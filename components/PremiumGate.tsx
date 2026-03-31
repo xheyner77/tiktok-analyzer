@@ -1,5 +1,11 @@
 import Link from 'next/link';
 import { MAX_ANALYSES_ELITE, MAX_ANALYSES_PRO } from '@/lib/plan-limits';
+import {
+  DISPLAY_CATALOG_ELITE_EUR,
+  DISPLAY_CATALOG_PRO_EUR,
+  DISPLAY_LAUNCH_ELITE_EUR,
+  DISPLAY_LAUNCH_PRO_EUR,
+} from '@/lib/stripe-pricing';
 
 interface PremiumGateProps {
   onReset?: () => void;
@@ -107,10 +113,16 @@ export default function PremiumGate({ onReset }: PremiumGateProps) {
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-semibold gradient-text uppercase tracking-widest">Pro</span>
             </div>
-            <div className="flex items-end gap-1">
-              <span className="text-3xl font-bold text-white">9,99</span>
-              <span className="text-base font-semibold text-gray-300 mb-0.5">€</span>
-              <span className="text-sm text-gray-400 mb-1">/mois</span>
+            <div className="space-y-0.5">
+              <div className="text-xs text-gray-500 line-through">
+                {DISPLAY_CATALOG_PRO_EUR}€/mois
+              </div>
+              <div className="flex items-end gap-1">
+                <span className="text-3xl font-bold text-white">{DISPLAY_LAUNCH_PRO_EUR}</span>
+                <span className="text-base font-semibold text-gray-300 mb-0.5">€</span>
+                <span className="text-sm text-gray-400 mb-1">/mois</span>
+              </div>
+              <p className="text-[10px] font-semibold text-emerald-400/90">Offre lancement -50%</p>
             </div>
             <p className="text-xs text-green-400 mt-1 font-medium">Annulable à tout moment</p>
           </div>
@@ -141,10 +153,16 @@ export default function PremiumGate({ onReset }: PremiumGateProps) {
                 Créateurs sérieux
               </span>
             </div>
-            <div className="flex items-end gap-1">
-              <span className="text-3xl font-bold text-white">24,99</span>
-              <span className="text-base font-semibold text-gray-300 mb-0.5">€</span>
-              <span className="text-sm text-gray-400 mb-1">/mois</span>
+            <div className="space-y-0.5">
+              <div className="text-xs text-gray-500 line-through">
+                {DISPLAY_CATALOG_ELITE_EUR}€/mois
+              </div>
+              <div className="flex items-end gap-1">
+                <span className="text-3xl font-bold text-white">{DISPLAY_LAUNCH_ELITE_EUR}</span>
+                <span className="text-base font-semibold text-gray-300 mb-0.5">€</span>
+                <span className="text-sm text-gray-400 mb-1">/mois</span>
+              </div>
+              <p className="text-[10px] font-semibold text-emerald-400/90">Offre lancement -50%</p>
             </div>
             <p className="text-xs text-green-400 mt-1 font-medium">Annulable à tout moment</p>
           </div>

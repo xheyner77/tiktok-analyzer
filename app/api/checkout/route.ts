@@ -3,12 +3,18 @@ import Stripe from 'stripe';
 import { getSession } from '@/lib/session';
 import { getUserById } from '@/lib/auth';
 import { getSiteUrl } from '@/lib/site-url';
+import {
+  STRIPE_LAUNCH_PRICE_ELITE_CENTS,
+  STRIPE_LAUNCH_PRICE_PRO_CENTS,
+  STRIPE_PRODUCT_NAME_ELITE,
+  STRIPE_PRODUCT_NAME_PRO,
+} from '@/lib/stripe-pricing';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 const PLANS = {
-  pro:   { amount: 999,  label: 'TikTok Analyzer — Plan Pro',   rank: 1 },
-  elite: { amount: 2499, label: 'TikTok Analyzer — Plan Elite', rank: 2 },
+  pro:   { amount: STRIPE_LAUNCH_PRICE_PRO_CENTS,   label: STRIPE_PRODUCT_NAME_PRO,   rank: 1 },
+  elite: { amount: STRIPE_LAUNCH_PRICE_ELITE_CENTS, label: STRIPE_PRODUCT_NAME_ELITE, rank: 2 },
 } as const;
 
 const CURRENT_PLAN_RANK: Record<string, number> = {
