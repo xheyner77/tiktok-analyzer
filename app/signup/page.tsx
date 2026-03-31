@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import AuthTransition from '@/components/AuthTransition';
 
 function getPasswordStrength(password: string): { level: 0 | 1 | 2 | 3; label: string; color: string } {
   if (password.length === 0) return { level: 0, label: '', color: '' };
@@ -25,6 +26,7 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showTransition, setShowTransition] = useState(false);
 
   const strength = getPasswordStrength(password);
 
@@ -58,20 +60,29 @@ export default function SignupPage() {
 
       if (!res.ok) {
         setError(data.error ?? 'Une erreur est survenue.');
+        setIsLoading(false);
         return;
       }
 
-      router.push('/dashboard');
-      router.refresh();
+      // Show premium transition — onComplete fires the actual navigation
+      setShowTransition(true);
+      // isLoading stays true to keep buttons disabled during the transition
     } catch {
       setError('Impossible de contacter le serveur.');
-    } finally {
       setIsLoading(false);
     }
   };
 
   return (
     <main className="min-h-screen bg-[#080808] flex items-center justify-center px-4">
+      <AuthTransition
+        show={showTransition}
+        onComplete={() => {
+          router.push('/dashboard');
+          router.refresh();
+        }}
+      />
+
       {/* Ambient glow */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-[#7928ca]/5 to-[#ff0050]/5 blur-3xl" />

@@ -3,6 +3,7 @@
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import AuthTransition from '@/components/AuthTransition';
 
 // Separated into its own component because useSearchParams() requires
 // a Suspense boundary in Next.js 14 App Router. Without it the page
@@ -17,6 +18,7 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showTransition, setShowTransition] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,20 +41,30 @@ function LoginForm() {
 
       if (!res.ok) {
         setError(data.error ?? 'Une erreur est survenue.');
+        setIsLoading(false);
         return;
       }
 
-      router.push(redirectTo);
-      router.refresh();
+      // Show premium transition — onComplete fires the actual navigation
+      setShowTransition(true);
+      // isLoading stays true to keep buttons disabled during the transition
     } catch (err) {
       console.error('[LoginForm] fetch error:', err);
       setError('Impossible de contacter le serveur.');
-    } finally {
       setIsLoading(false);
     }
   };
 
   return (
+    <>
+      <AuthTransition
+        show={showTransition}
+        onComplete={() => {
+          router.push(redirectTo);
+          router.refresh();
+        }}
+      />
+
     <div className="relative w-full max-w-sm animate-fade-up">
       {/* Logo */}
       <div className="flex flex-col items-center mb-8">
@@ -159,6 +171,7 @@ function LoginForm() {
         </Link>
       </p>
     </div>
+    </>
   );
 }
 
