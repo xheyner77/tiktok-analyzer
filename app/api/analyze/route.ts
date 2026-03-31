@@ -3,9 +3,12 @@ import { AnalysisResult, Rating, Improvement, AnalysisSection } from '@/lib/type
 import { getSession } from '@/lib/session';
 import { getUserById, incrementAnalysesCount, checkAndResetMonthly, canRunAnalysis, PLAN_LIMITS } from '@/lib/auth';
 import { saveAnalysis } from '@/lib/analyses';
-import { analyzeWithOpenAI } from '@/lib/openai';
+import { analyzeWithOpenAI, analyzeWithOpenAIVision } from '@/lib/openai';
+import { normalizeTikTokUrl, isTikTokVideoUrl } from '@/lib/tiktok-url';
 import { fetchTikTokPublicStatsV2 } from '@/lib/tiktok';
 import { supabase } from '@/lib/supabase';
+
+export const maxDuration = 60;
 
 interface ObservedMetrics {
   views?: number;
@@ -520,9 +523,237 @@ function computeCredibleFinalScore(
   return clamp(Math.max(blended, minFloor));
 }
 
+function normalizeVisionFrames(raw: unknown): string[] | null {
+  if (!Array.isArray(raw)) return null;
+  const out: string[] = [];
+  for (const item of raw) {
+    if (typeof item !== 'string') return null;
+    const s = item.trim();
+    if (!s) continue;
+    if (s.length > 450_000) return null;
+    out.push(s);
+    if (out.length >= 12) break;
+  }
+  return out.length >= 3 ? out : null;
+}
+
+function finalizeAnalyzeResult(
+  result: AnalysisResult,
+  structureScore: number,
+  observed: ReturnType<typeof computeObservedPerformance>,
+  observedMetrics: ObservedMetrics | undefined,
+  detected: Awaited<ReturnType<typeof fetchTikTokPublicStatsV2>>,
+  detectedSource: 'cache' | 'live_page' | 'live_oembed' | 'manual' | 'none',
+  options?: { uploadDurationSec?: number }
+): void {
+  const credibleFinalScore = computeCredibleFinalScore(structureScore, observed, observedMetrics);
+  result.structureScore = structureScore;
+  result.viralityScore = credibleFinalScore;
+  result.observedPerformanceScore = observed?.score;
+  result.observedPerformanceLabel = observed?.label;
+  result.observedPerformanceEstimated = observed?.estimated;
+  result.observedMetrics = observedMetrics;
+  if (detected) {
+    result.detectedVideoMeta = {
+      favorites: detected.favorites,
+      durationSec: detected.durationSec ?? options?.uploadDurationSec,
+      authorUsername: detected.authorUsername,
+      publishedAt: detected.publishedAt,
+      caption: detected.caption,
+    };
+  } else if (options?.uploadDurationSec) {
+    result.detectedVideoMeta = { durationSec: options.uploadDurationSec };
+  } else {
+    result.detectedVideoMeta = undefined;
+  }
+  const viewsHigh = (observedMetrics?.views ?? 0) >= 150_000;
+  result.overperformanceDetected =
+    !!observed &&
+    structureScore <= 55 &&
+    (observed.score >= 70 || (viewsHigh && observed.score >= 50));
+  result.observedStatsSource = detectedSource;
+  result.unavailableObservedStats = ['views', 'likes', 'comments', 'shares'].filter((k) => {
+    const m = observedMetrics as Record<string, unknown> | undefined;
+    return !m || !m[k];
+  });
+  result.finalVerdict = buildFinalVerdict(structureScore, observed);
+
+  if (!result.comparativeInsight?.trim() || !result.comparativePriority?.trim()) {
+    const derived = deriveContextualComparative(
+      result,
+      observedMetrics,
+      detected?.caption,
+      detected?.authorUsername
+    );
+    if (!result.comparativeInsight?.trim()) result.comparativeInsight = derived.comparativeInsight;
+    if (!result.comparativePriority?.trim()) result.comparativePriority = derived.comparativePriority;
+  }
+}
+
+async function postVisionAnalyze(
+  body: Record<string, unknown>,
+  frames: string[]
+): Promise<NextResponse> {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json(
+      { error: 'Connecte-toi pour analyser une vidéo importée.', code: 'AUTH_REQUIRED' },
+      { status: 401 }
+    );
+  }
+
+  let dbUser = await getUserById(session.userId);
+  if (!dbUser) {
+    await supabase
+      .from('users')
+      .upsert(
+        { id: session.userId, email: session.email, plan: 'free', analyses_count: 0, hooks_count: 0 },
+        { onConflict: 'id', ignoreDuplicates: true }
+      );
+    dbUser = {
+      id: session.userId,
+      email: session.email,
+      plan: 'free' as const,
+      analyses_count: 0,
+      hooks_count: 0,
+      last_reset_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+    };
+  }
+  dbUser = await checkAndResetMonthly(dbUser);
+  const limit = PLAN_LIMITS[dbUser.plan] ?? PLAN_LIMITS.free;
+  if (!canRunAnalysis(dbUser)) {
+    return NextResponse.json(
+      {
+        error: 'Limite atteinte pour ce mois',
+        type: 'analysis',
+        plan: dbUser.plan,
+        used: dbUser.analyses_count,
+        limit,
+      },
+      { status: 429 }
+    );
+  }
+
+  const plan = dbUser.plan;
+  const hasOpenAI =
+    !!process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'sk-your-key-here';
+  if (plan === 'free' || !hasOpenAI) {
+    return NextResponse.json(
+      {
+        error:
+          'L’import vidéo (analyse par vision) est disponible pour les plans Pro et Elite.',
+        code: 'VISION_REQUIRES_PRO',
+      },
+      { status: 403 }
+    );
+  }
+
+  const durationSec =
+    typeof body.durationSec === 'number' && Number.isFinite(body.durationSec) && body.durationSec > 0
+      ? Math.min(600, body.durationSec)
+      : undefined;
+  const fileName =
+    typeof body.fileName === 'string' ? body.fileName.replace(/[<>]/g, '').slice(0, 120) : undefined;
+
+  let tiktokUrl = '';
+  const rawTiktok = typeof body.tiktokUrl === 'string' ? body.tiktokUrl.trim() : '';
+  if (rawTiktok) {
+    const n = normalizeTikTokUrl(rawTiktok);
+    if (isTikTokVideoUrl(n)) tiktokUrl = n;
+  }
+
+  let detected: Awaited<ReturnType<typeof fetchTikTokPublicStatsV2>> = null;
+  let detectedSource: 'cache' | 'live_page' | 'live_oembed' | 'manual' | 'none' = 'none';
+
+  if (tiktokUrl) {
+    try {
+      const { data: cached } = await supabase
+        .from('tiktok_stats_cache')
+        .select('stats_json, fetched_at')
+        .eq('video_url', tiktokUrl)
+        .maybeSingle();
+      if (cached?.stats_json && cached?.fetched_at) {
+        const ageMs = Date.now() - new Date(cached.fetched_at).getTime();
+        if (ageMs < 6 * 60 * 60 * 1000) {
+          detected = cached.stats_json as Awaited<ReturnType<typeof fetchTikTokPublicStatsV2>>;
+          detectedSource = 'cache';
+        }
+      }
+    } catch {}
+    if (!detected) {
+      detected = await fetchTikTokPublicStatsV2(tiktokUrl);
+      if (detected?.source === 'page_json') detectedSource = 'live_page';
+      else if (detected?.source === 'oembed') detectedSource = 'live_oembed';
+      if (detected) {
+        try {
+          await supabase
+            .from('tiktok_stats_cache')
+            .upsert(
+              { video_url: tiktokUrl, stats_json: detected, fetched_at: new Date().toISOString() },
+              { onConflict: 'video_url', ignoreDuplicates: false }
+            );
+        } catch {}
+      }
+    }
+  }
+
+  const detectedObserved: ObservedMetrics | undefined = detected
+    ? {
+        views: detected.views,
+        likes: detected.likes,
+        comments: detected.comments,
+        shares: detected.shares,
+      }
+    : undefined;
+
+  let result: AnalysisResult;
+  try {
+    result = await analyzeWithOpenAIVision(frames, plan as 'pro' | 'elite', detectedObserved, {
+      durationSec,
+      tiktokUrl: tiktokUrl || undefined,
+      fileName,
+    });
+  } catch (e) {
+    console.error('[analyze] vision OpenAI failed:', e);
+    return NextResponse.json(
+      { error: 'Analyse vision échouée. Réessaie dans un instant ou vérifie ta vidéo (MP4).' },
+      { status: 502 }
+    );
+  }
+
+  result.analysisSource = 'vision_upload';
+
+  const structureScore = result.structureScore ?? result.viralityScore;
+  const observed = computeObservedPerformance(detectedObserved);
+  finalizeAnalyzeResult(
+    result,
+    structureScore,
+    observed,
+    detectedObserved,
+    detected,
+    detectedSource,
+    durationSec ? { uploadDurationSec: durationSec } : undefined
+  );
+
+  const persistUrl = tiktokUrl || `upload:${fileName || 'video'}-${Date.now()}`;
+
+  await Promise.all([
+    incrementAnalysesCount(session.userId),
+    saveAnalysis(session.userId, persistUrl, result),
+  ]);
+
+  return NextResponse.json(result);
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    const visionFrames = normalizeVisionFrames(body.frames);
+    if (visionFrames) {
+      return await postVisionAnalyze(body, visionFrames);
+    }
+
     const { url } = body;
     const manualObservedMetrics = sanitizeMetrics(body?.observedMetrics);
 
@@ -674,46 +905,10 @@ export async function POST(request: NextRequest) {
       result = buildMockResult(url, plan);
     }
 
+    result.analysisSource = 'url';
     const structureScore = result.structureScore ?? result.viralityScore;
     const observed = computeObservedPerformance(observedMetrics);
-    const credibleFinalScore = computeCredibleFinalScore(structureScore, observed, observedMetrics);
-    result.structureScore = structureScore;
-    result.viralityScore = credibleFinalScore;
-    result.observedPerformanceScore = observed?.score;
-    result.observedPerformanceLabel = observed?.label;
-    result.observedPerformanceEstimated = observed?.estimated;
-    result.observedMetrics = observedMetrics;
-    result.detectedVideoMeta = detected
-      ? {
-          favorites: detected.favorites,
-          durationSec: detected.durationSec,
-          authorUsername: detected.authorUsername,
-          publishedAt: detected.publishedAt,
-          caption: detected.caption,
-        }
-      : undefined;
-    const viewsHigh = (observedMetrics?.views ?? 0) >= 150_000;
-    result.overperformanceDetected =
-      !!observed &&
-      structureScore <= 55 &&
-      (observed.score >= 70 || (viewsHigh && observed.score >= 50));
-    result.observedStatsSource = detectedSource;
-    result.unavailableObservedStats = ['views', 'likes', 'comments', 'shares'].filter((k) => {
-      const m = observedMetrics as Record<string, unknown> | undefined;
-      return !m || !m[k];
-    });
-    result.finalVerdict = buildFinalVerdict(structureScore, observed);
-
-    if (!result.comparativeInsight?.trim() || !result.comparativePriority?.trim()) {
-      const derived = deriveContextualComparative(
-        result,
-        observedMetrics,
-        detected?.caption,
-        detected?.authorUsername
-      );
-      if (!result.comparativeInsight?.trim()) result.comparativeInsight = derived.comparativeInsight;
-      if (!result.comparativePriority?.trim()) result.comparativePriority = derived.comparativePriority;
-    }
+    finalizeAnalyzeResult(result, structureScore, observed, observedMetrics, detected, detectedSource, undefined);
 
     // ── Persist for authenticated users ──────────────────────────────────────
     if (session && dbUser) {

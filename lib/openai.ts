@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import type { ChatCompletionContentPart } from 'openai/resources/chat/completions';
 import type { Plan } from './supabase';
 import type { AnalysisResult, Rating, Priority } from './types';
 
@@ -146,7 +147,103 @@ function parseResult(raw: string): AnalysisResult {
   };
 }
 
+function systemPromptVision(): string {
+  return `${systemPrompt()}
+
+MODE VISION — images fournies :
+- Ce sont des captures successives d’UNE vidéo importée par l’utilisateur (ordre chronologique).
+- Tu DOIS décrire ce que tu vois réellement (cadrage, texte à l’écran, visage, décor, mouvement, coupes apparentes, rythme perçu).
+- Si une image est floue ou peu lisible, dis-le sans inventer de détails.
+- Les scores et conseils doivent être justifiés par ce qui est visible sur les images, pas par des clichés TikTok génériques.
+- Ne prétends pas avoir entendu l’audio : si pertinent, note « audio non disponible dans cet échantillon ».`;
+}
+
+function buildVisionUserContent(
+  plan: 'pro' | 'elite',
+  frameCount: number,
+  observedMetrics?: { views?: number; likes?: number; comments?: number; shares?: number },
+  meta?: { durationSec?: number; tiktokUrl?: string; fileName?: string }
+): string {
+  const isPro = plan === 'pro';
+  const tipsCount = isPro ? 5 : 10;
+  const analysisDepth = isPro
+    ? 'courte et directe (2-3 phrases max par section), en t’appuyant sur le visible'
+    : 'détaillée (4-6 phrases par section) avec références aux frames (début / milieu / fin)';
+
+  const metricsBlock = observedMetrics
+    ? `\nMétriques TikTok associées (si fournies) :
+- vues: ${observedMetrics.views ?? 0}
+- likes: ${observedMetrics.likes ?? 0}
+- commentaires: ${observedMetrics.comments ?? 0}
+- partages: ${observedMetrics.shares ?? 0}
+`
+    : '\nAucune métrique TikTok fournie (upload seul).';
+
+  const metaBlock = `\nContexte fichier : ${meta?.fileName ?? 'vidéo importée'} — durée ~${meta?.durationSec ?? '?'} s${meta?.tiktokUrl ? ` — lien TikTok optionnel pour stats : ${meta.tiktokUrl}` : ''}`;
+
+  const eliteFields = isPro
+    ? ''
+    : `  "strategy": "string — 150-200 mots — stratégie ancrée dans ce que montrent les images",
+  "viralTips": ["string", "string", "string", "string"] — 4 insights liés à ce que tu as vu sur les frames`;
+
+  return `Tu reçois ${frameCount} images extraites d’une même vidéo verticale (type TikTok), ordre chronologique.
+${metaBlock}
+${metricsBlock}
+
+Analyse ${analysisDepth}. Génère exactement ${tipsCount} recommandations.
+
+Réponds avec ce JSON exact (sans markdown) :
+{
+  "viralityScore": <entier 0-100>,
+  "hook": { "score": <0-100>, "rating": <"Excellent"|"Bon"|"Moyen"|"Faible">, "analysis": "string", "strengths": ["string"], "weaknesses": ["string"] },
+  "editing": { "score": <0-100>, "rating": <...>, "analysis": "string", "strengths": ["string"], "weaknesses": ["string"] },
+  "retention": { "score": <0-100>, "rating": <...>, "analysis": "string", "strengths": ["string"], "weaknesses": ["string"] },
+  "improvements": [ { "priority": <"haute"|"moyenne"|"basse">, "tip": "string" }, ... exactement ${tipsCount} ],
+  "comparativeInsight": "string",
+  "comparativePriority": "string"
+  ${eliteFields ? `,\n  ${eliteFields.trim()}` : ''}
+}
+
+Règles :
+- viralityScore = score structurel déduit des images (hook 40%, montage 30%, rétention 30%).
+- Chaque tip doit citer un angle (hook / montage / rétention) et un élément visible ou manquant sur les images.
+- comparativeInsight / comparativePriority : obligatoires, spécifiques à cette vidéo.
+- Répondre en français.`;
+}
+
 // ── Main export ────────────────────────────────────────────────────────────────
+
+export async function analyzeWithOpenAIVision(
+  framesBase64: string[],
+  plan: Extract<Plan, 'pro' | 'elite'>,
+  observedMetrics?: { views?: number; likes?: number; comments?: number; shares?: number },
+  meta?: { durationSec?: number; tiktokUrl?: string; fileName?: string }
+): Promise<AnalysisResult> {
+  const text = buildVisionUserContent(plan, framesBase64.length, observedMetrics, meta);
+
+  const userContent: ChatCompletionContentPart[] = [
+    { type: 'text', text },
+    ...framesBase64.slice(0, 12).map((b64) => ({
+      type: 'image_url' as const,
+      image_url: {
+        url: b64.startsWith('data:') ? b64 : `data:image/jpeg;base64,${b64}`,
+      },
+    })),
+  ];
+
+  const response = await client.chat.completions.create({
+    model: 'gpt-4o-mini',
+    temperature: 0.4,
+    max_tokens: plan === 'elite' ? 3200 : 1800,
+    messages: [
+      { role: 'system', content: systemPromptVision() },
+      { role: 'user', content: userContent },
+    ],
+  });
+
+  const raw = response.choices[0]?.message?.content ?? '';
+  return parseResult(raw);
+}
 
 export async function analyzeWithOpenAI(
   videoUrl: string,

@@ -170,9 +170,16 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
       {/* 1 — Hero : score de viralité (priorité visuelle) */}
       <div className="gradient-border rounded-2xl p-5 sm:p-7 card-glow">
         <div className="flex flex-col items-center text-center mb-6 sm:mb-8">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
-            Score de viralité
-          </p>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
+              Score de viralité
+            </p>
+            {data.analysisSource === 'vision_upload' && (
+              <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border border-[#ff0050]/35 text-[#ff66a3] bg-[#ff0050]/10">
+                Vision
+              </span>
+            )}
+          </div>
           <p className="text-[11px] text-gray-600 mt-1.5 max-w-md">
             Score global combinant analyse structurelle et signaux de performance réels (vues, engagement).
           </p>

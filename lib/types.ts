@@ -15,6 +15,8 @@ export interface Improvement {
 }
 
 export interface AnalysisResult {
+  /** Origine de l’analyse (lien TikTok vs fichier upload + vision) */
+  analysisSource?: 'url' | 'vision_upload';
   viralityScore: number;
   structureScore?: number;
   observedPerformanceScore?: number;

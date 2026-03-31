@@ -9,6 +9,8 @@ import PremiumGate from '@/components/PremiumGate';
 import AnalysisCounter from '@/components/AnalysisCounter';
 import GuestGate, { PENDING_URL_KEY } from '@/components/GuestGate';
 import { AnalysisResult } from '@/lib/types';
+import { normalizeTikTokUrl, isTikTokVideoUrl } from '@/lib/tiktok-url';
+import { extractVideoFramesFromFile } from '@/lib/extract-video-frames';
 
 const STORAGE_KEY = 'tiktok_analysis_count';
 const GUEST_LIMIT = 3;
@@ -33,26 +35,12 @@ const PLAN_LIMITS: Record<string, number> = {
   elite: 300,
 };
 
-function normalizeTikTokUrl(input: string): string {
-  const raw = input.trim();
-  if (!raw) return '';
-  return raw.startsWith('http://') || raw.startsWith('https://') ? raw : `https://${raw}`;
-}
-
-function isTikTokVideoUrl(value: string): boolean {
-  try {
-    const u = new URL(value);
-    return (
-      u.hostname.includes('tiktok.com') &&
-      (u.pathname.includes('/video/') || u.pathname.includes('/t/'))
-    );
-  } catch {
-    return false;
-  }
-}
-
 export default function Home() {
+  const [inputMode, setInputMode] = useState<'url' | 'upload'>('url');
   const [url, setUrl] = useState('');
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [uploadTiktokUrl, setUploadTiktokUrl] = useState('');
+  const [extractStatus, setExtractStatus] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState('');
@@ -136,6 +124,107 @@ export default function Home() {
   const compareItems = sortedHistory.filter((h) => compareIds.includes(h.id)).slice(0, 3);
 
   // ── Handlers ───────────────────────────────────────────────────────────────
+  const processAnalyzeResponse = async (response: Response) => {
+    if (response.status === 429) {
+      const data = await response.json().catch(() => ({} as Record<string, unknown>));
+      if (authUser) {
+        const used = typeof data.used === 'number' ? data.used : effectiveLimit;
+        setAuthUser({ ...authUser, analyses_count: used });
+      }
+      setError(
+        data?.limit
+          ? `Limite atteinte (${data.used ?? data.limit}/${data.limit}). Passe à un plan supérieur ou attends le prochain reset.`
+          : 'Limite atteinte pour ton plan.'
+      );
+      return;
+    }
+
+    if (response.status === 401) {
+      setError('Ta session a expiré. Reconnecte-toi puis réessaie.');
+      return;
+    }
+
+    if (response.status === 403) {
+      const data = await response.json().catch(() => ({} as { error?: string }));
+      setError(data?.error ?? 'Action non autorisée.');
+      return;
+    }
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({} as { error?: string }));
+      throw new Error(data?.error ?? 'Analyse échouée');
+    }
+
+    const rawText = await response.text();
+    console.log('[DEBUG][page] /api/analyze raw response text:', rawText.slice(0, 500));
+
+    let data: AnalysisResult;
+    try {
+      data = JSON.parse(rawText) as AnalysisResult;
+    } catch (parseErr) {
+      console.error('[DEBUG][page] JSON.parse failed — raw text was:', rawText);
+      throw parseErr;
+    }
+
+    const REQUIRED_SECTIONS = ['hook', 'editing', 'retention'] as const;
+    for (const key of REQUIRED_SECTIONS) {
+      if (!data[key]) {
+        console.error(`[DEBUG][page] MISSING section: data.${key} is`, data[key]);
+      } else {
+        const s = data[key];
+        if (typeof s.score !== 'number') console.error(`[DEBUG][page] data.${key}.score is not a number:`, s.score);
+        if (!s.rating) console.error(`[DEBUG][page] data.${key}.rating is missing:`, s.rating);
+        if (!Array.isArray(s.strengths)) console.error(`[DEBUG][page] data.${key}.strengths is not an array:`, s.strengths);
+        if (!Array.isArray(s.weaknesses)) console.error(`[DEBUG][page] data.${key}.weaknesses is not an array:`, s.weaknesses);
+      }
+    }
+
+    if (typeof data.viralityScore !== 'number') {
+      console.error('[DEBUG][page] data.viralityScore is not a number:', data.viralityScore);
+    }
+
+    if (!Array.isArray(data.improvements)) {
+      console.error('[DEBUG][page] data.improvements is not an array:', data.improvements);
+    } else {
+      const VALID_PRIORITIES = ['haute', 'moyenne', 'basse'];
+      data.improvements.forEach((imp, i) => {
+        if (!VALID_PRIORITIES.includes(imp.priority)) {
+          console.error(`[DEBUG][page] data.improvements[${i}].priority has unexpected value:`, imp.priority);
+        }
+      });
+    }
+
+    console.log('[DEBUG][page] structure summary:', {
+      viralityScore: data.viralityScore,
+      hookScore: data.hook?.score,
+      editingScore: data.editing?.score,
+      retentionScore: data.retention?.score,
+      improvementsCount: data.improvements?.length,
+      priorities: data.improvements?.map((i) => i.priority),
+      hasStrategy: !!data.strategy,
+      hasViralTips: !!data.viralTips,
+    });
+
+    setResults(data);
+    setCompareItem(null);
+
+    if (authUser) {
+      fetch('/api/auth/me')
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.user) setAuthUser(d.user);
+        })
+        .catch((err) => {
+          console.error('[Home] /api/auth/me refresh failed:', err);
+        });
+      refreshHistory();
+    } else {
+      const next = guestCount + 1;
+      setGuestCount(next);
+      localStorage.setItem(STORAGE_KEY, next.toString());
+    }
+  };
+
   const analyzeFromUrl = async (sourceUrl: string) => {
     if (isLimitReached) return;
 
@@ -149,7 +238,6 @@ export default function Home() {
       return;
     }
 
-    // ── Guest gate: block non-authenticated users ──────────────────────────
     if (isReady && !authUser) {
       setShowGuestGate(true);
       return;
@@ -165,101 +253,7 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: trimmed }),
       });
-
-      if (response.status === 429) {
-        const data = await response.json().catch(() => ({} as any));
-        // Server confirmed limit reached (DB authoritative)
-        if (authUser) {
-          const used = typeof data.used === 'number' ? data.used : effectiveLimit;
-          setAuthUser({ ...authUser, analyses_count: used });
-        }
-        setError(
-          data?.limit
-            ? `Limite atteinte (${data.used ?? data.limit}/${data.limit}). Passe à un plan supérieur ou attends le prochain reset.`
-            : 'Limite atteinte pour ton plan.'
-        );
-        return;
-      }
-
-      if (response.status === 401) {
-        setError('Ta session a expiré. Reconnecte-toi puis réessaie.');
-        return;
-      }
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({} as any));
-        throw new Error(data?.error ?? 'Analyse échouée');
-      }
-
-      const rawText = await response.text();
-      console.log('[DEBUG][page] /api/analyze raw response text:', rawText.slice(0, 500));
-
-      let data: AnalysisResult;
-      try {
-        data = JSON.parse(rawText) as AnalysisResult;
-      } catch (parseErr) {
-        console.error('[DEBUG][page] JSON.parse failed — raw text was:', rawText);
-        throw parseErr;
-      }
-
-      // ── Vérification de structure ──────────────────────────────────────────
-      const REQUIRED_SECTIONS = ['hook', 'editing', 'retention'] as const;
-      for (const key of REQUIRED_SECTIONS) {
-        if (!data[key]) {
-          console.error(`[DEBUG][page] MISSING section: data.${key} is`, data[key]);
-        } else {
-          const s = data[key];
-          if (typeof s.score !== 'number')  console.error(`[DEBUG][page] data.${key}.score is not a number:`, s.score);
-          if (!s.rating)                     console.error(`[DEBUG][page] data.${key}.rating is missing:`, s.rating);
-          if (!Array.isArray(s.strengths))   console.error(`[DEBUG][page] data.${key}.strengths is not an array:`, s.strengths);
-          if (!Array.isArray(s.weaknesses))  console.error(`[DEBUG][page] data.${key}.weaknesses is not an array:`, s.weaknesses);
-        }
-      }
-
-      if (typeof data.viralityScore !== 'number') {
-        console.error('[DEBUG][page] data.viralityScore is not a number:', data.viralityScore);
-      }
-
-      if (!Array.isArray(data.improvements)) {
-        console.error('[DEBUG][page] data.improvements is not an array:', data.improvements);
-      } else {
-        const VALID_PRIORITIES = ['haute', 'moyenne', 'basse'];
-        data.improvements.forEach((imp, i) => {
-          if (!VALID_PRIORITIES.includes(imp.priority)) {
-            console.error(`[DEBUG][page] data.improvements[${i}].priority has unexpected value:`, imp.priority, '— expected: haute | moyenne | basse');
-          }
-        });
-      }
-
-      console.log('[DEBUG][page] structure summary:', {
-        viralityScore: data.viralityScore,
-        hookScore: data.hook?.score,
-        editingScore: data.editing?.score,
-        retentionScore: data.retention?.score,
-        improvementsCount: data.improvements?.length,
-        priorities: data.improvements?.map(i => i.priority),
-        hasStrategy: !!data.strategy,
-        hasViralTips: !!data.viralTips,
-      });
-
-      setResults(data);
-      setCompareItem(null);
-
-      if (authUser) {
-        // Refresh DB count from server
-        fetch('/api/auth/me')
-          .then((r) => r.json())
-          .then((d) => { if (d.user) setAuthUser(d.user); })
-          .catch((err) => {
-            console.error('[Home] /api/auth/me refresh failed:', err);
-          });
-        refreshHistory();
-      } else {
-        // Guest: persist to localStorage
-        const next = guestCount + 1;
-        setGuestCount(next);
-        localStorage.setItem(STORAGE_KEY, next.toString());
-      }
+      await processAnalyzeResponse(response);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Une erreur est survenue. Veuillez réessayer.';
       setError(message);
@@ -268,7 +262,61 @@ export default function Home() {
     }
   };
 
+  const analyzeFromUpload = async () => {
+    if (isLimitReached) return;
+    if (!videoFile) {
+      setError('Choisis un fichier vidéo (MP4 recommandé).');
+      return;
+    }
+    if (isReady && !authUser) {
+      setShowGuestGate(true);
+      return;
+    }
+
+    let optionalTiktok = '';
+    if (uploadTiktokUrl.trim()) {
+      const n = normalizeTikTokUrl(uploadTiktokUrl.trim());
+      if (!isTikTokVideoUrl(n)) {
+        setError('Lien TikTok optionnel invalide (laisse vide ou colle une URL vidéo complète).');
+        return;
+      }
+      optionalTiktok = n;
+    }
+
+    setError('');
+    setIsLoading(true);
+    setResults(null);
+    setExtractStatus('Extraction des images…');
+
+    try {
+      const { frames, durationSec } = await extractVideoFramesFromFile(videoFile);
+      setExtractStatus('Analyse par vision IA…');
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          frames,
+          durationSec,
+          fileName: videoFile.name,
+          ...(optionalTiktok ? { tiktokUrl: optionalTiktok } : {}),
+        }),
+      });
+      await processAnalyzeResponse(response);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Une erreur est survenue. Veuillez réessayer.';
+      setError(message);
+    } finally {
+      setExtractStatus('');
+      setIsLoading(false);
+    }
+  };
+
   const handleAnalyze = async () => analyzeFromUrl(url);
+
+  const onInputModeChange = (mode: 'url' | 'upload') => {
+    setInputMode(mode);
+    setError('');
+  };
 
   function togglePin(itemId: string) {
     if (!authUser) return;
@@ -317,13 +365,110 @@ export default function Home() {
         <Header />
 
         <div className="mt-10 space-y-3">
-          <UrlInput
-            value={url}
-            onChange={setUrl}
-            onAnalyze={handleAnalyze}
-            isLoading={isLoading}
-            isLocked={isLimitReached}
-          />
+          <div className="flex rounded-xl border border-[#1a1a1a] bg-[#0a0a0a] p-1 gap-1">
+            <button
+              type="button"
+              onClick={() => onInputModeChange('url')}
+              className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-colors ${
+                inputMode === 'url'
+                  ? 'bg-[#1a1a1a] text-white shadow-sm'
+                  : 'text-gray-500 hover:text-gray-300'
+              }`}
+            >
+              Lien TikTok
+            </button>
+            <button
+              type="button"
+              onClick={() => onInputModeChange('upload')}
+              className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-colors ${
+                inputMode === 'upload'
+                  ? 'bg-[#1a1a1a] text-white shadow-sm'
+                  : 'text-gray-500 hover:text-gray-300'
+              }`}
+            >
+              Importer une vidéo
+            </button>
+          </div>
+
+          {inputMode === 'url' ? (
+            <UrlInput
+              value={url}
+              onChange={setUrl}
+              onAnalyze={handleAnalyze}
+              isLoading={isLoading}
+              isLocked={isLimitReached}
+            />
+          ) : (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-2 px-1">
+                  Fichier vidéo
+                </label>
+                <input
+                  type="file"
+                  accept="video/*"
+                  disabled={isLoading || isLimitReached}
+                  onChange={(e) => setVideoFile(e.target.files?.[0] ?? null)}
+                  className="block w-full text-sm text-gray-300 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-[#1a1a1a] file:text-white hover:file:bg-[#252525] border border-[#222] rounded-xl bg-[#111] px-3 py-2 disabled:opacity-50"
+                />
+                {videoFile && (
+                  <p className="text-xs text-gray-500 mt-2 px-1 truncate" title={videoFile.name}>
+                    {videoFile.name}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-2 px-1">
+                  Lien TikTok <span className="text-gray-600 normal-case font-normal">(optionnel, stats)</span>
+                </label>
+                <input
+                  type="url"
+                  value={uploadTiktokUrl}
+                  onChange={(e) => setUploadTiktokUrl(e.target.value)}
+                  placeholder="https://www.tiktok.com/@…/video/…"
+                  disabled={isLoading || isLimitReached}
+                  className="w-full bg-[#111] border border-[#222] rounded-xl px-4 py-3.5 text-sm text-white placeholder-gray-600 outline-none hover:border-[#333] focus:border-[#ff0050]/50 focus:ring-2 focus:ring-[#ff0050]/10 disabled:opacity-50"
+                />
+              </div>
+              <p className="text-[11px] text-gray-600 px-1 leading-relaxed">
+                L’analyse par vision extrait quelques images de ta vidéo et les envoie au modèle. Réservé aux comptes{' '}
+                <span className="text-gray-500">Pro / Elite</span>. MP4 recommandé, durée max ~90 s.
+              </p>
+              <button
+                type="button"
+                onClick={() => void analyzeFromUpload()}
+                disabled={isLoading || isLimitReached || !videoFile}
+                className={`w-full relative overflow-hidden rounded-xl py-4 font-semibold text-white text-sm transition-all duration-200 active:scale-[0.99] shadow-lg ${
+                  isLimitReached
+                    ? 'bg-[#1a1a2a] border border-[#2a1a3a] opacity-50 cursor-not-allowed shadow-none'
+                    : 'bg-gradient-to-r from-[#ff0050] to-[#7928ca] hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed shadow-[#ff0050]/10'
+                }`}
+              >
+                {isLoading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    {extractStatus || 'Analyse en cours…'}
+                  </span>
+                ) : isLimitReached ? (
+                  <span>Accès Premium requis</span>
+                ) : (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                      <path
+                        fillRule="evenodd"
+                        d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    Analyser (vision)
+                  </span>
+                )}
+              </button>
+            </div>
+          )}
 
           {isReady && !isLimitReached && (
             <AnalysisCounter
@@ -425,7 +570,7 @@ export default function Home() {
 
         {isLoading && (
           <div className="mt-10">
-            <LoadingState />
+            <LoadingState statusLine={extractStatus || undefined} />
           </div>
         )}
 
