@@ -166,7 +166,7 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
   }, [data, plan]);
 
   return (
-    <div className="space-y-8 animate-fade-up">
+    <div className="space-y-8 animate-fade-up min-w-0">
       {/* 1 — Hero : score de viralité (priorité visuelle) */}
       <div className="gradient-border rounded-2xl p-5 sm:p-7 card-glow">
         <div className="flex flex-col items-center text-center mb-6 sm:mb-8">
@@ -325,9 +325,9 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
               Analyse comparative
             </h2>
 
-            {/* Top % highlight */}
-            <div className="flex items-center gap-4">
-              <div className="shrink-0 text-center">
+            {/* Top % highlight — stack on narrow screens to avoid squeeze */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 min-w-0">
+              <div className="shrink-0 text-center sm:text-left">
                 <p className="text-3xl font-black" style={{ color: barColor }}>
                   Top {topPercent}%
                 </p>
@@ -337,7 +337,7 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
               </div>
 
               {/* Progress bar */}
-              <div className="flex-1">
+              <div className="flex-1 min-w-0 w-full">
                 <div className="h-2 bg-[#1e1e1e] rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-700"
@@ -352,14 +352,14 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
             </div>
 
             {/* Text insights */}
-            <div className="space-y-2.5 pt-1 border-t border-[#1a1a1a]">
-              <div className="flex items-start gap-2.5">
+            <div className="space-y-2.5 pt-1 border-t border-[#1a1a1a] min-w-0">
+              <div className="flex items-start gap-2.5 min-w-0">
                 <span className="mt-1 shrink-0 text-green-500 text-xs">✓</span>
-                <p className="text-sm text-gray-300 leading-relaxed">{comparison}</p>
+                <p className="text-sm text-gray-300 leading-relaxed min-w-0 break-words">{comparison}</p>
               </div>
-              <div className="flex items-start gap-2.5">
+              <div className="flex items-start gap-2.5 min-w-0">
                 <span className="mt-1 shrink-0 text-[#ff0050] text-xs">→</span>
-                <p className="text-sm text-gray-400 leading-relaxed">{gap}</p>
+                <p className="text-sm text-gray-400 leading-relaxed min-w-0 break-words">{gap}</p>
               </div>
             </div>
           </div>

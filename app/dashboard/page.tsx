@@ -36,7 +36,7 @@ export default async function DashboardPage({
   const stripeSessionId = searchParams.session_id ?? null;
 
   return (
-    <main className="min-h-screen bg-[#080808]">
+    <main className="min-h-screen bg-[#080808] overflow-x-hidden">
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[600px] h-[500px] rounded-full bg-gradient-to-br from-[#ff0050]/5 to-[#7928ca]/5 blur-3xl" />
       </div>

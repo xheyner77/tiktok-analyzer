@@ -198,7 +198,7 @@ function PricingCard({ plan }: { plan: Plan }) {
 
 export default function PricingPage() {
   return (
-    <main className="min-h-screen bg-[#080808]">
+    <main className="min-h-screen bg-[#080808] overflow-x-hidden">
       {/* Ambient glows */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -top-40 left-1/4 w-[500px] h-[500px] rounded-full bg-[#ff0050]/5 blur-3xl" />

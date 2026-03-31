@@ -250,7 +250,7 @@ export default function HookGeneratorPage() {
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <main className="min-h-screen bg-[#080808]">
+    <main className="min-h-screen bg-[#080808] overflow-x-hidden">
       {/* Ambient glow */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -top-64 left-1/2 -translate-x-1/2 w-[700px] h-[500px] rounded-full bg-gradient-to-br from-[#7928ca]/8 to-[#ff0050]/6 blur-3xl" />

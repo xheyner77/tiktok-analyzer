@@ -299,7 +299,7 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-[#080808]">
+    <main className="min-h-screen bg-[#080808] overflow-x-hidden">
       <GuestGate
         show={showGuestGate}
         pendingUrl={url}
@@ -342,8 +342,8 @@ export default function Home() {
         {/* Before / after comparison */}
         {results && compareItem && (
           <div className="mt-6 rounded-2xl border border-[#1a1a1a] bg-[#0f0f0f] p-4">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest min-w-0">
                 Comparaison avant / après
               </p>
               <button
@@ -382,8 +382,8 @@ export default function Home() {
         {/* Multi-version comparison */}
         {compareItems.length >= 2 && (
           <div className="mt-6 rounded-2xl border border-[#1a1a1a] bg-[#0f0f0f] p-4">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest min-w-0">
                 Comparaison multi-versions ({compareItems.length}/3)
               </p>
               <button
@@ -464,7 +464,7 @@ export default function Home() {
                 {sortedHistory.slice(0, 8).map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center gap-2 rounded-lg border border-[#1e1e1e] bg-[#111] px-3 py-2"
+                    className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2 rounded-lg border border-[#1e1e1e] bg-[#111] px-3 py-2.5"
                   >
                     <button
                       type="button"
@@ -472,38 +472,40 @@ export default function Home() {
                         setUrl(item.video_url);
                         analyzeFromUrl(item.video_url);
                       }}
-                      className="text-left flex-1 min-w-0"
+                      className="text-left flex-1 min-w-0 w-full sm:w-auto"
                     >
-                      <p className="text-xs text-white truncate">{item.video_url}</p>
+                      <p className="text-xs text-white break-all sm:break-normal sm:truncate">{item.video_url}</p>
                       <p className="text-[11px] text-gray-600">
                         Score {item.result?.viralityScore ?? 0} · {new Date(item.created_at).toLocaleDateString('fr-FR')}
                       </p>
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => togglePin(item.id)}
-                      className={`text-[11px] px-2 py-1 rounded-md border ${
-                        pinnedIds.includes(item.id)
-                          ? 'border-[#ff0050]/40 text-[#ff6080] bg-[#1b0a12]'
-                          : 'border-[#2a2a2a] text-gray-500 hover:text-white'
-                      }`}
-                    >
-                      {pinnedIds.includes(item.id) ? 'Épinglé' : 'Pin'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCompareItem(item);
-                        toggleCompare(item.id);
-                      }}
-                      className={`text-[11px] px-2 py-1 rounded-md border ${
-                        compareIds.includes(item.id)
-                          ? 'border-[#7928ca]/40 text-[#c084fc] bg-[#120d1f]'
-                          : 'border-[#2a2a2a] text-gray-400 hover:text-white'
-                      }`}
-                    >
-                      {compareIds.includes(item.id) ? 'Ajouté' : 'Comparer'}
-                    </button>
+                    <div className="flex gap-2 shrink-0 self-stretch sm:self-center justify-end sm:justify-start">
+                      <button
+                        type="button"
+                        onClick={() => togglePin(item.id)}
+                        className={`text-[11px] px-2.5 py-1.5 rounded-md border ${
+                          pinnedIds.includes(item.id)
+                            ? 'border-[#ff0050]/40 text-[#ff6080] bg-[#1b0a12]'
+                            : 'border-[#2a2a2a] text-gray-500 hover:text-white'
+                        }`}
+                      >
+                        {pinnedIds.includes(item.id) ? 'Épinglé' : 'Pin'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCompareItem(item);
+                          toggleCompare(item.id);
+                        }}
+                        className={`text-[11px] px-2.5 py-1.5 rounded-md border ${
+                          compareIds.includes(item.id)
+                            ? 'border-[#7928ca]/40 text-[#c084fc] bg-[#120d1f]'
+                            : 'border-[#2a2a2a] text-gray-400 hover:text-white'
+                        }`}
+                      >
+                        {compareIds.includes(item.id) ? 'Ajouté' : 'Comparer'}
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

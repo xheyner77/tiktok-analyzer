@@ -19,7 +19,7 @@ export default function RootLayout({
     <html lang="fr">
       <body className={inter.className}>
         <Navbar />
-        <div className="pt-14">{children}</div>
+        <div className="pt-14 min-h-[calc(100vh-0px)] overflow-x-hidden">{children}</div>
       </body>
     </html>
   );
