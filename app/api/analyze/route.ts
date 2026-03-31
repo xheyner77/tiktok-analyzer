@@ -22,11 +22,14 @@ function getRating(score: number): Rating {
   return 'Faible';
 }
 
+// rating is not stored in the profile — it is computed dynamically in buildMockResult
+type MockSection = Omit<AnalysisSection, 'rating'>;
+
 interface MockProfile {
   viralityScore: number;
-  hook: AnalysisSection;
-  editing: AnalysisSection;
-  retention: AnalysisSection;
+  hook: MockSection;
+  editing: MockSection;
+  retention: MockSection;
   improvements: Improvement[];
   strategy: string;
   viralTips: string[];
