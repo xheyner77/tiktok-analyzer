@@ -9,6 +9,7 @@ import {
   HOOK_LIMITS,
 } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
+import { HOOK_GENERATION_MAX_TOKENS, OPENAI_CHAT_MODEL } from '@/lib/openai-models';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -55,9 +56,9 @@ Réponds UNIQUEMENT avec un tableau JSON de strings, sans markdown, sans comment
 ["HOOK 1", "HOOK 2", ...]`;
 
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model: OPENAI_CHAT_MODEL,
     temperature: 0.85,
-    max_tokens: 300,
+    max_tokens: HOOK_GENERATION_MAX_TOKENS,
     messages: [
       {
         role: 'system',

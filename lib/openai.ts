@@ -1,6 +1,7 @@
 import OpenAI, { APIError, APIConnectionError, RateLimitError } from 'openai';
 import type { ChatCompletion, ChatCompletionContentPart } from 'openai/resources/chat/completions';
 import type { Plan } from './supabase';
+import { OPENAI_CHAT_MODEL } from './openai-models';
 import { VISION_MAX_FRAMES } from './vision-config';
 import type { AnalysisResult, Rating, Priority } from './types';
 
@@ -253,7 +254,7 @@ export async function analyzeWithOpenAIVision(
   const maxOut = plan === 'elite' ? 2600 : 1800;
 
   const createParams = {
-    model: 'gpt-4o-mini' as const,
+    model: OPENAI_CHAT_MODEL,
     temperature: 0.4,
     max_tokens: maxOut,
     response_format: { type: 'json_object' as const },
@@ -371,7 +372,7 @@ export async function analyzeWithOpenAI(
   videoContext?: { caption?: string; authorUsername?: string; durationSec?: number }
 ): Promise<AnalysisResult> {
   const response = await client.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model: OPENAI_CHAT_MODEL,
     temperature: 0.45,
     max_tokens: plan === 'elite' ? 2800 : 1600,
     messages: [
