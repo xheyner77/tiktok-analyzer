@@ -57,7 +57,6 @@ export default function FeedbackButton() {
   async function handleSubmit() {
     if (!message.trim() || status === 'sending') return;
     setStatus('sending');
-
     try {
       const res = await fetch('/api/feedback', {
         method:  'POST',
@@ -77,7 +76,7 @@ export default function FeedbackButton() {
       {/* ── Trigger button ────────────────────────────────────────────────── */}
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-300 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-white/5"
+        className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-300 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-white/5 outline-none"
         aria-label="Envoyer un feedback"
       >
         <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 shrink-0">
@@ -88,125 +87,128 @@ export default function FeedbackButton() {
 
       {/* ── Modal ─────────────────────────────────────────────────────────── */}
       {open && (
-        <div
-          className="fixed inset-0 z-[60] overflow-y-auto"
-          style={{
-            backgroundColor: `rgba(0,0,0,${visible ? 0.80 : 0})`,
-            backdropFilter:  `blur(${visible ? 8 : 0}px)`,
-            transition: 'background-color 0.2s ease, backdrop-filter 0.2s ease',
-          }}
-        >
-          {/* Backdrop close */}
-          <div className="absolute inset-0" onClick={() => setOpen(false)} aria-hidden />
-
-          {/* Centering wrapper */}
-          <div className="relative flex min-h-full items-center justify-center p-4 pointer-events-none">
-
-          {/* Card */}
+        <>
+          {/* Backdrop — separate element, no overflow, no focus */}
           <div
-            className="relative w-full max-w-md bg-[#0d0d0d] border border-[#1e1e1e] rounded-2xl shadow-2xl overflow-hidden pointer-events-auto"
+            className="fixed inset-0 z-[60]"
             style={{
+              backgroundColor: `rgba(0,0,0,${visible ? 0.82 : 0})`,
+              backdropFilter:  `blur(${visible ? 8 : 0}px)`,
+              transition: 'background-color 0.2s ease, backdrop-filter 0.2s ease',
+            }}
+            onClick={() => setOpen(false)}
+            aria-hidden
+          />
+
+          {/* Card — centered with transform, z above backdrop */}
+          <div
+            className="fixed z-[61] w-[calc(100%-2rem)] max-w-md outline-none"
+            style={{
+              top:       '50%',
+              left:      '50%',
+              transform: `translate(-50%, -50%) scale(${visible ? 1 : 0.97}) translateY(${visible ? 0 : 10}px)`,
               opacity:   visible ? 1 : 0,
-              transform: visible ? 'translateY(0) scale(1)' : 'translateY(12px) scale(0.97)',
               transition: 'opacity 0.25s ease, transform 0.3s cubic-bezier(0.16,1,0.3,1)',
+              maxHeight: 'calc(100vh - 3rem)',
+              overflowY: 'auto',
             }}
           >
-            {/* Top ambient glow */}
-            <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-64 h-24 rounded-full bg-gradient-to-br from-[#ff0050]/10 to-[#7928ca]/10 blur-2xl pointer-events-none" />
+            <div className="bg-[#0d0d0d] border border-[#1e1e1e] rounded-2xl shadow-2xl overflow-hidden">
+              {/* Top ambient glow */}
+              <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-64 h-24 rounded-full bg-gradient-to-br from-[#ff0050]/10 to-[#7928ca]/10 blur-2xl pointer-events-none" />
 
-            <div className="relative p-6">
-              {/* Close */}
-              <button
-                onClick={() => setOpen(false)}
-                className="absolute right-4 top-4 w-7 h-7 rounded-lg bg-[#1a1a1a] flex items-center justify-center text-gray-500 hover:text-gray-300 hover:bg-[#222] transition-colors"
-                aria-label="Fermer"
-              >
-                <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
-                  <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.75.75 0 1 1 1.06 1.06L9.06 8l3.22 3.22a.75.75 0 1 1-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 0 1-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z" />
-                </svg>
-              </button>
+              <div className="relative p-6">
+                {/* Close */}
+                <button
+                  onClick={() => setOpen(false)}
+                  className="absolute right-4 top-4 w-7 h-7 rounded-lg bg-[#1a1a1a] flex items-center justify-center text-gray-500 hover:text-gray-300 hover:bg-[#222] transition-colors outline-none"
+                  aria-label="Fermer"
+                >
+                  <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
+                    <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.75.75 0 1 1 1.06 1.06L9.06 8l3.22 3.22a.75.75 0 1 1-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 0 1-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z" />
+                  </svg>
+                </button>
 
-              {status === 'success' ? (
-                /* ── Success state ─────────────────────────────────────────── */
-                <div className="py-6 flex flex-col items-center gap-4 text-center">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#ff0050]/15 to-[#7928ca]/15 border border-[#ff0050]/20 flex items-center justify-center text-2xl">
-                    🙏
+                {status === 'success' ? (
+                  /* ── Success state ─────────────────────────────────────── */
+                  <div className="py-6 flex flex-col items-center gap-4 text-center">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#ff0050]/15 to-[#7928ca]/15 border border-[#ff0050]/20 flex items-center justify-center text-2xl">
+                      🙏
+                    </div>
+                    <div>
+                      <p className="text-base font-bold text-white mb-1">Merci pour ton retour !</p>
+                      <p className="text-sm text-gray-500">On le prend en compte pour améliorer l&apos;outil.</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-base font-bold text-white mb-1">Merci pour ton retour !</p>
-                    <p className="text-sm text-gray-500">On le prend en compte pour améliorer l&apos;outil.</p>
-                  </div>
-                </div>
-              ) : (
-                /* ── Form ─────────────────────────────────────────────────── */
-                <>
-                  {/* Header */}
-                  <div className="mb-5 pr-6">
-                    <h2 className="text-base font-bold text-white mb-1">Ton avis compte</h2>
-                    <p className="text-xs text-gray-500">Bug, idée, suggestion — tout nous intéresse.</p>
-                  </div>
+                ) : (
+                  /* ── Form ─────────────────────────────────────────────── */
+                  <>
+                    {/* Header */}
+                    <div className="mb-5 pr-6">
+                      <h2 className="text-base font-bold text-white mb-1">Ton avis compte</h2>
+                      <p className="text-xs text-gray-500">Bug, idée, suggestion — tout nous intéresse.</p>
+                    </div>
 
-                  {/* Category tabs */}
-                  <div className="flex gap-1.5 mb-4">
-                    {CATEGORIES.map((c) => (
-                      <button
-                        key={c.id}
-                        onClick={() => setCategory(c.id)}
-                        className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150
-                          ${category === c.id
-                            ? 'bg-[#1a1a1a] border border-[#333] text-white'
-                            : 'text-gray-600 hover:text-gray-400 hover:bg-white/4'
-                          }`}
-                      >
-                        {c.label}
-                      </button>
-                    ))}
-                  </div>
+                    {/* Category tabs */}
+                    <div className="flex gap-1.5 mb-4">
+                      {CATEGORIES.map((c) => (
+                        <button
+                          key={c.id}
+                          onClick={() => setCategory(c.id)}
+                          className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 outline-none
+                            ${category === c.id
+                              ? 'bg-[#1a1a1a] border border-[#333] text-white'
+                              : 'text-gray-600 hover:text-gray-400 hover:bg-white/5'
+                            }`}
+                        >
+                          {c.label}
+                        </button>
+                      ))}
+                    </div>
 
-                  {/* Textarea */}
-                  <textarea
-                    ref={textareaRef}
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Dis-nous ce que tu aimerais améliorer, un bug rencontré, ou une idée…"
-                    rows={4}
-                    maxLength={1000}
-                    className="w-full bg-[#111] border border-[#222] hover:border-[#2a2a2a] focus:border-[#ff0050]/40 focus:ring-2 focus:ring-[#ff0050]/8 text-white text-sm placeholder-gray-600 rounded-xl px-4 py-3 outline-none resize-none transition-all duration-150 mb-1"
-                  />
-                  <p className="text-right text-[11px] text-gray-700 mb-4 tabular-nums">
-                    {message.length} / 1000
-                  </p>
-
-                  {/* Error */}
-                  {status === 'error' && (
-                    <p className="text-xs text-red-400 mb-3">
-                      Une erreur est survenue. Réessaie dans un instant.
+                    {/* Textarea */}
+                    <textarea
+                      ref={textareaRef}
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      placeholder="Dis-nous ce que tu aimerais améliorer, un bug rencontré, ou une idée…"
+                      rows={4}
+                      maxLength={1000}
+                      className="w-full bg-[#111] border border-[#222] hover:border-[#2a2a2a] focus:border-[#ff0050]/40 focus:ring-2 focus:ring-[#ff0050]/8 text-white text-sm placeholder-gray-600 rounded-xl px-4 py-3 outline-none resize-none transition-all duration-150 mb-1"
+                    />
+                    <p className="text-right text-[11px] text-gray-700 mb-4 tabular-nums">
+                      {message.length} / 1000
                     </p>
-                  )}
 
-                  {/* Submit */}
-                  <button
-                    onClick={handleSubmit}
-                    disabled={!message.trim() || status === 'sending'}
-                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#ff0050] to-[#7928ca] text-white font-semibold text-sm hover:opacity-90 transition-all duration-200 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-[#ff0050]/15"
-                  >
-                    {status === 'sending' ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                        </svg>
-                        Envoi…
-                      </span>
-                    ) : 'Envoyer'}
-                  </button>
-                </>
-              )}
+                    {/* Error */}
+                    {status === 'error' && (
+                      <p className="text-xs text-red-400 mb-3">
+                        Une erreur est survenue. Réessaie dans un instant.
+                      </p>
+                    )}
+
+                    {/* Submit */}
+                    <button
+                      onClick={handleSubmit}
+                      disabled={!message.trim() || status === 'sending'}
+                      className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#ff0050] to-[#7928ca] text-white font-semibold text-sm hover:opacity-90 transition-all duration-200 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-[#ff0050]/15 outline-none"
+                    >
+                      {status === 'sending' ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                          </svg>
+                          Envoi…
+                        </span>
+                      ) : 'Envoyer'}
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
-
-          </div>{/* end centering wrapper */}
-        </div>
+        </>
       )}
     </>
   );
