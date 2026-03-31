@@ -99,6 +99,9 @@ const RetentionIcon = () => (
 
 export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
   const structureScore = data.structureScore ?? data.viralityScore ?? 0;
+  /** Score global crédible (structure + stats réelles) — ne pas confondre avec le score de structure seul */
+  const viralScore =
+    typeof data.viralityScore === 'number' ? data.viralityScore : structureScore;
 
   const metrics = data.observedMetrics ?? {};
   const meta = data.detectedVideoMeta;
@@ -260,7 +263,7 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
         </div>
 
         <div className="flex justify-center mb-5">
-          <ScoreRing score={structureScore} size={168} strokeWidth={10} />
+          <ScoreRing score={viralScore} size={168} strokeWidth={10} />
         </div>
 
         {/* Sub scores */}

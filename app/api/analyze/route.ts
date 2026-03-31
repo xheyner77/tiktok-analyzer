@@ -394,12 +394,23 @@ function computeObservedPerformance(metrics?: ObservedMetrics): { score: number;
   if (shares >= 1000) score += 6;
 
   const capped = Math.max(1, Math.min(100, Math.round(score)));
+
+  // Forte portée absolue = signal de distribution réel, même si le taux d’engagement % est modeste (gros comptes, scroll passif).
+  let reachFloor = 1;
+  if (views >= 1_000_000) reachFloor = 62;
+  else if (views >= 500_000) reachFloor = 58;
+  else if (views >= 200_000) reachFloor = 54;
+  else if (views >= 100_000) reachFloor = 50;
+  else if (views >= 50_000) reachFloor = 44;
+  else if (views >= 10_000) reachFloor = 36;
+
+  const merged = Math.max(capped, reachFloor);
   const label =
-    capped >= 80 ? (estimated ? 'Très forte performance estimée (basée sur les vues)' : 'Très forte performance observée') :
-    capped >= 60 ? (estimated ? 'Bonne traction estimée (basée sur les vues)' : 'Bonne traction réelle') :
-    capped >= 40 ? (estimated ? 'Performance estimée correcte' : 'Performance correcte') :
+    merged >= 80 ? (estimated ? 'Très forte performance estimée (basée sur les vues)' : 'Très forte performance observée') :
+    merged >= 60 ? (estimated ? 'Bonne traction estimée (basée sur les vues)' : 'Bonne traction réelle') :
+    merged >= 40 ? (estimated ? 'Performance estimée correcte' : 'Performance correcte') :
     (estimated ? 'Performance estimée encore limitée' : 'Performance encore limitée');
-  return { score: capped, label, estimated };
+  return { score: merged, label, estimated };
 }
 
 function buildFinalVerdict(structure: number, observed: { score: number; label: string } | null): string {
@@ -424,12 +435,16 @@ function buildFinalVerdict(structure: number, observed: { score: number; label: 
   if (structure < 50 && observed.score < 50) {
     return 'Structure faible et performance observée limitée: prioriser hook, montage et rétention.';
   }
+  if (structure < 55 && observed.score >= 50) {
+    return 'Portée réelle solide malgré une structure perfectible: la vidéo a trouvé son audience; optimise le format pour stabiliser les prochaines performances.';
+  }
   return 'Vidéo qui montre des signaux positifs, avec des marges d’optimisation ciblées.';
 }
 
 function computeCredibleFinalScore(
   structureScore: number,
-  observed: { score: number } | null
+  observed: { score: number } | null,
+  metrics?: ObservedMetrics
 ): number {
   const clamp = (n: number) => Math.max(1, Math.min(100, Math.round(n)));
   if (!observed) return clamp(structureScore);
@@ -442,6 +457,12 @@ function computeCredibleFinalScore(
   else if (observed.score >= 75) minFloor = 52;
   else if (observed.score >= 65) minFloor = 46;
   else if (observed.score >= 55) minFloor = 40;
+  else if (observed.score >= 50) minFloor = 36;
+
+  const views = metrics?.views ?? 0;
+  if (views >= 500_000) minFloor = Math.max(minFloor, 50);
+  else if (views >= 200_000) minFloor = Math.max(minFloor, 48);
+  else if (views >= 100_000) minFloor = Math.max(minFloor, 44);
 
   return clamp(Math.max(blended, minFloor));
 }
@@ -596,7 +617,7 @@ export async function POST(request: NextRequest) {
 
     const structureScore = result.structureScore ?? result.viralityScore;
     const observed = computeObservedPerformance(observedMetrics);
-    const credibleFinalScore = computeCredibleFinalScore(structureScore, observed);
+    const credibleFinalScore = computeCredibleFinalScore(structureScore, observed, observedMetrics);
     result.structureScore = structureScore;
     result.viralityScore = credibleFinalScore;
     result.observedPerformanceScore = observed?.score;
@@ -612,7 +633,11 @@ export async function POST(request: NextRequest) {
           caption: detected.caption,
         }
       : undefined;
-    result.overperformanceDetected = !!observed && observed.score >= 70 && structureScore <= 55;
+    const viewsHigh = (observedMetrics?.views ?? 0) >= 150_000;
+    result.overperformanceDetected =
+      !!observed &&
+      structureScore <= 55 &&
+      (observed.score >= 70 || (viewsHigh && observed.score >= 50));
     result.observedStatsSource = detectedSource;
     result.unavailableObservedStats = ['views', 'likes', 'comments', 'shares'].filter((k) => {
       const m = observedMetrics as Record<string, unknown> | undefined;
