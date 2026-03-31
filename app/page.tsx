@@ -51,12 +51,6 @@ function isTikTokVideoUrl(value: string): boolean {
   }
 }
 
-function formatCompact(value: string): string {
-  const n = Number(value);
-  if (!n) return '';
-  return new Intl.NumberFormat('fr-FR', { notation: 'compact', maximumFractionDigits: 1 }).format(n);
-}
-
 export default function Home() {
   const [url, setUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -73,10 +67,6 @@ export default function Home() {
 
   // Guest gate modal
   const [showGuestGate, setShowGuestGate] = useState(false);
-  const [views, setViews] = useState('');
-  const [likes, setLikes] = useState('');
-  const [comments, setComments] = useState('');
-  const [shares, setShares] = useState('');
   const [history, setHistory] = useState<AnalysisHistoryItem[]>([]);
   const [historyLocked, setHistoryLocked] = useState(false);
   const [compareItem, setCompareItem] = useState<AnalysisHistoryItem | null>(null);
@@ -173,15 +163,7 @@ export default function Home() {
       const response = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          url: trimmed,
-          observedMetrics: {
-            views: Number(views) || 0,
-            likes: Number(likes) || 0,
-            comments: Number(comments) || 0,
-            shares: Number(shares) || 0,
-          },
-        }),
+        body: JSON.stringify({ url: trimmed }),
       });
 
       if (response.status === 429) {
@@ -350,105 +332,12 @@ export default function Home() {
             />
           )}
 
-          <div className="rounded-xl border border-[#1a1a1a] bg-[#0f0f0f] p-3">
-            <p className="text-[11px] text-gray-500 uppercase tracking-wider mb-2">
-              Performance observée (optionnel, pour crédibilité du verdict)
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              <input value={views} onChange={(e) => setViews(e.target.value.replace(/\D/g, ''))} placeholder="Vues" className="bg-[#111] border border-[#1f1f1f] rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 outline-none" />
-              <input value={likes} onChange={(e) => setLikes(e.target.value.replace(/\D/g, ''))} placeholder="Likes" className="bg-[#111] border border-[#1f1f1f] rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 outline-none" />
-              <input value={comments} onChange={(e) => setComments(e.target.value.replace(/\D/g, ''))} placeholder="Commentaires" className="bg-[#111] border border-[#1f1f1f] rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 outline-none" />
-              <input value={shares} onChange={(e) => setShares(e.target.value.replace(/\D/g, ''))} placeholder="Partages" className="bg-[#111] border border-[#1f1f1f] rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 outline-none" />
-            </div>
-            <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
-              <p className="text-[10px] text-gray-600 px-1">{formatCompact(views) || '—'}</p>
-              <p className="text-[10px] text-gray-600 px-1">{formatCompact(likes) || '—'}</p>
-              <p className="text-[10px] text-gray-600 px-1">{formatCompact(comments) || '—'}</p>
-              <p className="text-[10px] text-gray-600 px-1">{formatCompact(shares) || '—'}</p>
-            </div>
-            {(views && !likes && !comments && !shares) && (
-              <p className="text-[11px] text-amber-400/90 mt-2">
-                Estimation auto active: performance calculée principalement à partir des vues.
-              </p>
-            )}
-          </div>
-
           {error && (
             <p className="text-red-400 text-sm text-center animate-fade-in">
               {error}
             </p>
           )}
         </div>
-
-        {/* Recent analyses + quick relaunch */}
-        {authUser && (
-          <div className="mt-6 bg-[#0d0d0d] border border-[#1a1a1a] rounded-2xl p-4">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
-                Historique rapide
-              </p>
-              {historyLocked && (
-                <span className="text-[11px] text-[#c084fc]">Débloque en Pro</span>
-              )}
-            </div>
-
-            {historyLocked ? (
-              <p className="text-xs text-gray-600">
-                L&apos;historique complet est disponible en Pro/Elite.
-              </p>
-            ) : sortedHistory.length === 0 ? (
-              <p className="text-xs text-gray-600">Aucune analyse récente.</p>
-            ) : (
-              <div className="space-y-2">
-                {sortedHistory.slice(0, 8).map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center gap-2 rounded-lg border border-[#1e1e1e] bg-[#111] px-3 py-2"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setUrl(item.video_url);
-                        analyzeFromUrl(item.video_url);
-                      }}
-                      className="text-left flex-1 min-w-0"
-                    >
-                      <p className="text-xs text-white truncate">{item.video_url}</p>
-                      <p className="text-[11px] text-gray-600">
-                        Score {item.result?.viralityScore ?? 0} · {new Date(item.created_at).toLocaleDateString('fr-FR')}
-                      </p>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => togglePin(item.id)}
-                      className={`text-[11px] px-2 py-1 rounded-md border ${
-                        pinnedIds.includes(item.id)
-                          ? 'border-[#ff0050]/40 text-[#ff6080] bg-[#1b0a12]'
-                          : 'border-[#2a2a2a] text-gray-500 hover:text-white'
-                      }`}
-                    >
-                      {pinnedIds.includes(item.id) ? 'Épinglé' : 'Pin'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCompareItem(item);
-                        toggleCompare(item.id);
-                      }}
-                      className={`text-[11px] px-2 py-1 rounded-md border ${
-                        compareIds.includes(item.id)
-                          ? 'border-[#7928ca]/40 text-[#c084fc] bg-[#120d1f]'
-                          : 'border-[#2a2a2a] text-gray-400 hover:text-white'
-                      }`}
-                    >
-                      {compareIds.includes(item.id) ? 'Ajouté' : 'Comparer'}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Before / after comparison */}
         {results && compareItem && (
@@ -534,51 +423,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Score trend chart */}
-        {authUser && !historyLocked && sortedHistory.length >= 2 && (
-          <div className="mt-6 rounded-2xl border border-[#1a1a1a] bg-[#0f0f0f] p-4">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">
-              Évolution du score
-            </p>
-            {(() => {
-              const points = sortedHistory
-                .slice(0, 10)
-                .reverse()
-                .map((h) => h.result?.viralityScore ?? 0);
-              const max = Math.max(...points, 1);
-              const min = Math.min(...points, 0);
-              const range = Math.max(1, max - min);
-              const width = 300;
-              const height = 80;
-              const coords = points
-                .map((s, i) => {
-                  const x = (i / Math.max(1, points.length - 1)) * width;
-                  const y = height - ((s - min) / range) * height;
-                  return `${x},${y}`;
-                })
-                .join(' ');
-              const last = points[points.length - 1] ?? 0;
-              const prev = points[points.length - 2] ?? 0;
-              const delta = last - prev;
-              return (
-                <div>
-                  <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-24">
-                    <polyline
-                      fill="none"
-                      stroke="#7928ca"
-                      strokeWidth="2.5"
-                      points={coords}
-                    />
-                  </svg>
-                  <p className={`text-xs font-semibold ${delta >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    Dernière évolution: {delta >= 0 ? '+' : ''}{delta} points
-                  </p>
-                </div>
-              );
-            })()}
-          </div>
-        )}
-
         {isLoading && (
           <div className="mt-10">
             <LoadingState />
@@ -594,6 +438,76 @@ export default function Home() {
         {isLimitReached && !isLoading && (
           <div className="mt-10">
             <PremiumGate onReset={authUser ? undefined : handleReset} />
+          </div>
+        )}
+
+        {/* Recent analyses + quick relaunch (moved to bottom for cleaner reading flow) */}
+        {authUser && (
+          <div className="mt-12 bg-[#0d0d0d] border border-[#1a1a1a] rounded-2xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
+                Historique rapide
+              </p>
+              {historyLocked && (
+                <span className="text-[11px] text-[#c084fc]">Débloque en Pro</span>
+              )}
+            </div>
+
+            {historyLocked ? (
+              <p className="text-xs text-gray-600">
+                L&apos;historique complet est disponible en Pro/Elite.
+              </p>
+            ) : sortedHistory.length === 0 ? (
+              <p className="text-xs text-gray-600">Aucune analyse récente.</p>
+            ) : (
+              <div className="space-y-2">
+                {sortedHistory.slice(0, 8).map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-2 rounded-lg border border-[#1e1e1e] bg-[#111] px-3 py-2"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUrl(item.video_url);
+                        analyzeFromUrl(item.video_url);
+                      }}
+                      className="text-left flex-1 min-w-0"
+                    >
+                      <p className="text-xs text-white truncate">{item.video_url}</p>
+                      <p className="text-[11px] text-gray-600">
+                        Score {item.result?.viralityScore ?? 0} · {new Date(item.created_at).toLocaleDateString('fr-FR')}
+                      </p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => togglePin(item.id)}
+                      className={`text-[11px] px-2 py-1 rounded-md border ${
+                        pinnedIds.includes(item.id)
+                          ? 'border-[#ff0050]/40 text-[#ff6080] bg-[#1b0a12]'
+                          : 'border-[#2a2a2a] text-gray-500 hover:text-white'
+                      }`}
+                    >
+                      {pinnedIds.includes(item.id) ? 'Épinglé' : 'Pin'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCompareItem(item);
+                        toggleCompare(item.id);
+                      }}
+                      className={`text-[11px] px-2 py-1 rounded-md border ${
+                        compareIds.includes(item.id)
+                          ? 'border-[#7928ca]/40 text-[#c084fc] bg-[#120d1f]'
+                          : 'border-[#2a2a2a] text-gray-400 hover:text-white'
+                      }`}
+                    >
+                      {compareIds.includes(item.id) ? 'Ajouté' : 'Comparer'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
