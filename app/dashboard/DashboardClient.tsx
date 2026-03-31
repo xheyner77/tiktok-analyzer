@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { createPortal } from 'react-dom';
 import { Plan } from '@/lib/supabase';
 import { AnalysisRow } from '@/lib/analyses';
 import { getScoreTextColor, getRatingColors } from '@/lib/utils';
@@ -195,6 +196,12 @@ export default function DashboardClient({
   const [upgradeStatus, setUpgradeStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [upgradedPlan, setUpgradedPlan] = useState<string | null>(null);
 
+  // ── Cancel subscription state ──────────────────────────────────────────────
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelStatus, setCancelStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+  const [domReady, setDomReady] = useState(false);
+  useEffect(() => { setDomReady(true); }, []);
+
   // After Stripe redirects back with ?session_id=cs_xxx, verify the payment
   // server-side and apply the plan upgrade, then clean the URL.
   useEffect(() => {
@@ -253,7 +260,104 @@ export default function DashboardClient({
     ? `${remaining} restante${remaining > 1 ? 's' : ''}`
     : 'Limite atteinte';
 
+  async function handleCancelPlan() {
+    setCancelStatus('loading');
+    try {
+      const res = await fetch('/api/cancel-plan', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        setCancelStatus('done');
+        setTimeout(() => { window.location.href = '/dashboard'; }, 1500);
+      } else {
+        console.error('[cancel-plan]', data.error);
+        setCancelStatus('error');
+      }
+    } catch (err) {
+      console.error('[cancel-plan] network error:', err);
+      setCancelStatus('error');
+    }
+  }
+
+  // ── Cancel confirmation modal ──────────────────────────────────────────────
+  const cancelModal = showCancelModal && domReady && createPortal(
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+      style={{ backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)' }}
+      onClick={() => { if (cancelStatus !== 'loading') setShowCancelModal(false); }}
+    >
+      <div
+        className="w-full max-w-sm bg-[#0d0d0d] border border-[#1e1e1e] rounded-2xl shadow-2xl p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {cancelStatus === 'done' ? (
+          <div className="text-center py-2">
+            <div className="w-12 h-12 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-4">
+              <svg viewBox="0 0 16 16" fill="currentColor" className="w-5 h-5 text-green-400">
+                <path fillRule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <p className="text-base font-semibold text-white mb-1">Abonnement annulé</p>
+            <p className="text-xs text-gray-500">Ton plan a bien été repassé en Free. Redirection...</p>
+          </div>
+        ) : (
+          <>
+            {/* Icon */}
+            <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-5">
+              <svg viewBox="0 0 16 16" fill="currentColor" className="w-5 h-5 text-red-400">
+                <path fillRule="evenodd" d="M8 1a3.5 3.5 0 0 0-3.5 3.5V7A1.5 1.5 0 0 0 3 8.5v5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 11.5 7V4.5A3.5 3.5 0 0 0 8 1Zm2 6V4.5a2 2 0 1 0-4 0V7h4Z" clipRule="evenodd" />
+              </svg>
+            </div>
+
+            <h3 className="text-base font-bold text-white text-center mb-2">
+              Annuler ton abonnement {plan === 'elite' ? 'Elite' : 'Pro'} ?
+            </h3>
+            <p className="text-sm text-gray-400 text-center leading-relaxed mb-5">
+              Ton plan passera immédiatement en <span className="text-white font-medium">Free</span> (3 analyses max, sans historique ni hooks).
+              <br /><br />
+              <span className="text-gray-500 text-xs">Ton historique d&apos;analyses existant sera conservé.</span>
+            </p>
+
+            {cancelStatus === 'error' && (
+              <p className="text-xs text-red-400 text-center mb-3">
+                Une erreur est survenue. Réessaie dans un instant.
+              </p>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowCancelModal(false)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-300 bg-[#111] border border-[#1e1e1e] hover:bg-[#181818] hover:text-white transition-all"
+              >
+                Garder mon plan
+              </button>
+              <button
+                onClick={handleCancelPlan}
+                disabled={cancelStatus === 'loading'}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-600/80 hover:bg-red-600 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {cancelStatus === 'loading' ? (
+                  <span className="flex items-center justify-center gap-1.5">
+                    <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Annulation...
+                  </span>
+                ) : (
+                  'Confirmer l\'annulation'
+                )}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>,
+    document.body
+  );
+
   return (
+    <>
+    {cancelModal}
     <div className="space-y-8 animate-fade-up">
       {/* Upgrade in progress */}
       {upgradeStatus === 'loading' && (
@@ -476,6 +580,32 @@ export default function DashboardClient({
           </div>
         </div>
       </div>
+
+      {/* ── Subscription management — Pro/Elite only ─────────────────────── */}
+      {plan !== 'free' && (
+        <div className="border border-[#1a1a1a] rounded-2xl overflow-hidden">
+          <div className="px-5 py-4 bg-[#111] flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-0.5">
+                Gérer mon abonnement
+              </p>
+              <p className="text-xs text-gray-600">
+                Plan actuel : <span className={plan === 'elite' ? 'text-[#c084fc]' : 'text-[#ff6080]'}>
+                  {plan === 'elite' ? 'Elite' : 'Pro'}
+                </span>
+              </p>
+            </div>
+            <button
+              onClick={() => { setCancelStatus('idle'); setShowCancelModal(true); }}
+              className="text-xs font-medium text-gray-500 hover:text-red-400 transition-colors px-3 py-1.5 rounded-lg hover:bg-red-500/5 border border-transparent hover:border-red-500/15"
+            >
+              Annuler l&apos;abonnement
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
+    </>
   );
 }
