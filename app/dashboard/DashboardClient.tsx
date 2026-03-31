@@ -267,19 +267,25 @@ export default function DashboardClient({
     try {
       const res = await fetch('/api/cancel-plan', { method: 'POST' });
       const data = await res.json();
+
       if (data.success) {
         setCancelStatus('done');
-        // Hard reload with cache-busting param to bypass any Next.js stale cache
+        // Hard reload with cache-busting param — forces fresh server render
         setTimeout(() => { window.location.href = '/dashboard?t=' + Date.now(); }, 1500);
-      } else {
-        console.error('[cancel-plan]', data.error, '| status:', res.status);
-        setCancelError(
-          res.status === 401
-            ? 'Ta session a expiré. Déconnecte-toi et reconnecte-toi, puis réessaie.'
-            : (data.error ?? 'Une erreur est survenue.')
-        );
-        setCancelStatus('error');
+        return;
       }
+
+      console.error('[cancel-plan]', data.code, data.error, '| status:', res.status);
+
+      // Session expired → auto-logout and redirect to login so they get a fresh session
+      if (res.status === 401 || data.code === 'SESSION_EXPIRED') {
+        await fetch('/api/auth/logout', { method: 'POST' });
+        window.location.href = '/login?redirect=/dashboard';
+        return;
+      }
+
+      setCancelError(data.error ?? 'Une erreur est survenue (code: ' + (data.code ?? '?') + ')');
+      setCancelStatus('error');
     } catch (err) {
       console.error('[cancel-plan] network error:', err);
       setCancelError('Erreur réseau. Vérifie ta connexion et réessaie.');
@@ -331,14 +337,6 @@ export default function DashboardClient({
                 <p className="text-xs text-red-400 text-center leading-relaxed">
                   {cancelError || 'Une erreur est survenue. Réessaie dans un instant.'}
                 </p>
-                {cancelError.includes('session') && (
-                  <a
-                    href="/login"
-                    className="block text-center text-xs text-[#ff6080] hover:underline mt-1.5"
-                  >
-                    Se reconnecter →
-                  </a>
-                )}
               </div>
             )}
 
