@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AnalysisResult, Rating } from '@/lib/types';
+import { AnalysisResult, Rating, Improvement, AnalysisSection } from '@/lib/types';
 import { getSession } from '@/lib/session';
 import { getUserById, incrementAnalysesCount, PLAN_LIMITS } from '@/lib/auth';
 import { saveAnalysis } from '@/lib/analyses';
@@ -22,7 +22,17 @@ function getRating(score: number): Rating {
   return 'Faible';
 }
 
-const profiles = [
+interface MockProfile {
+  viralityScore: number;
+  hook: AnalysisSection;
+  editing: AnalysisSection;
+  retention: AnalysisSection;
+  improvements: Improvement[];
+  strategy: string;
+  viralTips: string[];
+}
+
+const profiles: MockProfile[] = [
   // ── Profil A — Haute performance (~83%) ─────────────────────────────────
   {
     viralityScore: 83,
