@@ -28,6 +28,13 @@ export interface AnalysisResult {
     comments?: number;
     shares?: number;
   };
+  detectedVideoMeta?: {
+    favorites?: number;
+    durationSec?: number;
+    authorUsername?: string;
+    publishedAt?: string;
+    caption?: string;
+  };
   hook: AnalysisSection;
   editing: AnalysisSection;
   retention: AnalysisSection;

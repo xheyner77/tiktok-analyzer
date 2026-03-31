@@ -4,6 +4,7 @@ import { getSession } from '@/lib/session';
 import { getUserById, incrementAnalysesCount, checkAndResetMonthly, canRunAnalysis, PLAN_LIMITS } from '@/lib/auth';
 import { saveAnalysis } from '@/lib/analyses';
 import { analyzeWithOpenAI } from '@/lib/openai';
+import { fetchTikTokPublicStats } from '@/lib/tiktok';
 
 interface ObservedMetrics {
   views?: number;
@@ -429,7 +430,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { url } = body;
-    const observedMetrics = sanitizeMetrics(body?.observedMetrics);
+    const manualObservedMetrics = sanitizeMetrics(body?.observedMetrics);
 
     if (!url || typeof url !== 'string') {
       return NextResponse.json({ error: 'URL invalide' }, { status: 400 });
@@ -489,6 +490,28 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // ── Fetch real public TikTok stats (best effort) ───────────────────────
+    const detected = await fetchTikTokPublicStats(url);
+    const detectedObserved: ObservedMetrics | undefined = detected
+      ? {
+          views: detected.views,
+          likes: detected.likes,
+          comments: detected.comments,
+          shares: detected.shares,
+        }
+      : undefined;
+
+    // Priority: detected stats from TikTok URL. Fill missing fields with manual inputs.
+    const observedMetrics: ObservedMetrics | undefined =
+      detectedObserved || manualObservedMetrics
+        ? {
+            views: detectedObserved?.views ?? manualObservedMetrics?.views,
+            likes: detectedObserved?.likes ?? manualObservedMetrics?.likes,
+            comments: detectedObserved?.comments ?? manualObservedMetrics?.comments,
+            shares: detectedObserved?.shares ?? manualObservedMetrics?.shares,
+          }
+        : undefined;
+
     // ── Analysis ─────────────────────────────────────────────────────────────
     const plan = dbUser?.plan ?? 'free';
     const useOpenAI =
@@ -519,6 +542,15 @@ export async function POST(request: NextRequest) {
     result.observedPerformanceLabel = observed?.label;
     result.observedPerformanceEstimated = observed?.estimated;
     result.observedMetrics = observedMetrics;
+    result.detectedVideoMeta = detected
+      ? {
+          favorites: detected.favorites,
+          durationSec: detected.durationSec,
+          authorUsername: detected.authorUsername,
+          publishedAt: detected.publishedAt,
+          caption: detected.caption,
+        }
+      : undefined;
     result.overperformanceDetected = !!observed && observed.score >= 70 && structureScore <= 55;
     result.finalVerdict = buildFinalVerdict(structureScore, observed);
 

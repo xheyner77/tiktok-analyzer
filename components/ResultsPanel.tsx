@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { AnalysisResult } from '@/lib/types';
 import ScoreRing from './ScoreRing';
 import AnalysisCard from './AnalysisCard';
@@ -100,41 +100,6 @@ const RetentionIcon = () => (
 export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
   const structureScore = data.structureScore ?? data.viralityScore ?? 0;
 
-  const [copied, setCopied] = useState(false);
-
-  const reportText = useMemo(() => {
-    const topImprovements = (data.improvements ?? []).slice(0, 5).map((i, idx) => `${idx + 1}. [${i.priority.toUpperCase()}] ${i.tip}`);
-    return [
-      'RAPPORT TIKTOK ANALYZER',
-      '',
-      `Score viralité: ${data.viralityScore}`,
-      `Hook: ${data.hook?.score ?? 0} (${data.hook?.rating ?? 'N/A'})`,
-      `Montage: ${data.editing?.score ?? 0} (${data.editing?.rating ?? 'N/A'})`,
-      `Rétention: ${data.retention?.score ?? 0} (${data.retention?.rating ?? 'N/A'})`,
-      '',
-      'Top recommandations:',
-      ...topImprovements,
-      data.strategy ? `\nStratégie:\n${data.strategy}` : '',
-    ].join('\n');
-  }, [data]);
-
-  function copyReport() {
-    navigator.clipboard.writeText(reportText).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    });
-  }
-
-  function exportTxt() {
-    const blob = new Blob([reportText], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `rapport-tiktok-${Date.now()}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
   const confidence = useMemo(() => {
     const base = data.viralityScore ?? 0;
     const bonus = Math.min(12, (data.hook?.strengths?.length ?? 0) * 2);
@@ -150,6 +115,17 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
       { label: 'CTA final engageant', ok: (data.viralityScore ?? 0) >= 58 },
     ];
   }, [data]);
+
+  const metrics = data.observedMetrics ?? {};
+  const meta = data.detectedVideoMeta;
+
+  const formatNumber = (value?: number) => {
+    if (value == null) return 'N/A';
+    return new Intl.NumberFormat('fr-FR', {
+      notation: 'compact',
+      maximumFractionDigits: 1,
+    }).format(value);
+  };
 
   useEffect(() => {
     console.log('[DEBUG][ResultsPanel] props received — plan:', plan);
@@ -204,27 +180,6 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
 
   return (
     <div className="space-y-6 animate-fade-up">
-      <div className="flex items-center justify-end gap-2">
-        <button
-          type="button"
-          onClick={copyReport}
-          className={`text-xs px-2.5 py-1.5 rounded-md border transition-colors ${
-            copied
-              ? 'text-green-400 border-green-500/30 bg-green-500/10'
-              : 'text-gray-400 border-[#2a2a2a] hover:text-white hover:border-[#3a3a3a]'
-          }`}
-        >
-          {copied ? 'Résumé copié' : 'Copier résumé'}
-        </button>
-        <button
-          type="button"
-          onClick={exportTxt}
-          className="text-xs px-2.5 py-1.5 rounded-md border text-gray-400 border-[#2a2a2a] hover:text-white hover:border-[#3a3a3a] transition-colors"
-        >
-          Export TXT
-        </button>
-      </div>
-
       {/* Structure / observed performance / final verdict */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="rounded-xl border border-[#1a1a1a] bg-[#101010] p-3">
@@ -247,6 +202,47 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
           <p className="text-xs text-gray-300 mt-1 leading-relaxed">
             {data.finalVerdict ?? 'Verdict indisponible'}
           </p>
+        </div>
+      </div>
+
+      {/* Detected public stats from TikTok URL */}
+      <div className="rounded-2xl border border-[#1a1a1a] bg-[#101010] p-4">
+        <div className="flex items-center justify-between mb-2.5">
+          <p className="text-[11px] text-gray-500 uppercase tracking-wider">Stats publiques détectées</p>
+          <span className="text-[10px] text-gray-600">
+            {metrics.views || metrics.likes || metrics.comments || metrics.shares ? 'Depuis le lien TikTok' : 'Partielles / indisponibles'}
+          </span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {[
+            { label: 'Vues', value: formatNumber(metrics.views) },
+            { label: 'Likes', value: formatNumber(metrics.likes) },
+            { label: 'Commentaires', value: formatNumber(metrics.comments) },
+            { label: 'Partages', value: formatNumber(metrics.shares) },
+          ].map((m) => (
+            <div key={m.label} className="rounded-lg border border-[#1c1c1c] bg-[#121212] px-3 py-2">
+              <p className="text-[10px] text-gray-500">{m.label}</p>
+              <p className="text-sm font-semibold text-white">{m.value}</p>
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
+          <div className="rounded-lg border border-[#1c1c1c] bg-[#121212] px-3 py-2">
+            <p className="text-[10px] text-gray-500">Favoris</p>
+            <p className="text-xs text-gray-300">{formatNumber(meta?.favorites)}</p>
+          </div>
+          <div className="rounded-lg border border-[#1c1c1c] bg-[#121212] px-3 py-2">
+            <p className="text-[10px] text-gray-500">Durée</p>
+            <p className="text-xs text-gray-300">{meta?.durationSec ? `${meta.durationSec}s` : 'N/A'}</p>
+          </div>
+          <div className="rounded-lg border border-[#1c1c1c] bg-[#121212] px-3 py-2">
+            <p className="text-[10px] text-gray-500">Auteur</p>
+            <p className="text-xs text-gray-300 truncate">{meta?.authorUsername ? `@${meta.authorUsername}` : 'N/A'}</p>
+          </div>
+        </div>
+        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-gray-500">
+          <span>Publication: {meta?.publishedAt ? new Date(meta.publishedAt).toLocaleDateString('fr-FR') : 'N/A'}</span>
+          {meta?.caption && <span className="truncate max-w-full">Caption: {meta.caption}</span>}
         </div>
       </div>
 
