@@ -40,6 +40,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unknown plan.' }, { status: 400 });
     }
 
+    // Idempotency check: only update if the user is not already on this plan
+    // (or a better one). Stripe may retry the webhook and we must not overwrite
+    // a later upgrade (e.g. pro → elite) with a stale retry.
+    const { data: currentUser, error: readErr } = await supabase
+      .from('users')
+      .select('plan')
+      .eq('id', userId)
+      .single();
+
+    if (readErr) {
+      console.error('[webhook] Could not read current plan for user', userId, ':', readErr.message);
+      return NextResponse.json({ error: 'DB read failed.' }, { status: 500 });
+    }
+
+    const PLAN_RANK: Record<string, number> = { free: 0, pro: 1, elite: 2 };
+    const currentRank = PLAN_RANK[currentUser?.plan ?? 'free'] ?? 0;
+    const targetRank  = PLAN_RANK[plan] ?? 0;
+
+    if (currentRank >= targetRank) {
+      console.log(`[webhook] Idempotency skip — user ${userId} already on ${currentUser?.plan} (target: ${plan})`);
+      return NextResponse.json({ received: true });
+    }
+
     // Upgrade the user's plan and reset all monthly counters
     const now = new Date().toISOString();
     const { error } = await supabase

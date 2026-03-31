@@ -679,32 +679,41 @@ async function postVisionAnalyze(
   let detectedSource: 'cache' | 'live_page' | 'live_oembed' | 'manual' | 'none' = 'none';
 
   try {
-    const { data: cached } = await supabase
+    const { data: cached, error: cacheReadErr } = await supabase
       .from('tiktok_stats_cache')
       .select('stats_json, fetched_at')
       .eq('video_url', tiktokUrl)
       .maybeSingle();
-    if (cached?.stats_json && cached?.fetched_at) {
+    if (cacheReadErr) {
+      console.warn('[analyze/vision] tiktok_stats_cache read error:', cacheReadErr.message);
+    } else if (cached?.stats_json && cached?.fetched_at) {
       const ageMs = Date.now() - new Date(cached.fetched_at).getTime();
       if (ageMs < 6 * 60 * 60 * 1000) {
         detected = cached.stats_json as Awaited<ReturnType<typeof fetchTikTokPublicStatsV2>>;
         detectedSource = 'cache';
       }
     }
-  } catch {}
+  } catch (err) {
+    console.warn('[analyze/vision] tiktok_stats_cache read threw:', err instanceof Error ? err.message : err);
+  }
   if (!detected) {
     detected = await fetchTikTokPublicStatsV2(tiktokUrl);
     if (detected?.source === 'page_json') detectedSource = 'live_page';
     else if (detected?.source === 'oembed') detectedSource = 'live_oembed';
     if (detected) {
       try {
-        await supabase
+        const { error: cacheWriteErr } = await supabase
           .from('tiktok_stats_cache')
           .upsert(
             { video_url: tiktokUrl, stats_json: detected, fetched_at: new Date().toISOString() },
             { onConflict: 'video_url', ignoreDuplicates: false }
           );
-      } catch {}
+        if (cacheWriteErr) {
+          console.warn('[analyze/vision] tiktok_stats_cache write error:', cacheWriteErr.message);
+        }
+      } catch (err) {
+        console.warn('[analyze/vision] tiktok_stats_cache write threw:', err instanceof Error ? err.message : err);
+      }
     }
   }
 
@@ -778,7 +787,6 @@ export async function POST(request: NextRequest) {
 
       // Profile row missing (signup DB insert may have failed) — create it now
       if (!dbUser) {
-        const { supabase } = await import('@/lib/supabase');
         await supabase
           .from('users')
           .upsert(
@@ -829,19 +837,23 @@ export async function POST(request: NextRequest) {
 
     // 1) Try DB cache first (TTL = 6 hours)
     try {
-      const { data: cached } = await supabase
+      const { data: cached, error: cacheReadErr } = await supabase
         .from('tiktok_stats_cache')
         .select('stats_json, fetched_at')
         .eq('video_url', url)
         .maybeSingle();
-      if (cached?.stats_json && cached?.fetched_at) {
+      if (cacheReadErr) {
+        console.warn('[analyze] tiktok_stats_cache read error:', cacheReadErr.message);
+      } else if (cached?.stats_json && cached?.fetched_at) {
         const ageMs = Date.now() - new Date(cached.fetched_at).getTime();
         if (ageMs < 6 * 60 * 60 * 1000) {
-          detected = cached.stats_json as any;
+          detected = cached.stats_json as Awaited<ReturnType<typeof fetchTikTokPublicStatsV2>>;
           detectedSource = 'cache';
         }
       }
-    } catch {}
+    } catch (err) {
+      console.warn('[analyze] tiktok_stats_cache read threw:', err instanceof Error ? err.message : err);
+    }
 
     // 2) If no valid cache, fetch live and write cache
     if (!detected) {
@@ -851,13 +863,18 @@ export async function POST(request: NextRequest) {
 
       if (detected) {
         try {
-          await supabase
+          const { error: cacheWriteErr } = await supabase
             .from('tiktok_stats_cache')
             .upsert(
               { video_url: url, stats_json: detected, fetched_at: new Date().toISOString() },
               { onConflict: 'video_url', ignoreDuplicates: false }
             );
-        } catch {}
+          if (cacheWriteErr) {
+            console.warn('[analyze] tiktok_stats_cache write error:', cacheWriteErr.message);
+          }
+        } catch (err) {
+          console.warn('[analyze] tiktok_stats_cache write threw:', err instanceof Error ? err.message : err);
+        }
       }
     }
     const detectedObserved: ObservedMetrics | undefined = detected
@@ -927,7 +944,8 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(result);
-  } catch {
+  } catch (err) {
+    console.error('[analyze/POST] Unexpected error:', err instanceof Error ? err.message : err);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

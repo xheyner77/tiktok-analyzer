@@ -154,6 +154,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Contexte requis' }, { status: 400 });
     }
 
+    if (context.length > 500) {
+      return NextResponse.json({ error: 'Le contexte ne doit pas dépasser 500 caractères.' }, { status: 400 });
+    }
+
+    if (scene.length > 100) {
+      return NextResponse.json({ error: 'Le champ scène ne doit pas dépasser 100 caractères.' }, { status: 400 });
+    }
+
+    if (person.length > 100) {
+      return NextResponse.json({ error: 'Le champ personnage ne doit pas dépasser 100 caractères.' }, { status: 400 });
+    }
+
     if (count > remaining) {
       count = remaining; // cap silencieux plutôt qu'erreur
     }

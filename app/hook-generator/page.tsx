@@ -130,6 +130,7 @@ export default function HookGeneratorPage() {
     setError('');
 
     if (!authLoaded) return;
+    if (loading) return; // prevent double-click while a request is in flight
 
     if (!authUser) {
       setShowGuestGate(true);
@@ -140,6 +141,11 @@ export default function HookGeneratorPage() {
 
     if (!context.trim()) {
       setError('Décris le contexte de ta vidéo pour générer des hooks.');
+      return;
+    }
+
+    if (context.trim().length > 500) {
+      setError('Le contexte ne doit pas dépasser 500 caractères.');
       return;
     }
 
@@ -225,6 +231,9 @@ export default function HookGeneratorPage() {
   }
 
   async function toggleFavorite(item: HookHistoryItem) {
+    // Optimistic items use temp IDs — wait for the real history reload before acting.
+    if (item.id.startsWith('temp-')) return;
+
     const next = !item.is_favorite;
     setHistory((prev) => prev.map((h) => (h.id === item.id ? { ...h, is_favorite: next } : h)));
     const res = await fetch('/api/hooks/favorite', {
@@ -239,6 +248,9 @@ export default function HookGeneratorPage() {
   }
 
   async function deleteHistoryItem(item: HookHistoryItem) {
+    // Optimistic items use temp IDs — wait for the real history reload before acting.
+    if (item.id.startsWith('temp-')) return;
+
     const previous = history;
     setHistory((prev) => prev.filter((h) => h.id !== item.id));
     const res = await fetch('/api/hooks/delete', {

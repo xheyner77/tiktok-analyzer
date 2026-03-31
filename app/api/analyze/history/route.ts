@@ -16,8 +16,12 @@ export async function GET() {
     }
 
     const analyses = await getAnalyses(session.userId, user.plan);
+    // Cap the dashboard preview to 30 for Pro and all rows for Elite.
+    // getAnalyses() already limits to HISTORY_LIMITS[plan], so this is just
+    // a dashboard-panel cap — never slice Elite below what the plan allows.
+    const dashboardCap = user.plan === 'elite' ? analyses.length : Math.min(analyses.length, 30);
     return NextResponse.json({
-      analyses: analyses.slice(0, 12),
+      analyses: analyses.slice(0, dashboardCap),
       locked: user.plan === 'free',
       plan: user.plan,
     });

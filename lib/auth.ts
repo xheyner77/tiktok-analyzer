@@ -131,50 +131,30 @@ export function canGenerateHook(user: UserProfile): boolean {
 
 // ── Increments ───────────────────────────────────────────────────────────────
 
-/** Atomic increment of analyses_count */
+/**
+ * Atomically increments analyses_count using a server-side SQL function.
+ * Avoids the read-then-write race condition that allows quota bypass under
+ * concurrent requests.
+ */
 export async function incrementAnalysesCount(userId: string): Promise<void> {
-  const { data: current, error: fetchError } = await supabase
-    .from('users')
-    .select('analyses_count')
-    .eq('id', userId)
-    .single();
-
-  if (fetchError || !current) {
-    console.error('[incrementAnalysesCount] User not found:', userId);
-    return;
-  }
-
-  const { error } = await supabase
-    .from('users')
-    .update({ analyses_count: current.analyses_count + 1 })
-    .eq('id', userId);
-
+  const { error } = await supabase.rpc('increment_analyses_count', { user_id: userId });
   if (error) {
-    console.error('[incrementAnalysesCount] Update failed:', error.message);
+    console.error('[incrementAnalysesCount] RPC failed:', error.message, '— userId:', userId);
   }
 }
 
-/** Atomic increment of hooks_count */
+/**
+ * Atomically increments hooks_count by `amount` using a server-side SQL function.
+ * Avoids the read-then-write race condition that allows quota bypass under
+ * concurrent requests.
+ */
 export async function incrementHooksCount(userId: string, amount = 1): Promise<void> {
-  const { data: current, error: fetchError } = await supabase
-    .from('users')
-    .select('hooks_count')
-    .eq('id', userId)
-    .single();
-
-  if (fetchError || !current) {
-    console.error('[incrementHooksCount] User not found:', userId);
-    return;
-  }
-
   const safeAmount = Math.max(1, Math.floor(amount));
-
-  const { error } = await supabase
-    .from('users')
-    .update({ hooks_count: current.hooks_count + safeAmount })
-    .eq('id', userId);
-
+  const { error } = await supabase.rpc('increment_hooks_count_by', {
+    p_user_id: userId,
+    p_amount:  safeAmount,
+  });
   if (error) {
-    console.error('[incrementHooksCount] Update failed:', error.message);
+    console.error('[incrementHooksCount] RPC failed:', error.message, '— userId:', userId, 'amount:', safeAmount);
   }
 }

@@ -11,5 +11,15 @@
  */
 export const OPENAI_CHAT_MODEL = 'gpt-4o-mini';
 
-/** Sortie JSON courte (liste de hooks) — limite le coût output. */
-export const HOOK_GENERATION_MAX_TOKENS = 240;
+/**
+ * Max output tokens for hook generation.
+ *
+ * Budget breakdown (worst case — 10 hooks × 70 chars):
+ *   • Content   : 10 × ~20 tokens = 200 tokens
+ *   • JSON overhead (brackets, quotes, commas) : ~40 tokens
+ *   • Safety buffer : ~60 tokens
+ *   → 300 tokens minimum; 400 gives comfortable headroom.
+ *
+ * Truncation at 240 caused JSON.parse to throw a 500 for batches of 10 hooks.
+ */
+export const HOOK_GENERATION_MAX_TOKENS = 400;

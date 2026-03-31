@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       const { error: dbError } = await supabase
         .from('users')
         .upsert(
-          { id: userId, email, plan: 'free', analyses_count: 0 },
+          { id: userId, email, plan: 'free', analyses_count: 0, hooks_count: 0 },
           { onConflict: 'id', ignoreDuplicates: true }
         );
 

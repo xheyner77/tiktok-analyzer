@@ -19,35 +19,40 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Plan invalide.' }, { status: 400 });
     }
 
-    // ── Verify payment with Stripe (tamper-proof) ──────────────────────────
-    if (sessionId) {
-      let checkoutSession: Stripe.Checkout.Session;
+    // ── Verify payment with Stripe (REQUIRED — never skip) ─────────────────
+    // sessionId is mandatory: upgrading without a verified Stripe payment is
+    // a critical security bypass (free plan upgrade exploit).
+    if (!sessionId) {
+      console.error('[upgrade-plan] sessionId missing — upgrade blocked for user:', session.userId);
+      return NextResponse.json({ error: 'Session de paiement requise.' }, { status: 400 });
+    }
 
-      try {
-        checkoutSession = await stripe.checkout.sessions.retrieve(sessionId);
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        console.error('[upgrade-plan] Stripe session retrieve failed:', msg);
-        return NextResponse.json({ error: 'Session Stripe introuvable.' }, { status: 400 });
-      }
+    let checkoutSession: Stripe.Checkout.Session;
 
-      // Payment must be confirmed
-      if (checkoutSession.payment_status !== 'paid') {
-        console.error('[upgrade-plan] Payment not confirmed for session:', sessionId);
-        return NextResponse.json({ error: 'Paiement non confirmé.' }, { status: 402 });
-      }
+    try {
+      checkoutSession = await stripe.checkout.sessions.retrieve(sessionId);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error('[upgrade-plan] Stripe session retrieve failed:', msg);
+      return NextResponse.json({ error: 'Session Stripe introuvable.' }, { status: 400 });
+    }
 
-      // Session must belong to this user
-      if (checkoutSession.metadata?.userId !== session.userId) {
-        console.error('[upgrade-plan] userId mismatch — session:', checkoutSession.metadata?.userId, 'auth:', session.userId);
-        return NextResponse.json({ error: 'Session invalide.' }, { status: 403 });
-      }
+    // Payment must be confirmed
+    if (checkoutSession.payment_status !== 'paid') {
+      console.error('[upgrade-plan] Payment not confirmed for session:', sessionId);
+      return NextResponse.json({ error: 'Paiement non confirmé.' }, { status: 402 });
+    }
 
-      // Plan in Stripe metadata must match the requested plan
-      if (checkoutSession.metadata?.plan !== plan) {
-        console.error('[upgrade-plan] Plan mismatch — stripe:', checkoutSession.metadata?.plan, 'requested:', plan);
-        return NextResponse.json({ error: 'Plan incohérent.' }, { status: 400 });
-      }
+    // Session must belong to this user
+    if (checkoutSession.metadata?.userId !== session.userId) {
+      console.error('[upgrade-plan] userId mismatch — session:', checkoutSession.metadata?.userId, 'auth:', session.userId);
+      return NextResponse.json({ error: 'Session invalide.' }, { status: 403 });
+    }
+
+    // Plan in Stripe metadata must match the requested plan
+    if (checkoutSession.metadata?.plan !== plan) {
+      console.error('[upgrade-plan] Plan mismatch — stripe:', checkoutSession.metadata?.plan, 'requested:', plan);
+      return NextResponse.json({ error: 'Plan incohérent.' }, { status: 400 });
     }
 
     // ── Upgrade plan + reset monthly counters ─────────────────────────────
