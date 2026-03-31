@@ -70,6 +70,8 @@ export default function Home() {
   const [history, setHistory] = useState<AnalysisHistoryItem[]>([]);
   const [historyLocked, setHistoryLocked] = useState(false);
   const [compareItem, setCompareItem] = useState<AnalysisHistoryItem | null>(null);
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [pinnedIds, setPinnedIds] = useState<string[]>([]);
 
   function refreshHistory() {
     fetch('/api/analyze/history')
@@ -100,6 +102,10 @@ export default function Home() {
       .then((data) => {
         if (data.user) {
           setAuthUser(data.user);
+          try {
+            const stored = localStorage.getItem(`pinned_analyses_${data.user.id}`);
+            if (stored) setPinnedIds(JSON.parse(stored));
+          } catch {}
           refreshHistory();
         }
       })
@@ -119,6 +125,15 @@ export default function Home() {
 
   const isLimitReached =
     isReady && effectiveCount >= effectiveLimit;
+
+  const sortedHistory = [...history].sort((a, b) => {
+    const aPinned = pinnedIds.includes(a.id) ? 1 : 0;
+    const bPinned = pinnedIds.includes(b.id) ? 1 : 0;
+    if (aPinned !== bPinned) return bPinned - aPinned;
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+
+  const compareItems = sortedHistory.filter((h) => compareIds.includes(h.id)).slice(0, 3);
 
   // ── Handlers ───────────────────────────────────────────────────────────────
   const analyzeFromUrl = async (sourceUrl: string) => {
@@ -255,6 +270,27 @@ export default function Home() {
 
   const handleAnalyze = async () => analyzeFromUrl(url);
 
+  function togglePin(itemId: string) {
+    if (!authUser) return;
+    setPinnedIds((prev) => {
+      const next = prev.includes(itemId)
+        ? prev.filter((id) => id !== itemId)
+        : [itemId, ...prev].slice(0, 8);
+      try {
+        localStorage.setItem(`pinned_analyses_${authUser.id}`, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  }
+
+  function toggleCompare(itemId: string) {
+    setCompareIds((prev) => {
+      if (prev.includes(itemId)) return prev.filter((id) => id !== itemId);
+      if (prev.length >= 3) return prev;
+      return [...prev, itemId];
+    });
+  }
+
   const handleReset = () => {
     localStorage.removeItem(STORAGE_KEY);
     setGuestCount(0);
@@ -319,11 +355,11 @@ export default function Home() {
               <p className="text-xs text-gray-600">
                 L&apos;historique complet est disponible en Pro/Elite.
               </p>
-            ) : history.length === 0 ? (
+            ) : sortedHistory.length === 0 ? (
               <p className="text-xs text-gray-600">Aucune analyse récente.</p>
             ) : (
               <div className="space-y-2">
-                {history.slice(0, 6).map((item) => (
+                {sortedHistory.slice(0, 8).map((item) => (
                   <div
                     key={item.id}
                     className="flex items-center gap-2 rounded-lg border border-[#1e1e1e] bg-[#111] px-3 py-2"
@@ -341,15 +377,31 @@ export default function Home() {
                         Score {item.result?.viralityScore ?? 0} · {new Date(item.created_at).toLocaleDateString('fr-FR')}
                       </p>
                     </button>
-                    {results && (
-                      <button
-                        type="button"
-                        onClick={() => setCompareItem(item)}
-                        className="text-[11px] px-2 py-1 rounded-md border border-[#2a2a2a] text-gray-400 hover:text-white"
-                      >
-                        Comparer
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => togglePin(item.id)}
+                      className={`text-[11px] px-2 py-1 rounded-md border ${
+                        pinnedIds.includes(item.id)
+                          ? 'border-[#ff0050]/40 text-[#ff6080] bg-[#1b0a12]'
+                          : 'border-[#2a2a2a] text-gray-500 hover:text-white'
+                      }`}
+                    >
+                      {pinnedIds.includes(item.id) ? 'Épinglé' : 'Pin'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCompareItem(item);
+                        toggleCompare(item.id);
+                      }}
+                      className={`text-[11px] px-2 py-1 rounded-md border ${
+                        compareIds.includes(item.id)
+                          ? 'border-[#7928ca]/40 text-[#c084fc] bg-[#120d1f]'
+                          : 'border-[#2a2a2a] text-gray-400 hover:text-white'
+                      }`}
+                    >
+                      {compareIds.includes(item.id) ? 'Ajouté' : 'Comparer'}
+                    </button>
                   </div>
                 ))}
               </div>
@@ -394,6 +446,95 @@ export default function Home() {
                 );
               })}
             </div>
+          </div>
+        )}
+
+        {/* Multi-version comparison */}
+        {compareItems.length >= 2 && (
+          <div className="mt-6 rounded-2xl border border-[#1a1a1a] bg-[#0f0f0f] p-4">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
+                Comparaison multi-versions ({compareItems.length}/3)
+              </p>
+              <button
+                type="button"
+                onClick={() => setCompareIds([])}
+                className="text-[11px] text-gray-500 hover:text-gray-300"
+              >
+                Réinitialiser
+              </button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="text-gray-500 border-b border-[#1a1a1a]">
+                    <th className="text-left py-2 pr-2">Version</th>
+                    <th className="text-left py-2 pr-2">Global</th>
+                    <th className="text-left py-2 pr-2">Hook</th>
+                    <th className="text-left py-2 pr-2">Montage</th>
+                    <th className="text-left py-2 pr-2">Rétention</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {compareItems.map((item) => (
+                    <tr key={item.id} className="border-b border-[#151515] last:border-none">
+                      <td className="py-2 pr-2 text-gray-400">
+                        {new Date(item.created_at).toLocaleDateString('fr-FR')}
+                      </td>
+                      <td className="py-2 pr-2 text-white font-semibold">{item.result?.viralityScore ?? 0}</td>
+                      <td className="py-2 pr-2 text-gray-300">{item.result?.hook?.score ?? 0}</td>
+                      <td className="py-2 pr-2 text-gray-300">{item.result?.editing?.score ?? 0}</td>
+                      <td className="py-2 pr-2 text-gray-300">{item.result?.retention?.score ?? 0}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Score trend chart */}
+        {authUser && !historyLocked && sortedHistory.length >= 2 && (
+          <div className="mt-6 rounded-2xl border border-[#1a1a1a] bg-[#0f0f0f] p-4">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">
+              Évolution du score
+            </p>
+            {(() => {
+              const points = sortedHistory
+                .slice(0, 10)
+                .reverse()
+                .map((h) => h.result?.viralityScore ?? 0);
+              const max = Math.max(...points, 1);
+              const min = Math.min(...points, 0);
+              const range = Math.max(1, max - min);
+              const width = 300;
+              const height = 80;
+              const coords = points
+                .map((s, i) => {
+                  const x = (i / Math.max(1, points.length - 1)) * width;
+                  const y = height - ((s - min) / range) * height;
+                  return `${x},${y}`;
+                })
+                .join(' ');
+              const last = points[points.length - 1] ?? 0;
+              const prev = points[points.length - 2] ?? 0;
+              const delta = last - prev;
+              return (
+                <div>
+                  <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-24">
+                    <polyline
+                      fill="none"
+                      stroke="#7928ca"
+                      strokeWidth="2.5"
+                      points={coords}
+                    />
+                  </svg>
+                  <p className={`text-xs font-semibold ${delta >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    Dernière évolution: {delta >= 0 ? '+' : ''}{delta} points
+                  </p>
+                </div>
+              );
+            })()}
           </div>
         )}
 
