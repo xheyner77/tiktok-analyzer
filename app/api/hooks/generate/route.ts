@@ -8,6 +8,7 @@ import {
   canGenerateHook,
   HOOK_LIMITS,
 } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -19,8 +20,9 @@ async function generateHooksWithAI(params: {
   person?: string;
   tone: string;
   count: number;
+  seedHook?: string;
 }): Promise<string[]> {
-  const { context, scene, person, tone, count } = params;
+  const { context, scene, person, tone, count, seedHook } = params;
 
   const prompt = `Tu es un expert en contenu viral TikTok spécialisé dans les hooks textuels courts.
 Génère ${count} hooks textuels COURTS et PERCUTANTS pour un overlay TikTok.
@@ -43,6 +45,11 @@ RÈGLES ABSOLUES :
 Contexte de la vidéo : ${context}
 Type de scène : ${scene}${person ? `\nPersonnage impliqué : ${person}` : ''}
 Ton souhaité : ${tone}
+${seedHook ? `\nHook de base à varier : ${seedHook}` : ''}
+
+${seedHook
+  ? 'OBJECTIF SUPPLÉMENTAIRE : génère des VARIANTES du hook de base (même idée, formulation différente).'
+  : ''}
 
 Réponds UNIQUEMENT avec un tableau JSON de strings, sans markdown, sans commentaires :
 ["HOOK 1", "HOOK 2", ...]`;
@@ -143,6 +150,7 @@ export async function POST(request: NextRequest) {
     let person  = '';
     let tone    = 'dramatique';
     let count   = 5;
+    let seedHook = '';
 
     try {
       const body = await request.json();
@@ -151,6 +159,7 @@ export async function POST(request: NextRequest) {
       person  = typeof body.person  === 'string' ? body.person.trim()  : '';
       tone    = typeof body.tone    === 'string' ? body.tone.trim()    : 'dramatique';
       count   = typeof body.count   === 'number' ? Math.min(Math.max(1, body.count), 10) : 5;
+      seedHook = typeof body.seedHook === 'string' ? body.seedHook.trim() : '';
     } catch {
       // Fall back to defaults
     }
@@ -174,7 +183,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Generate ─────────────────────────────────────────────────────────────
-    const hooks = await generateHooksWithAI({ context, scene, person, tone, count });
+    const hooks = await generateHooksWithAI({ context, scene, person, tone, count, seedHook });
     if (hooks.length === 0) {
       return NextResponse.json(
         { error: 'Impossible de générer des hooks pour ce contexte. Réessaie avec plus de détails.' },
@@ -184,6 +193,22 @@ export async function POST(request: NextRequest) {
 
     const consumed = hooks.length;
     await incrementHooksCount(session.userId, consumed);
+
+    const rows = hooks.map((hook) => ({
+      user_id: session.userId,
+      hook_text: hook,
+      context,
+      scene,
+      person: person || null,
+      tone,
+      variant_of: seedHook || null,
+    }));
+    const { error: historyError } = await supabase
+      .from('hooks_history')
+      .insert(rows);
+    if (historyError) {
+      console.error('[hooks/generate] history insert error:', historyError.message);
+    }
 
     console.log('[hooks/generate]', {
       userId: session.userId,

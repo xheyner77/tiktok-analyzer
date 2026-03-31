@@ -14,6 +14,16 @@ interface AuthUser {
   hooks_count: number;
 }
 
+interface HookHistoryItem {
+  id: string;
+  hook_text: string;
+  tone: string;
+  scene: string | null;
+  is_favorite: boolean;
+  created_at: string;
+  variant_of: string | null;
+}
+
 const HOOK_LIMITS: Record<string, number> = { free: 0, pro: 30, elite: 100 };
 
 // ── Tone options ──────────────────────────────────────────────────────────────
@@ -69,6 +79,12 @@ export default function HookGeneratorPage() {
   const [used,      setUsed]      = useState(0);
   const [limitUsed, setLimitUsed] = useState(0);
   const [copied,    setCopied]    = useState<number | null>(null);
+  const [variantSource, setVariantSource] = useState<string>('');
+
+  // History
+  const [history, setHistory] = useState<HookHistoryItem[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [historyFilter, setHistoryFilter] = useState<'all' | 'favorites'>('all');
 
   // Guest gate
   const [showGuestGate, setShowGuestGate] = useState(false);
@@ -84,6 +100,12 @@ export default function HookGeneratorPage() {
           setAuthUser(d.user);
           setUsed(d.user.hooks_count ?? 0);
           setLimitUsed(HOOK_LIMITS[d.user.plan] ?? 0);
+          setLoadingHistory(true);
+          fetch('/api/hooks/history')
+            .then((r) => r.json())
+            .then((h) => setHistory(h.hooks ?? []))
+            .catch(() => {})
+            .finally(() => setLoadingHistory(false));
         }
       })
       .catch(() => {})
@@ -127,7 +149,14 @@ export default function HookGeneratorPage() {
       const res = await fetch('/api/hooks/generate', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ context: context.trim(), scene, person: person.trim(), tone, count }),
+        body:    JSON.stringify({
+          context: context.trim(),
+          scene,
+          person: person.trim(),
+          tone,
+          count,
+          seedHook: variantSource || undefined,
+        }),
       });
 
       const data = await res.json();
@@ -144,6 +173,14 @@ export default function HookGeneratorPage() {
       setHooks(data.hooks ?? []);
       setUsed(data.used ?? used);
       setLimitUsed(data.limit ?? limitUsed);
+      setVariantSource('');
+
+      if (authUser) {
+        fetch('/api/hooks/history')
+          .then((r) => r.json())
+          .then((h) => setHistory(h.hooks ?? []))
+          .catch(() => {});
+      }
 
       setTimeout(() => {
         resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -160,6 +197,20 @@ export default function HookGeneratorPage() {
       setCopied(idx);
       setTimeout(() => setCopied(null), 1800);
     });
+  }
+
+  async function toggleFavorite(item: HookHistoryItem) {
+    const next = !item.is_favorite;
+    setHistory((prev) => prev.map((h) => (h.id === item.id ? { ...h, is_favorite: next } : h)));
+    const res = await fetch('/api/hooks/favorite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hookId: item.id, favorite: next }),
+    });
+    if (!res.ok) {
+      // rollback optimistic update
+      setHistory((prev) => prev.map((h) => (h.id === item.id ? { ...h, is_favorite: item.is_favorite } : h)));
+    }
   }
 
   function copyAllHooks() {
@@ -303,6 +354,20 @@ export default function HookGeneratorPage() {
               className="w-full bg-[#0d0d0d] border border-[#1e1e1e] hover:border-[#2a2a2a] focus:border-[#7928ca]/40 focus:ring-1 focus:ring-[#7928ca]/20 text-white text-sm placeholder-gray-700 rounded-xl px-4 py-3 resize-none transition-all duration-150 outline-none"
             />
             <p className="text-right text-[11px] text-gray-700 mt-1 tabular-nums">{context.length} / 300</p>
+            {variantSource && (
+              <div className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-[#2d1a4a] bg-[#120d1f] px-3 py-2">
+                <p className="text-[11px] text-[#c084fc] truncate">
+                  Mode variantes actif: {variantSource}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setVariantSource('')}
+                  className="text-[11px] text-gray-400 hover:text-white transition-colors"
+                >
+                  Retirer
+                </button>
+              </div>
+            )}
             <div className="mt-2 flex flex-wrap gap-2">
               {CONTEXT_TEMPLATES.map((tpl) => (
                 <button
@@ -455,38 +520,49 @@ export default function HookGeneratorPage() {
 
             <div className="space-y-3">
               {hooks.map((hook, i) => (
-                <button
+                <div
                   key={i}
-                  onClick={() => copyHook(hook, i)}
-                  className="group w-full text-left rounded-xl bg-[#0d0d0d] border border-[#1e1e1e] hover:border-[#2a2a2a] hover:bg-[#111] transition-all duration-150 px-5 py-4 flex items-center justify-between gap-4 active:scale-[0.99]"
+                  className="group w-full text-left rounded-xl bg-[#0d0d0d] border border-[#1e1e1e] hover:border-[#2a2a2a] hover:bg-[#111] transition-all duration-150 px-5 py-4"
                 >
-                  <span className="text-base font-extrabold text-white tracking-wide leading-tight">
+                  <p className="text-base font-extrabold text-white tracking-wide leading-tight">
                     {hook}
-                  </span>
-                  <span className={`shrink-0 flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg transition-all
-                    ${copied === i
-                      ? 'bg-green-500/15 text-green-400 border border-green-500/30'
-                      : 'bg-[#1a1a1a] text-gray-600 border border-[#222] group-hover:text-gray-400'
-                    }`}
-                  >
-                    {copied === i ? (
-                      <>
-                        <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
-                          <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z" />
-                        </svg>
-                        Copié
-                      </>
-                    ) : (
-                      <>
-                        <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
-                          <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z" />
-                          <path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z" />
-                        </svg>
-                        Copier
-                      </>
-                    )}
-                  </span>
-                </button>
+                  </p>
+                  <div className="mt-3 flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => { setVariantSource(hook); setHooks([]); }}
+                      className="text-xs px-2.5 py-1 rounded-md border border-[#2d1a4a] text-[#c084fc] hover:bg-[#7928ca]/15 transition-colors"
+                    >
+                      Variantes
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => copyHook(hook, i)}
+                      className={`shrink-0 flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg transition-all
+                        ${copied === i
+                          ? 'bg-green-500/15 text-green-400 border border-green-500/30'
+                          : 'bg-[#1a1a1a] text-gray-600 border border-[#222] group-hover:text-gray-400'
+                        }`}
+                    >
+                      {copied === i ? (
+                        <>
+                          <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
+                            <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z" />
+                          </svg>
+                          Copié
+                        </>
+                      ) : (
+                        <>
+                          <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
+                            <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z" />
+                            <path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z" />
+                          </svg>
+                          Copier
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
               ))}
             </div>
 
@@ -499,6 +575,84 @@ export default function HookGeneratorPage() {
               {loading ? 'Génération...' : '↺ Regénérer'}
             </button>
           </div>
+        )}
+
+        {/* ── History + favorites (Pro/Elite) ───────────────────────────────── */}
+        {authUser && plan !== 'free' && (
+          <section className="mt-12">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold text-white">Historique des hooks</h3>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setHistoryFilter('all')}
+                  className={`text-xs px-2.5 py-1 rounded-md border ${
+                    historyFilter === 'all'
+                      ? 'border-[#2d1a4a] text-[#c084fc] bg-[#120d1f]'
+                      : 'border-[#1f1f1f] text-gray-500'
+                  }`}
+                >
+                  Tous
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHistoryFilter('favorites')}
+                  className={`text-xs px-2.5 py-1 rounded-md border ${
+                    historyFilter === 'favorites'
+                      ? 'border-[#ff0050]/40 text-[#ff6080] bg-[#1b0a12]'
+                      : 'border-[#1f1f1f] text-gray-500'
+                  }`}
+                >
+                  Favoris
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              {(historyFilter === 'favorites'
+                ? history.filter((h) => h.is_favorite)
+                : history
+              ).slice(0, 20).map((item) => (
+                <div
+                  key={item.id}
+                  className="rounded-lg border border-[#1a1a1a] bg-[#0d0d0d] px-3 py-2.5"
+                >
+                  <p className="text-sm font-semibold text-white">{item.hook_text}</p>
+                  <div className="mt-2 flex items-center justify-between">
+                    <span className="text-[11px] text-gray-600">
+                      {new Date(item.created_at).toLocaleDateString('fr-FR')} · {item.tone}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => { setVariantSource(item.hook_text); setHooks([]); }}
+                        className="text-[11px] px-2 py-1 rounded-md border border-[#2d1a4a] text-[#c084fc]"
+                      >
+                        Variantes
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleFavorite(item)}
+                        className={`text-[11px] px-2 py-1 rounded-md border ${
+                          item.is_favorite
+                            ? 'border-[#ff0050]/40 text-[#ff6080] bg-[#1b0a12]'
+                            : 'border-[#1f1f1f] text-gray-500'
+                        }`}
+                      >
+                        {item.is_favorite ? 'Favori' : 'Ajouter'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {!loadingHistory && history.length === 0 && (
+                <p className="text-xs text-gray-600 text-center py-4">
+                  Aucun hook enregistré pour le moment.
+                </p>
+              )}
+            </div>
+          </section>
         )}
 
         {/* ── Loading skeleton ─────────────────────────────────────────────────── */}
