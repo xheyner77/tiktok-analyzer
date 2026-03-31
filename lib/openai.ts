@@ -249,7 +249,8 @@ export async function analyzeWithOpenAIVision(
     })),
   ];
 
-  const maxOut = plan === 'elite' ? 3200 : 2200;
+  /** Limite la sortie (tokens) pour réduire charge côté modèle / cohérence TPM. */
+  const maxOut = plan === 'elite' ? 2600 : 1800;
 
   const createParams = {
     model: 'gpt-4o-mini' as const,
