@@ -427,6 +427,25 @@ function buildFinalVerdict(structure: number, observed: { score: number; label: 
   return 'Vidéo qui montre des signaux positifs, avec des marges d’optimisation ciblées.';
 }
 
+function computeCredibleFinalScore(
+  structureScore: number,
+  observed: { score: number } | null
+): number {
+  const clamp = (n: number) => Math.max(1, Math.min(100, Math.round(n)));
+  if (!observed) return clamp(structureScore);
+
+  // Keep structure dominant, but ensure real traction is reflected in final score.
+  const blended = structureScore * 0.65 + observed.score * 0.35;
+  let minFloor = 1;
+
+  if (observed.score >= 85) minFloor = 58;
+  else if (observed.score >= 75) minFloor = 52;
+  else if (observed.score >= 65) minFloor = 46;
+  else if (observed.score >= 55) minFloor = 40;
+
+  return clamp(Math.max(blended, minFloor));
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -577,7 +596,9 @@ export async function POST(request: NextRequest) {
 
     const structureScore = result.structureScore ?? result.viralityScore;
     const observed = computeObservedPerformance(observedMetrics);
+    const credibleFinalScore = computeCredibleFinalScore(structureScore, observed);
     result.structureScore = structureScore;
+    result.viralityScore = credibleFinalScore;
     result.observedPerformanceScore = observed?.score;
     result.observedPerformanceLabel = observed?.label;
     result.observedPerformanceEstimated = observed?.estimated;
