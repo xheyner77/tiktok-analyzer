@@ -118,8 +118,8 @@ function PricingCard({ plan }: { plan: Plan }) {
   const isFree = plan.variant === 'free';
 
   return (
-    /* Outer wrapper — provides the vertical space for the floating badge */
-    <div className="flex flex-col pt-5">
+    /* Outer wrapper — h-full pour que toutes les cartes s'étirent à la même hauteur */
+    <div className="flex flex-col pt-5 h-full">
       {/* Floating badge — always reserving the same height (h-5) */}
       <div className="h-5 flex items-center justify-center mb-3">
         {plan.badge && (
@@ -271,8 +271,8 @@ export default function PricingPage() {
           </p>
         </div>
 
-        {/* Pricing grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-3 items-start">
+        {/* Pricing grid — items-stretch pour que toutes les cartes aient la même hauteur */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-3">
           {plans.map((plan) => (
             <PricingCard key={plan.name} plan={plan} />
           ))}
