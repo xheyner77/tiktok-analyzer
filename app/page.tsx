@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import Header from '@/components/Header';
-import UrlInput from '@/components/UrlInput';
 import ResultsPanel from '@/components/ResultsPanel';
 import LoadingState from '@/components/LoadingState';
 import PremiumGate from '@/components/PremiumGate';
@@ -36,7 +35,6 @@ const PLAN_LIMITS: Record<string, number> = {
 };
 
 export default function Home() {
-  const [url, setUrl] = useState('');
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [uploadTiktokUrl, setUploadTiktokUrl] = useState('');
   const [extractStatus, setExtractStatus] = useState('');
@@ -74,7 +72,7 @@ export default function Home() {
     // Restore a pending TikTok URL saved before login/signup
     const pendingUrl = localStorage.getItem(PENDING_URL_KEY);
     if (pendingUrl) {
-      setUrl(pendingUrl);
+      setUploadTiktokUrl(pendingUrl);
       localStorage.removeItem(PENDING_URL_KEY);
     }
 
@@ -113,11 +111,6 @@ export default function Home() {
   const isLimitReached =
     isReady && effectiveCount >= effectiveLimit;
 
-  /** Invités + plan Free : lien TikTok uniquement. Pro / Elite : import vidéo (vision) uniquement. */
-  const isProOrElite = authUser?.plan === 'pro' || authUser?.plan === 'elite';
-  const inputMode: 'url' | 'upload' =
-    isReady && authUser && isProOrElite ? 'upload' : 'url';
-
   const sortedHistory = [...history].sort((a, b) => {
     const aPinned = pinnedIds.includes(a.id) ? 1 : 0;
     const bPinned = pinnedIds.includes(b.id) ? 1 : 0;
@@ -145,6 +138,12 @@ export default function Home() {
 
     if (response.status === 401) {
       setError('Ta session a expiré. Reconnecte-toi puis réessaie.');
+      return;
+    }
+
+    if (response.status === 400) {
+      const data = await response.json().catch(() => ({} as { error?: string }));
+      setError(data?.error ?? 'Requête invalide.');
       return;
     }
 
@@ -229,45 +228,17 @@ export default function Home() {
     }
   };
 
-  const analyzeFromUrl = async (sourceUrl: string) => {
-    if (isLimitReached) return;
-
-    const trimmed = normalizeTikTokUrl(sourceUrl);
-    if (!trimmed) {
-      setError('Veuillez coller un lien TikTok.');
-      return;
-    }
-    if (!isTikTokVideoUrl(trimmed)) {
-      setError('Lien invalide. Colle un lien vidéo TikTok complet (avec /video/...).');
-      return;
-    }
-
-    if (isReady && !authUser) {
-      setShowGuestGate(true);
-      return;
-    }
-
-    setError('');
-    setIsLoading(true);
-    setResults(null);
-
-    try {
-      const response = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: trimmed }),
-      });
-      await processAnalyzeResponse(response);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Une erreur est survenue. Veuillez réessayer.';
-      setError(message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const analyzeFromUpload = async () => {
     if (isLimitReached) return;
+    if (!uploadTiktokUrl.trim()) {
+      setError('Le lien TikTok est obligatoire pour récupérer les stats de la vidéo.');
+      return;
+    }
+    const normalized = normalizeTikTokUrl(uploadTiktokUrl.trim());
+    if (!isTikTokVideoUrl(normalized)) {
+      setError('Lien TikTok invalide. Colle l’URL complète de la vidéo (…/video/…).');
+      return;
+    }
     if (!videoFile) {
       setError('Choisis un fichier vidéo (MP4 recommandé).');
       return;
@@ -275,16 +246,6 @@ export default function Home() {
     if (isReady && !authUser) {
       setShowGuestGate(true);
       return;
-    }
-
-    let optionalTiktok = '';
-    if (uploadTiktokUrl.trim()) {
-      const n = normalizeTikTokUrl(uploadTiktokUrl.trim());
-      if (!isTikTokVideoUrl(n)) {
-        setError('Lien TikTok optionnel invalide (laisse vide ou colle une URL vidéo complète).');
-        return;
-      }
-      optionalTiktok = n;
     }
 
     setError('');
@@ -302,7 +263,7 @@ export default function Home() {
           frames,
           durationSec,
           fileName: videoFile.name,
-          ...(optionalTiktok ? { tiktokUrl: optionalTiktok } : {}),
+          tiktokUrl: normalized,
         }),
       });
       await processAnalyzeResponse(response);
@@ -314,8 +275,6 @@ export default function Home() {
       setIsLoading(false);
     }
   };
-
-  const handleAnalyze = async () => analyzeFromUrl(url);
 
   function togglePin(itemId: string) {
     if (!authUser) return;
@@ -349,7 +308,7 @@ export default function Home() {
     <main className="min-h-screen bg-[#080808] overflow-x-hidden">
       <GuestGate
         show={showGuestGate}
-        pendingUrl={url}
+        pendingUrl={uploadTiktokUrl}
         onClose={() => setShowGuestGate(false)}
       />
       {/* Ambient glow */}
@@ -364,84 +323,77 @@ export default function Home() {
         <Header />
 
         <div className="mt-10 space-y-3">
-          {inputMode === 'url' ? (
-            <UrlInput
-              value={url}
-              onChange={setUrl}
-              onAnalyze={handleAnalyze}
-              isLoading={isLoading}
-              isLocked={isLimitReached}
-            />
-          ) : (
-            <div className="space-y-3">
-              <div>
-                <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-2 px-1">
-                  Fichier vidéo
-                </label>
-                <input
-                  type="file"
-                  accept="video/*"
-                  disabled={isLoading || isLimitReached}
-                  onChange={(e) => setVideoFile(e.target.files?.[0] ?? null)}
-                  className="block w-full text-sm text-gray-300 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-[#1a1a1a] file:text-white hover:file:bg-[#252525] border border-[#222] rounded-xl bg-[#111] px-3 py-2 disabled:opacity-50"
-                />
-                {videoFile && (
-                  <p className="text-xs text-gray-500 mt-2 px-1 truncate" title={videoFile.name}>
-                    {videoFile.name}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-2 px-1">
-                  Lien TikTok <span className="text-gray-600 normal-case font-normal">(optionnel, stats)</span>
-                </label>
-                <input
-                  type="url"
-                  value={uploadTiktokUrl}
-                  onChange={(e) => setUploadTiktokUrl(e.target.value)}
-                  placeholder="https://www.tiktok.com/@…/video/…"
-                  disabled={isLoading || isLimitReached}
-                  className="w-full bg-[#111] border border-[#222] rounded-xl px-4 py-3.5 text-sm text-white placeholder-gray-600 outline-none hover:border-[#333] focus:border-[#ff0050]/50 focus:ring-2 focus:ring-[#ff0050]/10 disabled:opacity-50"
-                />
-              </div>
-              <p className="text-[11px] text-gray-600 px-1 leading-relaxed">
-                L’analyse par vision extrait quelques images de ta vidéo et les envoie au modèle. MP4 recommandé, durée max ~90 s.
+          <div className="space-y-3">
+            <div>
+              <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-2 px-1">
+                Lien TikTok <span className="text-[#ff0050]/90 normal-case font-normal">(obligatoire)</span>
+              </label>
+              <p className="text-[11px] text-gray-600 px-1 mb-2 leading-relaxed">
+                Utilise l’URL de la vidéo sur TikTok pour récupérer les stats (vues, likes, etc.).
               </p>
-              <button
-                type="button"
-                onClick={() => void analyzeFromUpload()}
-                disabled={isLoading || isLimitReached || !videoFile}
-                className={`w-full relative overflow-hidden rounded-xl py-4 font-semibold text-white text-sm transition-all duration-200 active:scale-[0.99] shadow-lg ${
-                  isLimitReached
-                    ? 'bg-[#1a1a2a] border border-[#2a1a3a] opacity-50 cursor-not-allowed shadow-none'
-                    : 'bg-gradient-to-r from-[#ff0050] to-[#7928ca] hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed shadow-[#ff0050]/10'
-                }`}
-              >
-                {isLoading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    {extractStatus || 'Analyse en cours…'}
-                  </span>
-                ) : isLimitReached ? (
-                  <span>Accès Premium requis</span>
-                ) : (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                      <path
-                        fillRule="evenodd"
-                        d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    Analyser (vision)
-                  </span>
-                )}
-              </button>
+              <input
+                type="url"
+                value={uploadTiktokUrl}
+                onChange={(e) => setUploadTiktokUrl(e.target.value)}
+                placeholder="https://www.tiktok.com/@…/video/…"
+                disabled={isLoading || isLimitReached}
+                className="w-full bg-[#111] border border-[#222] rounded-xl px-4 py-3.5 text-sm text-white placeholder-gray-600 outline-none hover:border-[#333] focus:border-[#ff0050]/50 focus:ring-2 focus:ring-[#ff0050]/10 disabled:opacity-50"
+              />
             </div>
-          )}
+            <div>
+              <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-2 px-1">
+                Fichier vidéo
+              </label>
+              <input
+                type="file"
+                accept="video/*"
+                disabled={isLoading || isLimitReached}
+                onChange={(e) => setVideoFile(e.target.files?.[0] ?? null)}
+                className="block w-full text-sm text-gray-300 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-[#1a1a1a] file:text-white hover:file:bg-[#252525] border border-[#222] rounded-xl bg-[#111] px-3 py-2 disabled:opacity-50"
+              />
+              {videoFile && (
+                <p className="text-xs text-gray-500 mt-2 px-1 truncate" title={videoFile.name}>
+                  {videoFile.name}
+                </p>
+              )}
+            </div>
+            <p className="text-[11px] text-gray-600 px-1 leading-relaxed">
+              L’analyse par vision extrait quelques images de ton fichier et les envoie au modèle. MP4 recommandé, durée max ~90 s.
+            </p>
+            <button
+              type="button"
+              onClick={() => void analyzeFromUpload()}
+              disabled={isLoading || isLimitReached || !videoFile || !uploadTiktokUrl.trim()}
+              className={`w-full relative overflow-hidden rounded-xl py-4 font-semibold text-white text-sm transition-all duration-200 active:scale-[0.99] shadow-lg ${
+                isLimitReached
+                  ? 'bg-[#1a1a2a] border border-[#2a1a3a] opacity-50 cursor-not-allowed shadow-none'
+                  : 'bg-gradient-to-r from-[#ff0050] to-[#7928ca] hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed shadow-[#ff0050]/10'
+              }`}
+            >
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  {extractStatus || 'Analyse en cours…'}
+                </span>
+              ) : isLimitReached ? (
+                <span>Accès Premium requis</span>
+              ) : (
+                <span className="flex items-center justify-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                    <path
+                      fillRule="evenodd"
+                      d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  Analyser la vidéo
+                </span>
+              )}
+            </button>
+          </div>
 
           {isReady && !isLimitReached && (
             <AnalysisCounter
@@ -587,8 +539,16 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={() => {
-                        setUrl(item.video_url);
-                        analyzeFromUrl(item.video_url);
+                        setCompareItem(null);
+                        const v = item.video_url;
+                        if (!v.startsWith('upload:')) {
+                          const n = normalizeTikTokUrl(v);
+                          setUploadTiktokUrl(isTikTokVideoUrl(n) ? n : '');
+                        } else {
+                          setUploadTiktokUrl('');
+                        }
+                        setResults(item.result);
+                        setError('');
                       }}
                       className="text-left flex-1 min-w-0 w-full sm:w-auto"
                     >

@@ -663,38 +663,46 @@ async function postVisionAnalyze(
     if (isTikTokVideoUrl(n)) tiktokUrl = n;
   }
 
+  if (!tiktokUrl) {
+    return NextResponse.json(
+      {
+        error: 'Le lien TikTok de la vidéo est obligatoire pour récupérer les statistiques.',
+        code: 'TIKTOK_URL_REQUIRED',
+      },
+      { status: 400 }
+    );
+  }
+
   let detected: Awaited<ReturnType<typeof fetchTikTokPublicStatsV2>> = null;
   let detectedSource: 'cache' | 'live_page' | 'live_oembed' | 'manual' | 'none' = 'none';
 
-  if (tiktokUrl) {
-    try {
-      const { data: cached } = await supabase
-        .from('tiktok_stats_cache')
-        .select('stats_json, fetched_at')
-        .eq('video_url', tiktokUrl)
-        .maybeSingle();
-      if (cached?.stats_json && cached?.fetched_at) {
-        const ageMs = Date.now() - new Date(cached.fetched_at).getTime();
-        if (ageMs < 6 * 60 * 60 * 1000) {
-          detected = cached.stats_json as Awaited<ReturnType<typeof fetchTikTokPublicStatsV2>>;
-          detectedSource = 'cache';
-        }
+  try {
+    const { data: cached } = await supabase
+      .from('tiktok_stats_cache')
+      .select('stats_json, fetched_at')
+      .eq('video_url', tiktokUrl)
+      .maybeSingle();
+    if (cached?.stats_json && cached?.fetched_at) {
+      const ageMs = Date.now() - new Date(cached.fetched_at).getTime();
+      if (ageMs < 6 * 60 * 60 * 1000) {
+        detected = cached.stats_json as Awaited<ReturnType<typeof fetchTikTokPublicStatsV2>>;
+        detectedSource = 'cache';
       }
-    } catch {}
-    if (!detected) {
-      detected = await fetchTikTokPublicStatsV2(tiktokUrl);
-      if (detected?.source === 'page_json') detectedSource = 'live_page';
-      else if (detected?.source === 'oembed') detectedSource = 'live_oembed';
-      if (detected) {
-        try {
-          await supabase
-            .from('tiktok_stats_cache')
-            .upsert(
-              { video_url: tiktokUrl, stats_json: detected, fetched_at: new Date().toISOString() },
-              { onConflict: 'video_url', ignoreDuplicates: false }
-            );
-        } catch {}
-      }
+    }
+  } catch {}
+  if (!detected) {
+    detected = await fetchTikTokPublicStatsV2(tiktokUrl);
+    if (detected?.source === 'page_json') detectedSource = 'live_page';
+    else if (detected?.source === 'oembed') detectedSource = 'live_oembed';
+    if (detected) {
+      try {
+        await supabase
+          .from('tiktok_stats_cache')
+          .upsert(
+            { video_url: tiktokUrl, stats_json: detected, fetched_at: new Date().toISOString() },
+            { onConflict: 'video_url', ignoreDuplicates: false }
+          );
+      } catch {}
     }
   }
 
