@@ -78,8 +78,7 @@ export default function SignupPage() {
       <AuthTransition
         show={showTransition}
         onComplete={() => {
-          router.push('/dashboard');
-          router.refresh();
+          window.location.href = '/dashboard';
         }}
       />
 

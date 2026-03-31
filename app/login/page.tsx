@@ -60,8 +60,7 @@ function LoginForm() {
       <AuthTransition
         show={showTransition}
         onComplete={() => {
-          router.push(redirectTo);
-          router.refresh();
+          window.location.href = redirectTo;
         }}
       />
 
