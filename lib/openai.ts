@@ -147,32 +147,49 @@ function isValidPriority(v: unknown): v is Priority {
 function parseResult(raw: string): AnalysisResult {
   // Strip potential markdown code fences
   const clean = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
-  const json = JSON.parse(clean);
+  const json = JSON.parse(clean) as Record<string, unknown>;
 
-  const section = (s: Record<string, unknown>) => ({
-    score: Math.min(100, Math.max(0, Number(s.score) || 0)),
-    rating: isValidRating(s.rating) ? s.rating : 'Moyen' as Rating,
-    analysis: String(s.analysis ?? ''),
-    strengths: Array.isArray(s.strengths) ? s.strengths.map(String) : [],
-    weaknesses: Array.isArray(s.weaknesses) ? s.weaknesses.map(String) : [],
-  });
+  // Defensive section builder — handles null / undefined / wrong-type fields
+  // that OpenAI occasionally returns when the prompt is minimal (e.g. no URL).
+  const section = (s: unknown) => {
+    if (!s || typeof s !== 'object' || Array.isArray(s)) {
+      return { score: 0, rating: 'Moyen' as Rating, analysis: '', strengths: [], weaknesses: [] };
+    }
+    const o = s as Record<string, unknown>;
+    return {
+      score: Math.min(100, Math.max(0, Number(o.score) || 0)),
+      rating: isValidRating(o.rating) ? o.rating : 'Moyen' as Rating,
+      analysis: String(o.analysis ?? ''),
+      strengths: Array.isArray(o.strengths) ? o.strengths.map(String) : [],
+      weaknesses: Array.isArray(o.weaknesses) ? o.weaknesses.map(String) : [],
+    };
+  };
+
+  // If the AI returned an error field instead of the expected structure,
+  // surface it as a proper error rather than returning empty results.
+  if (typeof json.error === 'string' && !json.viralityScore && !json.hook) {
+    throw new Error(`IA: ${json.error}`);
+  }
 
   return {
     viralityScore: Math.min(100, Math.max(0, Number(json.viralityScore) || 0)),
-    hook: section(json.hook),
-    editing: section(json.editing),
+    hook:      section(json.hook),
+    editing:   section(json.editing),
     retention: section(json.retention),
     improvements: Array.isArray(json.improvements)
-      ? json.improvements.map((i: Record<string, unknown>) => ({
-          priority: isValidPriority(i.priority) ? i.priority : 'moyenne' as Priority,
-          tip: String(i.tip ?? ''),
-        }))
+      ? json.improvements.map((i: unknown) => {
+          const o = (i && typeof i === 'object' ? i : {}) as Record<string, unknown>;
+          return {
+            priority: isValidPriority(o.priority) ? o.priority : 'moyenne' as Priority,
+            tip: String(o.tip ?? ''),
+          };
+        })
       : [],
     comparativeInsight:
-      typeof json.comparativeInsight === 'string' ? String(json.comparativeInsight).trim() : undefined,
+      typeof json.comparativeInsight === 'string' ? json.comparativeInsight.trim() : undefined,
     comparativePriority:
-      typeof json.comparativePriority === 'string' ? String(json.comparativePriority).trim() : undefined,
-    strategy: typeof json.strategy === 'string' ? json.strategy : undefined,
+      typeof json.comparativePriority === 'string' ? json.comparativePriority.trim() : undefined,
+    strategy:  typeof json.strategy  === 'string' ? json.strategy  : undefined,
     viralTips: Array.isArray(json.viralTips)
       ? json.viralTips.map(String).filter(Boolean)
       : undefined,
@@ -308,12 +325,15 @@ export async function analyzeWithOpenAIVision(
   } catch (parseErr) {
     console.error('[openai] vision parseResult failed', {
       finish,
-      preview: raw.slice(0, 800),
-      err: parseErr,
+      rawLength: raw.length,
+      preview: raw.slice(0, 1200),
+      err: parseErr instanceof Error ? parseErr.message : parseErr,
     });
-    throw new Error(
-      'Format de réponse IA inattendu. Réessaie dans un instant ; si ça persiste, contacte le support.'
-    );
+    // Surface AI's own error message if it returned {"error":"..."}
+    const aiMsg = parseErr instanceof Error && parseErr.message.startsWith('IA:')
+      ? parseErr.message
+      : 'Format de réponse IA inattendu. Réessaie dans un instant ; si ça persiste, contacte le support.';
+    throw new Error(aiMsg);
   }
 }
 
