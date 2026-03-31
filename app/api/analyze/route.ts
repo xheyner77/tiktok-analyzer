@@ -30,7 +30,7 @@ interface MockProfile {
   hook: MockSection;
   editing: MockSection;
   retention: MockSection;
-  improvements: Improvement[];
+  improvements: { priority: 'haute' | 'moyenne' | 'basse'; tip: string }[];
   strategy: string;
   viralTips: string[];
 }
@@ -326,7 +326,16 @@ function buildMockResult(url: string, plan: string = 'free'): AnalysisResult {
       score: clamp(profile.retention.score + variation),
       rating: getRating(clamp(profile.retention.score + variation)),
     },
-    improvements: profile.improvements,
+    improvements: profile.improvements.map((item): Improvement => ({
+      priority: (
+        item.priority === 'haute'
+          ? 'high'
+          : item.priority === 'moyenne'
+          ? 'medium'
+          : 'low'
+      ) as Improvement['priority'],
+      tip: item.tip,
+    })),
   };
 
   if (plan === 'elite') {
