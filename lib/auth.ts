@@ -1,26 +1,21 @@
 import { supabase } from './supabase';
 import type { Plan } from './supabase';
+import { HOOK_LIMITS, PLAN_LIMITS } from './plan-limits';
+
+export {
+  HOOK_LIMITS,
+  PLAN_LIMITS,
+  MAX_ANALYSES_ELITE,
+  MAX_ANALYSES_FREE,
+  MAX_ANALYSES_PRO,
+  MAX_HOOKS_ELITE,
+  MAX_HOOKS_PRO,
+} from './plan-limits';
 
 export interface SessionPayload {
   userId: string;
   email: string;
 }
-
-// ── Plan limits ─────────────────────────────────────────────────────────────
-
-/** Analyses per period (Free = lifetime; Pro/Elite = per calendar month) */
-export const PLAN_LIMITS: Record<string, number> = {
-  free:  3,
-  pro:   50,
-  elite: 300,
-};
-
-/** Hook generator quota per calendar month (0 = feature unavailable) */
-export const HOOK_LIMITS: Record<string, number> = {
-  free:  0,
-  pro:   30,
-  elite: 100,
-};
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

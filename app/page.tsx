@@ -10,6 +10,7 @@ import GuestGate, { PENDING_URL_KEY } from '@/components/GuestGate';
 import { AnalysisResult } from '@/lib/types';
 import { normalizeTikTokUrl, isTikTokVideoUrl } from '@/lib/tiktok-url';
 import { extractVideoFramesFromFile } from '@/lib/extract-video-frames';
+import { PLAN_LIMITS } from '@/lib/plan-limits';
 
 const STORAGE_KEY = 'tiktok_analysis_count';
 const GUEST_LIMIT = 3;
@@ -27,12 +28,6 @@ interface AnalysisHistoryItem {
   created_at: string;
   result: AnalysisResult;
 }
-
-const PLAN_LIMITS: Record<string, number> = {
-  free:  3,
-  pro:   50,
-  elite: 300,
-};
 
 export default function Home() {
   const [videoFile, setVideoFile] = useState<File | null>(null);

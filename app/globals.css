@@ -46,4 +46,19 @@
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04),
       0 4px 24px rgba(0, 0, 0, 0.4);
   }
+
+  /** Carte pricing Elite — halo violet fort, lisible sur fond sombre */
+  .elite-pricing-card {
+    background: linear-gradient(
+      165deg,
+      rgba(121, 40, 202, 0.18) 0%,
+      rgba(15, 8, 28, 0.92) 38%,
+      #080808 100%
+    );
+    border: 1px solid rgba(167, 85, 247, 0.45);
+    box-shadow:
+      0 0 0 1px rgba(192, 132, 252, 0.12),
+      0 0 100px -24px rgba(121, 40, 202, 0.65),
+      0 12px 48px rgba(0, 0, 0, 0.55);
+  }
 }

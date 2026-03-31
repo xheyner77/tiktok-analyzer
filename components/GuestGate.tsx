@@ -2,6 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import {
+  MAX_ANALYSES_ELITE,
+  MAX_ANALYSES_FREE,
+  MAX_ANALYSES_PRO,
+  MAX_HOOKS_ELITE,
+  MAX_HOOKS_PRO,
+} from '@/lib/plan-limits';
 
 export const PENDING_URL_KEY  = 'pending_tiktok_url';
 export const PENDING_PLAN_KEY = 'pending_plan_after_signup';
@@ -38,10 +45,10 @@ const PLANS: PlanConfig[] = [
     price: '9,99€',
     period: '/ mois',
     features: [
-      '50 analyses / mois',
+      `${MAX_ANALYSES_PRO} analyses / mois`,
       'Score de viralité complet',
       '5 conseils détaillés',
-      '30 hooks générés / mois',
+      `${MAX_HOOKS_PRO} hooks générés / mois`,
     ],
     cta: 'Choisir Pro',
   },
@@ -51,9 +58,9 @@ const PLANS: PlanConfig[] = [
     price: '24,99€',
     period: '/ mois',
     features: [
-      '300 analyses / mois',
+      `${MAX_ANALYSES_ELITE} analyses / mois`,
       'Recommandations IA avancées',
-      '100 hooks générés / mois',
+      `${MAX_HOOKS_ELITE} hooks générés / mois`,
       'Support prioritaire',
     ],
     cta: 'Choisir Elite',

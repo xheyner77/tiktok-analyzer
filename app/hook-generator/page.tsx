@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import GuestGate from '@/components/GuestGate';
+import { HOOK_LIMITS, MAX_HOOKS_ELITE, MAX_HOOKS_PRO } from '@/lib/plan-limits';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -24,7 +25,6 @@ interface HookHistoryItem {
   variant_of: string | null;
 }
 
-const HOOK_LIMITS: Record<string, number> = { free: 0, pro: 30, elite: 100 };
 
 // ── Tone options ──────────────────────────────────────────────────────────────
 
@@ -292,7 +292,7 @@ export default function HookGeneratorPage() {
             </div>
             <h2 className="text-base font-bold text-white mb-2">Fonctionnalité Pro & Elite</h2>
             <p className="text-sm text-gray-500 mb-5">
-              Le Hook Generator est disponible à partir du plan Pro (30 hooks/mois) et Elite (100 hooks/mois).
+              {`Le Hook Generator est disponible à partir du plan Pro (${MAX_HOOKS_PRO} hooks/mois) et Elite (${MAX_HOOKS_ELITE} hooks/mois).`}
             </p>
             <Link
               href="/pricing"

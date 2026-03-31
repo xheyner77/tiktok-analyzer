@@ -7,6 +7,7 @@ import { createPortal } from 'react-dom';
 import { Plan } from '@/lib/supabase';
 import { AnalysisRow } from '@/lib/analyses';
 import { getScoreTextColor, getRatingColors } from '@/lib/utils';
+import { MAX_ANALYSES_ELITE, MAX_ANALYSES_FREE, MAX_ANALYSES_PRO } from '@/lib/plan-limits';
 
 interface DashboardClientProps {
   email: string;
@@ -452,7 +453,13 @@ export default function DashboardClient({
         <StatCard
           label="Plan actuel"
           value={planLabels[plan]}
-          sub={plan === 'free' ? '3 analyses incluses' : plan === 'pro' ? '50 analyses / mois' : '300 analyses / mois'}
+          sub={
+            plan === 'free'
+              ? `${MAX_ANALYSES_FREE} analyses incluses`
+              : plan === 'pro'
+                ? `${MAX_ANALYSES_PRO} analyses / mois`
+                : `${MAX_ANALYSES_ELITE} analyses / mois`
+          }
           icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" /></svg>}
         />
         <StatCard
@@ -518,7 +525,7 @@ export default function DashboardClient({
               </div>
               <div>
                 <p className="font-semibold text-sm text-white group-hover:text-[#c084fc] transition-colors">Passer à Pro</p>
-                <p className="text-xs text-gray-500 mt-0.5">50 analyses/mois • 9,99€</p>
+                <p className="text-xs text-gray-500 mt-0.5">{`${MAX_ANALYSES_PRO} analyses/mois • 9,99€`}</p>
               </div>
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-gray-600 ml-auto group-hover:text-[#b060ff] transition-colors"><path fillRule="evenodd" d="M6.22 4.22a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06l-3.25 3.25a.75.75 0 0 1-1.06-1.06L9.19 8 6.22 5.03a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" /></svg>
             </Link>

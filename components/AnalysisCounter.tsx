@@ -10,7 +10,7 @@ export default function AnalysisCounter({ used, limit }: AnalysisCounterProps) {
     return (
       <div className="flex items-center justify-center gap-2">
         <span className="w-1.5 h-1.5 rounded-full bg-[#ff0050]" style={{ boxShadow: '0 0 6px #ff005060' }} />
-        <span className="text-xs font-medium text-gray-500">Analyses illimitées — Plan Elite</span>
+        <span className="text-xs font-medium text-gray-500">Quota mensuel — Plan Elite</span>
       </div>
     );
   }
@@ -43,7 +43,7 @@ export default function AnalysisCounter({ used, limit }: AnalysisCounterProps) {
     );
   }
 
-  /* For larger limits (Pro 50, Elite 300) use a compact progress bar + text */
+  /* Pour les plafonds élevés (ex. Pro / Elite), barre + texte */
   const pct = Math.min(100, Math.round((used / limit) * 100));
 
   return (

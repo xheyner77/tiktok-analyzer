@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { MAX_ANALYSES_ELITE, MAX_ANALYSES_PRO } from '@/lib/plan-limits';
 
 interface PremiumGateProps {
   onReset?: () => void;
@@ -13,7 +14,7 @@ const CheckIcon = ({ className }: { className?: string }) => (
 const freeFeatures = ['3 analyses (utilisées)', 'Score de viralité', 'Conseils basiques'];
 
 const proFeatures = [
-  '50 analyses / mois',
+  `${MAX_ANALYSES_PRO} analyses / mois`,
   'Score de viralité détaillé',
   'Conseils personnalisés IA',
   'Export PDF du rapport',
@@ -21,7 +22,7 @@ const proFeatures = [
 ];
 
 const eliteFeatures = [
-  'Analyses illimitées',
+  `${MAX_ANALYSES_ELITE} analyses / mois`,
   'Score de viralité détaillé',
   'Conseils personnalisés IA',
   'Export PDF du rapport',
