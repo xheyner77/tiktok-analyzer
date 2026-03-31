@@ -221,8 +221,11 @@ export default function DashboardClient({
           localStorage.removeItem('pendingPlan');
           setUpgradedPlan(pendingPlan);
           setUpgradeStatus('success');
-          router.replace('/dashboard'); // Remove ?success=true from URL
-          router.refresh();             // Reload server data with new plan
+          // Hard reload after 2s so server component fetches fresh plan data.
+          // router.refresh() is unreliable here (Next.js may serve cached response).
+          setTimeout(() => {
+            window.location.href = '/dashboard';
+          }, 2000);
         } else {
           console.error('[Dashboard] upgrade-plan failed:', data.error);
           setUpgradeStatus('error');
