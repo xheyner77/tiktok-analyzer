@@ -175,17 +175,10 @@ function PricingCard({ plan }: { plan: Plan }) {
           <p className={`leading-relaxed ${isElite ? 'text-gray-300 text-sm' : 'text-gray-500 text-sm'}`}>
             {plan.description}
           </p>
-
-          {plan.tagline && (
-            <div className="mt-4 flex items-start gap-2.5">
-              <div className="w-0.5 rounded-full bg-[#a855f7]/80 self-stretch shrink-0 mt-0.5" />
-              <p className="text-sm text-[#e9d5ff] leading-snug font-medium">{plan.tagline}</p>
-            </div>
-          )}
         </div>
 
         {/* CTA */}
-        <div className="mb-6">
+        <div className="mb-3">
           {isPro || isElite ? (
             <CheckoutButton
               plan={plan.variant as 'pro' | 'elite'}
@@ -207,6 +200,17 @@ function PricingCard({ plan }: { plan: Plan }) {
           )}
         </div>
 
+        {/* Tagline social proof — sous le bouton */}
+        {plan.tagline && (
+          <div className="flex items-start gap-2 mb-5">
+            <div className="w-0.5 rounded-full bg-[#a855f7]/70 self-stretch shrink-0 mt-0.5" />
+            <p className="text-xs text-[#d8b4fe]/80 leading-snug">{plan.tagline}</p>
+          </div>
+        )}
+
+        {/* Espace pour les plans sans tagline (Free / Pro) afin de garder l'alignement du divider */}
+        {!plan.tagline && <div className="mb-5" />}
+
         {/* Divider */}
         <div
           className={`mb-5 h-px ${
@@ -215,6 +219,7 @@ function PricingCard({ plan }: { plan: Plan }) {
               : 'bg-[#1d1d1d]'
           }`}
         />
+
 
         {/* Features */}
         <ul className="space-y-3 flex-1">
