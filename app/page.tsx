@@ -1,4 +1,4 @@
-﻿﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import Header from '@/components/Header';
@@ -299,7 +299,7 @@ export default function Home() {
             </div>
             <div>
               <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-2 px-1">
-                Lien TikTok <span className="text-gray-600 normal-case font-normal">(optionnel — pour les stats)</span>
+                Lien TikTok <span className="text-gray-600 normal-case font-normal">(fortement conseillé — pour les stats)</span>
               </label>
               <input
                 type="url"
@@ -311,7 +311,7 @@ export default function Home() {
               />
             </div>
             <p className="text-[11px] text-gray-600 px-1 leading-relaxed">
-              L’analyse visuelle porte sur le <span className="text-gray-500">fichier</span> importé. Le <span className="text-gray-500">lien TikTok</span> est optionnel — s’il est fourni, les stats réelles (vues, likes…) seront incluses. MP4 recommandé, durée max ~90 s.
+              L’analyse visuelle porte sur le <span className="text-gray-500">fichier</span> importé. Le <span className="text-gray-500">lien TikTok</span> est fortement conseillé : il permet d’ajouter les stats réelles (vues, likes…) à ton analyse. Sans lien, l’analyse repose uniquement sur la vidéo importée. MP4 recommandé, durée max ~90 s.
             </p>
             <button
               type="button"
