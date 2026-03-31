@@ -3,7 +3,7 @@ import { AnalysisResult, Rating, Improvement, AnalysisSection } from '@/lib/type
 import { getSession } from '@/lib/session';
 import { getUserById, incrementAnalysesCount, checkAndResetMonthly, canRunAnalysis, PLAN_LIMITS } from '@/lib/auth';
 import { saveAnalysis } from '@/lib/analyses';
-import { analyzeWithOpenAI, analyzeWithOpenAIVision } from '@/lib/openai';
+import { analyzeWithOpenAI, analyzeWithOpenAIVision, mapOpenAIVisionError } from '@/lib/openai';
 import { normalizeTikTokUrl, isTikTokVideoUrl } from '@/lib/tiktok-url';
 import { fetchTikTokPublicStatsV2 } from '@/lib/tiktok';
 import { supabase } from '@/lib/supabase';
@@ -724,10 +724,8 @@ async function postVisionAnalyze(
     });
   } catch (e) {
     console.error('[analyze] vision OpenAI failed:', e);
-    return NextResponse.json(
-      { error: 'Analyse vision échouée. Réessaie dans un instant ou vérifie ta vidéo (MP4).' },
-      { status: 502 }
-    );
+    const { message, status } = mapOpenAIVisionError(e);
+    return NextResponse.json({ error: message }, { status });
   }
 
   result.analysisSource = 'vision_upload';

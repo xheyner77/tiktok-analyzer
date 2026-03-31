@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+import OpenAI, { APIError, APIConnectionError } from 'openai';
 import type { ChatCompletionContentPart } from 'openai/resources/chat/completions';
 import type { Plan } from './supabase';
 import type { AnalysisResult, Rating, Priority } from './types';
@@ -179,7 +179,11 @@ function buildVisionUserContent(
 `
     : '\nAucune métrique TikTok fournie (upload seul).';
 
-  const metaBlock = `\nContexte fichier : ${meta?.fileName ?? 'vidéo importée'} — durée ~${meta?.durationSec ?? '?'} s${meta?.tiktokUrl ? ` — lien TikTok optionnel pour stats : ${meta.tiktokUrl}` : ''}`;
+  const metaBlock = `\nContexte fichier : ${meta?.fileName ?? 'vidéo importée'} — durée ~${meta?.durationSec ?? '?'} s${meta?.tiktokUrl ? ` — lien TikTok associé (stats publiques) : ${meta.tiktokUrl}` : ''}`;
+
+  const linkNote = meta?.tiktokUrl
+    ? `\nRôle du lien : les métriques TikTok ci-dessus viennent de cette URL ; l’analyse visuelle décrit uniquement le fichier importé. Si le fichier n’est pas la même vidéo que le lien, le signale brièvement dans comparativeInsight (une phrase).\n`
+    : '';
 
   const eliteFields = isPro
     ? ''
@@ -188,7 +192,7 @@ function buildVisionUserContent(
 
   return `Tu reçois ${frameCount} images extraites d’une même vidéo verticale (type TikTok), ordre chronologique.
 ${metaBlock}
-${metricsBlock}
+${linkNote}${metricsBlock}
 
 Analyse ${analysisDepth}. Génère exactement ${tipsCount} recommandations.
 
@@ -231,18 +235,94 @@ export async function analyzeWithOpenAIVision(
     })),
   ];
 
+  const maxOut = plan === 'elite' ? 4000 : 2800;
+
   const response = await client.chat.completions.create({
     model: 'gpt-4o-mini',
     temperature: 0.4,
-    max_tokens: plan === 'elite' ? 3200 : 1800,
+    max_tokens: maxOut,
+    response_format: { type: 'json_object' },
     messages: [
       { role: 'system', content: systemPromptVision() },
       { role: 'user', content: userContent },
     ],
   });
 
-  const raw = response.choices[0]?.message?.content ?? '';
-  return parseResult(raw);
+  const choice = response.choices[0];
+  const raw = choice?.message?.content ?? '';
+  const finish = choice?.finish_reason;
+
+  if (!raw.trim()) {
+    throw new Error(
+      "L'IA n'a renvoyé aucune analyse. Réessaie ; si le problème continue, essaie une vidéo plus courte ou un autre export MP4."
+    );
+  }
+
+  if (finish === 'length') {
+    throw new Error(
+      'Réponse de l’IA interrompue (trop longue). Réessaie ; nous avons augmenté la limite côté serveur.'
+    );
+  }
+
+  try {
+    return parseResult(raw);
+  } catch (parseErr) {
+    console.error('[openai] vision parseResult failed', {
+      finish,
+      preview: raw.slice(0, 800),
+      err: parseErr,
+    });
+    throw new Error(
+      'Format de réponse IA inattendu. Réessaie dans un instant ; si ça persiste, contacte le support.'
+    );
+  }
+}
+
+/** Messages utilisateur + code HTTP pour l’API (vision). */
+export function mapOpenAIVisionError(e: unknown): { message: string; status: number } {
+  if (e instanceof APIConnectionError) {
+    return {
+      message: 'Impossible de joindre le service IA. Vérifie ta connexion et réessaie.',
+      status: 503,
+    };
+  }
+  if (e instanceof APIError) {
+    if (e.status === 429) {
+      return {
+        message: 'Trop de requêtes vers le service IA. Réessaie dans une minute.',
+        status: 503,
+      };
+    }
+    if (e.status === 401) {
+      return {
+        message: 'Clé API OpenAI invalide ou absente (configuration serveur).',
+        status: 502,
+      };
+    }
+    if (e.status === 503 || e.status === 502) {
+      return {
+        message: 'Service IA temporairement indisponible. Réessaie dans quelques minutes.',
+        status: 503,
+      };
+    }
+    if (e.status === 400) {
+      return {
+        message: `Requête refusée par l’IA : ${e.message}`,
+        status: 502,
+      };
+    }
+    return {
+      message: `Erreur du service IA (${e.status ?? '?'}). Réessaie.`,
+      status: 502,
+    };
+  }
+  if (e instanceof Error && e.message) {
+    return { message: e.message, status: 502 };
+  }
+  return {
+    message: 'Analyse vision indisponible. Réessaie dans un instant.',
+    status: 502,
+  };
 }
 
 export async function analyzeWithOpenAI(

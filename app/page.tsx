@@ -358,7 +358,9 @@ export default function Home() {
               )}
             </div>
             <p className="text-[11px] text-gray-600 px-1 leading-relaxed">
-              L’analyse par vision extrait quelques images de ton fichier et les envoie au modèle. MP4 recommandé, durée max ~90 s.
+              L’analyse visuelle porte sur le <span className="text-gray-500">fichier</span> importé ; le{' '}
+              <span className="text-gray-500">lien</span> sert uniquement aux stats TikTok. Si le fichier ne correspond pas à
+              cette URL, les métriques et l’analyse peuvent être incohérentes. MP4 recommandé, durée max ~90 s.
             </p>
             <button
               type="button"
