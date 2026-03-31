@@ -89,7 +89,7 @@ export default function FeedbackButton() {
       {/* ── Modal ─────────────────────────────────────────────────────────── */}
       {open && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+          className="fixed inset-0 z-[60] overflow-y-auto"
           style={{
             backgroundColor: `rgba(0,0,0,${visible ? 0.80 : 0})`,
             backdropFilter:  `blur(${visible ? 8 : 0}px)`,
@@ -99,9 +99,12 @@ export default function FeedbackButton() {
           {/* Backdrop close */}
           <div className="absolute inset-0" onClick={() => setOpen(false)} aria-hidden />
 
+          {/* Centering wrapper */}
+          <div className="relative flex min-h-full items-center justify-center p-4 pointer-events-none">
+
           {/* Card */}
           <div
-            className="relative w-full max-w-md bg-[#0d0d0d] border border-[#1e1e1e] rounded-2xl shadow-2xl overflow-hidden"
+            className="relative w-full max-w-md bg-[#0d0d0d] border border-[#1e1e1e] rounded-2xl shadow-2xl overflow-hidden pointer-events-auto"
             style={{
               opacity:   visible ? 1 : 0,
               transform: visible ? 'translateY(0) scale(1)' : 'translateY(12px) scale(0.97)',
@@ -201,6 +204,8 @@ export default function FeedbackButton() {
               )}
             </div>
           </div>
+
+          </div>{/* end centering wrapper */}
         </div>
       )}
     </>
