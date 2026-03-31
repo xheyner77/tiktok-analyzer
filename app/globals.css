@@ -7,6 +7,12 @@
     @apply bg-[#080808] text-white antialiased;
   }
 
+  /* Prevent browsers from drawing red/blue focus outlines on non-interactive
+     scrollable containers (e.g. modal overlays with overflow:auto/scroll). */
+  div:focus {
+    outline: none;
+  }
+
   ::-webkit-scrollbar {
     width: 5px;
   }
