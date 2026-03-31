@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { AnalysisResult } from '@/lib/types';
 import ScoreRing from './ScoreRing';
 import AnalysisCard from './AnalysisCard';
@@ -99,22 +99,6 @@ const RetentionIcon = () => (
 
 export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
   const structureScore = data.structureScore ?? data.viralityScore ?? 0;
-
-  const confidence = useMemo(() => {
-    const base = data.viralityScore ?? 0;
-    const bonus = Math.min(12, (data.hook?.strengths?.length ?? 0) * 2);
-    const malus = Math.min(15, (data.hook?.weaknesses?.length ?? 0) * 1.5);
-    return Math.max(1, Math.min(99, Math.round(base * 0.75 + 18 + bonus - malus)));
-  }, [data]);
-
-  const checklist = useMemo(() => {
-    return [
-      { label: 'Hook clair en 1-2 secondes', ok: (data.hook?.score ?? 0) >= 65 },
-      { label: 'Rythme de montage dynamique', ok: (data.editing?.score ?? 0) >= 60 },
-      { label: 'Rétention solide sur la durée', ok: (data.retention?.score ?? 0) >= 60 },
-      { label: 'CTA final engageant', ok: (data.viralityScore ?? 0) >= 58 },
-    ];
-  }, [data]);
 
   const metrics = data.observedMetrics ?? {};
   const meta = data.detectedVideoMeta;
@@ -307,32 +291,6 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Confidence + ready-to-post checklist */}
-      <div className="bg-[#111] border border-[#1a1a1a] rounded-2xl p-5 card-glow">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
-            Prêt à poster
-          </h2>
-          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-            confidence >= 70
-              ? 'bg-green-500/15 text-green-400 border border-green-500/30'
-              : confidence >= 50
-              ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
-              : 'bg-red-500/15 text-red-400 border border-red-500/30'
-          }`}>
-            Confiance {confidence}%
-          </span>
-        </div>
-        <ul className="space-y-2">
-          {checklist.map((item) => (
-            <li key={item.label} className="flex items-center gap-2 text-xs">
-              <span className={`w-2 h-2 rounded-full ${item.ok ? 'bg-green-500' : 'bg-gray-600'}`} />
-              <span className={item.ok ? 'text-gray-300' : 'text-gray-500'}>{item.label}</span>
-            </li>
-          ))}
-        </ul>
       </div>
 
       {/* Comparative analysis */}
