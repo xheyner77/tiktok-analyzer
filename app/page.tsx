@@ -36,7 +36,6 @@ const PLAN_LIMITS: Record<string, number> = {
 };
 
 export default function Home() {
-  const [inputMode, setInputMode] = useState<'url' | 'upload'>('url');
   const [url, setUrl] = useState('');
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [uploadTiktokUrl, setUploadTiktokUrl] = useState('');
@@ -113,6 +112,11 @@ export default function Home() {
 
   const isLimitReached =
     isReady && effectiveCount >= effectiveLimit;
+
+  /** Invités + plan Free : lien TikTok uniquement. Pro / Elite : import vidéo (vision) uniquement. */
+  const isProOrElite = authUser?.plan === 'pro' || authUser?.plan === 'elite';
+  const inputMode: 'url' | 'upload' =
+    isReady && authUser && isProOrElite ? 'upload' : 'url';
 
   const sortedHistory = [...history].sort((a, b) => {
     const aPinned = pinnedIds.includes(a.id) ? 1 : 0;
@@ -313,11 +317,6 @@ export default function Home() {
 
   const handleAnalyze = async () => analyzeFromUrl(url);
 
-  const onInputModeChange = (mode: 'url' | 'upload') => {
-    setInputMode(mode);
-    setError('');
-  };
-
   function togglePin(itemId: string) {
     if (!authUser) return;
     setPinnedIds((prev) => {
@@ -365,31 +364,6 @@ export default function Home() {
         <Header />
 
         <div className="mt-10 space-y-3">
-          <div className="flex rounded-xl border border-[#1a1a1a] bg-[#0a0a0a] p-1 gap-1">
-            <button
-              type="button"
-              onClick={() => onInputModeChange('url')}
-              className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-colors ${
-                inputMode === 'url'
-                  ? 'bg-[#1a1a1a] text-white shadow-sm'
-                  : 'text-gray-500 hover:text-gray-300'
-              }`}
-            >
-              Lien TikTok
-            </button>
-            <button
-              type="button"
-              onClick={() => onInputModeChange('upload')}
-              className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-colors ${
-                inputMode === 'upload'
-                  ? 'bg-[#1a1a1a] text-white shadow-sm'
-                  : 'text-gray-500 hover:text-gray-300'
-              }`}
-            >
-              Importer une vidéo
-            </button>
-          </div>
-
           {inputMode === 'url' ? (
             <UrlInput
               value={url}
@@ -431,8 +405,7 @@ export default function Home() {
                 />
               </div>
               <p className="text-[11px] text-gray-600 px-1 leading-relaxed">
-                L’analyse par vision extrait quelques images de ta vidéo et les envoie au modèle. Réservé aux comptes{' '}
-                <span className="text-gray-500">Pro / Elite</span>. MP4 recommandé, durée max ~90 s.
+                L’analyse par vision extrait quelques images de ta vidéo et les envoie au modèle. MP4 recommandé, durée max ~90 s.
               </p>
               <button
                 type="button"
