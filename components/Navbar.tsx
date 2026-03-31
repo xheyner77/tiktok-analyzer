@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import { getSession } from '@/lib/session';
+import { getUserById } from '@/lib/auth';
 import NavbarUserMenu from './NavbarUserMenu';
 import FeedbackButton from './FeedbackButton';
 
 export default async function Navbar() {
   const session = await getSession();
+  const userProfile = session ? await getUserById(session.userId) : null;
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[#141414] bg-[#080808]/85 backdrop-blur-md">
@@ -61,7 +63,7 @@ export default async function Navbar() {
           {session ? (
             /* Authenticated — show user menu */
             <div className="ml-2">
-              <NavbarUserMenu email={session.email} />
+              <NavbarUserMenu email={session.email} plan={userProfile?.plan ?? 'free'} />
             </div>
           ) : (
             /* Guest — show login + subscribe */

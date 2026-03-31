@@ -4,11 +4,26 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+type Plan = 'free' | 'pro' | 'elite';
+
+const PLAN_LABELS: Record<Plan, string> = {
+  free:  'Plan Free',
+  pro:   'Plan Pro',
+  elite: 'Plan Elite',
+};
+
+const PLAN_COLORS: Record<Plan, string> = {
+  free:  'bg-[#1a1a1a] text-gray-500',
+  pro:   'bg-[#ff0050]/10 text-[#ff0050] border border-[#ff0050]/20',
+  elite: 'bg-[#7928ca]/15 text-[#c084fc] border border-[#7928ca]/25',
+};
+
 interface NavbarUserMenuProps {
   email: string;
+  plan: Plan;
 }
 
-export default function NavbarUserMenu({ email }: NavbarUserMenuProps) {
+export default function NavbarUserMenu({ email, plan }: NavbarUserMenuProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -62,8 +77,8 @@ export default function NavbarUserMenu({ email }: NavbarUserMenuProps) {
             {/* User info */}
             <div className="px-3.5 py-3 border-b border-[#1a1a1a]">
               <p className="text-xs font-medium text-white truncate">{email}</p>
-              <span className="inline-block mt-1 text-xs text-gray-500 bg-[#1a1a1a] px-2 py-0.5 rounded-full">
-                Plan Free
+              <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full ${PLAN_COLORS[plan]}`}>
+                {PLAN_LABELS[plan]}
               </span>
             </div>
 
@@ -92,16 +107,18 @@ export default function NavbarUserMenu({ email }: NavbarUserMenuProps) {
                 Analyser
               </Link>
 
-              <Link
-                href="/pricing"
-                onClick={() => setIsOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-[#c084fc] hover:text-[#d8a4ff] hover:bg-[#7928ca]/10 transition-colors"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-[#7928ca]">
-                  <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" />
-                </svg>
-                Passer à Pro
-              </Link>
+              {plan !== 'elite' && (
+                <Link
+                  href="/pricing"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-[#c084fc] hover:text-[#d8a4ff] hover:bg-[#7928ca]/10 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-[#7928ca]">
+                    <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" />
+                  </svg>
+                  {plan === 'pro' ? 'Passer à Elite' : 'Passer à Pro'}
+                </Link>
+              )}
             </div>
 
             {/* Logout */}
