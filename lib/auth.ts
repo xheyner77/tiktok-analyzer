@@ -36,8 +36,18 @@ export interface UserProfile {
 
 export type User = UserProfile;
 
-// Emails that always get elite plan — no DB writes, no payment needed
-const DEV_EMAILS = ['xheyner77@gmail.com'];
+/**
+ * Optional local-only override: comma-separated emails that appear as Elite in the UI
+ * without changing the DB. Use ONLY in .env.local for testing — never set in Vercel production.
+ */
+function isForceEliteEmail(email: string): boolean {
+  const raw = process.env.DEV_FORCE_ELITE_EMAILS ?? '';
+  if (!raw.trim()) return false;
+  const set = new Set(
+    raw.split(',').map((e) => e.trim().toLowerCase()).filter(Boolean)
+  );
+  return set.has(email.toLowerCase());
+}
 
 // ── Read ─────────────────────────────────────────────────────────────────────
 
@@ -61,8 +71,8 @@ export async function getUserById(id: string): Promise<UserProfile | null> {
     created_at:     data.created_at,
   };
 
-  // Dev override — forces elite plan without touching the DB
-  if (DEV_EMAILS.includes(profile.email.toLowerCase())) {
+  // Local dev only — keeps UI in sync with optional test override (empty by default)
+  if (isForceEliteEmail(profile.email)) {
     profile.plan           = 'elite';
     profile.analyses_count = 0;
     profile.hooks_count    = 0;
