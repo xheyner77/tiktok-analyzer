@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { supabaseAuth } from '@/lib/supabase';
-import { COOKIE_NAME, COOKIE_OPTIONS } from '@/lib/session';
+import { COOKIE_NAME, COOKIE_OPTIONS, createSessionToken } from '@/lib/session';
 
 // Supabase error messages that indicate the email hasn't been confirmed yet.
 const EMAIL_NOT_CONFIRMED_MSGS = [
@@ -56,8 +56,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Store the Supabase access_token in a secure HTTP-only cookie
-    cookies().set(COOKIE_NAME, data.session.access_token, COOKIE_OPTIONS);
+    // Create a custom JWT (signed with JWT_SECRET, valid 7 days) instead of
+    // storing the Supabase access token (which expires after only 1 hour).
+    const sessionToken = await createSessionToken(data.user.id, data.user.email ?? email);
+    cookies().set(COOKIE_NAME, sessionToken, COOKIE_OPTIONS);
 
     console.log('[login] Success — user id:', data.user.id);
     return NextResponse.json({ success: true });
