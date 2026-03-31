@@ -98,6 +98,8 @@ const RetentionIcon = () => (
 );
 
 export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
+  const structureScore = data.structureScore ?? data.viralityScore ?? 0;
+
   const [copied, setCopied] = useState(false);
 
   const reportText = useMemo(() => {
@@ -223,6 +225,31 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
         </button>
       </div>
 
+      {/* Structure / observed performance / final verdict */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="rounded-xl border border-[#1a1a1a] bg-[#101010] p-3">
+          <p className="text-[11px] text-gray-500 uppercase tracking-wider">Score de structure</p>
+          <p className="text-2xl font-extrabold text-white mt-1">{structureScore}</p>
+        </div>
+        <div className="rounded-xl border border-[#1a1a1a] bg-[#101010] p-3">
+          <p className="text-[11px] text-gray-500 uppercase tracking-wider">Performance observée</p>
+          <p className="text-base font-bold text-white mt-1">
+            {typeof data.observedPerformanceScore === 'number'
+              ? `${data.observedPerformanceScore}/100`
+              : 'Non fournie'}
+          </p>
+          {data.observedPerformanceLabel && (
+            <p className="text-[11px] text-gray-500 mt-0.5">{data.observedPerformanceLabel}</p>
+          )}
+        </div>
+        <div className="rounded-xl border border-[#1a1a1a] bg-[#101010] p-3 sm:col-span-1">
+          <p className="text-[11px] text-gray-500 uppercase tracking-wider">Verdict final</p>
+          <p className="text-xs text-gray-300 mt-1 leading-relaxed">
+            {data.finalVerdict ?? 'Verdict indisponible'}
+          </p>
+        </div>
+      </div>
+
       {/* Score hero card */}
       <div className="gradient-border rounded-2xl p-6 card-glow">
         <div className="flex flex-col items-center gap-1 mb-5">
@@ -232,7 +259,7 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
         </div>
 
         <div className="flex justify-center mb-5">
-          <ScoreRing score={data.viralityScore} size={168} strokeWidth={10} />
+          <ScoreRing score={structureScore} size={168} strokeWidth={10} />
         </div>
 
         {/* Sub scores */}
@@ -293,7 +320,7 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
 
       {/* Comparative analysis */}
       {(() => {
-        const { topPercent, comparison, gap, barColor } = getComparativeData(data.viralityScore);
+        const { topPercent, comparison, gap, barColor } = getComparativeData(structureScore);
         const barWidth = Math.max(4, 100 - topPercent);
         return (
           <div className="bg-[#111] border border-[#1a1a1a] rounded-2xl p-5 card-glow space-y-4">

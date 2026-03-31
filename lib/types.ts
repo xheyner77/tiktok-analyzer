@@ -16,6 +16,16 @@ export interface Improvement {
 
 export interface AnalysisResult {
   viralityScore: number;
+  structureScore?: number;
+  observedPerformanceScore?: number;
+  observedPerformanceLabel?: string;
+  finalVerdict?: string;
+  observedMetrics?: {
+    views?: number;
+    likes?: number;
+    comments?: number;
+    shares?: number;
+  };
   hook: AnalysisSection;
   editing: AnalysisSection;
   retention: AnalysisSection;

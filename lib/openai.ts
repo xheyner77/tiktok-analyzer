@@ -13,7 +13,11 @@ Ton analyse est directe, technique, et orientée résultat.
 Tu réponds UNIQUEMENT en JSON valide, sans aucun texte avant ou après.`;
 }
 
-function buildPrompt(videoUrl: string, plan: 'pro' | 'elite'): string {
+function buildPrompt(
+  videoUrl: string,
+  plan: 'pro' | 'elite',
+  observedMetrics?: { views?: number; likes?: number; comments?: number; shares?: number }
+): string {
   const isPro = plan === 'pro';
   const tipsCount = isPro ? 5 : 10;
   const analysisDepth = isPro
@@ -25,7 +29,17 @@ function buildPrompt(videoUrl: string, plan: 'pro' | 'elite'): string {
     : `  "strategy": "string — 150-200 mots — stratégie personnalisée de contenu basée sur l'analyse : fréquence de publication recommandée, formats à tester, accroches optimales, public cible, et plan d'action sur 30 jours",
   "viralTips": ["string", "string", "string", "string"] — exactement 4 insights sur ce que font les créateurs viraux dans cette niche spécifique (données chiffrées, patterns observés, techniques concrètes)`;
 
+  const metricsBlock = observedMetrics
+    ? `\nMétriques observées fournies par l'utilisateur :
+- vues: ${observedMetrics.views ?? 0}
+- likes: ${observedMetrics.likes ?? 0}
+- commentaires: ${observedMetrics.comments ?? 0}
+- partages: ${observedMetrics.shares ?? 0}
+`
+    : '\nAucune métrique observée fournie.';
+
   return `Analyse cette URL de vidéo TikTok : ${videoUrl}
+${metricsBlock}
 
 Génère une analyse ${analysisDepth} avec exactement ${tipsCount} recommandations d'amélioration.
 
@@ -60,7 +74,7 @@ Réponds avec ce JSON exact (sans markdown, sans commentaires) :
 }
 
 Règles :
-- viralityScore = moyenne pondérée (hook 40%, editing 30%, retention 30%)
+- viralityScore = score STRUCTUREL UNIQUEMENT (hook 40%, editing 30%, retention 30%)
 - rating : Excellent ≥ 80, Bon ≥ 60, Moyen ≥ 40, Faible < 40
 - ${isPro ? 'Exactement 5 tips : 2 haute, 2 moyenne, 1 basse' : 'Exactement 10 tips : 4 haute, 4 moyenne, 2 basse'}
 - Répondre en français`;
@@ -111,7 +125,8 @@ function parseResult(raw: string): AnalysisResult {
 
 export async function analyzeWithOpenAI(
   videoUrl: string,
-  plan: Extract<Plan, 'pro' | 'elite'>
+  plan: Extract<Plan, 'pro' | 'elite'>,
+  observedMetrics?: { views?: number; likes?: number; comments?: number; shares?: number }
 ): Promise<AnalysisResult> {
   const response = await client.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -119,7 +134,7 @@ export async function analyzeWithOpenAI(
     max_tokens: plan === 'elite' ? 2400 : 1400,
     messages: [
       { role: 'system', content: systemPrompt() },
-      { role: 'user', content: buildPrompt(videoUrl, plan) },
+      { role: 'user', content: buildPrompt(videoUrl, plan, observedMetrics) },
     ],
   });
 

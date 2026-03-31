@@ -67,6 +67,10 @@ export default function Home() {
 
   // Guest gate modal
   const [showGuestGate, setShowGuestGate] = useState(false);
+  const [views, setViews] = useState('');
+  const [likes, setLikes] = useState('');
+  const [comments, setComments] = useState('');
+  const [shares, setShares] = useState('');
   const [history, setHistory] = useState<AnalysisHistoryItem[]>([]);
   const [historyLocked, setHistoryLocked] = useState(false);
   const [compareItem, setCompareItem] = useState<AnalysisHistoryItem | null>(null);
@@ -163,7 +167,15 @@ export default function Home() {
       const response = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: trimmed }),
+        body: JSON.stringify({
+          url: trimmed,
+          observedMetrics: {
+            views: Number(views) || 0,
+            likes: Number(likes) || 0,
+            comments: Number(comments) || 0,
+            shares: Number(shares) || 0,
+          },
+        }),
       });
 
       if (response.status === 429) {
@@ -331,6 +343,18 @@ export default function Home() {
               limit={effectiveLimit === Infinity ? undefined : effectiveLimit}
             />
           )}
+
+          <div className="rounded-xl border border-[#1a1a1a] bg-[#0f0f0f] p-3">
+            <p className="text-[11px] text-gray-500 uppercase tracking-wider mb-2">
+              Performance observée (optionnel, pour crédibilité du verdict)
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <input value={views} onChange={(e) => setViews(e.target.value.replace(/\D/g, ''))} placeholder="Vues" className="bg-[#111] border border-[#1f1f1f] rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 outline-none" />
+              <input value={likes} onChange={(e) => setLikes(e.target.value.replace(/\D/g, ''))} placeholder="Likes" className="bg-[#111] border border-[#1f1f1f] rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 outline-none" />
+              <input value={comments} onChange={(e) => setComments(e.target.value.replace(/\D/g, ''))} placeholder="Commentaires" className="bg-[#111] border border-[#1f1f1f] rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 outline-none" />
+              <input value={shares} onChange={(e) => setShares(e.target.value.replace(/\D/g, ''))} placeholder="Partages" className="bg-[#111] border border-[#1f1f1f] rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 outline-none" />
+            </div>
+          </div>
 
           {error && (
             <p className="text-red-400 text-sm text-center animate-fade-in">

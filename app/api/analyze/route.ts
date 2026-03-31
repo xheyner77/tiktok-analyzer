@@ -5,6 +5,13 @@ import { getUserById, incrementAnalysesCount, checkAndResetMonthly, canRunAnalys
 import { saveAnalysis } from '@/lib/analyses';
 import { analyzeWithOpenAI } from '@/lib/openai';
 
+interface ObservedMetrics {
+  views?: number;
+  likes?: number;
+  comments?: number;
+  shares?: number;
+}
+
 function simpleHash(str: string): number {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
@@ -311,6 +318,7 @@ function buildMockResult(url: string, plan: string = 'free'): AnalysisResult {
 
   const result: AnalysisResult = {
     viralityScore: clamp(profile.viralityScore + variation),
+    structureScore: clamp(profile.viralityScore + variation),
     hook: {
       ...profile.hook,
       score: clamp(profile.hook.score + variation),
@@ -340,9 +348,87 @@ function buildMockResult(url: string, plan: string = 'free'): AnalysisResult {
   return result;
 }
 
+function sanitizeMetrics(input: unknown): ObservedMetrics | undefined {
+  if (!input || typeof input !== 'object') return undefined;
+  const src = input as Record<string, unknown>;
+  const num = (v: unknown) => {
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+  };
+  const views = num(src.views);
+  const likes = num(src.likes);
+  const comments = num(src.comments);
+  const shares = num(src.shares);
+  if (!views && !likes && !comments && !shares) return undefined;
+  return { views, likes, comments, shares };
+}
+
+function computeObservedPerformance(metrics?: ObservedMetrics): { score: number; label: string } | null {
+  if (!metrics || !metrics.views || metrics.views <= 0) return null;
+  const views = metrics.views;
+  const likes = metrics.likes ?? 0;
+  const comments = metrics.comments ?? 0;
+  const shares = metrics.shares ?? 0;
+
+  const weightedEngagement = likes + comments * 2 + shares * 3;
+  const er = (weightedEngagement / Math.max(views, 1)) * 100;
+
+  let score = 0;
+  if (views >= 1_000_000) score += 45;
+  else if (views >= 500_000) score += 38;
+  else if (views >= 100_000) score += 30;
+  else if (views >= 30_000) score += 22;
+  else if (views >= 10_000) score += 15;
+  else score += 8;
+
+  if (er >= 15) score += 45;
+  else if (er >= 10) score += 36;
+  else if (er >= 6) score += 28;
+  else if (er >= 3) score += 18;
+  else score += 10;
+
+  if (comments >= 1000) score += 6;
+  if (shares >= 1000) score += 6;
+
+  const capped = Math.max(1, Math.min(100, Math.round(score)));
+  const label =
+    capped >= 80 ? 'Très forte performance observée' :
+    capped >= 60 ? 'Bonne traction réelle' :
+    capped >= 40 ? 'Performance correcte' :
+    'Performance encore limitée';
+  return { score: capped, label };
+}
+
+function buildFinalVerdict(structure: number, observed: { score: number; label: string } | null): string {
+  if (!observed) {
+    if (structure >= 75) return 'Structure solide, fort potentiel de diffusion.';
+    if (structure >= 55) return 'Structure correcte, optimisations possibles pour accélérer la traction.';
+    return 'Structure fragile, une refonte du hook et du rythme est recommandée.';
+  }
+
+  if (structure < 45 && observed.score >= 75) {
+    return 'Structure moyenne, mais forte performance réelle: la vidéo a surperformé malgré plusieurs faiblesses.';
+  }
+  if (structure < 60 && observed.score >= 60) {
+    return 'Bonne traction réelle, encore optimisable côté structure pour stabiliser les prochaines performances.';
+  }
+  if (structure >= 70 && observed.score >= 70) {
+    return 'Structure solide et performance observée forte: combo crédible et durable.';
+  }
+  if (structure >= 70 && observed.score < 55) {
+    return 'Structure de qualité, mais traction réelle en dessous du potentiel: retravailler packaging/timing.';
+  }
+  if (structure < 50 && observed.score < 50) {
+    return 'Structure faible et performance observée limitée: prioriser hook, montage et rétention.';
+  }
+  return 'Vidéo qui montre des signaux positifs, avec des marges d’optimisation ciblées.';
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { url } = await request.json();
+    const body = await request.json();
+    const { url } = body;
+    const observedMetrics = sanitizeMetrics(body?.observedMetrics);
 
     if (!url || typeof url !== 'string') {
       return NextResponse.json({ error: 'URL invalide' }, { status: 400 });
@@ -413,7 +499,7 @@ export async function POST(request: NextRequest) {
 
     if (useOpenAI) {
       try {
-        result = await analyzeWithOpenAI(url, plan as 'pro' | 'elite');
+        result = await analyzeWithOpenAI(url, plan as 'pro' | 'elite', observedMetrics);
         console.log(`[analyze] OpenAI (${plan}) — viralityScore:`, result.viralityScore);
       } catch (aiErr) {
         console.error('[analyze] OpenAI failed, falling back to mock:', aiErr);
@@ -424,6 +510,14 @@ export async function POST(request: NextRequest) {
       await new Promise((resolve) => setTimeout(resolve, 1800 + Math.random() * 1200));
       result = buildMockResult(url, plan);
     }
+
+    const structureScore = result.structureScore ?? result.viralityScore;
+    const observed = computeObservedPerformance(observedMetrics);
+    result.structureScore = structureScore;
+    result.observedPerformanceScore = observed?.score;
+    result.observedPerformanceLabel = observed?.label;
+    result.observedMetrics = observedMetrics;
+    result.finalVerdict = buildFinalVerdict(structureScore, observed);
 
     // ── Persist for authenticated users ──────────────────────────────────────
     if (session && dbUser) {
