@@ -85,6 +85,8 @@ export default function HookGeneratorPage() {
   const [history, setHistory] = useState<HookHistoryItem[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [historyFilter, setHistoryFilter] = useState<'all' | 'favorites'>('all');
+  const [historyQuery, setHistoryQuery] = useState('');
+  const [copiedFavorites, setCopiedFavorites] = useState(false);
 
   // Guest gate
   const [showGuestGate, setShowGuestGate] = useState(false);
@@ -211,6 +213,30 @@ export default function HookGeneratorPage() {
       // rollback optimistic update
       setHistory((prev) => prev.map((h) => (h.id === item.id ? { ...h, is_favorite: item.is_favorite } : h)));
     }
+  }
+
+  async function deleteHistoryItem(item: HookHistoryItem) {
+    const previous = history;
+    setHistory((prev) => prev.filter((h) => h.id !== item.id));
+    const res = await fetch('/api/hooks/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hookId: item.id }),
+    });
+    if (!res.ok) {
+      setHistory(previous);
+    }
+  }
+
+  function copyFavorites() {
+    const favoriteHooks = history
+      .filter((h) => h.is_favorite)
+      .map((h) => h.hook_text);
+    if (!favoriteHooks.length) return;
+    navigator.clipboard.writeText(favoriteHooks.join('\n')).then(() => {
+      setCopiedFavorites(true);
+      setTimeout(() => setCopiedFavorites(false), 1800);
+    });
   }
 
   function copyAllHooks() {
@@ -596,6 +622,18 @@ export default function HookGeneratorPage() {
                 </button>
                 <button
                   type="button"
+                  onClick={copyFavorites}
+                  disabled={!history.some((h) => h.is_favorite)}
+                  className={`text-xs px-2.5 py-1 rounded-md border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                    copiedFavorites
+                      ? 'border-green-500/40 text-green-400 bg-green-500/10'
+                      : 'border-[#1f1f1f] text-gray-500 hover:text-gray-300'
+                  }`}
+                >
+                  {copiedFavorites ? 'Favoris copiés' : 'Copier favoris'}
+                </button>
+                <button
+                  type="button"
                   onClick={() => setHistoryFilter('favorites')}
                   className={`text-xs px-2.5 py-1 rounded-md border ${
                     historyFilter === 'favorites'
@@ -608,11 +646,32 @@ export default function HookGeneratorPage() {
               </div>
             </div>
 
+            <div className="mb-3">
+              <input
+                type="text"
+                value={historyQuery}
+                onChange={(e) => setHistoryQuery(e.target.value)}
+                placeholder="Rechercher dans l'historique..."
+                className="w-full bg-[#0d0d0d] border border-[#1e1e1e] hover:border-[#2a2a2a] focus:border-[#7928ca]/40 text-white text-sm placeholder-gray-700 rounded-lg px-3 py-2 outline-none transition-all"
+              />
+            </div>
+
             <div className="space-y-2">
               {(historyFilter === 'favorites'
                 ? history.filter((h) => h.is_favorite)
                 : history
-              ).slice(0, 20).map((item) => (
+              )
+                .filter((h) => {
+                  const q = historyQuery.trim().toLowerCase();
+                  if (!q) return true;
+                  return (
+                    h.hook_text.toLowerCase().includes(q) ||
+                    (h.tone ?? '').toLowerCase().includes(q) ||
+                    (h.scene ?? '').toLowerCase().includes(q)
+                  );
+                })
+                .slice(0, 20)
+                .map((item) => (
                 <div
                   key={item.id}
                   className="rounded-lg border border-[#1a1a1a] bg-[#0d0d0d] px-3 py-2.5"
@@ -640,6 +699,13 @@ export default function HookGeneratorPage() {
                         }`}
                       >
                         {item.is_favorite ? 'Favori' : 'Ajouter'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => deleteHistoryItem(item)}
+                        className="text-[11px] px-2 py-1 rounded-md border border-red-500/20 text-red-400 hover:bg-red-500/10 transition-colors"
+                      >
+                        Supprimer
                       </button>
                     </div>
                   </div>
