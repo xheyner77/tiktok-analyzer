@@ -21,9 +21,8 @@ async function generateHooksWithAI(params: {
   person?: string;
   tone: string;
   count: number;
-  seedHook?: string;
 }): Promise<string[]> {
-  const { context, scene, person, tone, count, seedHook } = params;
+  const { context, scene, person, tone, count } = params;
 
   const prompt = `Tu es un expert en contenu viral TikTok spécialisé dans les hooks textuels courts.
 Génère ${count} hooks textuels COURTS et PERCUTANTS pour un overlay TikTok.
@@ -46,11 +45,6 @@ RÈGLES ABSOLUES :
 Contexte de la vidéo : ${context}
 Type de scène : ${scene}${person ? `\nPersonnage impliqué : ${person}` : ''}
 Ton souhaité : ${tone}
-${seedHook ? `\nHook de base à varier : ${seedHook}` : ''}
-
-${seedHook
-  ? 'OBJECTIF SUPPLÉMENTAIRE : génère des VARIANTES du hook de base (même idée, formulation différente).'
-  : ''}
 
 Réponds UNIQUEMENT avec un tableau JSON de strings, sans markdown, sans commentaires :
 ["HOOK 1", "HOOK 2", ...]`;
@@ -63,7 +57,7 @@ Réponds UNIQUEMENT avec un tableau JSON de strings, sans markdown, sans comment
       {
         role: 'system',
         content:
-          'Tu génères des hooks textuels TikTok ultra-courts. Réponds UNIQUEMENT avec un tableau JSON valide de strings, rien d\'autre.',
+          "Tu génères des hooks textuels TikTok ultra-courts. Réponds UNIQUEMENT avec un tableau JSON valide de strings, rien d'autre.",
       },
       { role: 'user', content: prompt },
     ],
@@ -81,7 +75,6 @@ Réponds UNIQUEMENT avec un tableau JSON de strings, sans markdown, sans comment
     .map((h) => h.replace(/\s+/g, ' ').toUpperCase())
     .map((h) => (h.length > 70 ? h.slice(0, 70).trim() : h));
 
-  // Remove duplicates while preserving order
   const unique: string[] = [];
   const seen = new Set<string>();
   for (const hook of normalized) {
@@ -115,29 +108,23 @@ export async function POST(request: NextRequest) {
 
     user = await checkAndResetMonthly(user);
 
-    // ── Feature availability ─────────────────────────────────────────────────
+    // ── Feature availability ──────────────────────────────────────────────────
     const hookLimit = HOOK_LIMITS[user.plan] ?? 0;
 
     if (hookLimit === 0) {
       return NextResponse.json(
-        {
-          error: 'Le générateur de hooks est disponible à partir du plan Pro.',
-          type:  'hook',
-          plan:  user.plan,
-        },
+        { error: 'Le générateur de hooks est disponible à partir du plan Pro.', plan: user.plan },
         { status: 403 }
       );
     }
 
-    // ── Quota check ──────────────────────────────────────────────────────────
+    // ── Quota check ───────────────────────────────────────────────────────────
     const remaining = Math.max(0, hookLimit - user.hooks_count);
 
     if (!canGenerateHook(user) || remaining === 0) {
       return NextResponse.json(
         {
           error: `Tu as utilisé tes ${hookLimit} hooks ce mois-ci. Renouvellement le 1er du mois.`,
-          type:  'hook',
-          plan:  user.plan,
           used:  user.hooks_count,
           limit: hookLimit,
         },
@@ -145,13 +132,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── Parse body ───────────────────────────────────────────────────────────
-    let context = '';
-    let scene   = '';
-    let person  = '';
-    let tone    = 'dramatique';
-    let count   = 5;
-    let seedHook = '';
+    // ── Parse body ────────────────────────────────────────────────────────────
+    let context  = '';
+    let scene    = '';
+    let person   = '';
+    let tone     = 'dramatique';
+    let count    = 5;
 
     try {
       const body = await request.json();
@@ -160,7 +146,6 @@ export async function POST(request: NextRequest) {
       person  = typeof body.person  === 'string' ? body.person.trim()  : '';
       tone    = typeof body.tone    === 'string' ? body.tone.trim()    : 'dramatique';
       count   = typeof body.count   === 'number' ? Math.min(Math.max(1, body.count), 10) : 5;
-      seedHook = typeof body.seedHook === 'string' ? body.seedHook.trim() : '';
     } catch {
       // Fall back to defaults
     }
@@ -170,21 +155,11 @@ export async function POST(request: NextRequest) {
     }
 
     if (count > remaining) {
-      return NextResponse.json(
-        {
-          error: `Tu peux générer ${remaining} hook${remaining > 1 ? 's' : ''} maximum avant la fin du mois.`,
-          type: 'hook',
-          plan: user.plan,
-          used: user.hooks_count,
-          limit: hookLimit,
-          remaining,
-        },
-        { status: 400 }
-      );
+      count = remaining; // cap silencieux plutôt qu'erreur
     }
 
-    // ── Generate ─────────────────────────────────────────────────────────────
-    const hooks = await generateHooksWithAI({ context, scene, person, tone, count, seedHook });
+    // ── Generate ──────────────────────────────────────────────────────────────
+    const hooks = await generateHooksWithAI({ context, scene, person, tone, count });
     if (hooks.length === 0) {
       return NextResponse.json(
         { error: 'Impossible de générer des hooks pour ce contexte. Réessaie avec plus de détails.' },
@@ -192,41 +167,60 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ── Increment quota ───────────────────────────────────────────────────────
     const consumed = hooks.length;
     await incrementHooksCount(session.userId, consumed);
 
-    const rows = hooks.map((hook) => ({
-      user_id: session.userId,
-      hook_text: hook,
-      context,
-      scene,
-      person: person || null,
-      tone,
-      variant_of: seedHook || null,
+    // ── Save to history ───────────────────────────────────────────────────────
+    // Columns must exactly match public.hooks_history schema.
+    // user_id references public.users(id) — NOT auth.users.
+    const rows = hooks.map((hook_text) => ({
+      user_id:    session.userId,
+      hook_text,
+      context:    context || null,
+      scene:      scene   || null,
+      person:     person  || null,
+      tone:       tone    || null,
+      variant_of: null,
     }));
-    const { error: historyError } = await supabase
+
+    const { error: insertError, data: insertedRows } = await supabase
       .from('hooks_history')
-      .insert(rows);
-    if (historyError) {
-      console.error('[hooks/generate] history insert error:', historyError.message);
+      .insert(rows)
+      .select('id');
+
+    if (insertError) {
+      // Log complet pour debug — ne bloque pas la réponse client
+      console.error('[hooks/generate] INSERT hooks_history FAILED:', {
+        code:    insertError.code,
+        message: insertError.message,
+        details: insertError.details,
+        hint:    insertError.hint,
+        userId:  session.userId,
+        rows,
+      });
+    } else {
+      console.log(`[hooks/generate] ${insertedRows?.length ?? 0} hooks saved to history for user ${session.userId}`);
     }
 
-    console.log('[hooks/generate]', {
-      userId: session.userId,
-      plan:   user.plan,
-      used:   user.hooks_count + consumed,
-      limit:  hookLimit,
+    console.log('[hooks/generate] success', {
+      userId:  session.userId,
+      plan:    user.plan,
+      used:    user.hooks_count + consumed,
+      limit:   hookLimit,
       tone,
-      count,
+      count:   consumed,
     });
 
     return NextResponse.json({
       hooks,
-      used:  user.hooks_count + consumed,
-      limit: hookLimit,
+      used:          user.hooks_count + consumed,
+      limit:         hookLimit,
+      historySaved:  !insertError,
     });
+
   } catch (err) {
-    console.error('[hooks/generate] Error:', err);
+    console.error('[hooks/generate] Unexpected error:', err);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

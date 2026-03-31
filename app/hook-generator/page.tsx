@@ -175,8 +175,8 @@ export default function HookGeneratorPage() {
       setUsed(data.used ?? used);
       setLimitUsed(data.limit ?? limitUsed);
 
-      // Mise à jour optimiste : ajout immédiat des hooks dans l'historique local
       if (authUser && newHooks.length > 0) {
+        // 1. Mise à jour optimiste : affichage immédiat dans l'historique (IDs temp)
         const now = new Date().toISOString();
         const optimistic: HookHistoryItem[] = newHooks.map((h, i) => ({
           id: `temp-${Date.now()}-${i}`,
@@ -189,13 +189,22 @@ export default function HookGeneratorPage() {
         }));
         setHistory((prev) => [...optimistic, ...prev]);
 
-        // Confirmation serveur après 400ms (remplace les IDs temporaires par les vrais)
-        setTimeout(() => {
-          fetch('/api/hooks/history')
-            .then((r) => r.json())
-            .then((h) => setHistory(h.hooks ?? []))
-            .catch(() => {});
-        }, 400);
+        // 2. L'API a déjà effectué l'INSERT avant de répondre.
+        //    On recharge l'historique réel pour remplacer les IDs temporaires
+        //    par les vrais UUIDs (nécessaires pour Favori / Supprimer).
+        //    Si historySaved === false, le log serveur indique la cause exacte.
+        if (data.historySaved === false) {
+          console.warn('[HookGenerator] hooks generated but NOT saved to DB — check server logs');
+        }
+        fetch('/api/hooks/history')
+          .then((r) => r.json())
+          .then((h) => {
+            if (Array.isArray(h.hooks) && h.hooks.length > 0) {
+              setHistory(h.hooks);
+            }
+            // Si h.hooks est vide, on garde l'optimiste pour ne pas effacer l'affichage
+          })
+          .catch((err) => console.error('[HookGenerator] history reload failed:', err));
       }
 
       setTimeout(() => {
