@@ -166,35 +166,96 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
   }, [data, plan]);
 
   return (
-    <div className="space-y-6 animate-fade-up">
-      {/* Structure / observed performance / final verdict */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="rounded-xl border border-[#1a1a1a] bg-[#101010] p-3">
-          <p className="text-[11px] text-gray-500 uppercase tracking-wider">Score de structure</p>
-          <p className="text-2xl font-extrabold text-white mt-1">{structureScore}</p>
-        </div>
-        <div className="rounded-xl border border-[#1a1a1a] bg-[#101010] p-3">
-          <p className="text-[11px] text-gray-500 uppercase tracking-wider">Performance observée</p>
-          <p className="text-base font-bold text-white mt-1">
-            {typeof data.observedPerformanceScore === 'number'
-              ? `${data.observedPerformanceScore}/100`
-              : 'Non fournie'}
+    <div className="space-y-8 animate-fade-up">
+      {/* 1 — Hero : score de viralité (priorité visuelle) */}
+      <div className="gradient-border rounded-2xl p-5 sm:p-7 card-glow">
+        <div className="flex flex-col items-center text-center mb-6 sm:mb-8">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
+            Score de viralité
           </p>
-          {data.observedPerformanceLabel && (
-            <p className="text-[11px] text-gray-500 mt-0.5">{data.observedPerformanceLabel}</p>
-          )}
-        </div>
-        <div className="rounded-xl border border-[#1a1a1a] bg-[#101010] p-3 sm:col-span-1">
-          <p className="text-[11px] text-gray-500 uppercase tracking-wider">Verdict final</p>
-          <p className="text-xs text-gray-300 mt-1 leading-relaxed">
-            {data.finalVerdict ?? 'Verdict indisponible'}
+          <p className="text-[11px] text-gray-600 mt-1.5 max-w-md">
+            Score global combinant analyse structurelle et signaux de performance réels (vues, engagement).
           </p>
+        </div>
+
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-8 lg:gap-12 xl:gap-16">
+          <div className="flex justify-center shrink-0">
+            <ScoreRing score={viralScore} size={176} strokeWidth={10} />
+          </div>
+
+          <div className="flex-1 w-full max-w-xl mx-auto lg:mx-0">
+            <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-3 text-center lg:text-left">
+              Détail structurel
+            </p>
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+              {[
+                { label: 'Hook', score: data.hook?.score ?? 0 },
+                { label: 'Montage', score: data.editing?.score ?? 0 },
+                { label: 'Rétention', score: data.retention?.score ?? 0 },
+              ].map(({ label, score }) => (
+                <div
+                  key={label}
+                  className="bg-[#0e0e0e] rounded-xl p-3 sm:p-3.5 text-center border border-[#1a1a1a]"
+                >
+                  <p className="text-[10px] sm:text-xs text-gray-500 mb-1">{label}</p>
+                  <p
+                    className="text-base sm:text-lg font-bold tabular-nums"
+                    style={{
+                      color:
+                        score >= 70 ? '#22c55e' : score >= 40 ? '#f59e0b' : '#ef4444',
+                    }}
+                  >
+                    {score}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Detected public stats from TikTok URL */}
-      <div className="rounded-2xl border border-[#1a1a1a] bg-[#101010] p-4">
-        <div className="flex items-center justify-between mb-2.5">
+      {/* 2 — Synthèse rapide */}
+      <section className="space-y-3">
+        <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest px-0.5">
+          Synthèse
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="rounded-xl border border-[#1a1a1a] bg-[#101010] p-4">
+            <p className="text-[11px] text-gray-500 uppercase tracking-wider">Score de structure</p>
+            <p className="text-2xl font-extrabold text-white mt-1 tabular-nums">{structureScore}</p>
+            <p className="text-[10px] text-gray-600 mt-2 leading-snug">
+              Qualité perçue du hook, du montage et de la rétention.
+            </p>
+          </div>
+          <div className="rounded-xl border border-[#1a1a1a] bg-[#101010] p-4">
+            <p className="text-[11px] text-gray-500 uppercase tracking-wider">Performance observée</p>
+            <p className="text-2xl font-extrabold text-white mt-1 tabular-nums">
+              {typeof data.observedPerformanceScore === 'number'
+                ? `${data.observedPerformanceScore}`
+                : '—'}
+              {typeof data.observedPerformanceScore === 'number' && (
+                <span className="text-sm font-semibold text-gray-500">/100</span>
+              )}
+            </p>
+            {data.observedPerformanceLabel && (
+              <p className="text-[11px] text-gray-500 mt-1.5">{data.observedPerformanceLabel}</p>
+            )}
+            {typeof data.observedPerformanceScore !== 'number' && (
+              <p className="text-[10px] text-gray-600 mt-2">Stats non disponibles pour ce lien.</p>
+            )}
+          </div>
+          <div className="rounded-xl border border-[#1a1a1a] bg-[#101010] p-4 sm:col-span-1">
+            <p className="text-[11px] text-gray-500 uppercase tracking-wider">Verdict final</p>
+            <p className="text-sm text-gray-300 mt-2 leading-relaxed">
+              {data.finalVerdict ?? 'Verdict indisponible'}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* 3 — Stats publiques */}
+      <section className="rounded-2xl border border-[#1a1a1a] bg-[#101010] p-4 sm:p-5">
+        <div className="flex items-center justify-between mb-3">
           <p className="text-[11px] text-gray-500 uppercase tracking-wider">Stats publiques détectées</p>
           <span className="text-[10px] text-gray-600">
             {data.observedStatsSource === 'cache' ? 'Source: cache (TTL 6h)' :
@@ -240,10 +301,10 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
             Stats non disponibles: {data.unavailableObservedStats.join(', ')}
           </p>
         )}
-      </div>
+      </section>
 
       {data.overperformanceDetected && (
-        <div className="rounded-xl border border-[#ff0050]/25 bg-gradient-to-r from-[#1a0b13] to-[#130c1f] px-4 py-3">
+        <div className="rounded-xl border border-[#ff0050]/25 bg-gradient-to-r from-[#1a0b13] to-[#130c1f] px-4 py-3.5">
           <div className="flex items-center gap-2">
             <span className="text-[#ff6080]">🔥</span>
             <p className="text-sm font-semibold text-[#ff6f95]">Surperformance détectée</p>
@@ -254,49 +315,7 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
         </div>
       )}
 
-      {/* Score hero card */}
-      <div className="gradient-border rounded-2xl p-6 card-glow">
-        <div className="flex flex-col items-center gap-1 mb-5">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
-            Score de viralité
-          </p>
-        </div>
-
-        <div className="flex justify-center mb-5">
-          <ScoreRing score={viralScore} size={168} strokeWidth={10} />
-        </div>
-
-        {/* Sub scores */}
-        <div className="grid grid-cols-3 gap-3 mt-2">
-          {[
-            { label: 'Hook', score: data.hook?.score ?? 0 },
-            { label: 'Montage', score: data.editing?.score ?? 0 },
-            { label: 'Rétention', score: data.retention?.score ?? 0 },
-          ].map(({ label, score }) => (
-            <div
-              key={label}
-              className="bg-[#0e0e0e] rounded-xl p-3 text-center border border-[#1a1a1a]"
-            >
-              <p className="text-xs text-gray-500 mb-1">{label}</p>
-              <p
-                className="text-lg font-bold tabular-nums"
-                style={{
-                  color:
-                    score >= 70
-                      ? '#22c55e'
-                      : score >= 40
-                      ? '#f59e0b'
-                      : '#ef4444',
-                }}
-              >
-                {score}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Comparative analysis */}
+      {/* 4 — Analyse comparative (basée sur le score de structure) */}
       {(() => {
         const { topPercent, comparison, gap, barColor } = getComparativeData(structureScore);
         const barWidth = Math.max(4, 100 - topPercent);
@@ -347,9 +366,9 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
         );
       })()}
 
-      {/* Analysis cards */}
+      {/* 5 — Analyse détaillée */}
       <div className="space-y-4">
-        <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest px-1">
+        <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest px-0.5">
           Analyse détaillée
         </h2>
 
@@ -379,9 +398,9 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
         )}
       </div>
 
-      {/* Improvements */}
+      {/* 6 — Recommandations */}
       <div className="space-y-4">
-        <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest px-1">
+        <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest px-0.5">
           Recommandations
         </h2>
         <ImprovementTips improvements={data.improvements ?? []} plan={plan} />
