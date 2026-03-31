@@ -1,6 +1,6 @@
 'use client';
 
-import { KeyboardEvent } from 'react';
+import { KeyboardEvent, useState } from 'react';
 
 interface UrlInputProps {
   value: string;
@@ -17,9 +17,25 @@ export default function UrlInput({
   isLoading,
   isLocked = false,
 }: UrlInputProps) {
+  const [pasteState, setPasteState] = useState<'idle' | 'ok' | 'error'>('idle');
+
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !isLoading && !isLocked) onAnalyze();
   };
+
+  async function handlePaste() {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text?.trim()) {
+        onChange(text.trim());
+        setPasteState('ok');
+        setTimeout(() => setPasteState('idle'), 1400);
+      }
+    } catch {
+      setPasteState('error');
+      setTimeout(() => setPasteState('idle'), 1800);
+    }
+  }
 
   return (
     <div className="space-y-3">
@@ -51,18 +67,43 @@ export default function UrlInput({
             }`}
         />
 
-        {value && !isLoading && !isLocked && (
-          <button
-            onClick={() => onChange('')}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400 transition-colors"
-            aria-label="Effacer"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-              <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-            </svg>
-          </button>
-        )}
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+          {!isLoading && !isLocked && (
+            <button
+              type="button"
+              onClick={handlePaste}
+              className={`text-[11px] px-2 py-1 rounded-md border transition-colors ${
+                pasteState === 'ok'
+                  ? 'text-green-400 border-green-500/30 bg-green-500/10'
+                  : pasteState === 'error'
+                  ? 'text-red-400 border-red-500/30 bg-red-500/10'
+                  : 'text-gray-500 border-[#2a2a2a] hover:text-gray-300 hover:border-[#3a3a3a]'
+              }`}
+              aria-label="Coller depuis le presse-papiers"
+            >
+              {pasteState === 'ok' ? 'Collé' : pasteState === 'error' ? 'Erreur' : 'Coller'}
+            </button>
+          )}
+
+          {value && !isLoading && !isLocked && (
+            <button
+              onClick={() => onChange('')}
+              className="text-gray-600 hover:text-gray-400 transition-colors p-1"
+              aria-label="Effacer"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
+
+      {!isLocked && (
+        <p className="text-[11px] text-gray-600 px-1">
+          Format attendu: `https://www.tiktok.com/@username/video/...`
+        </p>
+      )}
 
       <button
         onClick={onAnalyze}

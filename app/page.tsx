@@ -26,6 +26,24 @@ const PLAN_LIMITS: Record<string, number> = {
   elite: 300,
 };
 
+function normalizeTikTokUrl(input: string): string {
+  const raw = input.trim();
+  if (!raw) return '';
+  return raw.startsWith('http://') || raw.startsWith('https://') ? raw : `https://${raw}`;
+}
+
+function isTikTokVideoUrl(value: string): boolean {
+  try {
+    const u = new URL(value);
+    return (
+      u.hostname.includes('tiktok.com') &&
+      (u.pathname.includes('/video/') || u.pathname.includes('/t/'))
+    );
+  } catch {
+    return false;
+  }
+}
+
 export default function Home() {
   const [url, setUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -83,13 +101,13 @@ export default function Home() {
   const handleAnalyze = async () => {
     if (isLimitReached) return;
 
-    const trimmed = url.trim();
+    const trimmed = normalizeTikTokUrl(url);
     if (!trimmed) {
       setError('Veuillez coller un lien TikTok.');
       return;
     }
-    if (!trimmed.includes('tiktok.com') && !trimmed.startsWith('http')) {
-      setError('Veuillez entrer un lien TikTok valide.');
+    if (!isTikTokVideoUrl(trimmed)) {
+      setError('Lien invalide. Colle un lien vidéo TikTok complet (avec /video/...).');
       return;
     }
 
@@ -111,12 +129,29 @@ export default function Home() {
       });
 
       if (response.status === 429) {
+        const data = await response.json().catch(() => ({} as any));
         // Server confirmed limit reached (DB authoritative)
-        if (authUser) setAuthUser({ ...authUser, analyses_count: effectiveLimit });
+        if (authUser) {
+          const used = typeof data.used === 'number' ? data.used : effectiveLimit;
+          setAuthUser({ ...authUser, analyses_count: used });
+        }
+        setError(
+          data?.limit
+            ? `Limite atteinte (${data.used ?? data.limit}/${data.limit}). Passe à un plan supérieur ou attends le prochain reset.`
+            : 'Limite atteinte pour ton plan.'
+        );
         return;
       }
 
-      if (!response.ok) throw new Error('Analyse échouée');
+      if (response.status === 401) {
+        setError('Ta session a expiré. Reconnecte-toi puis réessaie.');
+        return;
+      }
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({} as any));
+        throw new Error(data?.error ?? 'Analyse échouée');
+      }
 
       const rawText = await response.text();
       console.log('[DEBUG][page] /api/analyze raw response text:', rawText.slice(0, 500));
@@ -185,8 +220,9 @@ export default function Home() {
         setGuestCount(next);
         localStorage.setItem(STORAGE_KEY, next.toString());
       }
-    } catch {
-      setError('Une erreur est survenue. Veuillez réessayer.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Une erreur est survenue. Veuillez réessayer.';
+      setError(message);
     } finally {
       setIsLoading(false);
     }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AnalysisResult } from '@/lib/types';
 import ScoreRing from './ScoreRing';
 import AnalysisCard from './AnalysisCard';
@@ -98,6 +98,41 @@ const RetentionIcon = () => (
 );
 
 export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
+  const [copied, setCopied] = useState(false);
+
+  const reportText = useMemo(() => {
+    const topImprovements = (data.improvements ?? []).slice(0, 5).map((i, idx) => `${idx + 1}. [${i.priority.toUpperCase()}] ${i.tip}`);
+    return [
+      'RAPPORT TIKTOK ANALYZER',
+      '',
+      `Score viralité: ${data.viralityScore}`,
+      `Hook: ${data.hook?.score ?? 0} (${data.hook?.rating ?? 'N/A'})`,
+      `Montage: ${data.editing?.score ?? 0} (${data.editing?.rating ?? 'N/A'})`,
+      `Rétention: ${data.retention?.score ?? 0} (${data.retention?.rating ?? 'N/A'})`,
+      '',
+      'Top recommandations:',
+      ...topImprovements,
+      data.strategy ? `\nStratégie:\n${data.strategy}` : '',
+    ].join('\n');
+  }, [data]);
+
+  function copyReport() {
+    navigator.clipboard.writeText(reportText).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  }
+
+  function exportTxt() {
+    const blob = new Blob([reportText], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `rapport-tiktok-${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   useEffect(() => {
     console.log('[DEBUG][ResultsPanel] props received — plan:', plan);
     console.log('[DEBUG][ResultsPanel] full data object:', data);
@@ -151,6 +186,27 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
 
   return (
     <div className="space-y-6 animate-fade-up">
+      <div className="flex items-center justify-end gap-2">
+        <button
+          type="button"
+          onClick={copyReport}
+          className={`text-xs px-2.5 py-1.5 rounded-md border transition-colors ${
+            copied
+              ? 'text-green-400 border-green-500/30 bg-green-500/10'
+              : 'text-gray-400 border-[#2a2a2a] hover:text-white hover:border-[#3a3a3a]'
+          }`}
+        >
+          {copied ? 'Résumé copié' : 'Copier résumé'}
+        </button>
+        <button
+          type="button"
+          onClick={exportTxt}
+          className="text-xs px-2.5 py-1.5 rounded-md border text-gray-400 border-[#2a2a2a] hover:text-white hover:border-[#3a3a3a] transition-colors"
+        >
+          Export TXT
+        </button>
+      </div>
+
       {/* Score hero card */}
       <div className="gradient-border rounded-2xl p-6 card-glow">
         <div className="flex flex-col items-center gap-1 mb-5">
