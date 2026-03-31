@@ -21,9 +21,9 @@ interface AuthUser {
 }
 
 const PLAN_LIMITS: Record<string, number> = {
-  free: 3,
-  pro: 50,
-  elite: Infinity,
+  free:  3,
+  pro:   50,
+  elite: 300,
 };
 
 export default function Home() {
@@ -77,7 +77,7 @@ export default function Home() {
     : GUEST_LIMIT;
 
   const isLimitReached =
-    isReady && effectiveCount >= effectiveLimit && effectiveLimit !== Infinity;
+    isReady && effectiveCount >= effectiveLimit;
 
   // ── Handlers ───────────────────────────────────────────────────────────────
   const handleAnalyze = async () => {

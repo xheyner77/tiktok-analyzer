@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AnalysisResult, Rating, Improvement, AnalysisSection } from '@/lib/types';
 import { getSession } from '@/lib/session';
-import { getUserById, incrementAnalysesCount, PLAN_LIMITS } from '@/lib/auth';
+import { getUserById, incrementAnalysesCount, checkAndResetMonthly, PLAN_LIMITS } from '@/lib/auth';
 import { saveAnalysis } from '@/lib/analyses';
 import { analyzeWithOpenAI } from '@/lib/openai';
 
@@ -361,7 +361,7 @@ export async function POST(request: NextRequest) {
         await supabase
           .from('users')
           .upsert(
-            { id: session.userId, email: session.email, plan: 'free', analyses_count: 0 },
+            { id: session.userId, email: session.email, plan: 'free', analyses_count: 0, hooks_count: 0 },
             { onConflict: 'id', ignoreDuplicates: true }
           );
         dbUser = {
@@ -369,10 +369,15 @@ export async function POST(request: NextRequest) {
           email: session.email,
           plan: 'free' as const,
           analyses_count: 0,
+          hooks_count: 0,
+          last_reset_at: new Date().toISOString(),
           created_at: new Date().toISOString(),
         };
         console.log('[analyze] profile row created on-the-fly for:', session.userId);
       }
+
+      // Reset monthly counters if we've crossed a calendar-month boundary
+      dbUser = await checkAndResetMonthly(dbUser);
 
       const limit = PLAN_LIMITS[dbUser.plan] ?? PLAN_LIMITS.free;
 

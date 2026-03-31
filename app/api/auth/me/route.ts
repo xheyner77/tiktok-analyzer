@@ -21,6 +21,7 @@ export async function GET() {
         email: session.email,
         plan: 'free',
         analyses_count: 0,
+        hooks_count: 0,
         created_at: new Date().toISOString(),
       },
     });
@@ -32,6 +33,7 @@ export async function GET() {
       email: user.email,
       plan: user.plan,
       analyses_count: user.analyses_count,
+      hooks_count: user.hooks_count,
       created_at: user.created_at,
     },
   });

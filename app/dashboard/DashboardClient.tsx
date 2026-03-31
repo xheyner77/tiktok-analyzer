@@ -12,6 +12,8 @@ interface DashboardClientProps {
   plan: Plan;
   analysesCount: number;
   analysesLimit: number;
+  hooksCount: number;
+  hooksLimit: number;
   memberSince: string;
   analyses: AnalysisRow[];
   paymentSuccess?: boolean;
@@ -187,7 +189,7 @@ function AnalysisHistoryItem({ row }: { row: AnalysisRow }) {
 }
 
 export default function DashboardClient({
-  email, plan, analysesCount, analysesLimit, memberSince, analyses, paymentSuccess,
+  email, plan, analysesCount, analysesLimit, hooksCount, hooksLimit, memberSince, analyses, paymentSuccess,
 }: DashboardClientProps) {
   const router = useRouter();
   const [upgradeStatus, setUpgradeStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -233,9 +235,9 @@ export default function DashboardClient({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paymentSuccess]);
 
-  const isElite = plan === 'elite';
-  const remaining = isElite ? Infinity : Math.max(0, analysesLimit - analysesCount);
-  const canAnalyze = isElite || remaining > 0;
+  const remaining  = Math.max(0, analysesLimit - analysesCount);
+  const canAnalyze = remaining > 0;
+  const hooksRemaining = hooksLimit > 0 ? Math.max(0, hooksLimit - hooksCount) : 0;
   const initials = email.slice(0, 2).toUpperCase();
   const hasHistory = analyses.length > 0;
 
@@ -243,10 +245,8 @@ export default function DashboardClient({
     day: 'numeric', month: 'long', year: 'numeric',
   });
 
-  const limitDisplay = isElite ? '∞' : `${analysesCount} / ${analysesLimit}`;
-  const remainingDisplay = isElite
-    ? 'Illimité'
-    : remaining > 0
+  const limitDisplay = `${analysesCount} / ${analysesLimit}`;
+  const remainingDisplay = remaining > 0
     ? `${remaining} restante${remaining > 1 ? 's' : ''}`
     : 'Limite atteinte';
 
@@ -326,7 +326,7 @@ export default function DashboardClient({
         <StatCard
           label="Plan actuel"
           value={planLabels[plan]}
-          sub={plan === 'free' ? '3 analyses incluses' : plan === 'pro' ? '50 analyses / mois' : 'Analyses illimitées'}
+          sub={plan === 'free' ? '3 analyses incluses' : plan === 'pro' ? '50 analyses / mois' : '300 analyses / mois'}
           icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" /></svg>}
         />
         <StatCard
@@ -335,6 +335,34 @@ export default function DashboardClient({
           icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4"><path fillRule="evenodd" d="M4 1.75a.75.75 0 0 1 1.5 0V3h5V1.75a.75.75 0 0 1 1.5 0V3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2V1.75ZM4.5 7a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-7Zm0 2.5a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1h-4Z" clipRule="evenodd" /></svg>}
         />
       </div>
+
+      {/* Hooks stat — Pro/Elite only */}
+      {hooksLimit > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <StatCard
+            label="Hooks générés ce mois"
+            value={`${hooksCount} / ${hooksLimit}`}
+            sub={hooksRemaining > 0 ? `${hooksRemaining} restant${hooksRemaining > 1 ? 's' : ''}` : 'Quota atteint'}
+            icon={
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
+                <path d="M7.557 2.066A.75.75 0 0 1 8 2.75v10.5a.75.75 0 0 1-1.248.56L3.59 11H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1.59l3.162-2.81a.75.75 0 0 1 .805-.124ZM12.95 3.05a.75.75 0 1 0-1.06 1.06 5.5 5.5 0 0 1 0 7.78.75.75 0 1 0 1.06 1.06 7 7 0 0 0 0-9.9Z" />
+                <path d="M10.828 5.172a.75.75 0 1 0-1.06 1.06 2.5 2.5 0 0 1 0 3.536.75.75 0 1 0 1.06 1.061 4 4 0 0 0 0-5.657Z" />
+              </svg>
+            }
+          />
+          <div className="bg-[#111] border border-[#1a1a1a] rounded-2xl p-5 card-glow flex items-center gap-4">
+            <div className="w-8 h-8 rounded-lg bg-[#ff0050]/10 flex items-center justify-center shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-[#ff0050]">
+                <path d="M8 1a6 6 0 0 1 3.196 11.064.75.75 0 0 1-.064.372l-1.154 2.83a.75.75 0 0 1-.697.47H6.72a.75.75 0 0 1-.698-.47l-1.153-2.83a.75.75 0 0 1-.064-.372A6 6 0 0 1 8 1zm.75 8a.75.75 0 0 0-1.5 0v1.5a.75.75 0 0 0 1.5 0V9zm0-4.25a.75.75 0 0 0-1.5 0v2.5a.75.75 0 0 0 1.5 0v-2.5z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-white">Reset mensuel automatique</p>
+              <p className="text-xs text-gray-500 mt-0.5">Quotas rechargés chaque 1er du mois</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Quick actions */}
       <div>
@@ -375,7 +403,7 @@ export default function DashboardClient({
               </div>
               <div>
                 <p className="font-semibold text-sm text-white">Nouvelle analyse</p>
-                <p className="text-xs text-gray-500 mt-0.5">Analyses illimitées disponibles</p>
+                <p className="text-xs text-gray-500 mt-0.5">{remainingDisplay}</p>
               </div>
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-gray-600 ml-auto group-hover:text-gray-400 transition-colors"><path fillRule="evenodd" d="M6.22 4.22a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06l-3.25 3.25a.75.75 0 0 1-1.06-1.06L9.19 8 6.22 5.03a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" /></svg>
             </Link>

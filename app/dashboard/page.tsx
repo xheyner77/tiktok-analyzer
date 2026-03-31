@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/session';
-import { getUserById, PLAN_LIMITS } from '@/lib/auth';
+import { getUserById, PLAN_LIMITS, HOOK_LIMITS } from '@/lib/auth';
 import { getAnalyses } from '@/lib/analyses';
 import DashboardClient from './DashboardClient';
 
@@ -21,10 +21,12 @@ export default async function DashboardPage({
   }
 
   const user = await getUserById(session.userId);
-  const memberSince = user?.created_at ?? new Date().toISOString();
-  const plan = user?.plan ?? 'free';
-  const analysesCount = user?.analyses_count ?? 0;
-  const analysesLimit = PLAN_LIMITS[plan] ?? 3;
+  const memberSince   = user?.created_at      ?? new Date().toISOString();
+  const plan          = user?.plan             ?? 'free';
+  const analysesCount = user?.analyses_count   ?? 0;
+  const hooksCount    = user?.hooks_count      ?? 0;
+  const analysesLimit = PLAN_LIMITS[plan]      ?? 3;
+  const hooksLimit    = HOOK_LIMITS[plan]      ?? 0;
 
   const analyses = await getAnalyses(session.userId, plan);
   const paymentSuccess = searchParams.success === 'true';
@@ -41,6 +43,8 @@ export default async function DashboardPage({
           plan={plan}
           analysesCount={analysesCount}
           analysesLimit={analysesLimit}
+          hooksCount={hooksCount}
+          hooksLimit={hooksLimit}
           memberSince={memberSince}
           analyses={analyses}
           paymentSuccess={paymentSuccess}
