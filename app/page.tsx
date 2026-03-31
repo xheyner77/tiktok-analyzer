@@ -7,6 +7,7 @@ import ResultsPanel from '@/components/ResultsPanel';
 import LoadingState from '@/components/LoadingState';
 import PremiumGate from '@/components/PremiumGate';
 import AnalysisCounter from '@/components/AnalysisCounter';
+import GuestGate, { PENDING_URL_KEY } from '@/components/GuestGate';
 import { AnalysisResult } from '@/lib/types';
 
 const STORAGE_KEY = 'tiktok_analysis_count';
@@ -39,7 +40,17 @@ export default function Home() {
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [authLoaded, setAuthLoaded] = useState(false);
 
+  // Guest gate modal
+  const [showGuestGate, setShowGuestGate] = useState(false);
+
   useEffect(() => {
+    // Restore a pending TikTok URL saved before login/signup
+    const pendingUrl = localStorage.getItem(PENDING_URL_KEY);
+    if (pendingUrl) {
+      setUrl(pendingUrl);
+      localStorage.removeItem(PENDING_URL_KEY);
+    }
+
     // Read guest count from localStorage
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) setGuestCount(parseInt(stored, 10));
@@ -79,6 +90,12 @@ export default function Home() {
     }
     if (!trimmed.includes('tiktok.com') && !trimmed.startsWith('http')) {
       setError('Veuillez entrer un lien TikTok valide.');
+      return;
+    }
+
+    // ── Guest gate: block non-authenticated users ──────────────────────────
+    if (isReady && !authUser) {
+      setShowGuestGate(true);
       return;
     }
 
@@ -184,6 +201,11 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#080808]">
+      <GuestGate
+        show={showGuestGate}
+        pendingUrl={url}
+        onClose={() => setShowGuestGate(false)}
+      />
       {/* Ambient glow */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -top-64 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-br from-[#ff0050]/6 to-[#7928ca]/6 blur-3xl" />

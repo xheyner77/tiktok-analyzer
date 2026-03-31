@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import AuthTransition from '@/components/AuthTransition';
+import { PENDING_PLAN_KEY } from '@/components/GuestGate';
 
 function getPasswordStrength(password: string): { level: 0 | 1 | 2 | 3; label: string; color: string } {
   if (password.length === 0) return { level: 0, label: '', color: '' };
@@ -78,7 +79,18 @@ export default function SignupPage() {
       <AuthTransition
         show={showTransition}
         onComplete={() => {
-          window.location.href = '/dashboard';
+          const pendingPlan = localStorage.getItem(PENDING_PLAN_KEY);
+          localStorage.removeItem(PENDING_PLAN_KEY);
+          if (pendingPlan === 'pro' || pendingPlan === 'elite') {
+            // User chose a paid plan from GuestGate → pricing page
+            window.location.href = '/pricing';
+          } else if (pendingPlan === 'free') {
+            // User chose Free from GuestGate → home to analyze
+            window.location.href = '/';
+          } else {
+            // Normal signup (no GuestGate) → dashboard
+            window.location.href = '/dashboard';
+          }
         }}
       />
 
