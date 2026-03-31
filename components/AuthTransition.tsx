@@ -19,7 +19,7 @@ const TOTAL_MS  = 2100;  // total before onComplete fires
 export default function AuthTransition({ show, onComplete }: AuthTransitionProps) {
   const [mounted, setMounted]     = useState(false); // drives fade-in + scale
   const [stepIdx, setStepIdx]     = useState(0);
-  const [stepText, setStepText]   = useState(STEPS[0]);
+  const [stepText, setStepText]   = useState<typeof STEPS[number]>(STEPS[0]);
   const [textVisible, setTextVisible] = useState(true);
   const [progress, setProgress]   = useState(0);
 
