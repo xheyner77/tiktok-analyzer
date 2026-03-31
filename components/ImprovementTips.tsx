@@ -46,20 +46,10 @@ function TipItem({ item, index }: { item: Improvement; index: number }) {
       <div className="flex-1 min-w-0">
         <p className="text-xs text-gray-300 leading-relaxed">{item.tip}</p>
         <div className="mt-2">
-        <li className="flex items-start gap-3 p-3 rounded-xl bg-[#0e0e0e] border border-[#1a1a1a]">
-  <span className="shrink-0 w-6 h-6 rounded-full bg-[#1a1a1a] flex items-center justify-center text-xs font-bold text-gray-500 mt-0.5">
-    {index + 1}
-  </span>
-  <div className="flex-1 min-w-0">
-    <p className="text-xs text-gray-300 leading-relaxed">{item.tip}</p>
-    <div className="mt-2">
-      <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full bg-gray-500/10 text-gray-400 border border-gray-500/20">
-        <span className="w-1.5 h-1.5 rounded-full bg-gray-500" />
-        Recommandation
-      </span>
-    </div>
-  </div>
-</li>
+          <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full ${config.className}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
+            {config.label}
+          </span>
         </div>
       </div>
     </li>
