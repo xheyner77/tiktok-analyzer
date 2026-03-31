@@ -51,6 +51,12 @@ function isTikTokVideoUrl(value: string): boolean {
   }
 }
 
+function formatCompact(value: string): string {
+  const n = Number(value);
+  if (!n) return '';
+  return new Intl.NumberFormat('fr-FR', { notation: 'compact', maximumFractionDigits: 1 }).format(n);
+}
+
 export default function Home() {
   const [url, setUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -354,6 +360,17 @@ export default function Home() {
               <input value={comments} onChange={(e) => setComments(e.target.value.replace(/\D/g, ''))} placeholder="Commentaires" className="bg-[#111] border border-[#1f1f1f] rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 outline-none" />
               <input value={shares} onChange={(e) => setShares(e.target.value.replace(/\D/g, ''))} placeholder="Partages" className="bg-[#111] border border-[#1f1f1f] rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 outline-none" />
             </div>
+            <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <p className="text-[10px] text-gray-600 px-1">{formatCompact(views) || '—'}</p>
+              <p className="text-[10px] text-gray-600 px-1">{formatCompact(likes) || '—'}</p>
+              <p className="text-[10px] text-gray-600 px-1">{formatCompact(comments) || '—'}</p>
+              <p className="text-[10px] text-gray-600 px-1">{formatCompact(shares) || '—'}</p>
+            </div>
+            {(views && !likes && !comments && !shares) && (
+              <p className="text-[11px] text-amber-400/90 mt-2">
+                Estimation auto active: performance calculée principalement à partir des vues.
+              </p>
+            )}
           </div>
 
           {error && (

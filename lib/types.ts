@@ -19,6 +19,8 @@ export interface AnalysisResult {
   structureScore?: number;
   observedPerformanceScore?: number;
   observedPerformanceLabel?: string;
+  observedPerformanceEstimated?: boolean;
+  overperformanceDetected?: boolean;
   finalVerdict?: string;
   observedMetrics?: {
     views?: number;

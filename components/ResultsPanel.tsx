@@ -250,6 +250,18 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
         </div>
       </div>
 
+      {data.overperformanceDetected && (
+        <div className="rounded-xl border border-[#ff0050]/25 bg-gradient-to-r from-[#1a0b13] to-[#130c1f] px-4 py-3">
+          <div className="flex items-center gap-2">
+            <span className="text-[#ff6080]">🔥</span>
+            <p className="text-sm font-semibold text-[#ff6f95]">Surperformance détectée</p>
+          </div>
+          <p className="text-xs text-gray-300 mt-1">
+            La vidéo performe mieux que ce que sa structure laisse prévoir. Bon signal produit/audience; optimise la structure pour reproduire ce niveau.
+          </p>
+        </div>
+      )}
+
       {/* Score hero card */}
       <div className="gradient-border rounded-2xl p-6 card-glow">
         <div className="flex flex-col items-center gap-1 mb-5">

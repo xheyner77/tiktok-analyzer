@@ -363,12 +363,13 @@ function sanitizeMetrics(input: unknown): ObservedMetrics | undefined {
   return { views, likes, comments, shares };
 }
 
-function computeObservedPerformance(metrics?: ObservedMetrics): { score: number; label: string } | null {
+function computeObservedPerformance(metrics?: ObservedMetrics): { score: number; label: string; estimated: boolean } | null {
   if (!metrics || !metrics.views || metrics.views <= 0) return null;
   const views = metrics.views;
   const likes = metrics.likes ?? 0;
   const comments = metrics.comments ?? 0;
   const shares = metrics.shares ?? 0;
+  const estimated = likes === 0 && comments === 0 && shares === 0;
 
   const weightedEngagement = likes + comments * 2 + shares * 3;
   const er = (weightedEngagement / Math.max(views, 1)) * 100;
@@ -392,11 +393,11 @@ function computeObservedPerformance(metrics?: ObservedMetrics): { score: number;
 
   const capped = Math.max(1, Math.min(100, Math.round(score)));
   const label =
-    capped >= 80 ? 'Très forte performance observée' :
-    capped >= 60 ? 'Bonne traction réelle' :
-    capped >= 40 ? 'Performance correcte' :
-    'Performance encore limitée';
-  return { score: capped, label };
+    capped >= 80 ? (estimated ? 'Très forte performance estimée (basée sur les vues)' : 'Très forte performance observée') :
+    capped >= 60 ? (estimated ? 'Bonne traction estimée (basée sur les vues)' : 'Bonne traction réelle') :
+    capped >= 40 ? (estimated ? 'Performance estimée correcte' : 'Performance correcte') :
+    (estimated ? 'Performance estimée encore limitée' : 'Performance encore limitée');
+  return { score: capped, label, estimated };
 }
 
 function buildFinalVerdict(structure: number, observed: { score: number; label: string } | null): string {
@@ -516,7 +517,9 @@ export async function POST(request: NextRequest) {
     result.structureScore = structureScore;
     result.observedPerformanceScore = observed?.score;
     result.observedPerformanceLabel = observed?.label;
+    result.observedPerformanceEstimated = observed?.estimated;
     result.observedMetrics = observedMetrics;
+    result.overperformanceDetected = !!observed && observed.score >= 70 && structureScore <= 55;
     result.finalVerdict = buildFinalVerdict(structureScore, observed);
 
     // ── Persist for authenticated users ──────────────────────────────────────
