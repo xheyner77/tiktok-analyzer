@@ -33,6 +33,14 @@ export default async function Navbar() {
 
         {/* Nav */}
         <div className="flex items-center gap-1">
+          {session && (
+            <Link
+              href="/dashboard"
+              className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5"
+            >
+              Dashboard
+            </Link>
+          )}
           <Link
             href="/"
             className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5"
