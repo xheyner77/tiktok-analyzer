@@ -17,7 +17,6 @@ interface Feature {
 interface Plan {
   name: string;
   badge?: string;
-  /** Accroche sous la description (ex. social proof Elite) */
   tagline?: string;
   price: string;
   period?: string;
@@ -40,7 +39,7 @@ const plans: Plan[] = [
       { label: `${MAX_ANALYSES_FREE} analyses gratuites`, included: true },
       { label: 'Score de viralité', included: true },
       { label: 'Analyse Hook, Montage, Rétention', included: true },
-      { label: '3 conseils d\'amélioration', included: true },
+      { label: "3 conseils d'amélioration", included: true },
       { label: 'Générateur de hooks', included: false },
       { label: 'Historique des analyses', included: false },
       { label: 'Recommandations IA avancées', included: false },
@@ -49,7 +48,7 @@ const plans: Plan[] = [
   },
   {
     name: 'Pro',
-    badge: 'Le plus populaire',
+    badge: '⭐ Le plus populaire',
     price: '9,99',
     period: '/ mois',
     description: 'Pour les créateurs sérieux qui veulent scaler leur contenu.',
@@ -73,8 +72,8 @@ const plans: Plan[] = [
     tagline: 'Le plan utilisé par les créateurs qui font +1M vues',
     price: '24,99',
     period: '/ mois',
-    description: 'Pour les agences et créateurs qui veulent dominer l\'algorithme.',
-    cta: 'Passer à Elite',
+    description: "Pour les agences et créateurs qui veulent dominer l'algorithme.",
+    cta: 'Passer à Elite →',
     ctaHref: '#',
     variant: 'elite',
     features: [
@@ -91,20 +90,23 @@ const plans: Plan[] = [
 ];
 
 function CheckIcon({ included, elite }: { included: boolean; elite?: boolean }) {
-  const checkClass = included
-    ? elite
-      ? 'text-[#c084fc]'
-      : 'text-[#ff0050]'
-    : 'text-[#282828]';
   if (included) {
     return (
-      <svg viewBox="0 0 16 16" fill="currentColor" className={`w-4 h-4 shrink-0 mt-0.5 ${checkClass}`}>
-        <path fillRule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" />
+      <svg
+        viewBox="0 0 16 16"
+        fill="currentColor"
+        className={`w-4 h-4 shrink-0 mt-px ${elite ? 'text-[#c084fc]' : 'text-[#ff0050]'}`}
+      >
+        <path
+          fillRule="evenodd"
+          d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z"
+          clipRule="evenodd"
+        />
       </svg>
     );
   }
   return (
-    <svg viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-[#282828] shrink-0 mt-0.5">
+    <svg viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-[#2a2a2a] shrink-0 mt-px">
       <path d="M5.28 4.22a.75.75 0 0 0-1.06 1.06L6.94 8l-2.72 2.72a.75.75 0 1 0 1.06 1.06L8 9.06l2.72 2.72a.75.75 0 1 0 1.06-1.06L9.06 8l2.72-2.72a.75.75 0 0 0-1.06-1.06L8 6.94 5.28 4.22Z" />
     </svg>
   );
@@ -113,127 +115,129 @@ function CheckIcon({ included, elite }: { included: boolean; elite?: boolean }) 
 function PricingCard({ plan }: { plan: Plan }) {
   const isPro = plan.variant === 'pro';
   const isElite = plan.variant === 'elite';
+  const isFree = plan.variant === 'free';
 
   return (
-    <div
-      className={`relative flex flex-col h-full transition-transform duration-300
-        ${isPro
-          ? 'rounded-2xl p-6 gradient-border card-glow scale-[1.01] z-[1] md:scale-[1.02]'
-          : isElite
-          ? 'rounded-3xl p-7 md:p-8 elite-pricing-card z-[2] scale-[1.03] md:scale-[1.07] md:-my-3 ring-1 ring-[#a855f7]/35'
-          : 'rounded-2xl p-6 bg-[#111] border border-[#1a1a1a] card-glow'
-        }`}
-    >
-      {/* Badge (Pro / Elite) */}
-      {plan.badge && (
-        <div
-          className={`absolute left-1/2 -translate-x-1/2 ${isElite ? '-top-4 md:-top-5' : '-top-3.5'}`}
-        >
+    /* Outer wrapper — provides the vertical space for the floating badge */
+    <div className="flex flex-col pt-5">
+      {/* Floating badge — always reserving the same height (h-5) */}
+      <div className="h-5 flex items-center justify-center mb-3">
+        {plan.badge && (
           <span
-            className={`inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold px-3.5 py-1.5 rounded-full whitespace-nowrap shadow-lg
+            className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-3 py-1 rounded-full whitespace-nowrap
               ${isElite
-                ? 'bg-gradient-to-r from-amber-500 via-[#ff0050] to-[#9333ea] text-white shadow-[#7928ca]/35 ring-2 ring-white/10'
-                : 'bg-gradient-to-r from-[#ff0050] to-[#7928ca] text-white shadow-[#ff0050]/25'
+                ? 'bg-gradient-to-r from-[#7928ca] via-[#9333ea] to-[#a855f7] text-white shadow-lg shadow-[#7928ca]/40 ring-1 ring-white/15'
+                : 'bg-[#111] border border-[#ff0050]/40 text-[#ff6680]'
               }`}
           >
-            {!isElite && (
-              <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3 shrink-0">
-                <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" />
-              </svg>
-            )}
             {plan.badge}
           </span>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Plan header */}
-      <div className={`mb-6 ${isElite ? 'mt-2 md:mt-3' : plan.badge ? 'mt-3' : ''}`}>
-        <div className="flex items-center gap-2 mb-3.5">
+      {/* Card */}
+      <div
+        className={`relative flex flex-col flex-1 rounded-2xl transition-all duration-300
+          ${isElite
+            ? 'elite-pricing-card p-7 ring-1 ring-[#a855f7]/30'
+            : isPro
+            ? 'pro-pricing-card p-6'
+            : 'bg-[#0d0d0d] border border-[#1d1d1d] p-6'
+          }`}
+      >
+        {/* Plan label + price */}
+        <div className="mb-5">
           <span
-            className={`text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider
-              ${isPro
-                ? 'bg-[#ff0050]/10 text-[#ff0050] border border-[#ff0050]/20'
-                : isElite
-                ? 'bg-[#7928ca]/20 text-[#e9d5ff] border border-[#a855f7]/35'
-                : 'bg-[#1a1a1a] text-gray-500 border border-[#222]'
+            className={`inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-md uppercase tracking-widest mb-3
+              ${isElite
+                ? 'bg-[#7928ca]/25 text-[#d8b4fe] border border-[#a855f7]/30'
+                : isPro
+                ? 'bg-[#ff0050]/10 text-[#ff6680] border border-[#ff0050]/20'
+                : 'bg-[#1a1a1a] text-gray-500 border border-[#242424]'
               }`}
           >
             {plan.name}
           </span>
-        </div>
 
-        {/* Price */}
-        <div className="flex items-end gap-1 mb-3">
-          {plan.period ? (
-            <>
-              <span
-                className={`font-bold tracking-tight text-white ${isElite ? 'text-5xl' : 'text-4xl'}`}
-              >
-                {plan.price}€
-              </span>
-              <span className="text-gray-500 text-sm mb-1.5">{plan.period}</span>
-            </>
-          ) : (
-            <span className="text-4xl font-bold text-white">{plan.price}</span>
+          <div className="flex items-end gap-1.5 mb-2.5">
+            {plan.period ? (
+              <>
+                <span className={`font-extrabold tracking-tight text-white leading-none ${isElite ? 'text-5xl' : 'text-4xl'}`}>
+                  {plan.price}€
+                </span>
+                <span className="text-gray-500 text-sm pb-1">{plan.period}</span>
+              </>
+            ) : (
+              <span className="text-4xl font-extrabold text-white leading-none">Gratuit</span>
+            )}
+          </div>
+
+          <p className={`leading-relaxed ${isElite ? 'text-gray-300 text-sm' : 'text-gray-500 text-sm'}`}>
+            {plan.description}
+          </p>
+
+          {plan.tagline && (
+            <div className="mt-4 flex items-start gap-2.5">
+              <div className="w-0.5 rounded-full bg-[#a855f7]/80 self-stretch shrink-0 mt-0.5" />
+              <p className="text-sm text-[#e9d5ff] leading-snug font-medium">{plan.tagline}</p>
+            </div>
           )}
         </div>
 
-        <p
-          className={`leading-relaxed ${isElite ? 'text-gray-300 text-[15px]' : 'text-gray-400 text-sm'}`}
-        >
-          {plan.description}
-        </p>
-
-        {plan.tagline && (
-          <p
-            className="mt-4 pl-3.5 border-l-2 border-[#a855f7]/70 text-sm text-[#e9d5ff]/95 leading-snug font-medium"
-          >
-            {plan.tagline}
-          </p>
-        )}
-      </div>
-
-      {/* CTA button */}
-      {isPro || isElite ? (
-        <CheckoutButton
-          plan={plan.variant as 'pro' | 'elite'}
-          className={`w-full text-center rounded-xl font-semibold transition-all duration-200 block
-            ${isPro
-              ? 'py-3 text-sm mb-6 bg-gradient-to-r from-[#ff0050] to-[#7928ca] text-white hover:opacity-90 shadow-lg shadow-[#ff0050]/20 active:scale-[0.98]'
-              : 'py-3.5 text-[15px] mb-7 bg-gradient-to-r from-[#9333ea] via-[#7928ca] to-[#ff0050] text-white hover:opacity-95 shadow-xl shadow-[#7928ca]/35 active:scale-[0.98] ring-1 ring-white/10'
-            }`}
-        >
-          {plan.cta}
-        </CheckoutButton>
-      ) : (
-        <Link
-          href={plan.ctaHref}
-          className="w-full text-center rounded-xl py-3 font-semibold text-sm transition-all duration-200 mb-6 block bg-[#1a1a1a] border border-[#2a2a2a] text-gray-300 hover:bg-[#222] hover:border-[#333] active:scale-[0.98]"
-        >
-          {plan.cta}
-        </Link>
-      )}
-
-      {/* Divider */}
-      <div
-        className={`mb-5 ${isElite ? 'h-px bg-gradient-to-r from-transparent via-[#a855f7]/35 to-transparent' : 'h-px bg-[#1a1a1a]'}`}
-      />
-
-      {/* Features */}
-      <ul className={`space-y-3.5 flex-1 ${isElite ? 'pb-1' : ''}`}>
-        {plan.features.map((feature, i) => (
-          <li key={i} className="flex items-start gap-3">
-            <CheckIcon included={feature.included} elite={isElite} />
-            <span
-              className={`leading-snug ${isElite ? 'text-[15px]' : 'text-sm'} ${
-                feature.included ? (isElite ? 'text-gray-200' : 'text-gray-300') : 'text-gray-600'
-              }`}
+        {/* CTA */}
+        <div className="mb-6">
+          {isPro || isElite ? (
+            <CheckoutButton
+              plan={plan.variant as 'pro' | 'elite'}
+              className={`w-full text-center rounded-xl font-semibold text-sm transition-all duration-200 block active:scale-[0.98]
+                ${isElite
+                  ? 'py-3.5 bg-gradient-to-r from-[#7928ca] to-[#a855f7] text-white hover:opacity-90 shadow-lg shadow-[#7928ca]/30 ring-1 ring-white/10'
+                  : 'py-3 bg-gradient-to-r from-[#ff0050] to-[#7928ca] text-white hover:opacity-90 shadow-md shadow-[#ff0050]/15'
+                }`}
             >
-              {feature.label}
-            </span>
-          </li>
-        ))}
-      </ul>
+              {plan.cta}
+            </CheckoutButton>
+          ) : (
+            <Link
+              href={plan.ctaHref}
+              className="w-full text-center rounded-xl py-3 font-semibold text-sm transition-all duration-200 block bg-[#151515] border border-[#252525] text-gray-400 hover:bg-[#1a1a1a] hover:text-gray-200 hover:border-[#333] active:scale-[0.98]"
+            >
+              {plan.cta}
+            </Link>
+          )}
+        </div>
+
+        {/* Divider */}
+        <div
+          className={`mb-5 h-px ${
+            isElite
+              ? 'bg-gradient-to-r from-transparent via-[#a855f7]/40 to-transparent'
+              : 'bg-[#1d1d1d]'
+          }`}
+        />
+
+        {/* Features */}
+        <ul className="space-y-3 flex-1">
+          {plan.features.map((feature, i) => (
+            <li key={i} className="flex items-start gap-2.5">
+              <CheckIcon included={feature.included} elite={isElite} />
+              <span
+                className={`text-sm leading-snug ${
+                  feature.included
+                    ? isFree
+                      ? 'text-gray-400'
+                      : isElite
+                      ? 'text-gray-200'
+                      : 'text-gray-300'
+                    : 'text-gray-700'
+                }`}
+              >
+                {feature.label}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
@@ -243,91 +247,78 @@ export default function PricingPage() {
     <main className="min-h-screen bg-[#080808] overflow-x-hidden">
       {/* Ambient glows */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-40 left-1/4 w-[500px] h-[500px] rounded-full bg-[#ff0050]/5 blur-3xl" />
-        <div className="absolute -top-40 right-1/4 w-[500px] h-[500px] rounded-full bg-[#7928ca]/5 blur-3xl" />
+        <div className="absolute -top-40 left-1/4 w-[600px] h-[600px] rounded-full bg-[#ff0050]/4 blur-3xl" />
+        <div className="absolute -top-20 right-1/4 w-[600px] h-[600px] rounded-full bg-[#7928ca]/6 blur-3xl" />
       </div>
 
-      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-16 pb-24">
+      <div className="relative max-w-5xl mx-auto px-4 sm:px-6 py-16 pb-28">
 
         {/* Hero */}
-        <div className="text-center mb-14">
+        <div className="text-center mb-16">
           <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-[#ff0050]/10 text-[#ff0050] border border-[#ff0050]/20 mb-5">
             <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
               <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" />
             </svg>
             Tarifs simples et transparents
           </span>
-
           <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight mb-4">
             Choisissez votre{' '}
             <span className="gradient-text">plan</span>
           </h1>
           <p className="text-gray-400 text-lg max-w-xl mx-auto leading-relaxed">
-            Passez au niveau supérieur avec des analyses précises, des conseils actionnables et des recommandations personnalisées.
+            Des analyses précises, des conseils actionnables et des recommandations
+            personnalisées pour dominer TikTok.
           </p>
         </div>
 
-        {/* Pricing grid — Elite mis en avant (échelle + z-index) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-5 items-stretch md:items-center">
+        {/* Pricing grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-3 items-start">
           {plans.map((plan) => (
             <PricingCard key={plan.name} plan={plan} />
           ))}
         </div>
 
         {/* Trust bar */}
-        <div className="mt-14 flex flex-col items-center gap-4">
-          <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-gray-600">
-            <span className="flex items-center gap-1.5">
-              <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 text-green-600">
+        <div className="mt-12 flex flex-wrap items-center justify-center gap-6 text-xs text-gray-600">
+          {[
+            'Annulable à tout moment',
+            'Paiement 100% sécurisé',
+            'Satisfait ou remboursé 7 jours',
+            'Sans engagement',
+          ].map((t) => (
+            <span key={t} className="flex items-center gap-1.5">
+              <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 text-green-600 shrink-0">
                 <path fillRule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" />
               </svg>
-              Annulable à tout moment
+              {t}
             </span>
-            <span className="flex items-center gap-1.5">
-              <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 text-green-600">
-                <path fillRule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" />
-              </svg>
-              Paiement 100% sécurisé
-            </span>
-            <span className="flex items-center gap-1.5">
-              <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 text-green-600">
-                <path fillRule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" />
-              </svg>
-              Satisfait ou remboursé 7 jours
-            </span>
-            <span className="flex items-center gap-1.5">
-              <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 text-green-600">
-                <path fillRule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" />
-              </svg>
-              Sans engagement
-            </span>
-          </div>
+          ))}
+        </div>
 
-          {/* FAQ teaser */}
-          <div className="mt-8 w-full max-w-2xl space-y-3">
-            <h2 className="text-center text-sm font-semibold text-gray-500 uppercase tracking-widest mb-5">
-              Questions fréquentes
-            </h2>
-            {[
-              {
-                q: `Quel est le quota d’analyses en Elite ?`,
-                a: `Le plan Elite inclut jusqu’à ${MAX_ANALYSES_ELITE} analyses par mois calendaire (réinitialisées le 1er de chaque mois), avec historique consultable sans limite pratique côté application.`,
-              },
-              {
-                q: 'Puis-je changer de plan à tout moment ?',
-                a: 'Oui, vous pouvez upgrader ou downgrader votre plan à n\'importe quel moment depuis votre espace compte.',
-              },
-              {
-                q: `Que se passe-t-il après mes ${MAX_ANALYSES_FREE} analyses gratuites ?`,
-                a: 'Votre accès est suspendu jusqu\'à la souscription d\'un abonnement. Vos données sont conservées 30 jours.',
-              },
-            ].map((faq, i) => (
-              <div key={i} className="bg-[#111] border border-[#1a1a1a] rounded-xl p-4">
-                <p className="text-sm font-medium text-white mb-1.5">{faq.q}</p>
-                <p className="text-xs text-gray-500 leading-relaxed">{faq.a}</p>
-              </div>
-            ))}
-          </div>
+        {/* FAQ */}
+        <div className="mt-16 max-w-2xl mx-auto space-y-3">
+          <h2 className="text-center text-xs font-semibold text-gray-600 uppercase tracking-widest mb-6">
+            Questions fréquentes
+          </h2>
+          {[
+            {
+              q: `Quel est le quota d'analyses en Elite ?`,
+              a: `Le plan Elite inclut jusqu'à ${MAX_ANALYSES_ELITE} analyses par mois calendaire, réinitialisées le 1er de chaque mois.`,
+            },
+            {
+              q: 'Puis-je changer de plan à tout moment ?',
+              a: "Oui, vous pouvez upgrader ou downgrader votre plan à n'importe quel moment depuis votre espace compte.",
+            },
+            {
+              q: `Que se passe-t-il après mes ${MAX_ANALYSES_FREE} analyses gratuites ?`,
+              a: 'Votre accès est suspendu jusqu\'à la souscription d\'un abonnement. Vos données sont conservées 30 jours.',
+            },
+          ].map((faq, i) => (
+            <div key={i} className="bg-[#0f0f0f] border border-[#1a1a1a] rounded-xl p-4">
+              <p className="text-sm font-medium text-white mb-1.5">{faq.q}</p>
+              <p className="text-xs text-gray-500 leading-relaxed">{faq.a}</p>
+            </div>
+          ))}
         </div>
       </div>
     </main>
