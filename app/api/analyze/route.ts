@@ -4,7 +4,8 @@ import { getSession } from '@/lib/session';
 import { getUserById, incrementAnalysesCount, checkAndResetMonthly, canRunAnalysis, PLAN_LIMITS } from '@/lib/auth';
 import { saveAnalysis } from '@/lib/analyses';
 import { analyzeWithOpenAI } from '@/lib/openai';
-import { fetchTikTokPublicStats } from '@/lib/tiktok';
+import { fetchTikTokPublicStatsV2 } from '@/lib/tiktok';
+import { supabase } from '@/lib/supabase';
 
 interface ObservedMetrics {
   views?: number;
@@ -490,8 +491,43 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // ── Fetch real public TikTok stats (best effort) ───────────────────────
-    const detected = await fetchTikTokPublicStats(url);
+    // ── Fetch real public TikTok stats (cache + live + fallback) ───────────
+    let detected: Awaited<ReturnType<typeof fetchTikTokPublicStatsV2>> = null;
+    let detectedSource: 'cache' | 'live_page' | 'live_oembed' | 'manual' | 'none' = 'none';
+
+    // 1) Try DB cache first (TTL = 6 hours)
+    try {
+      const { data: cached } = await supabase
+        .from('tiktok_stats_cache')
+        .select('stats_json, fetched_at')
+        .eq('video_url', url)
+        .maybeSingle();
+      if (cached?.stats_json && cached?.fetched_at) {
+        const ageMs = Date.now() - new Date(cached.fetched_at).getTime();
+        if (ageMs < 6 * 60 * 60 * 1000) {
+          detected = cached.stats_json as any;
+          detectedSource = 'cache';
+        }
+      }
+    } catch {}
+
+    // 2) If no valid cache, fetch live and write cache
+    if (!detected) {
+      detected = await fetchTikTokPublicStatsV2(url);
+      if (detected?.source === 'page_json') detectedSource = 'live_page';
+      else if (detected?.source === 'oembed') detectedSource = 'live_oembed';
+
+      if (detected) {
+        try {
+          await supabase
+            .from('tiktok_stats_cache')
+            .upsert(
+              { video_url: url, stats_json: detected, fetched_at: new Date().toISOString() },
+              { onConflict: 'video_url', ignoreDuplicates: false }
+            );
+        } catch {}
+      }
+    }
     const detectedObserved: ObservedMetrics | undefined = detected
       ? {
           views: detected.views,
@@ -511,6 +547,10 @@ export async function POST(request: NextRequest) {
             shares: detectedObserved?.shares ?? manualObservedMetrics?.shares,
           }
         : undefined;
+
+    if (!detectedObserved && manualObservedMetrics) {
+      detectedSource = 'manual';
+    }
 
     // ── Analysis ─────────────────────────────────────────────────────────────
     const plan = dbUser?.plan ?? 'free';
@@ -552,6 +592,11 @@ export async function POST(request: NextRequest) {
         }
       : undefined;
     result.overperformanceDetected = !!observed && observed.score >= 70 && structureScore <= 55;
+    result.observedStatsSource = detectedSource;
+    result.unavailableObservedStats = ['views', 'likes', 'comments', 'shares'].filter((k) => {
+      const m = observedMetrics as Record<string, unknown> | undefined;
+      return !m || !m[k];
+    });
     result.finalVerdict = buildFinalVerdict(structureScore, observed);
 
     // ── Persist for authenticated users ──────────────────────────────────────

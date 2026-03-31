@@ -21,6 +21,8 @@ export interface AnalysisResult {
   observedPerformanceLabel?: string;
   observedPerformanceEstimated?: boolean;
   overperformanceDetected?: boolean;
+  observedStatsSource?: 'cache' | 'live_page' | 'live_oembed' | 'manual' | 'none';
+  unavailableObservedStats?: string[];
   finalVerdict?: string;
   observedMetrics?: {
     views?: number;

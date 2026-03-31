@@ -210,7 +210,11 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
         <div className="flex items-center justify-between mb-2.5">
           <p className="text-[11px] text-gray-500 uppercase tracking-wider">Stats publiques détectées</p>
           <span className="text-[10px] text-gray-600">
-            {metrics.views || metrics.likes || metrics.comments || metrics.shares ? 'Depuis le lien TikTok' : 'Partielles / indisponibles'}
+            {data.observedStatsSource === 'cache' ? 'Source: cache (TTL 6h)' :
+             data.observedStatsSource === 'live_page' ? 'Source: page TikTok' :
+             data.observedStatsSource === 'live_oembed' ? 'Source: oEmbed (partiel)' :
+             data.observedStatsSource === 'manual' ? 'Source: saisie manuelle' :
+             'Partielles / indisponibles'}
           </span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -244,6 +248,11 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
           <span>Publication: {meta?.publishedAt ? new Date(meta.publishedAt).toLocaleDateString('fr-FR') : 'N/A'}</span>
           {meta?.caption && <span className="truncate max-w-full">Caption: {meta.caption}</span>}
         </div>
+        {data.unavailableObservedStats && data.unavailableObservedStats.length > 0 && (
+          <p className="mt-2 text-[11px] text-gray-600">
+            Stats non disponibles: {data.unavailableObservedStats.join(', ')}
+          </p>
+        )}
       </div>
 
       {data.overperformanceDetected && (

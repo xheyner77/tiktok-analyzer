@@ -8,6 +8,7 @@ export interface TikTokPublicStats {
   authorUsername?: string;
   publishedAt?: string;
   caption?: string;
+  source?: 'page_json' | 'oembed';
 }
 
 function extractJsonByScriptId(html: string, scriptId: string): unknown | null {
@@ -101,13 +102,13 @@ export async function fetchTikTokPublicStats(videoUrl: string): Promise<TikTokPu
       extractJsonByScriptId(html, '__NEXT_DATA__');
     const fromUniversal = universal ? parseFromUniversalData(universal) : null;
     if (fromUniversal && (fromUniversal.views || fromUniversal.likes || fromUniversal.comments || fromUniversal.shares)) {
-      return fromUniversal;
+      return { ...fromUniversal, source: 'page_json' };
     }
 
     const sigi = extractJsonByScriptId(html, 'SIGI_STATE');
     const fromSigi = sigi ? parseFromSigiState(sigi) : null;
     if (fromSigi && (fromSigi.views || fromSigi.likes || fromSigi.comments || fromSigi.shares)) {
-      return fromSigi;
+      return { ...fromSigi, source: 'page_json' };
     }
 
     return null;
@@ -116,4 +117,34 @@ export async function fetchTikTokPublicStats(videoUrl: string): Promise<TikTokPu
     console.error('[tiktok] stats extraction error:', message);
     return null;
   }
+}
+
+async function fetchFromOEmbed(videoUrl: string): Promise<TikTokPublicStats | null> {
+  try {
+    const endpoint = `https://www.tiktok.com/oembed?url=${encodeURIComponent(videoUrl)}`;
+    const res = await fetch(endpoint, { cache: 'no-store' });
+    if (!res.ok) return null;
+    const data = await res.json();
+    // oEmbed is limited: author + title/caption-like + publish_date sometimes.
+    return {
+      authorUsername: typeof data.author_unique_id === 'string' ? data.author_unique_id : undefined,
+      caption: typeof data.title === 'string' ? data.title : undefined,
+      publishedAt: typeof data.create_time === 'string' ? data.create_time : undefined,
+      source: 'oembed',
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchTikTokPublicStatsV2(videoUrl: string): Promise<TikTokPublicStats | null> {
+  // Retry page-json extraction a few times (TikTok can intermittently fail)
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const stats = await fetchTikTokPublicStats(videoUrl);
+    if (stats) return stats;
+    await new Promise((r) => setTimeout(r, 250 * attempt));
+  }
+
+  // Fallback: oEmbed (less complete, but still useful metadata)
+  return fetchFromOEmbed(videoUrl);
 }
