@@ -20,6 +20,13 @@ interface AuthUser {
   analyses_count: number;
 }
 
+interface AnalysisHistoryItem {
+  id: string;
+  video_url: string;
+  created_at: string;
+  result: AnalysisResult;
+}
+
 const PLAN_LIMITS: Record<string, number> = {
   free:  3,
   pro:   50,
@@ -60,6 +67,19 @@ export default function Home() {
 
   // Guest gate modal
   const [showGuestGate, setShowGuestGate] = useState(false);
+  const [history, setHistory] = useState<AnalysisHistoryItem[]>([]);
+  const [historyLocked, setHistoryLocked] = useState(false);
+  const [compareItem, setCompareItem] = useState<AnalysisHistoryItem | null>(null);
+
+  function refreshHistory() {
+    fetch('/api/analyze/history')
+      .then((r) => r.json())
+      .then((d) => {
+        setHistory(d.analyses ?? []);
+        setHistoryLocked(!!d.locked);
+      })
+      .catch(() => {});
+  }
 
   useEffect(() => {
     // Restore a pending TikTok URL saved before login/signup
@@ -78,7 +98,10 @@ export default function Home() {
     fetch('/api/auth/me')
       .then((r) => r.json())
       .then((data) => {
-        if (data.user) setAuthUser(data.user);
+        if (data.user) {
+          setAuthUser(data.user);
+          refreshHistory();
+        }
       })
       .catch((err) => {
         console.error('[Home] /api/auth/me failed:', err);
@@ -98,10 +121,10 @@ export default function Home() {
     isReady && effectiveCount >= effectiveLimit;
 
   // ── Handlers ───────────────────────────────────────────────────────────────
-  const handleAnalyze = async () => {
+  const analyzeFromUrl = async (sourceUrl: string) => {
     if (isLimitReached) return;
 
-    const trimmed = normalizeTikTokUrl(url);
+    const trimmed = normalizeTikTokUrl(sourceUrl);
     if (!trimmed) {
       setError('Veuillez coller un lien TikTok.');
       return;
@@ -205,6 +228,7 @@ export default function Home() {
       });
 
       setResults(data);
+      setCompareItem(null);
 
       if (authUser) {
         // Refresh DB count from server
@@ -214,6 +238,7 @@ export default function Home() {
           .catch((err) => {
             console.error('[Home] /api/auth/me refresh failed:', err);
           });
+        refreshHistory();
       } else {
         // Guest: persist to localStorage
         const next = guestCount + 1;
@@ -227,6 +252,8 @@ export default function Home() {
       setIsLoading(false);
     }
   };
+
+  const handleAnalyze = async () => analyzeFromUrl(url);
 
   const handleReset = () => {
     localStorage.removeItem(STORAGE_KEY);
@@ -275,6 +302,100 @@ export default function Home() {
             </p>
           )}
         </div>
+
+        {/* Recent analyses + quick relaunch */}
+        {authUser && (
+          <div className="mt-6 bg-[#0d0d0d] border border-[#1a1a1a] rounded-2xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
+                Historique rapide
+              </p>
+              {historyLocked && (
+                <span className="text-[11px] text-[#c084fc]">Débloque en Pro</span>
+              )}
+            </div>
+
+            {historyLocked ? (
+              <p className="text-xs text-gray-600">
+                L&apos;historique complet est disponible en Pro/Elite.
+              </p>
+            ) : history.length === 0 ? (
+              <p className="text-xs text-gray-600">Aucune analyse récente.</p>
+            ) : (
+              <div className="space-y-2">
+                {history.slice(0, 6).map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-2 rounded-lg border border-[#1e1e1e] bg-[#111] px-3 py-2"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUrl(item.video_url);
+                        analyzeFromUrl(item.video_url);
+                      }}
+                      className="text-left flex-1 min-w-0"
+                    >
+                      <p className="text-xs text-white truncate">{item.video_url}</p>
+                      <p className="text-[11px] text-gray-600">
+                        Score {item.result?.viralityScore ?? 0} · {new Date(item.created_at).toLocaleDateString('fr-FR')}
+                      </p>
+                    </button>
+                    {results && (
+                      <button
+                        type="button"
+                        onClick={() => setCompareItem(item)}
+                        className="text-[11px] px-2 py-1 rounded-md border border-[#2a2a2a] text-gray-400 hover:text-white"
+                      >
+                        Comparer
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Before / after comparison */}
+        {results && compareItem && (
+          <div className="mt-6 rounded-2xl border border-[#1a1a1a] bg-[#0f0f0f] p-4">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
+                Comparaison avant / après
+              </p>
+              <button
+                type="button"
+                onClick={() => setCompareItem(null)}
+                className="text-[11px] text-gray-500 hover:text-gray-300"
+              >
+                Fermer
+              </button>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              {[
+                { label: 'Global', prev: compareItem.result.viralityScore, cur: results.viralityScore },
+                { label: 'Hook', prev: compareItem.result.hook?.score ?? 0, cur: results.hook?.score ?? 0 },
+                { label: 'Montage', prev: compareItem.result.editing?.score ?? 0, cur: results.editing?.score ?? 0 },
+                { label: 'Rétention', prev: compareItem.result.retention?.score ?? 0, cur: results.retention?.score ?? 0 },
+              ].map((m) => {
+                const delta = m.cur - m.prev;
+                const up = delta >= 0;
+                return (
+                  <div key={m.label} className="rounded-lg border border-[#1d1d1d] bg-[#121212] px-3 py-2">
+                    <p className="text-[11px] text-gray-500">{m.label}</p>
+                    <p className="text-sm font-bold text-white">
+                      {m.prev} → {m.cur}
+                    </p>
+                    <p className={`text-[11px] ${up ? 'text-green-400' : 'text-red-400'}`}>
+                      {up ? '+' : ''}{delta}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {isLoading && (
           <div className="mt-10">
