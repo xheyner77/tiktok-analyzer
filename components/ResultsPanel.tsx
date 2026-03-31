@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { AnalysisResult } from '@/lib/types';
 import ScoreRing from './ScoreRing';
 import AnalysisCard from './AnalysisCard';
@@ -97,6 +98,57 @@ const RetentionIcon = () => (
 );
 
 export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
+  useEffect(() => {
+    console.log('[DEBUG][ResultsPanel] props received — plan:', plan);
+    console.log('[DEBUG][ResultsPanel] full data object:', data);
+
+    if (data == null) {
+      console.error('[DEBUG][ResultsPanel] data is null or undefined!');
+      return;
+    }
+
+    // Vérification des sections requises
+    (['hook', 'editing', 'retention'] as const).forEach((key) => {
+      if (!data[key]) {
+        console.error(`[DEBUG][ResultsPanel] data.${key} is MISSING:`, data[key]);
+      } else {
+        const s = data[key];
+        if (typeof s.score !== 'number')
+          console.error(`[DEBUG][ResultsPanel] data.${key}.score is not a number:`, s.score);
+        if (!s.rating)
+          console.error(`[DEBUG][ResultsPanel] data.${key}.rating is missing:`, s.rating);
+        if (!Array.isArray(s.strengths))
+          console.error(`[DEBUG][ResultsPanel] data.${key}.strengths is not an array:`, s.strengths);
+        if (!Array.isArray(s.weaknesses))
+          console.error(`[DEBUG][ResultsPanel] data.${key}.weaknesses is not an array:`, s.weaknesses);
+      }
+    });
+
+    // Vérification improvements
+    if (!Array.isArray(data.improvements)) {
+      console.error('[DEBUG][ResultsPanel] data.improvements is not an array:', data.improvements);
+    } else {
+      const VALID = ['haute', 'moyenne', 'basse'];
+      data.improvements.forEach((imp, i) => {
+        if (!VALID.includes(imp.priority)) {
+          console.error(
+            `[DEBUG][ResultsPanel] improvements[${i}].priority INVALID:`,
+            imp.priority,
+            '— expected: haute | moyenne | basse'
+          );
+        }
+      });
+      console.log('[DEBUG][ResultsPanel] improvements priorities:',
+        data.improvements.map(i => i.priority)
+      );
+    }
+
+    // Vérifications optionnelles
+    if (typeof data.viralityScore !== 'number') {
+      console.error('[DEBUG][ResultsPanel] viralityScore is not a number:', data.viralityScore);
+    }
+  }, [data, plan]);
+
   return (
     <div className="space-y-6 animate-fade-up">
       {/* Score hero card */}
@@ -114,9 +166,9 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
         {/* Sub scores */}
         <div className="grid grid-cols-3 gap-3 mt-2">
           {[
-            { label: 'Hook', score: data.hook.score },
-            { label: 'Montage', score: data.editing.score },
-            { label: 'Rétention', score: data.retention.score },
+            { label: 'Hook', score: data.hook?.score ?? 0 },
+            { label: 'Montage', score: data.editing?.score ?? 0 },
+            { label: 'Rétention', score: data.retention?.score ?? 0 },
           ].map(({ label, score }) => (
             <div
               key={label}
@@ -198,24 +250,30 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
           Analyse détaillée
         </h2>
 
-        <AnalysisCard
-          title="Analyse du Hook"
-          icon={<HookIcon />}
-          data={data.hook}
-          delay={100}
-        />
-        <AnalysisCard
-          title="Analyse du Montage"
-          icon={<EditingIcon />}
-          data={data.editing}
-          delay={200}
-        />
-        <AnalysisCard
-          title="Analyse de la Rétention"
-          icon={<RetentionIcon />}
-          data={data.retention}
-          delay={300}
-        />
+        {data.hook && (
+          <AnalysisCard
+            title="Analyse du Hook"
+            icon={<HookIcon />}
+            data={data.hook}
+            delay={100}
+          />
+        )}
+        {data.editing && (
+          <AnalysisCard
+            title="Analyse du Montage"
+            icon={<EditingIcon />}
+            data={data.editing}
+            delay={200}
+          />
+        )}
+        {data.retention && (
+          <AnalysisCard
+            title="Analyse de la Rétention"
+            icon={<RetentionIcon />}
+            data={data.retention}
+            delay={300}
+          />
+        )}
       </div>
 
       {/* Improvements */}
@@ -223,7 +281,7 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
         <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest px-1">
           Recommandations
         </h2>
-        <ImprovementTips improvements={data.improvements} plan={plan} />
+        <ImprovementTips improvements={data.improvements ?? []} plan={plan} />
       </div>
 
       {/* Viral Tips — Elite only */}

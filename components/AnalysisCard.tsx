@@ -21,6 +21,26 @@ export default function AnalysisCard({
   const [visible, setVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
+  // ── Diagnostic ──────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!data) {
+      console.error(`[DEBUG][AnalysisCard "${title}"] data prop is MISSING:`, data);
+      return;
+    }
+    const issues: string[] = [];
+    if (typeof data.score !== 'number')       issues.push(`score=${data.score}`);
+    if (!data.rating)                          issues.push(`rating=${data.rating}`);
+    if (!data.analysis)                        issues.push(`analysis=${data.analysis}`);
+    if (!Array.isArray(data.strengths))        issues.push(`strengths=${data.strengths}`);
+    if (!Array.isArray(data.weaknesses))       issues.push(`weaknesses=${data.weaknesses}`);
+
+    if (issues.length > 0) {
+      console.error(`[DEBUG][AnalysisCard "${title}"] unexpected props:`, issues.join(' | '), '— full data:', data);
+    } else {
+      console.log(`[DEBUG][AnalysisCard "${title}"] OK — score:${data.score} rating:${data.rating} strengths:${data.strengths.length} weaknesses:${data.weaknesses.length}`);
+    }
+  }, [title, data]);
+
   useEffect(() => {
     const timeout = setTimeout(() => {
       setVisible(true);
@@ -78,13 +98,13 @@ export default function AnalysisCard({
       </p>
 
       {/* Strengths */}
-      {data.strengths.length > 0 && (
+      {(data.strengths?.length ?? 0) > 0 && (
         <div className="mb-3">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
             Points forts
           </p>
           <ul className="space-y-1.5">
-            {data.strengths.map((s, i) => (
+            {(data.strengths ?? []).map((s, i) => (
               <li key={i} className="flex items-start gap-2">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -106,13 +126,13 @@ export default function AnalysisCard({
       )}
 
       {/* Weaknesses */}
-      {data.weaknesses.length > 0 && (
+      {(data.weaknesses?.length ?? 0) > 0 && (
         <div>
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
             Points faibles
           </p>
           <ul className="space-y-1.5">
-            {data.weaknesses.map((w, i) => (
+            {(data.weaknesses ?? []).map((w, i) => (
               <li key={i} className="flex items-start gap-2">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

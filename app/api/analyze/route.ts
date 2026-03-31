@@ -327,13 +327,7 @@ function buildMockResult(url: string, plan: string = 'free'): AnalysisResult {
       rating: getRating(clamp(profile.retention.score + variation)),
     },
     improvements: profile.improvements.map((item): Improvement => ({
-      priority: (
-        item.priority === 'haute'
-          ? 'high'
-          : item.priority === 'moyenne'
-          ? 'medium'
-          : 'low'
-      ) as Improvement['priority'],
+      priority: item.priority,
       tip: item.tip,
     })),
   };

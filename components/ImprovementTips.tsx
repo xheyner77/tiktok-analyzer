@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { Improvement, Priority } from '@/lib/types';
 
@@ -29,8 +30,14 @@ const priorityConfig: Record<
   },
 };
 
+const fallbackConfig = {
+  label: 'Recommandation',
+  className: 'bg-gray-500/10 text-gray-400 border border-gray-500/20',
+  dot: 'bg-gray-500',
+};
+
 function TipItem({ item, index }: { item: Improvement; index: number }) {
-  const config = priorityConfig[item.priority];
+  const config = priorityConfig[item.priority as Priority] ?? fallbackConfig;
   return (
     <li className="flex items-start gap-3 p-3 rounded-xl bg-[#0e0e0e] border border-[#1a1a1a]">
       <span className="shrink-0 w-6 h-6 rounded-full bg-[#1a1a1a] flex items-center justify-center text-xs font-bold text-gray-500 mt-0.5">
@@ -39,10 +46,20 @@ function TipItem({ item, index }: { item: Improvement; index: number }) {
       <div className="flex-1 min-w-0">
         <p className="text-xs text-gray-300 leading-relaxed">{item.tip}</p>
         <div className="mt-2">
-          <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full ${config.className}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
-            {config.label}
-          </span>
+        <li className="flex items-start gap-3 p-3 rounded-xl bg-[#0e0e0e] border border-[#1a1a1a]">
+  <span className="shrink-0 w-6 h-6 rounded-full bg-[#1a1a1a] flex items-center justify-center text-xs font-bold text-gray-500 mt-0.5">
+    {index + 1}
+  </span>
+  <div className="flex-1 min-w-0">
+    <p className="text-xs text-gray-300 leading-relaxed">{item.tip}</p>
+    <div className="mt-2">
+      <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full bg-gray-500/10 text-gray-400 border border-gray-500/20">
+        <span className="w-1.5 h-1.5 rounded-full bg-gray-500" />
+        Recommandation
+      </span>
+    </div>
+  </div>
+</li>
         </div>
       </div>
     </li>
@@ -50,6 +67,25 @@ function TipItem({ item, index }: { item: Improvement; index: number }) {
 }
 
 export default function ImprovementTips({ improvements, plan }: ImprovementTipsProps) {
+  useEffect(() => {
+    if (!Array.isArray(improvements)) {
+      console.error('[DEBUG][ImprovementTips] improvements is not an array:', improvements);
+      return;
+    }
+    console.log('[DEBUG][ImprovementTips] received', improvements.length, 'improvements — priorities:',
+      improvements.map((i, idx) => `[${idx}] ${i.priority}`)
+    );
+    const VALID = ['haute', 'moyenne', 'basse'];
+    improvements.forEach((imp, i) => {
+      if (!VALID.includes(imp.priority)) {
+        console.error(`[DEBUG][ImprovementTips] improvements[${i}].priority INVALID:`, imp.priority);
+      }
+      if (!imp.tip) {
+        console.error(`[DEBUG][ImprovementTips] improvements[${i}].tip is missing:`, imp.tip);
+      }
+    });
+  }, [improvements]);
+
   const isFreePlan = plan === 'free';
   const visible = isFreePlan ? improvements.slice(0, VISIBLE_FREE) : improvements;
   const locked = isFreePlan ? improvements.slice(VISIBLE_FREE) : [];

@@ -101,7 +101,57 @@ export default function Home() {
 
       if (!response.ok) throw new Error('Analyse échouée');
 
-      const data: AnalysisResult = await response.json();
+      const rawText = await response.text();
+      console.log('[DEBUG][page] /api/analyze raw response text:', rawText.slice(0, 500));
+
+      let data: AnalysisResult;
+      try {
+        data = JSON.parse(rawText) as AnalysisResult;
+      } catch (parseErr) {
+        console.error('[DEBUG][page] JSON.parse failed — raw text was:', rawText);
+        throw parseErr;
+      }
+
+      // ── Vérification de structure ──────────────────────────────────────────
+      const REQUIRED_SECTIONS = ['hook', 'editing', 'retention'] as const;
+      for (const key of REQUIRED_SECTIONS) {
+        if (!data[key]) {
+          console.error(`[DEBUG][page] MISSING section: data.${key} is`, data[key]);
+        } else {
+          const s = data[key];
+          if (typeof s.score !== 'number')  console.error(`[DEBUG][page] data.${key}.score is not a number:`, s.score);
+          if (!s.rating)                     console.error(`[DEBUG][page] data.${key}.rating is missing:`, s.rating);
+          if (!Array.isArray(s.strengths))   console.error(`[DEBUG][page] data.${key}.strengths is not an array:`, s.strengths);
+          if (!Array.isArray(s.weaknesses))  console.error(`[DEBUG][page] data.${key}.weaknesses is not an array:`, s.weaknesses);
+        }
+      }
+
+      if (typeof data.viralityScore !== 'number') {
+        console.error('[DEBUG][page] data.viralityScore is not a number:', data.viralityScore);
+      }
+
+      if (!Array.isArray(data.improvements)) {
+        console.error('[DEBUG][page] data.improvements is not an array:', data.improvements);
+      } else {
+        const VALID_PRIORITIES = ['haute', 'moyenne', 'basse'];
+        data.improvements.forEach((imp, i) => {
+          if (!VALID_PRIORITIES.includes(imp.priority)) {
+            console.error(`[DEBUG][page] data.improvements[${i}].priority has unexpected value:`, imp.priority, '— expected: haute | moyenne | basse');
+          }
+        });
+      }
+
+      console.log('[DEBUG][page] structure summary:', {
+        viralityScore: data.viralityScore,
+        hookScore: data.hook?.score,
+        editingScore: data.editing?.score,
+        retentionScore: data.retention?.score,
+        improvementsCount: data.improvements?.length,
+        priorities: data.improvements?.map(i => i.priority),
+        hasStrategy: !!data.strategy,
+        hasViralTips: !!data.viralTips,
+      });
+
       setResults(data);
 
       if (authUser) {
