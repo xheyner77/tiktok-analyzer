@@ -16,7 +16,7 @@ interface DashboardClientProps {
   hooksLimit: number;
   memberSince: string;
   analyses: AnalysisRow[];
-  paymentSuccess?: boolean;
+  stripeSessionId?: string | null;
 }
 
 const planLabels: Record<Plan, string> = { free: 'Free', pro: 'Pro', elite: 'Elite' };
@@ -189,16 +189,16 @@ function AnalysisHistoryItem({ row }: { row: AnalysisRow }) {
 }
 
 export default function DashboardClient({
-  email, plan, analysesCount, analysesLimit, hooksCount, hooksLimit, memberSince, analyses, paymentSuccess,
+  email, plan, analysesCount, analysesLimit, hooksCount, hooksLimit, memberSince, analyses, stripeSessionId,
 }: DashboardClientProps) {
   const router = useRouter();
   const [upgradeStatus, setUpgradeStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [upgradedPlan, setUpgradedPlan] = useState<string | null>(null);
 
-  // After Stripe redirects back with ?success=true, read the pending plan from
-  // localStorage and apply the upgrade via API, then clean the URL.
+  // After Stripe redirects back with ?session_id=cs_xxx, verify the payment
+  // server-side and apply the plan upgrade, then clean the URL.
   useEffect(() => {
-    if (!paymentSuccess) return;
+    if (!stripeSessionId) return;
 
     const pendingPlan = localStorage.getItem('pendingPlan');
 
@@ -213,7 +213,7 @@ export default function DashboardClient({
     fetch('/api/upgrade-plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan: pendingPlan }),
+      body: JSON.stringify({ plan: pendingPlan, sessionId: stripeSessionId }),
     })
       .then((r) => r.json())
       .then((data) => {
@@ -233,7 +233,7 @@ export default function DashboardClient({
         setUpgradeStatus('error');
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paymentSuccess]);
+  }, [stripeSessionId]);
 
   const remaining  = Math.max(0, analysesLimit - analysesCount);
   const canAnalyze = remaining > 0;

@@ -29,7 +29,8 @@ export default async function DashboardPage({
   const hooksLimit    = HOOK_LIMITS[plan]      ?? 0;
 
   const analyses = await getAnalyses(session.userId, plan);
-  const paymentSuccess = searchParams.success === 'true';
+  // Stripe appends the real session ID — use it to verify the payment server-side
+  const stripeSessionId = searchParams.session_id ?? null;
 
   return (
     <main className="min-h-screen bg-[#080808]">
@@ -47,7 +48,7 @@ export default async function DashboardPage({
           hooksLimit={hooksLimit}
           memberSince={memberSince}
           analyses={analyses}
-          paymentSuccess={paymentSuccess}
+          stripeSessionId={stripeSessionId}
         />
       </div>
     </main>

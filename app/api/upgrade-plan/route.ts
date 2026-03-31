@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import Stripe from 'stripe';
 import { getSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
 
-// MVP: called client-side after Stripe redirects back with ?success=true.
-// The chosen plan was stored in localStorage before the Stripe redirect.
-// NOTE: for production, replace with a Stripe webhook for tamper-proof upgrades.
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getSession();
@@ -13,15 +13,53 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Non authentifié.' }, { status: 401 });
     }
 
-    const { plan } = await request.json() as { plan?: string };
+    const { plan, sessionId } = await request.json() as { plan?: string; sessionId?: string };
 
     if (plan !== 'pro' && plan !== 'elite') {
       return NextResponse.json({ error: 'Plan invalide.' }, { status: 400 });
     }
 
+    // ── Verify payment with Stripe (tamper-proof) ──────────────────────────
+    if (sessionId) {
+      let checkoutSession: Stripe.Checkout.Session;
+
+      try {
+        checkoutSession = await stripe.checkout.sessions.retrieve(sessionId);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error('[upgrade-plan] Stripe session retrieve failed:', msg);
+        return NextResponse.json({ error: 'Session Stripe introuvable.' }, { status: 400 });
+      }
+
+      // Payment must be confirmed
+      if (checkoutSession.payment_status !== 'paid') {
+        console.error('[upgrade-plan] Payment not confirmed for session:', sessionId);
+        return NextResponse.json({ error: 'Paiement non confirmé.' }, { status: 402 });
+      }
+
+      // Session must belong to this user
+      if (checkoutSession.metadata?.userId !== session.userId) {
+        console.error('[upgrade-plan] userId mismatch — session:', checkoutSession.metadata?.userId, 'auth:', session.userId);
+        return NextResponse.json({ error: 'Session invalide.' }, { status: 403 });
+      }
+
+      // Plan in Stripe metadata must match the requested plan
+      if (checkoutSession.metadata?.plan !== plan) {
+        console.error('[upgrade-plan] Plan mismatch — stripe:', checkoutSession.metadata?.plan, 'requested:', plan);
+        return NextResponse.json({ error: 'Plan incohérent.' }, { status: 400 });
+      }
+    }
+
+    // ── Upgrade plan + reset monthly counters ─────────────────────────────
+    const now = new Date().toISOString();
     const { error } = await supabase
       .from('users')
-      .update({ plan, analyses_count: 0 })
+      .update({
+        plan,
+        analyses_count: 0,
+        hooks_count:    0,
+        last_reset_at:  now,
+      })
       .eq('id', session.userId);
 
     if (error) {

@@ -40,10 +40,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unknown plan.' }, { status: 400 });
     }
 
-    // Upgrade the user's plan and reset their monthly counter
+    // Upgrade the user's plan and reset all monthly counters
+    const now = new Date().toISOString();
     const { error } = await supabase
       .from('users')
-      .update({ plan, analyses_count: 0 })
+      .update({
+        plan,
+        analyses_count: 0,
+        hooks_count:    0,
+        last_reset_at:  now,
+      })
       .eq('id', userId);
 
     if (error) {
