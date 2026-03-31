@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AnalysisResult, Rating, Improvement, AnalysisSection } from '@/lib/types';
 import { getSession } from '@/lib/session';
-import { getUserById, incrementAnalysesCount, checkAndResetMonthly, PLAN_LIMITS } from '@/lib/auth';
+import { getUserById, incrementAnalysesCount, checkAndResetMonthly, canRunAnalysis, PLAN_LIMITS } from '@/lib/auth';
 import { saveAnalysis } from '@/lib/analyses';
 import { analyzeWithOpenAI } from '@/lib/openai';
 
@@ -385,16 +385,16 @@ export async function POST(request: NextRequest) {
         plan: dbUser.plan,
         count: dbUser.analyses_count,
         limit,
-        allowed: dbUser.analyses_count < limit,
+        allowed: canRunAnalysis(dbUser),
       });
 
-      if (dbUser.analyses_count >= limit) {
+      if (!canRunAnalysis(dbUser)) {
         return NextResponse.json(
           {
-            error: 'Tu as atteint ta limite. Passe en premium pour continuer.',
-            code: 'LIMIT_REACHED',
-            plan: dbUser.plan,
-            used: dbUser.analyses_count,
+            error: 'Limite atteinte pour ce mois',
+            type:  'analysis',
+            plan:  dbUser.plan,
+            used:  dbUser.analyses_count,
             limit,
           },
           { status: 429 }

@@ -110,6 +110,20 @@ export async function checkAndResetMonthly(user: UserProfile): Promise<UserProfi
   return { ...user, analyses_count: 0, hooks_count: 0, last_reset_at: nowIso };
 }
 
+// ── Quota guards ─────────────────────────────────────────────────────────────
+
+/** True if the user has not yet exhausted their analysis quota this period */
+export function canRunAnalysis(user: UserProfile): boolean {
+  const limit = PLAN_LIMITS[user.plan] ?? PLAN_LIMITS.free;
+  return user.analyses_count < limit;
+}
+
+/** True if the user's plan includes hook generation and quota is not exhausted */
+export function canGenerateHook(user: UserProfile): boolean {
+  const limit = HOOK_LIMITS[user.plan] ?? 0;
+  return limit > 0 && user.hooks_count < limit;
+}
+
 // ── Increments ───────────────────────────────────────────────────────────────
 
 /** Atomic increment of analyses_count */

@@ -4,6 +4,7 @@ import {
   getUserById,
   checkAndResetMonthly,
   incrementHooksCount,
+  canGenerateHook,
   HOOK_LIMITS,
 } from '@/lib/auth';
 
@@ -98,19 +99,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: 'Le générateur de hooks est disponible à partir du plan Pro.',
-          code: 'PLAN_REQUIRED',
-          plan: user.plan,
+          type:  'hook',
+          plan:  user.plan,
         },
         { status: 403 }
       );
     }
 
     // ── Quota check ─────────────────────────────────────────────────────────
-    if (user.hooks_count >= hookLimit) {
+    if (!canGenerateHook(user)) {
       return NextResponse.json(
         {
-          error: 'Limite atteinte — passe à un plan supérieur pour continuer.',
-          code: 'LIMIT_REACHED',
+          error: 'Limite atteinte pour ce mois',
+          type:  'hook',
           plan:  user.plan,
           used:  user.hooks_count,
           limit: hookLimit,
