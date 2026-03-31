@@ -2,7 +2,8 @@
  * Extrait des images JPEG (base64 sans préfixe data:) depuis un fichier vidéo — navigateur uniquement.
  */
 
-const DEFAULT_MAX_FRAMES = 8;
+/** Moins d’images = moins de tokens / requête (limite TPM OpenAI). */
+const DEFAULT_MAX_FRAMES = 6;
 const DEFAULT_MAX_WIDTH = 640;
 const DEFAULT_MAX_DURATION_SEC = 90;
 

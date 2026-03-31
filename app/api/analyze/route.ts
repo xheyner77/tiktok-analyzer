@@ -8,6 +8,7 @@ import { normalizeTikTokUrl, isTikTokVideoUrl } from '@/lib/tiktok-url';
 import { fetchTikTokPublicStatsV2 } from '@/lib/tiktok';
 import { supabase } from '@/lib/supabase';
 
+/** Vision + reprises 429 : plusieurs appels OpenAI (plafond plan Vercel). */
 export const maxDuration = 60;
 
 interface ObservedMetrics {

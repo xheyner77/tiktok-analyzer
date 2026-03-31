@@ -1,9 +1,38 @@
-import OpenAI, { APIError, APIConnectionError } from 'openai';
-import type { ChatCompletionContentPart } from 'openai/resources/chat/completions';
+import OpenAI, { APIError, APIConnectionError, RateLimitError } from 'openai';
+import type { ChatCompletion, ChatCompletionContentPart } from 'openai/resources/chat/completions';
 import type { Plan } from './supabase';
 import type { AnalysisResult, Rating, Priority } from './types';
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+  maxRetries: 4,
+  timeout: 120_000,
+});
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** 429 / 503 : délai avant nouvel essai (backoff court + Retry-After). Max 3 tentatives. */
+function getOpenAIRetryDelayMs(e: unknown, attemptIndex: number): number | null {
+  if (attemptIndex >= 2) return null;
+  let base = 1000 * Math.pow(2, attemptIndex);
+  if (e instanceof APIError && e.headers) {
+    const h = e.headers as Headers;
+    const ra = h.get('retry-after');
+    if (ra) {
+      const sec = parseInt(ra, 10);
+      if (!Number.isNaN(sec) && sec >= 0) base = Math.max(base, sec * 1000);
+    }
+  }
+  return Math.min(base, 45_000);
+}
+
+function isOpenAIRetryableTransient(e: unknown): boolean {
+  if (e instanceof RateLimitError) return true;
+  if (e instanceof APIError && (e.status === 429 || e.status === 503)) return true;
+  return false;
+}
 
 // ── Prompt builders ────────────────────────────────────────────────────────────
 
@@ -237,16 +266,39 @@ export async function analyzeWithOpenAIVision(
 
   const maxOut = plan === 'elite' ? 4000 : 2800;
 
-  const response = await client.chat.completions.create({
-    model: 'gpt-4o-mini',
+  const createParams = {
+    model: 'gpt-4o-mini' as const,
     temperature: 0.4,
     max_tokens: maxOut,
-    response_format: { type: 'json_object' },
+    response_format: { type: 'json_object' as const },
     messages: [
-      { role: 'system', content: systemPromptVision() },
-      { role: 'user', content: userContent },
+      { role: 'system' as const, content: systemPromptVision() },
+      { role: 'user' as const, content: userContent },
     ],
-  });
+  };
+
+  let response: ChatCompletion | undefined;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      response = await client.chat.completions.create(createParams);
+      break;
+    } catch (e) {
+      if (!isOpenAIRetryableTransient(e)) throw e;
+      const delay = getOpenAIRetryDelayMs(e, attempt);
+      if (delay == null) throw e;
+      console.warn(
+        `[openai] vision retry after transient error (attempt ${attempt + 1}/3, wait ${delay}ms)`,
+        e instanceof APIError ? e.status : e
+      );
+      await sleep(delay);
+    }
+  }
+
+  if (!response) {
+    throw new Error(
+      'Le service IA est saturé après plusieurs tentatives. Réessaie dans une minute.'
+    );
+  }
 
   const choice = response.choices[0];
   const raw = choice?.message?.content ?? '';
@@ -289,7 +341,8 @@ export function mapOpenAIVisionError(e: unknown): { message: string; status: num
   if (e instanceof APIError) {
     if (e.status === 429) {
       return {
-        message: 'Trop de requêtes vers le service IA. Réessaie dans une minute.',
+        message:
+          'Limite de débit du service OpenAI atteinte (plusieurs essais déjà effectués côté serveur). Réessaie dans 1 à 2 minutes, ou vérifie ton quota / facturation sur platform.openai.com.',
         status: 503,
       };
     }
