@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAuth } from '@/lib/supabase';
+import { getSiteUrl } from '@/lib/site-url';
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,9 +10,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email requis.' }, { status: 400 });
     }
 
-    const origin = request.headers.get('origin') ??
-      (process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000');
-    const emailRedirectTo = `${origin}/auth/callback`;
+    const siteUrl = getSiteUrl(request.headers.get('origin'));
+    const emailRedirectTo = `${siteUrl}/auth/callback`;
+
+    console.log('[resend-confirmation] emailRedirectTo:', emailRedirectTo, '— email:', email);
 
     const { error } = await supabaseAuth.auth.resend({
       type: 'signup',
@@ -24,7 +26,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    console.log('[resend-confirmation] Email resent to:', email);
     return NextResponse.json({ success: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

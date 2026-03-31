@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAuth, supabase } from '@/lib/supabase';
+import { getSiteUrl } from '@/lib/site-url';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,13 +14,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Build the absolute redirect URL from the incoming request origin
-    // so it works on every deployment (localhost, preview, production).
-    const origin = request.headers.get('origin') ??
-      (process.env.NEXT_PUBLIC_SITE_URL
-        ? process.env.NEXT_PUBLIC_SITE_URL
-        : 'http://localhost:3000');
-    const emailRedirectTo = `${origin}/auth/callback`;
+    // Resolve the correct public URL for this deployment so that Supabase
+    // embeds the right domain in the confirmation email link.
+    // The URL MUST be whitelisted in Supabase Dashboard → Authentication →
+    // URL Configuration → Redirect URLs, otherwise Supabase falls back to
+    // its "Site URL" (which defaults to localhost in dev projects).
+    const siteUrl = getSiteUrl(request.headers.get('origin'));
+    const emailRedirectTo = `${siteUrl}/auth/callback`;
+
+    console.log('[signup] emailRedirectTo:', emailRedirectTo);
 
     const { data, error } = await supabaseAuth.auth.signUp({
       email,
@@ -42,12 +45,11 @@ export async function POST(request: NextRequest) {
     const userId = data.user?.id;
 
     // data.session is null when Supabase requires email confirmation.
-    // data.user is non-null but data.user.email_confirmed_at is null.
     const needsEmailConfirmation = !!data.user && !data.session;
 
     console.log('[signup] Auth success — user id:', userId ?? 'null', '| needs confirmation:', needsEmailConfirmation);
 
-    // Insert profile row in public.users (upsert so a duplicate id never crashes)
+    // Upsert profile row (ignoreDuplicates so a re-signup never crashes)
     if (userId) {
       const { error: dbError } = await supabase
         .from('users')
@@ -57,14 +59,11 @@ export async function POST(request: NextRequest) {
         );
 
       if (dbError) {
-        console.error('[signup] public.users insert error:', {
+        console.error('[signup] public.users upsert error:', {
           message: dbError.message,
           code: dbError.code,
           details: dbError.details,
-          hint: dbError.hint,
         });
-        // Don't block the response — the auth user was created successfully.
-        // The profile will be created on first login.
       } else {
         console.log('[signup] public.users row created for:', userId);
       }
