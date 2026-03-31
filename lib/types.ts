@@ -24,6 +24,10 @@ export interface AnalysisResult {
   observedStatsSource?: 'cache' | 'live_page' | 'live_oembed' | 'manual' | 'none';
   unavailableObservedStats?: string[];
   finalVerdict?: string;
+  /** Analyse comparative — texte généré par l’IA (évite les paragraphes génériques du front) */
+  comparativeInsight?: string;
+  /** Action prioritaire — dérivée des faiblesses identifiées */
+  comparativePriority?: string;
   observedMetrics?: {
     views?: number;
     likes?: number;

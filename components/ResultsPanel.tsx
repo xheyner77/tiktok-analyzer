@@ -317,7 +317,10 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
 
       {/* 4 — Analyse comparative (basée sur le score de structure) */}
       {(() => {
-        const { topPercent, comparison, gap, barColor } = getComparativeData(structureScore);
+        const { topPercent, comparison: fallbackComp, gap: fallbackGap, barColor } =
+          getComparativeData(structureScore);
+        const comparison = data.comparativeInsight?.trim() || fallbackComp;
+        const gap = data.comparativePriority?.trim() || fallbackGap;
         const barWidth = Math.max(4, 100 - topPercent);
         return (
           <div className="bg-[#111] border border-[#1a1a1a] rounded-2xl p-5 card-glow space-y-4">

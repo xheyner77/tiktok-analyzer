@@ -413,6 +413,59 @@ function computeObservedPerformance(metrics?: ObservedMetrics): { score: number;
   return { score: merged, label, estimated };
 }
 
+function clipText(text: string, max: number): string {
+  const t = text.trim();
+  if (!t) return '';
+  return t.length <= max ? t : `${t.slice(0, max - 1)}…`;
+}
+
+/** Synthèse comparative ancrée dans les faiblesses déjà présentes (mock / secours si l’IA omet des champs). */
+function deriveContextualComparative(
+  result: AnalysisResult,
+  metrics?: ObservedMetrics,
+  caption?: string,
+  author?: string
+): { comparativeInsight: string; comparativePriority: string } {
+  const structure = result.structureScore ?? result.viralityScore ?? 0;
+  const hs = result.hook?.score ?? 0;
+  const es = result.editing?.score ?? 0;
+  const rs = result.retention?.score ?? 0;
+  const hookW = clipText(result.hook?.weaknesses?.[0] ?? '', 220);
+  const editW = clipText(result.editing?.weaknesses?.[0] ?? '', 220);
+  const retW = clipText(result.retention?.weaknesses?.[0] ?? '', 220);
+  const vw = metrics?.views;
+  const fmt = (n: number) =>
+    new Intl.NumberFormat('fr-FR', { notation: 'compact', maximumFractionDigits: 1 }).format(n);
+
+  let comparativeInsight: string;
+  if (vw && vw > 0) {
+    comparativeInsight =
+      `Les stats publiques indiquent environ ${fmt(vw)} vues : la portée existe. ` +
+      `Avec un score structure à ${structure}/100, l’écart se lit surtout sur le trio hook (${hs}) / montage (${es}) / rétention (${rs}). `;
+    if (author) comparativeInsight += `Compte : @${author}. `;
+    if (caption?.trim()) {
+      comparativeInsight += `Légende détectée : « ${clipText(caption.trim(), 140)} » — aligne l’ouverture visuelle sur cette promesse dès la 1re seconde.`;
+    } else {
+      comparativeInsight += hookW
+        ? `Point faible principal (hook) : ${hookW}`
+        : `Priorise le hook : c’est le levier qui explique le plus l’écart avec la portée.`;
+    }
+  } else {
+    comparativeInsight =
+      `Score structure ${structure}/100 (hook ${hs}, montage ${es}, rétention ${rs}). ` +
+      (hookW
+        ? `Le diagnostic le plus coûteux côté hook : ${hookW}`
+        : `Renforce la clarté du hook dans les premières secondes pour éviter la sortie précoce.`);
+  }
+
+  const comparativePriority =
+    (editW && retW
+      ? `En priorité : montage — ${editW} Ensuite : rétention / fin — ${retW}`
+      : `Enchaîne : resserre le hook (score ${hs}), puis le rythme de montage (${es}) et la fin (${rs}).`).trim();
+
+  return { comparativeInsight: comparativeInsight.trim(), comparativePriority };
+}
+
 function buildFinalVerdict(structure: number, observed: { score: number; label: string } | null): string {
   if (!observed) {
     if (structure >= 75) return 'Structure solide, fort potentiel de diffusion.';
@@ -603,7 +656,13 @@ export async function POST(request: NextRequest) {
 
     if (useOpenAI) {
       try {
-        result = await analyzeWithOpenAI(url, plan as 'pro' | 'elite', observedMetrics);
+        result = await analyzeWithOpenAI(url, plan as 'pro' | 'elite', observedMetrics, detected
+          ? {
+              caption: detected.caption,
+              authorUsername: detected.authorUsername,
+              durationSec: detected.durationSec,
+            }
+          : undefined);
         console.log(`[analyze] OpenAI (${plan}) — viralityScore:`, result.viralityScore);
       } catch (aiErr) {
         console.error('[analyze] OpenAI failed, falling back to mock:', aiErr);
@@ -644,6 +703,17 @@ export async function POST(request: NextRequest) {
       return !m || !m[k];
     });
     result.finalVerdict = buildFinalVerdict(structureScore, observed);
+
+    if (!result.comparativeInsight?.trim() || !result.comparativePriority?.trim()) {
+      const derived = deriveContextualComparative(
+        result,
+        observedMetrics,
+        detected?.caption,
+        detected?.authorUsername
+      );
+      if (!result.comparativeInsight?.trim()) result.comparativeInsight = derived.comparativeInsight;
+      if (!result.comparativePriority?.trim()) result.comparativePriority = derived.comparativePriority;
+    }
 
     // ── Persist for authenticated users ──────────────────────────────────────
     if (session && dbUser) {
