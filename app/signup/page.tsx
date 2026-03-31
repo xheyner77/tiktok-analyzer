@@ -6,6 +6,97 @@ import { useRouter } from 'next/navigation';
 import AuthTransition from '@/components/AuthTransition';
 import { PENDING_PLAN_KEY } from '@/components/GuestGate';
 
+// ── Email confirmation screen ─────────────────────────────────────────────────
+
+function EmailConfirmationPending({ email }: { email: string }) {
+  const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+
+  async function handleResend() {
+    if (resendStatus === 'sending' || resendStatus === 'sent') return;
+    setResendStatus('sending');
+    try {
+      const res = await fetch('/api/auth/resend-confirmation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      setResendStatus(res.ok ? 'sent' : 'error');
+    } catch {
+      setResendStatus('error');
+    }
+  }
+
+  return (
+    <div className="relative w-full max-w-sm animate-fade-up text-center">
+      {/* Logo */}
+      <div className="flex flex-col items-center mb-8">
+        <Link href="/" className="flex items-center gap-2.5 mb-6">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#ff0050] to-[#7928ca] flex items-center justify-center shadow-lg shadow-[#ff0050]/25">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+              <path d="M9 18V5l12-2v13" />
+              <circle cx="6" cy="18" r="3" />
+              <circle cx="18" cy="16" r="3" />
+            </svg>
+          </div>
+          <span className="text-base font-bold text-white">TikTok<span className="gradient-text">Analyzer</span></span>
+        </Link>
+      </div>
+
+      <div className="bg-[#111] border border-[#1a1a1a] rounded-2xl p-7 card-glow">
+        {/* Icon */}
+        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#ff0050]/15 to-[#7928ca]/15 border border-[#ff0050]/20 flex items-center justify-center text-2xl mx-auto mb-5">
+          ✉️
+        </div>
+
+        <h2 className="text-xl font-bold text-white mb-2">Vérifie ton email</h2>
+        <p className="text-sm text-gray-400 mb-1">
+          Ton compte a bien été créé. Vérifie maintenant ton email pour activer ton accès.
+        </p>
+        <p className="text-xs text-gray-600 mb-6">
+          Nous t&apos;avons envoyé un lien à <span className="text-gray-400 font-medium">{email}</span>. Pense à vérifier aussi tes spams.
+        </p>
+
+        {/* Resend button */}
+        <button
+          onClick={handleResend}
+          disabled={resendStatus === 'sending' || resendStatus === 'sent'}
+          className="w-full py-3 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#ff0050] to-[#7928ca] text-white hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#ff0050]/15 mb-3"
+        >
+          {resendStatus === 'sending' ? (
+            <span className="flex items-center justify-center gap-2">
+              <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              Envoi en cours...
+            </span>
+          ) : resendStatus === 'sent' ? (
+            '✓ Email renvoyé !'
+          ) : (
+            'Renvoyer l\'email de confirmation'
+          )}
+        </button>
+
+        {resendStatus === 'error' && (
+          <p className="text-xs text-red-400 mb-3">Erreur lors de l&apos;envoi. Réessaie dans un instant.</p>
+        )}
+
+        {/* Already confirmed */}
+        <Link
+          href="/login"
+          className="block w-full py-2.5 rounded-xl font-semibold text-sm bg-[#1a1a1a] border border-[#222] text-gray-300 hover:bg-[#1f1f1f] hover:text-white transition-all text-center"
+        >
+          J&apos;ai déjà confirmé mon email →
+        </Link>
+      </div>
+
+      <p className="text-center text-xs text-gray-600 mt-5">
+        Une fois l&apos;email confirmé, connecte-toi pour accéder à ton espace.
+      </p>
+    </div>
+  );
+}
+
 function getPasswordStrength(password: string): { level: 0 | 1 | 2 | 3; label: string; color: string } {
   if (password.length === 0) return { level: 0, label: '', color: '' };
   let score = 0;
@@ -28,6 +119,7 @@ export default function SignupPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showTransition, setShowTransition] = useState(false);
+  const [pendingConfirmation, setPendingConfirmation] = useState(false);
 
   const strength = getPasswordStrength(password);
 
@@ -65,7 +157,14 @@ export default function SignupPage() {
         return;
       }
 
-      // Show premium transition — onComplete fires the actual navigation
+      // If Supabase requires email confirmation, show the confirmation screen.
+      if (data.needsEmailConfirmation) {
+        setIsLoading(false);
+        setPendingConfirmation(true);
+        return;
+      }
+
+      // No confirmation needed — show premium transition then redirect.
       setShowTransition(true);
       // isLoading stays true to keep buttons disabled during the transition
     } catch {
@@ -73,6 +172,18 @@ export default function SignupPage() {
       setIsLoading(false);
     }
   };
+
+  // Show email confirmation pending screen
+  if (pendingConfirmation) {
+    return (
+      <main className="min-h-screen bg-[#080808] flex items-center justify-center px-4">
+        <div className="fixed inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-[#7928ca]/5 to-[#ff0050]/5 blur-3xl" />
+        </div>
+        <EmailConfirmationPending email={email} />
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[#080808] flex items-center justify-center px-4">

@@ -3,6 +3,18 @@ import { cookies } from 'next/headers';
 import { supabaseAuth } from '@/lib/supabase';
 import { COOKIE_NAME, COOKIE_OPTIONS } from '@/lib/session';
 
+// Supabase error messages that indicate the email hasn't been confirmed yet.
+const EMAIL_NOT_CONFIRMED_MSGS = [
+  'email not confirmed',
+  'email address not confirmed',
+];
+
+function isEmailNotConfirmedError(message: string): boolean {
+  return EMAIL_NOT_CONFIRMED_MSGS.some((m) =>
+    message.toLowerCase().includes(m)
+  );
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json();
@@ -25,6 +37,19 @@ export async function POST(request: NextRequest) {
         status: error?.status,
         name: error?.name,
       });
+
+      // Translate the "email not confirmed" error to a user-friendly message
+      // with a dedicated code so the frontend can offer the resend button.
+      if (error?.message && isEmailNotConfirmedError(error.message)) {
+        return NextResponse.json(
+          {
+            error: 'Ton email n\'a pas encore été confirmé. Vérifie ta boîte mail (et tes spams) ou renvoie le lien de confirmation.',
+            code: 'EMAIL_NOT_CONFIRMED',
+          },
+          { status: 401 }
+        );
+      }
+
       return NextResponse.json(
         { error: error?.message ?? 'Email ou mot de passe incorrect.' },
         { status: 401 }

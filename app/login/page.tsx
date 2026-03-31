@@ -17,8 +17,25 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [errorCode, setErrorCode] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showTransition, setShowTransition] = useState(false);
+  const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+
+  async function handleResendConfirmation() {
+    if (!email || resendStatus === 'sending' || resendStatus === 'sent') return;
+    setResendStatus('sending');
+    try {
+      const res = await fetch('/api/auth/resend-confirmation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      setResendStatus(res.ok ? 'sent' : 'error');
+    } catch {
+      setResendStatus('error');
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,6 +45,8 @@ function LoginForm() {
     }
 
     setError('');
+    setErrorCode(null);
+    setResendStatus('idle');
     setIsLoading(true);
 
     try {
@@ -41,6 +60,7 @@ function LoginForm() {
 
       if (!res.ok) {
         setError(data.error ?? 'Une erreur est survenue.');
+        setErrorCode(data.code ?? null);
         setIsLoading(false);
         return;
       }
@@ -133,11 +153,40 @@ function LoginForm() {
 
           {/* Error */}
           {error && (
-            <div className="flex items-center gap-2 bg-red-500/8 border border-red-500/20 rounded-xl px-3.5 py-2.5">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-red-400 shrink-0">
-                <path fillRule="evenodd" d="M6.701 2.25c.577-1 2.02-1 2.598 0l5.196 9a1.5 1.5 0 0 1-1.299 2.25H2.804a1.5 1.5 0 0 1-1.3-2.25l5.197-9ZM8 4a.75.75 0 0 1 .75.75v3a.75.75 0 1 1-1.5 0v-3A.75.75 0 0 1 8 4Zm0 8a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-              </svg>
-              <p className="text-red-400 text-xs">{error}</p>
+            <div className={`border rounded-xl px-3.5 py-3 ${
+              errorCode === 'EMAIL_NOT_CONFIRMED'
+                ? 'bg-amber-500/8 border-amber-500/25'
+                : 'bg-red-500/8 border-red-500/20'
+            }`}>
+              <div className="flex items-start gap-2">
+                {errorCode === 'EMAIL_NOT_CONFIRMED' ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-amber-400 shrink-0 mt-0.5">
+                    <path d="M1.75 2h12.5c.966 0 1.75.784 1.75 1.75v8.5A1.75 1.75 0 0 1 14.25 14H1.75A1.75 1.75 0 0 1 0 12.25v-8.5C0 2.784.784 2 1.75 2ZM1.5 12.251c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V5.809L8.38 9.397a.75.75 0 0 1-.76 0L1.5 5.809v6.442Zm13-8.181v-.32a.25.25 0 0 0-.25-.25H1.75a.25.25 0 0 0-.25.25v.32L8 7.88Z" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-red-400 shrink-0 mt-0.5">
+                    <path fillRule="evenodd" d="M6.701 2.25c.577-1 2.02-1 2.598 0l5.196 9a1.5 1.5 0 0 1-1.299 2.25H2.804a1.5 1.5 0 0 1-1.3-2.25l5.197-9ZM8 4a.75.75 0 0 1 .75.75v3a.75.75 0 1 1-1.5 0v-3A.75.75 0 0 1 8 4Zm0 8a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+                  </svg>
+                )}
+                <p className={`text-xs leading-relaxed ${
+                  errorCode === 'EMAIL_NOT_CONFIRMED' ? 'text-amber-300' : 'text-red-400'
+                }`}>{error}</p>
+              </div>
+
+              {/* Resend button — only shown for unconfirmed email */}
+              {errorCode === 'EMAIL_NOT_CONFIRMED' && (
+                <button
+                  type="button"
+                  onClick={handleResendConfirmation}
+                  disabled={resendStatus === 'sending' || resendStatus === 'sent' || !email}
+                  className="mt-2.5 w-full py-2 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-semibold hover:bg-amber-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {resendStatus === 'sending' ? 'Envoi...'
+                    : resendStatus === 'sent' ? '✓ Email renvoyé !'
+                    : resendStatus === 'error' ? 'Erreur — réessaie'
+                    : 'Renvoyer l\'email de confirmation'}
+                </button>
+              )}
             </div>
           )}
 
