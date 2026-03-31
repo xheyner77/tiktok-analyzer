@@ -79,7 +79,6 @@ export default function HookGeneratorPage() {
   const [used,      setUsed]      = useState(0);
   const [limitUsed, setLimitUsed] = useState(0);
   const [copied,    setCopied]    = useState<number | null>(null);
-  const [variantSource, setVariantSource] = useState<string>('');
 
   // History
   const [history, setHistory] = useState<HookHistoryItem[]>([]);
@@ -157,7 +156,6 @@ export default function HookGeneratorPage() {
           person: person.trim(),
           tone,
           count,
-          seedHook: variantSource || undefined,
         }),
       });
 
@@ -172,16 +170,32 @@ export default function HookGeneratorPage() {
         return;
       }
 
-      setHooks(data.hooks ?? []);
+      const newHooks: string[] = data.hooks ?? [];
+      setHooks(newHooks);
       setUsed(data.used ?? used);
       setLimitUsed(data.limit ?? limitUsed);
-      setVariantSource('');
 
-      if (authUser) {
-        fetch('/api/hooks/history')
-          .then((r) => r.json())
-          .then((h) => setHistory(h.hooks ?? []))
-          .catch(() => {});
+      // Mise à jour optimiste : ajout immédiat des hooks dans l'historique local
+      if (authUser && newHooks.length > 0) {
+        const now = new Date().toISOString();
+        const optimistic: HookHistoryItem[] = newHooks.map((h, i) => ({
+          id: `temp-${Date.now()}-${i}`,
+          hook_text: h,
+          tone,
+          scene,
+          is_favorite: false,
+          created_at: now,
+          variant_of: null,
+        }));
+        setHistory((prev) => [...optimistic, ...prev]);
+
+        // Confirmation serveur après 400ms (remplace les IDs temporaires par les vrais)
+        setTimeout(() => {
+          fetch('/api/hooks/history')
+            .then((r) => r.json())
+            .then((h) => setHistory(h.hooks ?? []))
+            .catch(() => {});
+        }, 400);
       }
 
       setTimeout(() => {
@@ -380,20 +394,6 @@ export default function HookGeneratorPage() {
               className="w-full bg-[#0d0d0d] border border-[#1e1e1e] hover:border-[#2a2a2a] focus:border-[#7928ca]/40 focus:ring-1 focus:ring-[#7928ca]/20 text-white text-sm placeholder-gray-700 rounded-xl px-4 py-3 resize-none transition-all duration-150 outline-none"
             />
             <p className="text-right text-[11px] text-gray-700 mt-1 tabular-nums">{context.length} / 300</p>
-            {variantSource && (
-              <div className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-[#2d1a4a] bg-[#120d1f] px-3 py-2">
-                <p className="text-[11px] text-[#c084fc] truncate">
-                  Mode variantes actif: {variantSource}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setVariantSource('')}
-                  className="text-[11px] text-gray-400 hover:text-white transition-colors"
-                >
-                  Retirer
-                </button>
-              </div>
-            )}
             <div className="mt-2 flex flex-wrap gap-2">
               {CONTEXT_TEMPLATES.map((tpl) => (
                 <button
@@ -556,13 +556,6 @@ export default function HookGeneratorPage() {
                   <div className="mt-3 flex items-center justify-end gap-2">
                     <button
                       type="button"
-                      onClick={() => { setVariantSource(hook); setHooks([]); }}
-                      className="text-xs px-2.5 py-1 rounded-md border border-[#2d1a4a] text-[#c084fc] hover:bg-[#7928ca]/15 transition-colors"
-                    >
-                      Variantes
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => copyHook(hook, i)}
                       className={`shrink-0 flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg transition-all
                         ${copied === i
@@ -682,13 +675,6 @@ export default function HookGeneratorPage() {
                       {new Date(item.created_at).toLocaleDateString('fr-FR')} · {item.tone}
                     </span>
                     <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => { setVariantSource(item.hook_text); setHooks([]); }}
-                        className="text-[11px] px-2 py-1 rounded-md border border-[#2d1a4a] text-[#c084fc]"
-                      >
-                        Variantes
-                      </button>
                       <button
                         type="button"
                         onClick={() => toggleFavorite(item)}
