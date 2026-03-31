@@ -87,9 +87,9 @@ function AnalysisHistoryItem({ row }: { row: AnalysisRow }) {
         </div>
 
         {/* URL + date */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 overflow-hidden">
           <p className="text-xs text-white font-medium truncate">{displayUrl}</p>
-          <p className="text-[11px] text-gray-600 mt-0.5">{date} à {time}</p>
+          <p className="text-[11px] text-gray-600 mt-0.5 truncate">{date} à {time}</p>
         </div>
 
         {/* Sub-scores */}
@@ -300,17 +300,19 @@ export default function DashboardClient({
       )}
 
       {/* Welcome header */}
-      <div className="flex items-center gap-4">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#ff0050] to-[#7928ca] flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-[#ff0050]/20 shrink-0">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-[#ff0050] to-[#7928ca] flex items-center justify-center text-white font-bold text-base sm:text-lg shadow-lg shadow-[#ff0050]/20 shrink-0">
           {initials}
         </div>
-        <div>
-          <h1 className="text-xl font-bold text-white">Bonjour, {email.split('@')[0]} 👋</h1>
-          <p className="text-sm text-gray-500">{email}</p>
+        <div className="min-w-0 flex-1">
+          <h1 className="text-lg sm:text-xl font-bold text-white truncate">
+            Bonjour, {email.split('@')[0]} 👋
+          </h1>
+          <p className="text-xs sm:text-sm text-gray-500 truncate">{email}</p>
         </div>
-        <div className="ml-auto">
-          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${planColors[plan]}`}>
-            Plan {planLabels[plan]}
+        <div className="shrink-0">
+          <span className={`text-xs font-semibold px-2 sm:px-2.5 py-1 rounded-full border ${planColors[plan]}`}>
+            {planLabels[plan]}
           </span>
         </div>
       </div>

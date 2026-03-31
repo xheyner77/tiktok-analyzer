@@ -282,7 +282,7 @@ export default function HookGeneratorPage() {
           </div>
 
           {/* Type de scène + Personnage */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-gray-400 mb-2">Type de scène</label>
               <select
@@ -334,7 +334,7 @@ export default function HookGeneratorPage() {
           {/* Nombre de hooks */}
           <div>
             <label className="block text-xs font-semibold text-gray-400 mb-2">Nombre de hooks</label>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               {COUNT_OPTIONS.map((n) => (
                 <button
                   key={n}

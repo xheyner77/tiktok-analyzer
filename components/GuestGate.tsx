@@ -101,24 +101,24 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
 
   return (
     <div
-      className="fixed inset-0 z-40 flex items-start justify-center p-4 overflow-y-auto"
+      className="fixed inset-0 z-40 flex items-center justify-center p-4"
       style={{
         backgroundColor: `rgba(0,0,0,${visible ? 0.88 : 0})`,
         backdropFilter: `blur(${visible ? 10 : 0}px)`,
         transition: 'background-color 0.25s ease, backdrop-filter 0.25s ease',
       }}
+      onClick={onClose}
     >
-      {/* Backdrop close */}
-      <div className="absolute inset-0" onClick={onClose} aria-hidden />
-
-      {/* Modal */}
+      {/* Modal — stopPropagation so clicks inside don't close */}
       <div
-        className="relative w-full max-w-xl my-auto bg-[#0d0d0d] border border-[#1e1e1e] rounded-2xl shadow-2xl"
+        className="relative w-full max-w-xl bg-[#0d0d0d] border border-[#1e1e1e] rounded-2xl shadow-2xl overflow-y-auto"
         style={{
+          maxHeight: 'calc(100vh - 2rem)',
           opacity: visible ? 1 : 0,
           transform: visible ? 'translateY(0) scale(1)' : 'translateY(16px) scale(0.97)',
           transition: 'opacity 0.3s ease, transform 0.35s cubic-bezier(0.16,1,0.3,1)',
         }}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Top ambient glow */}
         <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-40 rounded-full bg-gradient-to-br from-[#ff0050]/12 to-[#7928ca]/12 blur-3xl pointer-events-none" />
