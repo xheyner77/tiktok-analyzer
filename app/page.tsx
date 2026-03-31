@@ -1,4 +1,4 @@
-'use client';
+﻿﻿'use client';
 
 import { useEffect, useState } from 'react';
 import Header from '@/components/Header';
@@ -184,19 +184,21 @@ export default function Home() {
 
   const analyzeFromUpload = async () => {
     if (isLimitReached) return;
-    if (!uploadTiktokUrl.trim()) {
-      setError('Le lien TikTok est obligatoire pour récupérer les stats de la vidéo.');
-      return;
-    }
-    const normalized = normalizeTikTokUrl(uploadTiktokUrl.trim());
-    if (!isTikTokVideoUrl(normalized)) {
-      setError('Lien TikTok invalide. Colle l’URL complète de la vidéo (…/video/…).');
-      return;
-    }
     if (!videoFile) {
-      setError('Choisis un fichier vidéo (MP4 recommandé).');
+      setError('Choisis un fichier vid\u00e9o (MP4 recommand\u00e9).');
       return;
     }
+
+    // TikTok URL is optional -- validate only if provided
+    let normalized = '';
+    if (uploadTiktokUrl.trim()) {
+      normalized = normalizeTikTokUrl(uploadTiktokUrl.trim());
+      if (!isTikTokVideoUrl(normalized)) {
+        setError('Lien TikTok invalide. Colle l\u2019URL compl\u00e8te de la vid\u00e9o (\u2026/video/\u2026).');
+        return;
+      }
+    }
+
     if (isReady && !authUser) {
       setShowGuestGate(true);
       return;
@@ -217,7 +219,7 @@ export default function Home() {
           frames,
           durationSec,
           fileName: videoFile.name,
-          tiktokUrl: normalized,
+          tiktokUrl: normalized || undefined,
         }),
       });
       await processAnalyzeResponse(response);
@@ -280,23 +282,7 @@ export default function Home() {
           <div className="space-y-3">
             <div>
               <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-2 px-1">
-                Lien TikTok <span className="text-[#ff0050]/90 normal-case font-normal">(obligatoire)</span>
-              </label>
-              <p className="text-[11px] text-gray-600 px-1 mb-2 leading-relaxed">
-                Utilise l’URL de la vidéo sur TikTok pour récupérer les stats (vues, likes, etc.).
-              </p>
-              <input
-                type="url"
-                value={uploadTiktokUrl}
-                onChange={(e) => setUploadTiktokUrl(e.target.value)}
-                placeholder="https://www.tiktok.com/@…/video/…"
-                disabled={isLoading || isLimitReached}
-                className="w-full bg-[#111] border border-[#222] rounded-xl px-4 py-3.5 text-sm text-white placeholder-gray-600 outline-none hover:border-[#333] focus:border-[#ff0050]/50 focus:ring-2 focus:ring-[#ff0050]/10 disabled:opacity-50"
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-2 px-1">
-                Fichier vidéo
+                Fichier vidéo <span className="text-[#ff0050]/90 normal-case font-normal">(obligatoire)</span>
               </label>
               <input
                 type="file"
@@ -311,15 +297,26 @@ export default function Home() {
                 </p>
               )}
             </div>
+            <div>
+              <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-2 px-1">
+                Lien TikTok <span className="text-gray-600 normal-case font-normal">(optionnel — pour les stats)</span>
+              </label>
+              <input
+                type="url"
+                value={uploadTiktokUrl}
+                onChange={(e) => setUploadTiktokUrl(e.target.value)}
+                placeholder="https://www.tiktok.com/@…/video/…"
+                disabled={isLoading || isLimitReached}
+                className="w-full bg-[#111] border border-[#222] rounded-xl px-4 py-3.5 text-sm text-white placeholder-gray-600 outline-none hover:border-[#333] focus:border-[#7928ca]/50 focus:ring-2 focus:ring-[#7928ca]/10 disabled:opacity-50"
+              />
+            </div>
             <p className="text-[11px] text-gray-600 px-1 leading-relaxed">
-              L’analyse visuelle porte sur le <span className="text-gray-500">fichier</span> importé ; le{' '}
-              <span className="text-gray-500">lien</span> sert uniquement aux stats TikTok. Si le fichier ne correspond pas à
-              cette URL, les métriques et l’analyse peuvent être incohérentes. MP4 recommandé, durée max ~90 s.
+              L’analyse visuelle porte sur le <span className="text-gray-500">fichier</span> importé. Le <span className="text-gray-500">lien TikTok</span> est optionnel — s’il est fourni, les stats réelles (vues, likes…) seront incluses. MP4 recommandé, durée max ~90 s.
             </p>
             <button
               type="button"
               onClick={() => void analyzeFromUpload()}
-              disabled={isLoading || isLimitReached || !videoFile || !uploadTiktokUrl.trim()}
+              disabled={isLoading || isLimitReached || !videoFile}
               className={`w-full relative overflow-hidden rounded-xl py-4 font-semibold text-white text-sm transition-all duration-200 active:scale-[0.99] shadow-lg ${
                 isLimitReached
                   ? 'bg-[#1a1a2a] border border-[#2a1a3a] opacity-50 cursor-not-allowed shadow-none'

@@ -665,19 +665,12 @@ async function postVisionAnalyze(
     if (isTikTokVideoUrl(n)) tiktokUrl = n;
   }
 
-  if (!tiktokUrl) {
-    return NextResponse.json(
-      {
-        error: 'Le lien TikTok de la vidéo est obligatoire pour récupérer les statistiques.',
-        code: 'TIKTOK_URL_REQUIRED',
-      },
-      { status: 400 }
-    );
-  }
+  // tiktokUrl is optional — stats will simply be absent if not provided.
 
   let detected: Awaited<ReturnType<typeof fetchTikTokPublicStatsV2>> = null;
   let detectedSource: 'cache' | 'live_page' | 'live_oembed' | 'manual' | 'none' = 'none';
 
+  if (tiktokUrl) {
   try {
     const { data: cached, error: cacheReadErr } = await supabase
       .from('tiktok_stats_cache')
@@ -716,6 +709,7 @@ async function postVisionAnalyze(
       }
     }
   }
+  } // end if (tiktokUrl)
 
   const detectedObserved: ObservedMetrics | undefined = detected
     ? {
