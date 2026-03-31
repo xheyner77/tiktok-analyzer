@@ -160,7 +160,7 @@ export async function incrementAnalysesCount(userId: string): Promise<void> {
 }
 
 /** Atomic increment of hooks_count */
-export async function incrementHooksCount(userId: string): Promise<void> {
+export async function incrementHooksCount(userId: string, amount = 1): Promise<void> {
   const { data: current, error: fetchError } = await supabase
     .from('users')
     .select('hooks_count')
@@ -172,9 +172,11 @@ export async function incrementHooksCount(userId: string): Promise<void> {
     return;
   }
 
+  const safeAmount = Math.max(1, Math.floor(amount));
+
   const { error } = await supabase
     .from('users')
-    .update({ hooks_count: current.hooks_count + 1 })
+    .update({ hooks_count: current.hooks_count + safeAmount })
     .eq('id', userId);
 
   if (error) {

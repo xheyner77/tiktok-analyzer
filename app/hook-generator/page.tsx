@@ -40,6 +40,12 @@ const SCENES = [
 ];
 
 const COUNT_OPTIONS = [3, 5, 7, 10];
+const CONTEXT_TEMPLATES = [
+  'Je réponds à un hater qui me critique',
+  'Je révèle un secret que personne ne connaît',
+  'J’ai testé une astuce pendant 7 jours',
+  'Avant / Après: transformation totale',
+];
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
@@ -86,7 +92,16 @@ export default function HookGeneratorPage() {
 
   const plan    = authUser?.plan ?? null;
   const limit   = plan ? HOOK_LIMITS[plan] : 0;
-  const canUse  = !!plan && plan !== 'free' && used < limit;
+  const effectiveLimit = limitUsed || limit;
+  const remaining = Math.max(0, effectiveLimit - used);
+  const canUse  = !!plan && plan !== 'free' && used < effectiveLimit;
+
+  useEffect(() => {
+    if (!authUser || authUser.plan === 'free') return;
+    if (count > remaining && remaining > 0) {
+      setCount(remaining);
+    }
+  }, [authUser, remaining, count]);
 
   async function handleGenerate() {
     setError('');
@@ -122,6 +137,7 @@ export default function HookGeneratorPage() {
         if (res.status === 429 || res.status === 403) {
           setUsed(data.used ?? used);
         }
+        if (typeof data.limit === 'number') setLimitUsed(data.limit);
         return;
       }
 
@@ -142,6 +158,14 @@ export default function HookGeneratorPage() {
   function copyHook(hook: string, idx: number) {
     navigator.clipboard.writeText(hook).then(() => {
       setCopied(idx);
+      setTimeout(() => setCopied(null), 1800);
+    });
+  }
+
+  function copyAllHooks() {
+    if (!hooks.length) return;
+    navigator.clipboard.writeText(hooks.join('\n')).then(() => {
+      setCopied(-1);
       setTimeout(() => setCopied(null), 1800);
     });
   }
@@ -239,15 +263,15 @@ export default function HookGeneratorPage() {
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-xs text-gray-500">Hooks ce mois</span>
                 <span className="text-xs font-semibold text-gray-300 tabular-nums">
-                  {used} / {limit}
+                  {used} / {effectiveLimit}
                 </span>
               </div>
               <div className="h-1.5 rounded-full bg-[#1a1a1a] overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{
-                    width: `${Math.min(100, limit > 0 ? (used / limit) * 100 : 0)}%`,
-                    background: used >= limit ? '#ef4444' : 'linear-gradient(to right, #ff0050, #7928ca)',
+                    width: `${Math.min(100, effectiveLimit > 0 ? (used / effectiveLimit) * 100 : 0)}%`,
+                    background: used >= effectiveLimit ? '#ef4444' : 'linear-gradient(to right, #ff0050, #7928ca)',
                   }}
                 />
               </div>
@@ -279,6 +303,18 @@ export default function HookGeneratorPage() {
               className="w-full bg-[#0d0d0d] border border-[#1e1e1e] hover:border-[#2a2a2a] focus:border-[#7928ca]/40 focus:ring-1 focus:ring-[#7928ca]/20 text-white text-sm placeholder-gray-700 rounded-xl px-4 py-3 resize-none transition-all duration-150 outline-none"
             />
             <p className="text-right text-[11px] text-gray-700 mt-1 tabular-nums">{context.length} / 300</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {CONTEXT_TEMPLATES.map((tpl) => (
+                <button
+                  key={tpl}
+                  type="button"
+                  onClick={() => setContext(tpl)}
+                  className="text-[11px] px-2.5 py-1 rounded-md bg-[#101010] border border-[#1f1f1f] text-gray-500 hover:text-gray-300 hover:border-[#2d2d2d] transition-colors"
+                >
+                  {tpl}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Type de scène + Personnage */}
@@ -339,7 +375,8 @@ export default function HookGeneratorPage() {
                 <button
                   key={n}
                   onClick={() => setCount(n)}
-                  className={`w-12 h-10 rounded-lg text-sm font-bold transition-all duration-150
+                  disabled={authUser?.plan && authUser.plan !== 'free' && n > remaining}
+                  className={`w-12 h-10 rounded-lg text-sm font-bold transition-all duration-150 disabled:opacity-35 disabled:cursor-not-allowed
                     ${count === n
                       ? 'bg-gradient-to-r from-[#ff0050] to-[#7928ca] text-white shadow-md shadow-[#ff0050]/20'
                       : 'bg-[#0d0d0d] border border-[#1e1e1e] text-gray-500 hover:border-[#2a2a2a] hover:text-gray-300'
@@ -349,6 +386,11 @@ export default function HookGeneratorPage() {
                 </button>
               ))}
             </div>
+            {authUser && plan !== 'free' && (
+              <p className="text-[11px] text-gray-600 mt-1">
+                Restants ce mois: {remaining}
+              </p>
+            )}
           </div>
 
           {/* Error */}
@@ -381,7 +423,7 @@ export default function HookGeneratorPage() {
             ) : plan === 'free' ? (
               '🔒 Disponible à partir du plan Pro'
             ) : used >= limit ? (
-              `Limite atteinte (${used}/${limit})`
+              `Limite atteinte (${used}/${effectiveLimit})`
             ) : (
               `Générer ${count} hook${count > 1 ? 's' : ''} →`
             )}
@@ -395,7 +437,20 @@ export default function HookGeneratorPage() {
               <h2 className="text-sm font-bold text-white">
                 {hooks.length} hook{hooks.length > 1 ? 's' : ''} générés
               </h2>
-              <span className="text-xs text-gray-600">Clic pour copier</span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={copyAllHooks}
+                  className={`text-xs px-2.5 py-1 rounded-md border transition-colors ${
+                    copied === -1
+                      ? 'bg-green-500/15 text-green-400 border-green-500/30'
+                      : 'bg-[#111] text-gray-500 border-[#1f1f1f] hover:text-gray-300'
+                  }`}
+                >
+                  {copied === -1 ? 'Tout copié' : 'Copier tout'}
+                </button>
+                <span className="text-xs text-gray-600">Clic pour copier</span>
+              </div>
             </div>
 
             <div className="space-y-3">
@@ -438,7 +493,7 @@ export default function HookGeneratorPage() {
             {/* Regenerate */}
             <button
               onClick={handleGenerate}
-              disabled={loading || used >= limit}
+            disabled={loading || used >= effectiveLimit}
               className="mt-5 w-full py-2.5 rounded-xl bg-[#0d0d0d] border border-[#1e1e1e] hover:border-[#2a2a2a] text-sm font-semibold text-gray-500 hover:text-gray-300 transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {loading ? 'Génération...' : '↺ Regénérer'}

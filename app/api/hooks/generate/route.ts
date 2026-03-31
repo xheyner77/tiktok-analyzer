@@ -66,7 +66,25 @@ Réponds UNIQUEMENT avec un tableau JSON de strings, sans markdown, sans comment
   const parsed = JSON.parse(clean);
 
   if (!Array.isArray(parsed)) throw new Error('Invalid response format');
-  return parsed.map(String).filter(Boolean).slice(0, count);
+
+  const normalized = parsed
+    .map((v) => String(v).trim())
+    .filter(Boolean)
+    .map((h) => h.replace(/\s+/g, ' ').toUpperCase())
+    .map((h) => (h.length > 70 ? h.slice(0, 70).trim() : h));
+
+  // Remove duplicates while preserving order
+  const unique: string[] = [];
+  const seen = new Set<string>();
+  for (const hook of normalized) {
+    if (!seen.has(hook)) {
+      seen.add(hook);
+      unique.push(hook);
+    }
+    if (unique.length >= count) break;
+  }
+
+  return unique;
 }
 
 // ── Route handler ─────────────────────────────────────────────────────────────
@@ -104,7 +122,9 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Quota check ──────────────────────────────────────────────────────────
-    if (!canGenerateHook(user)) {
+    const remaining = Math.max(0, hookLimit - user.hooks_count);
+
+    if (!canGenerateHook(user) || remaining === 0) {
       return NextResponse.json(
         {
           error: `Tu as utilisé tes ${hookLimit} hooks ce mois-ci. Renouvellement le 1er du mois.`,
@@ -139,15 +159,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Contexte requis' }, { status: 400 });
     }
 
+    if (count > remaining) {
+      return NextResponse.json(
+        {
+          error: `Tu peux générer ${remaining} hook${remaining > 1 ? 's' : ''} maximum avant la fin du mois.`,
+          type: 'hook',
+          plan: user.plan,
+          used: user.hooks_count,
+          limit: hookLimit,
+          remaining,
+        },
+        { status: 400 }
+      );
+    }
+
     // ── Generate ─────────────────────────────────────────────────────────────
     const hooks = await generateHooksWithAI({ context, scene, person, tone, count });
+    if (hooks.length === 0) {
+      return NextResponse.json(
+        { error: 'Impossible de générer des hooks pour ce contexte. Réessaie avec plus de détails.' },
+        { status: 422 }
+      );
+    }
 
-    await incrementHooksCount(session.userId);
+    const consumed = hooks.length;
+    await incrementHooksCount(session.userId, consumed);
 
     console.log('[hooks/generate]', {
       userId: session.userId,
       plan:   user.plan,
-      used:   user.hooks_count + 1,
+      used:   user.hooks_count + consumed,
       limit:  hookLimit,
       tone,
       count,
@@ -155,7 +196,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       hooks,
-      used:  user.hooks_count + 1,
+      used:  user.hooks_count + consumed,
       limit: hookLimit,
     });
   } catch (err) {
