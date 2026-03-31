@@ -2,9 +2,12 @@
  * Extrait des images JPEG (base64 sans préfixe data:) depuis un fichier vidéo — navigateur uniquement.
  */
 
-/** Moins d’images = moins de tokens / requête (limite TPM OpenAI). */
-const DEFAULT_MAX_FRAMES = 6;
-const DEFAULT_MAX_WIDTH = 640;
+import {
+  VISION_JPEG_QUALITY,
+  VISION_MAX_FRAMES,
+  VISION_MAX_WIDTH_PX,
+} from '@/lib/vision-config';
+
 const DEFAULT_MAX_DURATION_SEC = 90;
 
 export async function extractVideoFramesFromFile(
@@ -16,10 +19,13 @@ export async function extractVideoFramesFromFile(
     jpegQuality?: number;
   }
 ): Promise<{ frames: string[]; durationSec: number }> {
-  const maxFrames = Math.min(12, Math.max(4, options?.maxFrames ?? DEFAULT_MAX_FRAMES));
-  const maxWidth = options?.maxWidth ?? DEFAULT_MAX_WIDTH;
+  const maxFrames = Math.min(
+    VISION_MAX_FRAMES,
+    Math.max(3, options?.maxFrames ?? VISION_MAX_FRAMES)
+  );
+  const maxWidth = options?.maxWidth ?? VISION_MAX_WIDTH_PX;
   const maxDurationSec = options?.maxDurationSec ?? DEFAULT_MAX_DURATION_SEC;
-  const jpegQuality = options?.jpegQuality ?? 0.72;
+  const jpegQuality = options?.jpegQuality ?? VISION_JPEG_QUALITY;
 
   if (!file.type.startsWith('video/')) {
     throw new Error('Fichier vidéo attendu (MP4, WebM, MOV…).');

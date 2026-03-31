@@ -1,6 +1,7 @@
 import OpenAI, { APIError, APIConnectionError, RateLimitError } from 'openai';
 import type { ChatCompletion, ChatCompletionContentPart } from 'openai/resources/chat/completions';
 import type { Plan } from './supabase';
+import { VISION_MAX_FRAMES } from './vision-config';
 import type { AnalysisResult, Rating, Priority } from './types';
 
 const client = new OpenAI({
@@ -13,19 +14,20 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/** 429 / 503 : délai avant nouvel essai (backoff court + Retry-After). Max 3 tentatives. */
+/** 429 / 503 : backoff exponentiel (2^n × base) + header Retry-After si présent. Max 3 tentatives HTTP. */
 function getOpenAIRetryDelayMs(e: unknown, attemptIndex: number): number | null {
   if (attemptIndex >= 2) return null;
-  let base = 1000 * Math.pow(2, attemptIndex);
+  const baseMs = 2000;
+  let delay = baseMs * Math.pow(2, attemptIndex);
   if (e instanceof APIError && e.headers) {
     const h = e.headers as Headers;
     const ra = h.get('retry-after');
     if (ra) {
       const sec = parseInt(ra, 10);
-      if (!Number.isNaN(sec) && sec >= 0) base = Math.max(base, sec * 1000);
+      if (!Number.isNaN(sec) && sec >= 0) delay = Math.max(delay, sec * 1000);
     }
   }
-  return Math.min(base, 45_000);
+  return Math.min(delay, 60_000);
 }
 
 function isOpenAIRetryableTransient(e: unknown): boolean {
@@ -176,15 +178,18 @@ function parseResult(raw: string): AnalysisResult {
   };
 }
 
+/** Prompt système court (vision) — évite de dupliquer le long systemPrompt URL. */
 function systemPromptVision(): string {
-  return `${systemPrompt()}
+  return `Expert analyse TikTok. Réponds UNIQUEMENT en JSON valide.
 
-MODE VISION — images fournies :
-- Ce sont des captures successives d’UNE vidéo importée par l’utilisateur (ordre chronologique).
-- Tu DOIS décrire ce que tu vois réellement (cadrage, texte à l’écran, visage, décor, mouvement, coupes apparentes, rythme perçu).
-- Si une image est floue ou peu lisible, dis-le sans inventer de détails.
-- Les scores et conseils doivent être justifiés par ce qui est visible sur les images, pas par des clichés TikTok génériques.
-- Ne prétends pas avoir entendu l’audio : si pertinent, note « audio non disponible dans cet échantillon ».`;
+Règles : pas de conseils génériques ; tout doit s’appuyer sur les images ou les métriques fournies.
+Images = même vidéo, ordre chronologique ; décris le visible (cadrage, texte, sujet, rythme). Pas d’audio réel.
+Français.`;
+}
+
+function truncateForPrompt(s: string, max: number): string {
+  if (s.length <= max) return s;
+  return s.slice(0, max - 1) + '…';
 }
 
 function buildVisionUserContent(
@@ -195,53 +200,27 @@ function buildVisionUserContent(
 ): string {
   const isPro = plan === 'pro';
   const tipsCount = isPro ? 5 : 10;
-  const analysisDepth = isPro
-    ? 'courte et directe (2-3 phrases max par section), en t’appuyant sur le visible'
-    : 'détaillée (4-6 phrases par section) avec références aux frames (début / milieu / fin)';
+  const depth = isPro ? 'court (2–3 phrases/section)' : 'détaillé (4–6 phrases/section)';
 
-  const metricsBlock = observedMetrics
-    ? `\nMétriques TikTok associées (si fournies) :
-- vues: ${observedMetrics.views ?? 0}
-- likes: ${observedMetrics.likes ?? 0}
-- commentaires: ${observedMetrics.comments ?? 0}
-- partages: ${observedMetrics.shares ?? 0}
-`
-    : '\nAucune métrique TikTok fournie (upload seul).';
+  const m = observedMetrics
+    ? `Stats TikTok: v=${observedMetrics.views ?? 0} l=${observedMetrics.likes ?? 0} c=${observedMetrics.comments ?? 0} s=${observedMetrics.shares ?? 0}`
+    : 'Stats: n/a';
 
-  const metaBlock = `\nContexte fichier : ${meta?.fileName ?? 'vidéo importée'} — durée ~${meta?.durationSec ?? '?'} s${meta?.tiktokUrl ? ` — lien TikTok associé (stats publiques) : ${meta.tiktokUrl}` : ''}`;
+  const fn = truncateForPrompt(meta?.fileName ?? 'vidéo', 80);
+  const link = meta?.tiktokUrl ? truncateForPrompt(meta.tiktokUrl, 96) : '';
 
-  const linkNote = meta?.tiktokUrl
-    ? `\nRôle du lien : les métriques TikTok ci-dessus viennent de cette URL ; l’analyse visuelle décrit uniquement le fichier importé. Si le fichier n’est pas la même vidéo que le lien, le signale brièvement dans comparativeInsight (une phrase).\n`
-    : '';
-
-  const eliteFields = isPro
+  const eliteExtra = isPro
     ? ''
-    : `  "strategy": "string — 150-200 mots — stratégie ancrée dans ce que montrent les images",
-  "viralTips": ["string", "string", "string", "string"] — 4 insights liés à ce que tu as vu sur les frames`;
+    : ` + strategy (string), viralTips (4 strings)`;
 
-  return `Tu reçois ${frameCount} images extraites d’une même vidéo verticale (type TikTok), ordre chronologique.
-${metaBlock}
-${linkNote}${metricsBlock}
+  return `${frameCount} frames (vertical TikTok, ordre chronologique). Fichier: ${fn} · ~${meta?.durationSec ?? '?'}s · ${m}${link ? ` · lien stats: ${link}` : ''}.
+${meta?.tiktokUrl ? 'Si fichier ≠ vidéo du lien, une phrase dans comparativeInsight.' : ''}
 
-Analyse ${analysisDepth}. Génère exactement ${tipsCount} recommandations.
+Analyse ${depth}. ${tipsCount} tips (priorités haute/moyenne/basse selon plan Pro/Elite).
 
-Réponds avec ce JSON exact (sans markdown) :
-{
-  "viralityScore": <entier 0-100>,
-  "hook": { "score": <0-100>, "rating": <"Excellent"|"Bon"|"Moyen"|"Faible">, "analysis": "string", "strengths": ["string"], "weaknesses": ["string"] },
-  "editing": { "score": <0-100>, "rating": <...>, "analysis": "string", "strengths": ["string"], "weaknesses": ["string"] },
-  "retention": { "score": <0-100>, "rating": <...>, "analysis": "string", "strengths": ["string"], "weaknesses": ["string"] },
-  "improvements": [ { "priority": <"haute"|"moyenne"|"basse">, "tip": "string" }, ... exactement ${tipsCount} ],
-  "comparativeInsight": "string",
-  "comparativePriority": "string"
-  ${eliteFields ? `,\n  ${eliteFields.trim()}` : ''}
-}
+JSON: viralityScore ; hook/editing/retention {score,rating,analysis,strengths[],weaknesses[]} ; improvements[${tipsCount}] {priority,tip} ; comparativeInsight ; comparativePriority${eliteExtra}.
 
-Règles :
-- viralityScore = score structurel déduit des images (hook 40%, montage 30%, rétention 30%).
-- Chaque tip doit citer un angle (hook / montage / rétention) et un élément visible ou manquant sur les images.
-- comparativeInsight / comparativePriority : obligatoires, spécifiques à cette vidéo.
-- Répondre en français.`;
+Règles: scores 0–100 ; hook 40% · montage 30% · rétention 30% ; tips ancrés visible + hook/montage/rétention ; français.`;
 }
 
 // ── Main export ────────────────────────────────────────────────────────────────
@@ -252,11 +231,17 @@ export async function analyzeWithOpenAIVision(
   observedMetrics?: { views?: number; likes?: number; comments?: number; shares?: number },
   meta?: { durationSec?: number; tiktokUrl?: string; fileName?: string }
 ): Promise<AnalysisResult> {
-  const text = buildVisionUserContent(plan, framesBase64.length, observedMetrics, meta);
+  /**
+   * Coût TPM (entrée) : ~85–170 tokens par image basse déf. selon OpenAI.
+   * Ici le coût DOMINE dans les `image_url` (base64) du tableau userContent ci‑dessous,
+   * pas dans le texte du prompt.
+   */
+  const frames = framesBase64.slice(0, VISION_MAX_FRAMES);
+  const text = buildVisionUserContent(plan, frames.length, observedMetrics, meta);
 
   const userContent: ChatCompletionContentPart[] = [
     { type: 'text', text },
-    ...framesBase64.slice(0, 12).map((b64) => ({
+    ...frames.map((b64) => ({
       type: 'image_url' as const,
       image_url: {
         url: b64.startsWith('data:') ? b64 : `data:image/jpeg;base64,${b64}`,
@@ -264,7 +249,7 @@ export async function analyzeWithOpenAIVision(
     })),
   ];
 
-  const maxOut = plan === 'elite' ? 4000 : 2800;
+  const maxOut = plan === 'elite' ? 3200 : 2200;
 
   const createParams = {
     model: 'gpt-4o-mini' as const,
@@ -342,7 +327,7 @@ export function mapOpenAIVisionError(e: unknown): { message: string; status: num
     if (e.status === 429) {
       return {
         message:
-          'Limite de débit du service OpenAI atteinte (plusieurs essais déjà effectués côté serveur). Réessaie dans 1 à 2 minutes, ou vérifie ton quota / facturation sur platform.openai.com.',
+          'OpenAI limite le débit (trop de données par requête ou trop d’appels). Réessaie dans 2 à 5 minutes. Si ça revient souvent : augmenter le quota TPM sur platform.openai.com ou espacer les analyses.',
         status: 503,
       };
     }

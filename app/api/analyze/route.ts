@@ -5,6 +5,7 @@ import { getUserById, incrementAnalysesCount, checkAndResetMonthly, canRunAnalys
 import { saveAnalysis } from '@/lib/analyses';
 import { analyzeWithOpenAI, analyzeWithOpenAIVision, mapOpenAIVisionError } from '@/lib/openai';
 import { normalizeTikTokUrl, isTikTokVideoUrl } from '@/lib/tiktok-url';
+import { VISION_MAX_FRAMES } from '@/lib/vision-config';
 import { fetchTikTokPublicStatsV2 } from '@/lib/tiktok';
 import { supabase } from '@/lib/supabase';
 
@@ -531,9 +532,9 @@ function normalizeVisionFrames(raw: unknown): string[] | null {
     if (typeof item !== 'string') return null;
     const s = item.trim();
     if (!s) continue;
-    if (s.length > 450_000) return null;
+    if (s.length > 350_000) return null;
     out.push(s);
-    if (out.length >= 12) break;
+    if (out.length >= VISION_MAX_FRAMES) break;
   }
   return out.length >= 3 ? out : null;
 }
