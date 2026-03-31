@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import OpenAI from 'openai';
 import { getSession } from '@/lib/session';
 import {
   getUserById,
@@ -8,63 +9,64 @@ import {
   HOOK_LIMITS,
 } from '@/lib/auth';
 
-// ── Mock hook templates ───────────────────────────────────────────────────────
-// Organised by content style. A real implementation would call OpenAI here.
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const HOOK_POOLS: Record<string, string[]> = {
-  curiosity: [
-    "Le truc que personne ne te dit sur {niche}...",
-    "J'ai testé {niche} pendant 30 jours — voilà ce qui s'est passé",
-    "Pourquoi 99% des gens ratent {niche} (et comment éviter ça)",
-    "Ce détail change tout en {niche} — et tu l'ignores sûrement",
-    "La vérité sur {niche} que les experts cachent",
-  ],
-  pov: [
-    "POV : tu découvres enfin comment maîtriser {niche}",
-    "POV : tu appliques cette astuce {niche} pour la première fois",
-    "POV : tu réalises que tu faisais {niche} dans le mauvais sens",
-    "POV : quelqu'un t'explique {niche} en 60 secondes",
-    "POV : tu passes au niveau supérieur en {niche}",
-  ],
-  question: [
-    "C'est quoi ton niveau en {niche} ? (réponds en commentaire)",
-    "Tu fais quelle erreur en {niche} ? 👇",
-    "Combien de temps tu as mis pour comprendre {niche} ?",
-    "Est-ce que tu savais ça sur {niche} ?",
-    "Quel aspect de {niche} tu veux qu'on creuse ?",
-  ],
-  challenge: [
-    "J'ai fait {niche} en moins de 24h — résultats incroyables",
-    "Le défi {niche} que personne n'ose faire",
-    "Je teste la méthode {niche} la plus controversée",
-    "Can you beat this {niche} score? (commentaire 👇)",
-    "Challenge : améliore ton {niche} en 7 jours",
-  ],
-  story: [
-    "Il y a 6 mois je ne savais rien sur {niche}. Aujourd'hui...",
-    "J'ai failli tout arrêter à cause de {niche} — voilà pourquoi je suis resté",
-    "Mon pire échec en {niche} (et ce que j'ai appris)",
-    "De zéro à expert en {niche} : mon parcours honnête",
-    "La vraie raison pour laquelle j'ai commencé {niche}",
-  ],
-};
+// ── OpenAI hook generation ────────────────────────────────────────────────────
 
-const STYLE_KEYS = Object.keys(HOOK_POOLS);
+async function generateHooksWithAI(params: {
+  context: string;
+  scene: string;
+  person?: string;
+  tone: string;
+  count: number;
+}): Promise<string[]> {
+  const { context, scene, person, tone, count } = params;
 
-function generateMockHooks(niche: string, count: number): string[] {
-  const label = niche?.trim() || 'ce domaine';
-  const hooks: string[] = [];
-  const styles = [...STYLE_KEYS];
+  const prompt = `Tu es un expert en contenu viral TikTok spécialisé dans les hooks textuels courts.
+Génère ${count} hooks textuels COURTS et PERCUTANTS pour un overlay TikTok.
 
-  // Rotate through styles so we get variety
-  for (let i = 0; i < count; i++) {
-    const style = styles[i % styles.length];
-    const pool  = HOOK_POOLS[style];
-    const template = pool[i % pool.length];
-    hooks.push(template.replace(/\{niche\}/g, label));
-  }
+RÈGLES ABSOLUES :
+- Maximum 6 à 8 mots par hook
+- Tout en MAJUSCULES
+- Pas de point final, parfois "..." pour créer du suspense
+- Style : intrigant, dramatique, choquant ou mystérieux selon le ton
+- Conçu pour être affiché EN TEXTE sur la vidéo (pas de narration, pas de voix off)
+- Pas de script complet — juste le hook textuel d'accroche
+- Exemples du style attendu :
+  "JE RECADRE UN HATER..."
+  "ELLE VA REGRETTER CE QU'ELLE A DIT"
+  "IL PENSE QUE JE SUIS RUINÉ..."
+  "ON M'A TOUT PRIS"
+  "TU VAS PAS Y CROIRE..."
+  "REGARDEZ CE QU'ILS ONT FAIT..."
 
-  return hooks;
+Contexte de la vidéo : ${context}
+Type de scène : ${scene}${person ? `\nPersonnage impliqué : ${person}` : ''}
+Ton souhaité : ${tone}
+
+Réponds UNIQUEMENT avec un tableau JSON de strings, sans markdown, sans commentaires :
+["HOOK 1", "HOOK 2", ...]`;
+
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    temperature: 0.85,
+    max_tokens: 300,
+    messages: [
+      {
+        role: 'system',
+        content:
+          'Tu génères des hooks textuels TikTok ultra-courts. Réponds UNIQUEMENT avec un tableau JSON valide de strings, rien d\'autre.',
+      },
+      { role: 'user', content: prompt },
+    ],
+  });
+
+  const raw = response.choices[0]?.message?.content ?? '[]';
+  const clean = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+  const parsed = JSON.parse(clean);
+
+  if (!Array.isArray(parsed)) throw new Error('Invalid response format');
+  return parsed.map(String).filter(Boolean).slice(0, count);
 }
 
 // ── Route handler ─────────────────────────────────────────────────────────────
@@ -81,18 +83,13 @@ export async function POST(request: NextRequest) {
     }
 
     let user = await getUserById(session.userId);
-
     if (!user) {
-      return NextResponse.json(
-        { error: 'Utilisateur introuvable' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 404 });
     }
 
-    // ── Monthly reset ───────────────────────────────────────────────────────
     user = await checkAndResetMonthly(user);
 
-    // ── Feature availability ────────────────────────────────────────────────
+    // ── Feature availability ─────────────────────────────────────────────────
     const hookLimit = HOOK_LIMITS[user.plan] ?? 0;
 
     if (hookLimit === 0) {
@@ -106,11 +103,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── Quota check ─────────────────────────────────────────────────────────
+    // ── Quota check ──────────────────────────────────────────────────────────
     if (!canGenerateHook(user)) {
       return NextResponse.json(
         {
-          error: 'Limite atteinte pour ce mois',
+          error: `Tu as utilisé tes ${hookLimit} hooks ce mois-ci. Renouvellement le 1er du mois.`,
           type:  'hook',
           plan:  user.plan,
           used:  user.hooks_count,
@@ -120,22 +117,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── Parse body ──────────────────────────────────────────────────────────
-    let niche  = '';
-    let count  = 5; // default hooks per request
+    // ── Parse body ───────────────────────────────────────────────────────────
+    let context = '';
+    let scene   = '';
+    let person  = '';
+    let tone    = 'dramatique';
+    let count   = 5;
 
     try {
       const body = await request.json();
-      niche = typeof body.niche  === 'string' ? body.niche  : '';
-      count = typeof body.count  === 'number' ? Math.min(Math.max(1, body.count), 10) : 5;
+      context = typeof body.context === 'string' ? body.context.trim() : '';
+      scene   = typeof body.scene   === 'string' ? body.scene.trim()   : '';
+      person  = typeof body.person  === 'string' ? body.person.trim()  : '';
+      tone    = typeof body.tone    === 'string' ? body.tone.trim()    : 'dramatique';
+      count   = typeof body.count   === 'number' ? Math.min(Math.max(1, body.count), 10) : 5;
     } catch {
-      // Body is optional — fall back to defaults
+      // Fall back to defaults
     }
 
-    // ── Generate hooks ──────────────────────────────────────────────────────
-    const hooks = generateMockHooks(niche, count);
+    if (!context) {
+      return NextResponse.json({ error: 'Contexte requis' }, { status: 400 });
+    }
 
-    // ── Increment counter ───────────────────────────────────────────────────
+    // ── Generate ─────────────────────────────────────────────────────────────
+    const hooks = await generateHooksWithAI({ context, scene, person, tone, count });
+
     await incrementHooksCount(session.userId);
 
     console.log('[hooks/generate]', {
@@ -143,7 +149,8 @@ export async function POST(request: NextRequest) {
       plan:   user.plan,
       used:   user.hooks_count + 1,
       limit:  hookLimit,
-      niche,
+      tone,
+      count,
     });
 
     return NextResponse.json({
@@ -151,7 +158,8 @@ export async function POST(request: NextRequest) {
       used:  user.hooks_count + 1,
       limit: hookLimit,
     });
-  } catch {
+  } catch (err) {
+    console.error('[hooks/generate] Error:', err);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

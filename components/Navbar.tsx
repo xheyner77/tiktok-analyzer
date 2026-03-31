@@ -51,6 +51,13 @@ export default async function Navbar() {
             Analyser
           </Link>
           <Link
+            href="/hook-generator"
+            className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5"
+          >
+            <span className="hidden sm:inline">Hook Generator</span>
+            <span className="sm:hidden">Hooks</span>
+          </Link>
+          <Link
             href="/pricing"
             className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5"
           >
