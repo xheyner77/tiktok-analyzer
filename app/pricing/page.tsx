@@ -43,7 +43,7 @@ const plans: Plan[] = [
     price: '9,99',
     period: '/ mois',
     description: 'Pour les créateurs sérieux qui veulent scaler leur contenu.',
-    cta: 'S\'abonner',
+    cta: 'Passer à Pro',
     ctaHref: '#',
     variant: 'pro',
     features: [
