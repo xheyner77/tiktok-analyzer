@@ -199,6 +199,7 @@ export default function DashboardClient({
   // ── Cancel subscription state ──────────────────────────────────────────────
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelStatus, setCancelStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+  const [cancelError, setCancelError] = useState<string>('');
   const [domReady, setDomReady] = useState(false);
   useEffect(() => { setDomReady(true); }, []);
 
@@ -262,18 +263,26 @@ export default function DashboardClient({
 
   async function handleCancelPlan() {
     setCancelStatus('loading');
+    setCancelError('');
     try {
       const res = await fetch('/api/cancel-plan', { method: 'POST' });
       const data = await res.json();
       if (data.success) {
         setCancelStatus('done');
-        setTimeout(() => { window.location.href = '/dashboard'; }, 1500);
+        // Hard reload with cache-busting param to bypass any Next.js stale cache
+        setTimeout(() => { window.location.href = '/dashboard?t=' + Date.now(); }, 1500);
       } else {
-        console.error('[cancel-plan]', data.error);
+        console.error('[cancel-plan]', data.error, '| status:', res.status);
+        setCancelError(
+          res.status === 401
+            ? 'Ta session a expiré. Déconnecte-toi et reconnecte-toi, puis réessaie.'
+            : (data.error ?? 'Une erreur est survenue.')
+        );
         setCancelStatus('error');
       }
     } catch (err) {
       console.error('[cancel-plan] network error:', err);
+      setCancelError('Erreur réseau. Vérifie ta connexion et réessaie.');
       setCancelStatus('error');
     }
   }
@@ -318,9 +327,19 @@ export default function DashboardClient({
             </p>
 
             {cancelStatus === 'error' && (
-              <p className="text-xs text-red-400 text-center mb-3">
-                Une erreur est survenue. Réessaie dans un instant.
-              </p>
+              <div className="bg-red-500/8 border border-red-500/20 rounded-xl px-3 py-2.5 mb-3">
+                <p className="text-xs text-red-400 text-center leading-relaxed">
+                  {cancelError || 'Une erreur est survenue. Réessaie dans un instant.'}
+                </p>
+                {cancelError.includes('session') && (
+                  <a
+                    href="/login"
+                    className="block text-center text-xs text-[#ff6080] hover:underline mt-1.5"
+                  >
+                    Se reconnecter →
+                  </a>
+                )}
+              </div>
             )}
 
             <div className="flex gap-3">
@@ -596,7 +615,7 @@ export default function DashboardClient({
               </p>
             </div>
             <button
-              onClick={() => { setCancelStatus('idle'); setShowCancelModal(true); }}
+              onClick={() => { setCancelStatus('idle'); setCancelError(''); setShowCancelModal(true); }}
               className="text-xs font-medium text-gray-500 hover:text-red-400 transition-colors px-3 py-1.5 rounded-lg hover:bg-red-500/5 border border-transparent hover:border-red-500/15"
             >
               Annuler l&apos;abonnement

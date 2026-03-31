@@ -4,6 +4,9 @@ import { getUserById, PLAN_LIMITS, HOOK_LIMITS } from '@/lib/auth';
 import { getAnalyses } from '@/lib/analyses';
 import DashboardClient from './DashboardClient';
 
+// Always fetch fresh data — never serve a cached version of the dashboard.
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage({
   searchParams,
 }: {

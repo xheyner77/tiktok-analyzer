@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { SignJWT, jwtVerify } from 'jose';
 import type { SessionPayload } from './auth';
+import { supabase } from './supabase';
 
 export const COOKIE_NAME = 'tiktok_auth';
 
@@ -14,16 +15,12 @@ export const COOKIE_OPTIONS = {
 
 /**
  * Returns the HMAC secret used to sign and verify session JWTs.
- * Throws early if JWT_SECRET is missing so the issue is caught at startup.
+ * Returns null if JWT_SECRET is not configured (instead of throwing),
+ * so legacy Supabase token fallback can still work.
  */
-function getJwtSecret(): Uint8Array {
+function getJwtSecret(): Uint8Array | null {
   const secret = process.env.JWT_SECRET;
-  if (!secret || secret.length < 32) {
-    throw new Error(
-      'JWT_SECRET env var is missing or too short (must be ≥ 32 chars). ' +
-      'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"'
-    );
-  }
+  if (!secret || secret.length < 32) return null;
   return new TextEncoder().encode(secret);
 }
 
@@ -33,6 +30,12 @@ function getJwtSecret(): Uint8Array {
  */
 export async function createSessionToken(userId: string, email: string): Promise<string> {
   const secret = getJwtSecret();
+  if (!secret) {
+    throw new Error(
+      'JWT_SECRET env var is missing or too short (must be ≥ 32 chars). ' +
+      'Add it in Vercel Dashboard → Settings → Environment Variables.'
+    );
+  }
   return new SignJWT({ userId, email })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
@@ -42,32 +45,49 @@ export async function createSessionToken(userId: string, email: string): Promise
 
 /**
  * Reads and verifies the session cookie.
- * Returns the payload { userId, email } or null if missing / invalid / expired.
- * Verification is FULLY LOCAL — no Supabase API call, no 1-hour expiry issue.
+ *
+ * Strategy (two attempts for backward compatibility):
+ *  1. Try to verify as our custom HS256 JWT (new sessions, 7-day expiry).
+ *  2. If that fails, fall back to validating as a Supabase access token
+ *     (old sessions created before the JWT migration).
+ *
+ * Returns { userId, email } or null if not authenticated.
  */
 export async function getSession(): Promise<SessionPayload | null> {
   try {
     const token = cookies().get(COOKIE_NAME)?.value;
     if (!token) return null;
 
+    // ── Attempt 1: custom HS256 JWT (new sessions) ────────────────────────────
     const secret = getJwtSecret();
-    const { payload } = await jwtVerify(token, secret);
-
-    const userId = payload.userId as string | undefined;
-    const email  = payload.email  as string | undefined;
-
-    if (!userId || !email) {
-      console.error('[getSession] JWT payload missing userId or email');
-      return null;
+    if (secret) {
+      try {
+        const { payload } = await jwtVerify(token, secret);
+        const userId = payload.userId as string | undefined;
+        const email  = payload.email  as string | undefined;
+        if (userId && email) {
+          return { userId, email };
+        }
+      } catch {
+        // Not our JWT — fall through to legacy check
+      }
     }
 
-    return { userId, email };
+    // ── Attempt 2: legacy Supabase access token (old sessions) ───────────────
+    // Handles cookies created before the JWT migration.
+    // These expire after Supabase's 1-hour window, so users will be prompted
+    // to re-login naturally after that.
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (!error && user) {
+      console.log('[getSession] Legacy Supabase token accepted for user:', user.id);
+      return { userId: user.id, email: user.email ?? '' };
+    }
+
+    return null;
   } catch (err) {
-    // JWTExpired, JWTInvalid, etc. — treat as "not logged in"
     const message = err instanceof Error ? err.message : String(err);
-    // Only log unexpected errors; expired tokens are normal
     if (!message.includes('expired') && !message.includes('invalid')) {
-      console.error('[getSession] JWT verification error:', message);
+      console.error('[getSession] Unexpected error:', message);
     }
     return null;
   }

@@ -10,16 +10,22 @@ if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
   );
 }
 
+// Disable Next.js 14 automatic fetch() cache for all Supabase queries.
+// Without this, DB reads can return stale data after a write (e.g. plan change).
+const noStoreFetch = (input: RequestInfo | URL, init?: RequestInit) =>
+  fetch(input, { ...init, cache: 'no-store' });
+
 // Anon client — used for user-facing Auth operations (signUp, signInWithPassword).
-// Safe to use in route handlers; credentials stay server-side.
 export const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
   auth: { autoRefreshToken: false, persistSession: false },
+  global: { fetch: noStoreFetch },
 });
 
 // Service-role client — full DB access + Auth admin API.
 // NEVER import this in client components.
 export const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: { autoRefreshToken: false, persistSession: false },
+  global: { fetch: noStoreFetch },
 });
 
 export type Plan = 'free' | 'pro' | 'elite';
