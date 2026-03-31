@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getSession } from '@/lib/session';
 import NavbarUserMenu from './NavbarUserMenu';
+import FeedbackButton from './FeedbackButton';
 
 export default async function Navbar() {
   const session = await getSession();
@@ -53,6 +54,9 @@ export default async function Navbar() {
           >
             Tarifs
           </Link>
+
+          <div className="mx-1 w-px h-4 bg-[#222]" aria-hidden />
+          <FeedbackButton />
 
           {session ? (
             /* Authenticated — show user menu */
