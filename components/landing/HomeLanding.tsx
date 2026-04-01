@@ -196,11 +196,9 @@ export default function HomeLanding() {
               </span>
             </h1>
 
-            <p className="mt-5 sm:mt-6 text-[1.0rem] sm:text-[1.1rem] md:text-[1.18rem] text-gray-400 max-w-lg mx-auto leading-relaxed font-normal tracking-[-0.01em]">
-              Analyse hook, rétention et montage en quelques secondes.
-              <span className="block mt-1.5 text-gray-500">
-                Identifie ce qui bloque et corrige avant de reposter.
-              </span>
+            <p className="mt-5 sm:mt-6 text-[0.97rem] sm:text-[1.06rem] md:text-[1.13rem] text-gray-400 max-w-none mx-auto leading-relaxed font-normal tracking-[-0.01em]">
+              <span className="block whitespace-nowrap">Analyse hook, rétention et montage en quelques secondes.</span>
+              <span className="block mt-1.5 text-gray-500 whitespace-nowrap">Identifie ce qui bloque et corrige avant de reposter.</span>
             </p>
 
             <div className="mt-8 sm:mt-10 flex justify-center">
