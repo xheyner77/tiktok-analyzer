@@ -196,42 +196,29 @@ export default function HomeLanding() {
               </span>
             </h1>
 
-            <p className="mt-10 sm:mt-12 text-[1.02rem] sm:text-[1.14rem] md:text-[1.22rem] text-gray-400 max-w-xl mx-auto leading-relaxed font-normal tracking-[-0.01em]">
-              <span className="block text-gray-300/95">
-                Analyse hook, rétention et montage en quelques secondes.
-              </span>
-              <span className="block mt-2.5 sm:mt-3 text-gray-500">
+            <p className="mt-5 sm:mt-6 text-[1.0rem] sm:text-[1.1rem] md:text-[1.18rem] text-gray-400 max-w-lg mx-auto leading-relaxed font-normal tracking-[-0.01em]">
+              Analyse hook, rétention et montage en quelques secondes.
+              <span className="block mt-1.5 text-gray-500">
                 Identifie ce qui bloque et corrige avant de reposter.
               </span>
             </p>
 
-            <div className="mt-12 sm:mt-14 md:mt-16 flex flex-col sm:flex-row flex-wrap gap-4 sm:gap-3 justify-center items-stretch sm:items-start">
-              <div className="flex flex-col items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
-                <div className="relative w-full sm:w-auto group">
-                  <div
-                    className="absolute -inset-1.5 rounded-full bg-gradient-to-r from-vn-fuchsia/60 via-vn-violet/52 to-vn-indigo/52 opacity-75 blur-lg transition-all duration-500 group-hover:opacity-100 group-hover:blur-2xl group-hover:scale-[1.04]"
-                    aria-hidden
-                  />
-                  <Link
-                    href="/analyzer"
-                    className="relative inline-flex justify-center items-center w-full sm:w-auto min-h-[58px] rounded-full px-11 sm:px-12 text-[15px] font-semibold text-white bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:brightness-110 hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_14px_48px_-10px_rgba(232,121,249,0.72),0_30px_66px_-16px_rgba(99,102,241,0.4)]"
-                  >
-                    Lancer mon analyse IA
-                  </Link>
-                </div>
-                <p className="text-[12px] sm:text-[13px] text-gray-400 font-medium tracking-tight">
-                  {MAX_ANALYSES_FREE} analyses gratuites — sans carte
-                </p>
-                <p className="text-[12px] sm:text-[13px] text-vn-violet/90 font-medium tracking-tight">
-                  Chaque vidéo devient un test intelligent.
-                </p>
+            <div className="mt-8 sm:mt-10 flex justify-center">
+              <div className="relative group">
+                <div
+                  className="absolute -inset-1.5 rounded-full bg-gradient-to-r from-vn-fuchsia/55 via-vn-violet/45 to-vn-indigo/45 opacity-70 blur-lg transition-all duration-500 group-hover:opacity-100 group-hover:blur-xl group-hover:scale-[1.04]"
+                  aria-hidden
+                />
+                <Link
+                  href="/signup"
+                  className="relative inline-flex items-center gap-2.5 min-h-[52px] rounded-full px-9 sm:px-11 text-[15px] font-semibold text-white bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:brightness-110 hover:scale-[1.025] active:scale-[0.98] transition-all duration-300 shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_12px_40px_-10px_rgba(232,121,249,0.65),0_24px_56px_-16px_rgba(99,102,241,0.35)]"
+                >
+                  Commencer gratuitement
+                  <svg className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
+                    <path d="M3 8h10M9 4l4 4-4 4"/>
+                  </svg>
+                </Link>
               </div>
-              <Link
-                href="/signup"
-                className="inline-flex justify-center items-center min-h-[58px] rounded-full px-10 sm:px-11 text-[15px] font-semibold text-gray-100 border border-white/[0.14] bg-white/[0.05] hover:bg-white/[0.11] hover:border-white/[0.26] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-sm w-full sm:w-auto"
-              >
-                Créer un compte
-              </Link>
             </div>
 
             <div className="mt-11 sm:mt-14 flex flex-col items-center gap-2.5 max-w-xl mx-auto">
