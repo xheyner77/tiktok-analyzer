@@ -46,12 +46,12 @@ const PRIORITY_PC: Record<string, string> = {
 };
 
 function getComparativeData(score: number) {
-  if (score >= 85) return { pct: 3,  barCls: 'bg-emerald-400', txtCls: 'text-emerald-400' };
-  if (score >= 70) return { pct: 10, barCls: 'bg-emerald-400', txtCls: 'text-emerald-400' };
-  if (score >= 55) return { pct: 22, barCls: 'bg-amber-400',   txtCls: 'text-amber-400'   };
-  if (score >= 40) return { pct: 40, barCls: 'bg-amber-400',   txtCls: 'text-amber-400'   };
-  if (score >= 25) return { pct: 60, barCls: 'bg-red-400',     txtCls: 'text-red-400'     };
-  return                  { pct: 78, barCls: 'bg-red-400',     txtCls: 'text-red-400'     };
+  if (score >= 85) return { pct: 3,  barGrad: 'bg-gradient-to-r from-emerald-500 to-emerald-400', txtCls: 'text-emerald-400' };
+  if (score >= 70) return { pct: 10, barGrad: 'bg-gradient-to-r from-emerald-500 to-emerald-400', txtCls: 'text-emerald-400' };
+  if (score >= 55) return { pct: 22, barGrad: 'bg-gradient-to-r from-amber-500 to-amber-400',     txtCls: 'text-amber-400'   };
+  if (score >= 40) return { pct: 40, barGrad: 'bg-gradient-to-r from-amber-500 to-amber-400',     txtCls: 'text-amber-400'   };
+  if (score >= 25) return { pct: 60, barGrad: 'bg-gradient-to-r from-red-500 to-red-400',         txtCls: 'text-red-400'     };
+  return                  { pct: 78, barGrad: 'bg-gradient-to-r from-red-500 to-red-400',         txtCls: 'text-red-400'     };
 }
 
 /* ── Animated circular gauge ─────────────────────────────────────────────── */
@@ -125,28 +125,25 @@ function SectionCard({ title, section }: { title: string; section: SectionData }
 
   return (
     <div className="rounded-xl border border-white/[0.08] bg-[#111118] p-3 sm:p-4">
-      <div className="flex items-center justify-between gap-2 mb-2.5">
+      {/* Header: title left, score + badge right — score always white like mockup */}
+      <div className="flex items-center justify-between gap-2 mb-2">
         <p className="text-[11px] font-bold text-white">{title}</p>
         <div className="flex items-center gap-1.5 shrink-0">
-          <span className={`text-[13px] font-black tabular-nums ${scoreTextColor(s)}`}>{s}</span>
+          <span className="text-[13px] font-black text-white tabular-nums">{s}</span>
           <QBadge label={qb.label} color={qb.color} />
         </div>
       </div>
 
       <PBar pct={s} colorCls={scoreBarColor(s)} />
 
-      {section.analysis && (
-        <p className="text-[10px] text-gray-500 leading-snug mt-2 mb-1.5 line-clamp-2">{section.analysis}</p>
-      )}
-
-      <div className="mt-2 space-y-1">
+      <div className="mt-2.5 space-y-1.5">
         {(section.strengths?.length ?? 0) > 0 && (
           <>
             <p className="text-[8px] uppercase tracking-[0.18em] text-gray-600 font-bold">Points forts</p>
             {(section.strengths ?? []).slice(0, 2).map((f, i) => (
-              <div key={i} className="flex items-start gap-1.5">
-                <span className="text-emerald-400 text-[10px] font-bold shrink-0 mt-px">✓</span>
-                <span className="text-[10px] text-gray-400 leading-snug">{f}</span>
+              <div key={i} className="flex items-center gap-1.5">
+                <span className="text-emerald-400 text-[10px] font-bold shrink-0">✓</span>
+                <span className="text-[10px] text-gray-400">{f}</span>
               </div>
             ))}
           </>
@@ -155,9 +152,9 @@ function SectionCard({ title, section }: { title: string; section: SectionData }
           <>
             <p className="text-[8px] uppercase tracking-[0.18em] text-gray-600 font-bold pt-1">Points faibles</p>
             {(section.weaknesses ?? []).slice(0, 2).map((w, i) => (
-              <div key={i} className="flex items-start gap-1.5">
-                <span className="text-red-400 text-[10px] font-bold shrink-0 mt-px">×</span>
-                <span className="text-[10px] text-gray-400 leading-snug">{w}</span>
+              <div key={i} className="flex items-center gap-1.5">
+                <span className="text-red-400 text-[10px] font-bold shrink-0">×</span>
+                <span className="text-[10px] text-gray-400">{w}</span>
               </div>
             ))}
           </>
@@ -244,7 +241,7 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
 
   const gColors  = gaugeColors(viralScore);
   const vBadge   = viralBadge(viralScore);
-  const { pct: topPct, barCls: compBarCls, txtCls: compTxtCls } = getComparativeData(structureScore);
+  const { pct: topPct, barGrad: compBarGrad, txtCls: compTxtCls } = getComparativeData(structureScore);
   const barWidth = Math.max(4, 100 - topPct);
 
   const comparativeInsight  = data.comparativeInsight?.trim()  || null;
@@ -277,9 +274,9 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
           <span className="w-2.5 h-2.5 rounded-full bg-[#28c840]/90" />
         </div>
         <div className="flex-1 flex justify-center">
-          <span className="text-[11px] text-gray-500 bg-white/[0.05] border border-white/[0.07] rounded-md px-4 py-1 font-medium tracking-tight">
-            app.viralynz.com &middot; Analyse vid&eacute;o
-          </span>
+            <span className="text-[11px] text-gray-500 bg-white/[0.05] border border-white/[0.07] rounded-md px-4 py-1 font-medium tracking-tight">
+                  app.viralynz.com · Analyse vidéo
+                </span>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {data.analysisSource === 'vision_upload' && (
@@ -289,7 +286,7 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
             </span>
           )}
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" style={{ boxShadow: '0 0 6px rgba(52,211,153,0.7)' }} />
-          <span className="hidden sm:block text-[10px] text-emerald-400 font-bold uppercase tracking-[0.18em]">Termin&eacute;</span>
+          <span className="hidden sm:block text-[10px] text-emerald-400 font-bold uppercase tracking-[0.18em]">Terminé</span>
         </div>
       </div>
 
@@ -302,7 +299,10 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
           {/* Score de viralité */}
           <div className="rounded-xl border border-white/[0.1] bg-[#111118] p-4 sm:p-5">
             <div className="flex items-center gap-2 mb-3">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">Score de viralit&eacute;</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">Score de viralité</p>
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-vn-fuchsia/20 text-vn-fuchsia border border-vn-fuchsia/25 uppercase tracking-wide">
+                {data.analysisSource === 'vision_upload' ? 'Vision' : 'IA'}
+              </span>
             </div>
             <div className="flex items-center gap-4 sm:gap-6">
               {/* Circular gauge */}
@@ -321,12 +321,12 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
 
               {/* Structural detail */}
               <div className="flex-1 min-w-0">
-                <p className="text-[9px] uppercase tracking-[0.18em] text-gray-600 font-bold mb-2">D&eacute;tail structurel</p>
+                <p className="text-[9px] uppercase tracking-[0.18em] text-gray-600 font-bold mb-2">Détail structurel</p>
                 <div className="flex gap-2">
                   {[
-                    { label: 'Hook',       val: data.hook?.score      ?? 0 },
-                    { label: 'Montage',    val: data.editing?.score   ?? 0 },
-                    { label: 'R&eacute;tention', val: data.retention?.score ?? 0 },
+                    { label: 'Hook',      val: data.hook?.score      ?? 0 },
+                    { label: 'Montage',   val: data.editing?.score   ?? 0 },
+                    { label: 'Rétention', val: data.retention?.score ?? 0 },
                   ].map(({ label, val }) => (
                     <div key={label} className="flex-1 rounded-lg bg-white/[0.04] border border-white/[0.07] px-2 py-2 text-center">
                       <p className="text-[9px] text-gray-500 mb-0.5">{label}</p>
@@ -344,11 +344,11 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
           {/* Stats publiques + comparative */}
           <div className="rounded-xl border border-white/[0.08] bg-[#111118] p-4 sm:p-5">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">Stats publiques d&eacute;tect&eacute;es</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">Stats publiques détectées</p>
               <span className="text-[9px] text-gray-600 font-medium">{statsSource}</span>
             </div>
 
-            <div className="grid grid-cols-4 gap-1.5 sm:gap-2 mb-3">
+            <div className="grid grid-cols-4 gap-1.5 sm:gap-2 mb-2">
               {[
                 { label: 'Vues',          val: fmt(metrics.views)    },
                 { label: 'Likes',         val: fmt(metrics.likes)    },
@@ -367,7 +367,7 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
               <div className="flex gap-2 mb-3">
                 {meta.durationSec && (
                   <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] px-2 py-1.5">
-                    <p className="text-[8px] text-gray-500 mb-0.5">Dur&eacute;e</p>
+                    <p className="text-[8px] text-gray-500 mb-0.5">Durée</p>
                     <p className="text-[11px] font-semibold text-white">{meta.durationSec}s</p>
                   </div>
                 )}
@@ -381,15 +381,16 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
             )}
 
             {/* Comparative inline */}
-            <div className="rounded-lg bg-white/[0.02] border border-white/[0.06] p-3">
+            <div className="mt-3 rounded-lg bg-white/[0.02] border border-white/[0.06] p-3">
               <p className="text-[9px] uppercase tracking-[0.18em] text-gray-600 font-bold mb-1.5">Analyse comparative</p>
+
               <div className="flex items-center gap-2">
                 <span className={`text-xl font-black leading-none shrink-0 ${compTxtCls}`}>
                   Top {topPct}%
                 </span>
                 <div className="flex-1">
                   <div className="h-1.5 rounded-full bg-white/[0.07] overflow-hidden">
-                    <div className={`h-full rounded-full ${compBarCls}`} style={{ width: `${barWidth}%` }} />
+                    <div className={`h-full rounded-full ${compBarGrad}`} style={{ width: `${barWidth}%` }} />
                   </div>
                   <div className="flex justify-between mt-0.5">
                     <span className="text-[8px] text-gray-600">Moyenne</span>
@@ -401,7 +402,7 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
                 <p className="text-[10px] text-gray-400 mt-2 leading-snug">{comparativeInsight}</p>
               )}
               {comparativePriority && (
-                <p className="text-[10px] text-gray-500 mt-1 leading-snug">&rarr; {comparativePriority}</p>
+                <p className="text-[10px] text-gray-500 mt-1 leading-snug">→ {comparativePriority}</p>
               )}
             </div>
           </div>
@@ -411,14 +412,14 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
             <div className="rounded-xl bg-white/[0.03] border border-white/[0.07] p-3">
               <p className="text-[8px] uppercase tracking-wide text-gray-600 font-bold mb-1">Score de structure</p>
               <p className="text-[1.4rem] font-black text-white leading-none mb-1">{structureScore}</p>
-              <p className="text-[9px] text-gray-500 leading-snug">Qualit&eacute; hook, montage, r&eacute;tention</p>
+              <p className="text-[9px] text-gray-500 leading-snug">Qualité hook, montage, rétention</p>
             </div>
             <div className="rounded-xl bg-white/[0.03] border border-white/[0.07] p-3">
-              <p className="text-[8px] uppercase tracking-wide text-gray-600 font-bold mb-1">Performance observ&eacute;e</p>
+              <p className="text-[8px] uppercase tracking-wide text-gray-600 font-bold mb-1">Performance observée</p>
               {typeof data.observedPerformanceScore === 'number' ? (
                 <>
                   <p className="text-[1.4rem] font-black text-white leading-none mb-1">{data.observedPerformanceScore}</p>
-                  <p className="text-[9px] text-gray-500 leading-snug">{data.observedPerformanceLabel ?? 'Bas&eacute; sur les stats'}</p>
+                  <p className="text-[9px] text-gray-500 leading-snug">{data.observedPerformanceLabel ?? 'Basé sur les stats'}</p>
                 </>
               ) : (
                 <p className="text-[9px] text-gray-600 mt-1 leading-snug">Ajoute un lien TikTok pour ce score</p>
@@ -427,7 +428,7 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
             <div className="rounded-xl bg-white/[0.03] border border-white/[0.07] p-3">
               <p className="text-[8px] uppercase tracking-wide text-gray-600 font-bold mb-1">Verdict final</p>
               <p className="text-[9px] text-gray-400 leading-snug mt-1 line-clamp-3">
-                {data.finalVerdict ?? 'Voir les sections détaillées ci-dessous.'}
+                {data.finalVerdict ?? 'Voir les sections ci-dessous.'}
               </p>
             </div>
           </div>
@@ -435,20 +436,20 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
           {/* Surperformance alert */}
           {data.overperformanceDetected && (
             <div className="rounded-xl border border-vn-fuchsia/20 bg-vn-fuchsia/[0.06] px-3 py-2.5">
-              <p className="text-[11px] font-semibold text-vn-fuchsia/90">&#9889; Surperformance d&eacute;tect&eacute;e</p>
+              <p className="text-[11px] font-semibold text-vn-fuchsia/90">⚡ Surperformance détectée</p>
               <p className="text-[10px] text-gray-400 mt-0.5 leading-snug">
-                La vid&eacute;o performe mieux que ce que sa structure pr&eacute;voit. Optimise la structure pour reproduire ce niveau.
+                La vidéo performe mieux que ce que sa structure prévoit. Optimise la structure pour reproduire ce niveau.
               </p>
             </div>
           )}
         </div>
 
         {/* ── Right column ── */}
-        <div className="w-full lg:w-[270px] xl:w-[290px] shrink-0 flex flex-col gap-3 p-4 sm:p-5">
+        <div className="w-full lg:w-[260px] xl:w-[280px] shrink-0 flex flex-col gap-3 p-4 sm:p-5">
 
-          {data.hook      && <SectionCard title="Analyse du Hook"      section={data.hook}      />}
-          {data.editing   && <SectionCard title="Analyse du Montage"   section={data.editing}   />}
-          {data.retention && <SectionCard title="Analyse de la R&eacute;tention" section={data.retention} />}
+          {data.hook      && <SectionCard title="Analyse du Hook"       section={data.hook}      />}
+          {data.editing   && <SectionCard title="Analyse du Montage"    section={data.editing}   />}
+          {data.retention && <SectionCard title="Analyse de la Rétention" section={data.retention} />}
 
           {(data.improvements?.length ?? 0) > 0 && (
             <RecoCard improvements={data.improvements ?? []} plan={plan} />
@@ -472,7 +473,7 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
           {/* Elite: Strategy */}
           {data.strategy && (
             <div className="rounded-xl border border-vn-violet/20 bg-vn-violet/[0.06] p-3">
-              <p className="text-[10px] font-bold text-vn-violet uppercase tracking-[0.15em] mb-2">Strat&eacute;gie Elite</p>
+              <p className="text-[10px] font-bold text-vn-violet uppercase tracking-[0.15em] mb-2">Stratégie Elite</p>
               <p className="text-[10px] text-gray-400 leading-snug">
                 {data.strategy.length > 240 ? data.strategy.slice(0, 240) + '\u2026' : data.strategy}
               </p>
