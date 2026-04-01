@@ -4,26 +4,29 @@ import { getSession } from '@/lib/session';
 import { getUserById } from '@/lib/auth';
 import { getSiteUrl } from '@/lib/site-url';
 import {
-  STRIPE_LAUNCH_PRICE_ELITE_CENTS,
-  STRIPE_LAUNCH_PRICE_PRO_CENTS,
-  STRIPE_PRODUCT_NAME_ELITE,
-  STRIPE_PRODUCT_NAME_PRO,
-} from '@/lib/stripe-pricing';
+  assertStripePriceIsMonthlySubscription,
+  getStripePriceId,
+  isSubscriptionStatusAllowingAccess,
+  PLAN_RANK,
+} from '@/lib/stripe-billing';
+import {
+  blockTestStripePublishableInProduction,
+  blockTestStripeSecretInProduction,
+} from '@/lib/stripe-prod-guard';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+const stripeSecret = process.env.STRIPE_SECRET_KEY?.trim();
 
-const PLANS = {
-  pro:   { amount: STRIPE_LAUNCH_PRICE_PRO_CENTS,   label: STRIPE_PRODUCT_NAME_PRO,   rank: 1 },
-  elite: { amount: STRIPE_LAUNCH_PRICE_ELITE_CENTS, label: STRIPE_PRODUCT_NAME_ELITE, rank: 2 },
-} as const;
-
-const CURRENT_PLAN_RANK: Record<string, number> = {
-  free:  0,
-  pro:   1,
-  elite: 2,
-};
+function getStripe(): Stripe {
+  if (!stripeSecret) throw new Error('STRIPE_SECRET_KEY manquant');
+  return new Stripe(stripeSecret);
+}
 
 export async function POST(request: NextRequest) {
+  const skBlock = blockTestStripeSecretInProduction();
+  if (skBlock) return skBlock;
+  const pkBlock = blockTestStripePublishableInProduction();
+  if (pkBlock) return pkBlock;
+
   try {
     const session = await getSession();
 
@@ -38,14 +41,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Plan invalide. Valeurs acceptées : pro, elite.' }, { status: 400 });
     }
 
-    // ── Check current plan to prevent same-plan purchase or downgrade ─────────
     const userProfile = await getUserById(session.userId);
     const currentPlan = userProfile?.plan ?? 'free';
-    const currentRank = CURRENT_PLAN_RANK[currentPlan] ?? 0;
-    const targetRank  = PLANS[plan].rank;
+    const currentRank = PLAN_RANK[currentPlan] ?? 0;
+    const targetRank = PLAN_RANK[plan] ?? 0;
 
     if (currentRank >= targetRank) {
-      // User is already on this plan or a better one
       const isSamePlan = currentRank === targetRank;
       return NextResponse.json(
         {
@@ -58,37 +59,87 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── Resolve base URL from NEXT_PUBLIC_SITE_URL (reliable in prod) ─────────
-    const baseUrl = getSiteUrl(request.headers.get('origin'));
-    const price = PLANS[plan];
+    const hasActiveStripeSub =
+      !!userProfile?.stripe_subscription_id &&
+      isSubscriptionStatusAllowingAccess(userProfile.subscription_status);
 
-    const checkoutSession = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      payment_method_types: ['card'],
-      customer_email: session.email,
-      line_items: [
-        {
-          price_data: {
-            currency: 'eur',
-            unit_amount: price.amount,
-            product_data: { name: price.label },
+    if (hasActiveStripeSub) {
+      if (plan === 'elite' && currentPlan === 'pro') {
+        return NextResponse.json(
+          {
+            error:
+              'Tu as déjà un abonnement Pro actif. Utilise la mise à niveau Elite (même abonnement, prorata Stripe).',
+            code: 'PRO_TO_ELITE_USE_UPGRADE',
           },
-          quantity: 1,
+          { status: 400 }
+        );
+      }
+      return NextResponse.json(
+        {
+          error: 'Tu as déjà un abonnement Stripe actif. Gère-le depuis le dashboard ou contacte le support.',
+          code: 'ALREADY_SUBSCRIBED',
         },
-      ],
+        { status: 400 }
+      );
+    }
+
+    const baseUrl = getSiteUrl(request.headers.get('origin'));
+    const stripe = getStripe();
+    const priceId = getStripePriceId(plan);
+
+    const priceCheck = await assertStripePriceIsMonthlySubscription(stripe, priceId);
+    if (!priceCheck.ok) {
+      console.error('[checkout] Price invalide pour abonnement:', priceCheck.code, priceId, priceCheck.message);
+      return NextResponse.json(
+        { error: priceCheck.message, code: priceCheck.code },
+        { status: 400 }
+      );
+    }
+
+    const params: Stripe.Checkout.SessionCreateParams = {
+      mode: 'subscription',
+      payment_method_types: ['card'],
+      line_items: [{ price: priceId, quantity: 1 }],
       metadata: {
         userId: session.userId,
         plan,
       },
+      subscription_data: {
+        metadata: {
+          userId: session.userId,
+          plan,
+        },
+      },
       success_url: `${baseUrl}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url:  `${baseUrl}/pricing`,
-    });
+      cancel_url: `${baseUrl}/pricing`,
+      // Stripe Checkout : lien « Ajouter un code promotionnel » (codes actifs dans Dashboard → Produits → Codes promo)
+      allow_promotion_codes: true,
+    };
 
-    console.log(`[checkout] Session created for user ${session.userId} — plan: ${plan} (current: ${currentPlan})`);
+    if (userProfile?.stripe_customer_id) {
+      params.customer = userProfile.stripe_customer_id;
+    } else {
+      params.customer_email = session.email;
+    }
+
+    const checkoutSession = await stripe.checkout.sessions.create(params);
+
+    console.log('[checkout] Session créée (mode subscription, renouvellement mensuel)', {
+      sessionId: checkoutSession.id,
+      mode: checkoutSession.mode,
+      priceId,
+      userId: session.userId,
+      plan,
+      allow_promotion_codes: true,
+      customer: params.customer ?? '(nouveau via customer_email)',
+    });
     return NextResponse.json({ url: checkoutSession.url });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error('[checkout] Error:', message);
-    return NextResponse.json({ error: 'Erreur lors de la création du paiement.' }, { status: 500 });
+    return NextResponse.json(
+      { error: message.includes('STRIPE_PRICE') ? message : 'Erreur lors de la création du paiement.' },
+      { status: 500 }
+    );
   }
 }

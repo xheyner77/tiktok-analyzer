@@ -7,12 +7,18 @@ import { createPortal } from 'react-dom';
 import { Plan } from '@/lib/supabase';
 import { AnalysisRow } from '@/lib/analyses';
 import { getScoreTextColor, getRatingColors } from '@/lib/utils';
-import { MAX_ANALYSES_ELITE, MAX_ANALYSES_FREE, MAX_ANALYSES_PRO } from '@/lib/plan-limits';
-import { DISPLAY_LAUNCH_PRO_EUR } from '@/lib/stripe-pricing';
+import { MAX_ANALYSES_ELITE, MAX_ANALYSES_FREE, MAX_ANALYSES_PRO, MAX_HOOKS_ELITE } from '@/lib/plan-limits';
+import { DISPLAY_LAUNCH_ELITE_EUR, DISPLAY_LAUNCH_PRO_EUR } from '@/lib/stripe-pricing';
+import { waitForBillingPlan } from '@/lib/wait-for-billing-sync';
 
 interface DashboardClientProps {
   email: string;
+  /** Plan effectif (quotas / accès API). */
   plan: Plan;
+  /** Plan facturé en base (affichage résiliation / upgrade). */
+  billingPlan: Plan;
+  usesStripeSubscription: boolean;
+  showEliteUpgrade: boolean;
   analysesCount: number;
   analysesLimit: number;
   hooksCount: number;
@@ -192,16 +198,29 @@ function AnalysisHistoryItem({ row }: { row: AnalysisRow }) {
 }
 
 export default function DashboardClient({
-  email, plan, analysesCount, analysesLimit, hooksCount, hooksLimit, memberSince, analyses, stripeSessionId,
+  email,
+  plan,
+  billingPlan,
+  usesStripeSubscription,
+  showEliteUpgrade,
+  analysesCount,
+  analysesLimit,
+  hooksCount,
+  hooksLimit,
+  memberSince,
+  analyses,
+  stripeSessionId,
 }: DashboardClientProps) {
   const router = useRouter();
   const [upgradeStatus, setUpgradeStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [upgradedPlan, setUpgradedPlan] = useState<string | null>(null);
+  const [eliteUpgradeLoading, setEliteUpgradeLoading] = useState(false);
 
   // ── Cancel subscription state ──────────────────────────────────────────────
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelStatus, setCancelStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [cancelError, setCancelError] = useState<string>('');
+  const [cancelDoneMode, setCancelDoneMode] = useState<'immediate' | 'end_of_period' | null>(null);
   const [domReady, setDomReady] = useState(false);
   useEffect(() => { setDomReady(true); }, []);
 
@@ -226,16 +245,14 @@ export default function DashboardClient({
       body: JSON.stringify({ plan: pendingPlan, sessionId: stripeSessionId }),
     })
       .then((r) => r.json())
-      .then((data) => {
+      .then(async (data) => {
         if (data.success) {
           localStorage.removeItem('pendingPlan');
           setUpgradedPlan(pendingPlan);
           setUpgradeStatus('success');
-          // Hard reload after 2s so server component fetches fresh plan data.
-          // router.refresh() is unreliable here (Next.js may serve cached response).
-          setTimeout(() => {
-            window.location.href = '/dashboard';
-          }, 2000);
+          const ok = await waitForBillingPlan(pendingPlan as 'pro' | 'elite');
+          if (!ok) console.warn('[Dashboard] billingPlan pas encore à jour (webhook lent ?) — reload.');
+          window.location.href = '/dashboard';
         } else {
           console.error('[Dashboard] upgrade-plan failed:', data.error);
           setUpgradeStatus('error');
@@ -263,6 +280,27 @@ export default function DashboardClient({
     ? `${remaining} restante${remaining > 1 ? 's' : ''}`
     : 'Limite atteinte';
 
+  async function handleEliteUpgrade() {
+    setEliteUpgradeLoading(true);
+    try {
+      const res = await fetch('/api/upgrade-subscription', { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        console.error('[upgrade-subscription]', data);
+        alert(data.error ?? 'Mise à niveau impossible. Réessaie plus tard.');
+        return;
+      }
+      const synced = await waitForBillingPlan('elite');
+      if (!synced) console.warn('[Dashboard] Elite webhook lent — reload quand même.');
+      window.location.href = '/dashboard?t=' + Date.now();
+    } catch (e) {
+      console.error(e);
+      alert('Erreur réseau.');
+    } finally {
+      setEliteUpgradeLoading(false);
+    }
+  }
+
   async function handleCancelPlan() {
     setCancelStatus('loading');
     setCancelError('');
@@ -271,9 +309,9 @@ export default function DashboardClient({
       const data = await res.json();
 
       if (data.success) {
+        setCancelDoneMode(data.cancelAtPeriodEnd ? 'end_of_period' : 'immediate');
         setCancelStatus('done');
-        // Hard reload with cache-busting param — forces fresh server render
-        setTimeout(() => { window.location.href = '/dashboard?t=' + Date.now(); }, 1500);
+        setTimeout(() => { window.location.href = '/dashboard?t=' + Date.now(); }, data.cancelAtPeriodEnd ? 2500 : 1500);
         return;
       }
 
@@ -313,8 +351,14 @@ export default function DashboardClient({
                 <path fillRule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" />
               </svg>
             </div>
-            <p className="text-base font-semibold text-white mb-1">Abonnement annulé</p>
-            <p className="text-xs text-gray-500">Ton plan a bien été repassé en Free. Redirection...</p>
+            <p className="text-base font-semibold text-white mb-1">
+              {cancelDoneMode === 'end_of_period' ? 'Résiliation programmée' : 'Abonnement annulé'}
+            </p>
+            <p className="text-xs text-gray-500">
+              {cancelDoneMode === 'end_of_period'
+                ? 'Tu conserves l’accès Pro/Elite jusqu’à la fin de la période payée. Stripe ne renouvellera pas l’abonnement.'
+                : 'Ton plan a bien été repassé en Free. Redirection...'}
+            </p>
           </div>
         ) : (
           <>
@@ -326,10 +370,19 @@ export default function DashboardClient({
             </div>
 
             <h3 className="text-base font-bold text-white text-center mb-2">
-              Annuler ton abonnement {plan === 'elite' ? 'Elite' : 'Pro'} ?
+              Annuler ton abonnement {billingPlan === 'elite' ? 'Elite' : 'Pro'} ?
             </h3>
             <p className="text-sm text-gray-400 text-center leading-relaxed mb-5">
-              Ton plan passera immédiatement en <span className="text-white font-medium">Free</span> (3 analyses max, sans historique ni hooks).
+              {usesStripeSubscription ? (
+                <>
+                  L’abonnement sera arrêté à la <span className="text-white font-medium">fin de la période en cours</span> (facturation Stripe).
+                  Jusqu’à cette date tu conserves toutes les fonctionnalités payantes.
+                </>
+              ) : (
+                <>
+                  Ton plan passera immédiatement en <span className="text-white font-medium">Free</span> (3 analyses max, sans historique ni hooks).
+                </>
+              )}
               <br /><br />
               <span className="text-gray-500 text-xs">Ton historique d&apos;analyses existant sera conservé.</span>
             </p>
@@ -425,6 +478,23 @@ export default function DashboardClient({
         </div>
       )}
 
+      {billingPlan !== 'free' && plan === 'free' && (
+        <div className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/25 rounded-2xl px-5 py-4">
+          <div className="w-8 h-8 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0 mt-0.5">
+            <svg viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-amber-400">
+              <path fillRule="evenodd" d="M8 1a3.5 3.5 0 0 0-3.5 3.5V7A1.5 1.5 0 0 0 3 8.5v5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 11.5 7V4.5A3.5 3.5 0 0 0 8 1Zm2 6V4.5a2 2 0 1 0-4 0V7h4Z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-amber-200">Problème de paiement</p>
+            <p className="text-xs text-amber-100/80 mt-0.5 leading-relaxed">
+              Ton abonnement Stripe est en retard de paiement. Mets à jour ton moyen de paiement depuis
+              l’e-mail Stripe ou le portail client pour réactiver l’accès {billingPlan === 'elite' ? 'Elite' : 'Pro'}.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Welcome header */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-[#ff0050] to-[#7928ca] flex items-center justify-center text-white font-bold text-base sm:text-lg shadow-lg shadow-[#ff0050]/20 shrink-0">
@@ -458,8 +528,8 @@ export default function DashboardClient({
             plan === 'free'
               ? `${MAX_ANALYSES_FREE} analyses incluses`
               : plan === 'pro'
-                ? `${MAX_ANALYSES_PRO} analyses / mois`
-                : `${MAX_ANALYSES_ELITE} analyses / mois`
+                ? `${MAX_ANALYSES_PRO} analyses / ${usesStripeSubscription ? 'période' : 'mois calendaire'}`
+                : `${MAX_ANALYSES_ELITE} analyses / ${usesStripeSubscription ? 'période' : 'mois calendaire'}`
           }
           icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" /></svg>}
         />
@@ -492,7 +562,11 @@ export default function DashboardClient({
             </div>
             <div>
               <p className="text-xs font-semibold text-white">Reset mensuel automatique</p>
-              <p className="text-xs text-gray-500 mt-0.5">Quotas rechargés chaque 1er du mois</p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {usesStripeSubscription
+                  ? 'Quotas rechargés à chaque renouvellement d’abonnement (Stripe)'
+                  : 'Quotas rechargés le 1er du mois calendaire'}
+              </p>
             </div>
           </div>
         </div>
@@ -544,6 +618,25 @@ export default function DashboardClient({
           )}
         </div>
       </div>
+
+      {showEliteUpgrade && (
+        <div className="bg-gradient-to-br from-[#7928ca]/15 to-[#ff0050]/10 border border-[#a855f7]/25 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold text-white">Passer à Elite</p>
+            <p className="text-xs text-gray-400 mt-1">
+              Mise à niveau sur ton abonnement actuel (prorata Stripe). {MAX_ANALYSES_ELITE} analyses et {MAX_HOOKS_ELITE} hooks par période.
+            </p>
+          </div>
+          <button
+            type="button"
+            disabled={eliteUpgradeLoading}
+            onClick={handleEliteUpgrade}
+            className="shrink-0 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-[#7928ca] to-[#ff0050] hover:opacity-90 disabled:opacity-50"
+          >
+            {eliteUpgradeLoading ? 'Mise à niveau…' : `Elite — ${DISPLAY_LAUNCH_ELITE_EUR}€/mois`}
+          </button>
+        </div>
+      )}
 
       {/* ── History section ─────────────────────────────────────────────────── */}
       <div>
@@ -607,7 +700,7 @@ export default function DashboardClient({
       </div>
 
       {/* ── Subscription management — Pro/Elite only ─────────────────────── */}
-      {plan !== 'free' && (
+      {billingPlan !== 'free' && (
         <div className="border border-[#1a1a1a] rounded-2xl overflow-hidden">
           <div className="px-5 py-4 bg-[#111] flex items-center justify-between">
             <div>
@@ -615,13 +708,19 @@ export default function DashboardClient({
                 Gérer mon abonnement
               </p>
               <p className="text-xs text-gray-600">
-                Plan actuel : <span className={plan === 'elite' ? 'text-[#c084fc]' : 'text-[#ff6080]'}>
-                  {plan === 'elite' ? 'Elite' : 'Pro'}
+                Plan facturé :{' '}
+                <span className={billingPlan === 'elite' ? 'text-[#c084fc]' : 'text-[#ff6080]'}>
+                  {billingPlan === 'elite' ? 'Elite' : 'Pro'}
                 </span>
               </p>
             </div>
             <button
-              onClick={() => { setCancelStatus('idle'); setCancelError(''); setShowCancelModal(true); }}
+              onClick={() => {
+                setCancelStatus('idle');
+                setCancelError('');
+                setCancelDoneMode(null);
+                setShowCancelModal(true);
+              }}
               className="text-xs font-medium text-gray-500 hover:text-red-400 transition-colors px-3 py-1.5 rounded-lg hover:bg-red-500/5 border border-transparent hover:border-red-500/15"
             >
               Annuler l&apos;abonnement

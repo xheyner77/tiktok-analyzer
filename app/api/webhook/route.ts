@@ -1,13 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { supabase } from '@/lib/supabase';
+import {
+  downgradeToFreeBySubscriptionId,
+  invoiceSubscriptionId,
+  resetMonthlyCountersForSubscription,
+  setSubscriptionPaymentFailed,
+  syncUserFromPaidSubscriptionCheckout,
+  syncUserRowFromStripeSubscription,
+} from '@/lib/stripe-subscription-sync';
+import { blockTestStripeSecretInProduction } from '@/lib/stripe-prod-guard';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
-// Next.js App Router: request.text() reads the raw body without pre-parsing,
-// which is required for Stripe signature verification.
+const stripeSecret = process.env.STRIPE_SECRET_KEY?.trim();
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
+
+function getStripe(): Stripe {
+  if (!stripeSecret) {
+    throw new Error('STRIPE_SECRET_KEY manquant');
+  }
+  return new Stripe(stripeSecret);
+}
+
+/**
+ * Body brut obligatoire pour `constructEvent` — ne jamais utiliser request.json() avant.
+ */
 export async function POST(request: NextRequest) {
+  const skBlock = blockTestStripeSecretInProduction();
+  if (skBlock) return skBlock;
+
+  if (!webhookSecret || webhookSecret === 'whsec_your_webhook_secret_here') {
+    console.error('[webhook] STRIPE_WEBHOOK_SECRET invalide ou placeholder.');
+    return NextResponse.json({ error: 'Webhook non configuré.' }, { status: 500 });
+  }
+
   const body = await request.text();
   const signature = request.headers.get('stripe-signature');
 
@@ -16,6 +43,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Missing signature.' }, { status: 400 });
   }
 
+  const stripe = getStripe();
   let event: Stripe.Event;
 
   try {
@@ -26,61 +54,106 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature.' }, { status: 400 });
   }
 
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object as Stripe.Checkout.Session;
-    const { userId, plan } = session.metadata ?? {};
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        console.log('[webhook] checkout.session.completed', {
+          sessionId: session.id,
+          mode: session.mode,
+          payment_status: session.payment_status,
+          subscriptionField: typeof session.subscription === 'string' ? session.subscription : session.subscription?.id,
+        });
+        if (session.mode === 'subscription') {
+          const res = await syncUserFromPaidSubscriptionCheckout(stripe, session, {});
+          if (!res.ok) {
+            console.error('[webhook] checkout.session.completed sync failed:', res.reason, res.log ?? '');
+            return NextResponse.json({ error: res.reason }, { status: 500 });
+          }
+        } else {
+          console.warn('[webhook] Ignored checkout (not subscription) mode=', session.mode, session.id);
+        }
+        break;
+      }
 
-    if (!userId || !plan) {
-      console.error('[webhook] Missing metadata in session:', session.id);
-      return NextResponse.json({ error: 'Missing metadata.' }, { status: 400 });
+      case 'customer.subscription.created': {
+        const sub = event.data.object as Stripe.Subscription;
+        console.log('[webhook] customer.subscription.created', {
+          subscriptionId: sub.id,
+          status: sub.status,
+          customerId: typeof sub.customer === 'string' ? sub.customer : sub.customer?.id,
+          priceId: sub.items.data[0]?.price?.id,
+          interval: sub.items.data[0]?.price?.recurring?.interval,
+          metadata: sub.metadata,
+        });
+        const res = await syncUserRowFromStripeSubscription(sub);
+        if (!res.ok) {
+          console.warn(
+            '[webhook] customer.subscription.created sync deferred (souvent normal avant metadata / checkout):',
+            res.reason,
+            res.log
+          );
+        }
+        break;
+      }
+
+      case 'invoice.paid': {
+        const invoice = event.data.object as Stripe.Invoice;
+        const subId = invoiceSubscriptionId(invoice);
+
+        if (!subId) {
+          console.log('[webhook] invoice.paid — no subscription, skip (one-off?)', invoice.id);
+          break;
+        }
+
+        // Renouvellement de période uniquement — pas le premier cycle (déjà géré au checkout)
+        if (invoice.billing_reason === 'subscription_cycle') {
+          await resetMonthlyCountersForSubscription(subId);
+        } else {
+          console.log(
+            '[webhook] invoice.paid skip counter reset — billing_reason=',
+            invoice.billing_reason,
+            invoice.id
+          );
+        }
+        break;
+      }
+
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object as Stripe.Invoice;
+        const subId = invoiceSubscriptionId(invoice);
+        if (subId) {
+          await setSubscriptionPaymentFailed(subId);
+        } else {
+          console.warn('[webhook] invoice.payment_failed sans subscription', invoice.id);
+        }
+        break;
+      }
+
+      case 'customer.subscription.updated': {
+        const sub = event.data.object as Stripe.Subscription;
+        const res = await syncUserRowFromStripeSubscription(sub);
+        if (!res.ok) {
+          console.error('[webhook] subscription.updated sync failed:', res.reason, res.log ?? '');
+          return NextResponse.json({ error: res.reason }, { status: 500 });
+        }
+        break;
+      }
+
+      case 'customer.subscription.deleted': {
+        const sub = event.data.object as Stripe.Subscription;
+        await downgradeToFreeBySubscriptionId(sub.id);
+        break;
+      }
+
+      default:
+        console.log('[webhook] Unhandled event (ack OK):', event.type, event.id);
     }
-
-    if (plan !== 'pro' && plan !== 'elite') {
-      console.error('[webhook] Unknown plan in metadata:', plan);
-      return NextResponse.json({ error: 'Unknown plan.' }, { status: 400 });
-    }
-
-    // Idempotency check: only update if the user is not already on this plan
-    // (or a better one). Stripe may retry the webhook and we must not overwrite
-    // a later upgrade (e.g. pro → elite) with a stale retry.
-    const { data: currentUser, error: readErr } = await supabase
-      .from('users')
-      .select('plan')
-      .eq('id', userId)
-      .single();
-
-    if (readErr) {
-      console.error('[webhook] Could not read current plan for user', userId, ':', readErr.message);
-      return NextResponse.json({ error: 'DB read failed.' }, { status: 500 });
-    }
-
-    const PLAN_RANK: Record<string, number> = { free: 0, pro: 1, elite: 2 };
-    const currentRank = PLAN_RANK[currentUser?.plan ?? 'free'] ?? 0;
-    const targetRank  = PLAN_RANK[plan] ?? 0;
-
-    if (currentRank >= targetRank) {
-      console.log(`[webhook] Idempotency skip — user ${userId} already on ${currentUser?.plan} (target: ${plan})`);
-      return NextResponse.json({ received: true });
-    }
-
-    // Upgrade the user's plan and reset all monthly counters
-    const now = new Date().toISOString();
-    const { error } = await supabase
-      .from('users')
-      .update({
-        plan,
-        analyses_count: 0,
-        hooks_count:    0,
-        last_reset_at:  now,
-      })
-      .eq('id', userId);
-
-    if (error) {
-      console.error('[webhook] Failed to update plan for user', userId, ':', error.message);
-      return NextResponse.json({ error: 'DB update failed.' }, { status: 500 });
-    }
-
-    console.log(`[webhook] ✓ Plan updated → ${plan} for user ${userId}`);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[webhook] Handler error:', event.type, message);
+    // 500 → Stripe retente (idempotent sur la plupart des handlers)
+    return NextResponse.json({ error: 'Handler failed.' }, { status: 500 });
   }
 
   return NextResponse.json({ received: true });

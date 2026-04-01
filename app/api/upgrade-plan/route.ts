@@ -1,11 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getSession } from '@/lib/session';
-import { supabase } from '@/lib/supabase';
+import { blockTestStripeSecretInProduction } from '@/lib/stripe-prod-guard';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+const stripeSecret = process.env.STRIPE_SECRET_KEY?.trim();
 
+function getStripe(): Stripe {
+  if (!stripeSecret) throw new Error('STRIPE_SECRET_KEY manquant');
+  return new Stripe(stripeSecret);
+}
+
+/**
+ * Vérifie côté serveur que le Checkout Session est payé et appartient à l’utilisateur.
+ * **Ne modifie pas le plan en base** : seul le webhook `checkout.session.completed` (signé Stripe) applique pro/elite.
+ */
 export async function POST(request: NextRequest) {
+  const skBlock = blockTestStripeSecretInProduction();
+  if (skBlock) return skBlock;
+
   try {
     const session = await getSession();
 
@@ -19,61 +31,56 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Plan invalide.' }, { status: 400 });
     }
 
-    // ── Verify payment with Stripe (REQUIRED — never skip) ─────────────────
-    // sessionId is mandatory: upgrading without a verified Stripe payment is
-    // a critical security bypass (free plan upgrade exploit).
     if (!sessionId) {
-      console.error('[upgrade-plan] sessionId missing — upgrade blocked for user:', session.userId);
+      console.error('[upgrade-plan] sessionId missing — user:', session.userId);
       return NextResponse.json({ error: 'Session de paiement requise.' }, { status: 400 });
     }
 
+    const stripe = getStripe();
     let checkoutSession: Stripe.Checkout.Session;
 
     try {
       checkoutSession = await stripe.checkout.sessions.retrieve(sessionId);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      console.error('[upgrade-plan] Stripe session retrieve failed:', msg);
+      console.error('[upgrade-plan] Stripe retrieve failed:', msg);
       return NextResponse.json({ error: 'Session Stripe introuvable.' }, { status: 400 });
     }
 
-    // Payment must be confirmed
+    if (checkoutSession.mode !== 'subscription') {
+      console.error('[upgrade-plan] Session is not subscription mode:', checkoutSession.id);
+      return NextResponse.json({ error: 'Session invalide (pas un abonnement).' }, { status: 400 });
+    }
+
     if (checkoutSession.payment_status !== 'paid') {
-      console.error('[upgrade-plan] Payment not confirmed for session:', sessionId);
+      console.error('[upgrade-plan] Payment not confirmed:', sessionId);
       return NextResponse.json({ error: 'Paiement non confirmé.' }, { status: 402 });
     }
 
-    // Session must belong to this user
     if (checkoutSession.metadata?.userId !== session.userId) {
-      console.error('[upgrade-plan] userId mismatch — session:', checkoutSession.metadata?.userId, 'auth:', session.userId);
+      console.error('[upgrade-plan] userId mismatch');
       return NextResponse.json({ error: 'Session invalide.' }, { status: 403 });
     }
 
-    // Plan in Stripe metadata must match the requested plan
     if (checkoutSession.metadata?.plan !== plan) {
-      console.error('[upgrade-plan] Plan mismatch — stripe:', checkoutSession.metadata?.plan, 'requested:', plan);
+      console.error('[upgrade-plan] Plan metadata mismatch');
       return NextResponse.json({ error: 'Plan incohérent.' }, { status: 400 });
     }
 
-    // ── Upgrade plan + reset monthly counters ─────────────────────────────
-    const now = new Date().toISOString();
-    const { error } = await supabase
-      .from('users')
-      .update({
-        plan,
-        analyses_count: 0,
-        hooks_count:    0,
-        last_reset_at:  now,
-      })
-      .eq('id', session.userId);
+    console.log(
+      '[upgrade-plan] Checkout session verified (webhook-only DB) user=',
+      session.userId,
+      'session=',
+      checkoutSession.id,
+      'plan=',
+      plan
+    );
 
-    if (error) {
-      console.error('[upgrade-plan] DB error:', error.message);
-      return NextResponse.json({ error: 'Erreur lors de la mise à jour du plan.' }, { status: 500 });
-    }
-
-    console.log(`[upgrade-plan] ✓ Plan → ${plan} for user ${session.userId}`);
-    return NextResponse.json({ success: true, plan });
+    return NextResponse.json({
+      success: true,
+      plan,
+      syncedByWebhookOnly: true,
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error('[upgrade-plan] Unexpected error:', message);

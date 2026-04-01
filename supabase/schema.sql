@@ -15,12 +15,23 @@ CREATE TABLE IF NOT EXISTS public.users (
   plan           TEXT        NOT NULL DEFAULT 'free'
                              CHECK (plan IN ('free', 'pro', 'elite')),
   analyses_count INTEGER     NOT NULL DEFAULT 0,
+  hooks_count    INTEGER     NOT NULL DEFAULT 0,
+  last_reset_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  stripe_customer_id              TEXT,
+  stripe_subscription_id          TEXT,
+  subscription_status             TEXT,
+  subscription_current_period_end TIMESTAMPTZ,
+  subscription_cancel_at_period_end BOOLEAN NOT NULL DEFAULT false,
   created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Index for fast email look-ups
 CREATE INDEX IF NOT EXISTS users_email_idx ON public.users (email);
+
+CREATE UNIQUE INDEX IF NOT EXISTS users_stripe_subscription_id_key
+  ON public.users (stripe_subscription_id)
+  WHERE stripe_subscription_id IS NOT NULL;
 
 
 -- 3. Auto-update updated_at on every row change

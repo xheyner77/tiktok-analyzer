@@ -7,6 +7,7 @@ import {
   incrementHooksCount,
   canGenerateHook,
   HOOK_LIMITS,
+  getEffectivePlan,
 } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { HOOK_GENERATION_MAX_TOKENS, OPENAI_CHAT_MODEL } from '@/lib/openai-models';
@@ -108,12 +109,13 @@ export async function POST(request: NextRequest) {
 
     user = await checkAndResetMonthly(user);
 
-    // ── Feature availability ──────────────────────────────────────────────────
-    const hookLimit = HOOK_LIMITS[user.plan] ?? 0;
+    // ── Feature availability (plan effectif — impayé = pas d’accès) ───────────
+    const tier = getEffectivePlan(user);
+    const hookLimit = HOOK_LIMITS[tier] ?? 0;
 
     if (hookLimit === 0) {
       return NextResponse.json(
-        { error: 'Le générateur de hooks est disponible à partir du plan Pro.', plan: user.plan },
+        { error: 'Le générateur de hooks est disponible à partir du plan Pro.', plan: tier },
         { status: 403 }
       );
     }
@@ -124,7 +126,7 @@ export async function POST(request: NextRequest) {
     if (!canGenerateHook(user) || remaining === 0) {
       return NextResponse.json(
         {
-          error: `Tu as utilisé tes ${hookLimit} hooks ce mois-ci. Renouvellement le 1er du mois.`,
+          error: `Tu as utilisé tes ${hookLimit} hooks pour cette période de facturation.`,
           used:  user.hooks_count,
           limit: hookLimit,
         },
@@ -217,7 +219,7 @@ export async function POST(request: NextRequest) {
 
     console.log('[hooks/generate] success', {
       userId:  session.userId,
-      plan:    user.plan,
+      plan:    tier,
       used:    user.hooks_count + consumed,
       limit:   hookLimit,
       tone,

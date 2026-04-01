@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AnalysisResult, Rating, Improvement, AnalysisSection } from '@/lib/types';
 import { getSession } from '@/lib/session';
-import { getUserById, incrementAnalysesCount, checkAndResetMonthly, canRunAnalysis, PLAN_LIMITS } from '@/lib/auth';
+import {
+  getUserById,
+  incrementAnalysesCount,
+  checkAndResetMonthly,
+  canRunAnalysis,
+  PLAN_LIMITS,
+  getEffectivePlan,
+} from '@/lib/auth';
 import { saveAnalysis } from '@/lib/analyses';
 import { analyzeWithOpenAI, analyzeWithOpenAIVision, mapOpenAIVisionError } from '@/lib/openai';
 import { normalizeTikTokUrl, isTikTokVideoUrl } from '@/lib/tiktok-url';
@@ -620,16 +627,22 @@ async function postVisionAnalyze(
       hooks_count: 0,
       last_reset_at: new Date().toISOString(),
       created_at: new Date().toISOString(),
+      stripe_customer_id: null,
+      stripe_subscription_id: null,
+      subscription_status: null,
+      subscription_current_period_end: null,
+      subscription_cancel_at_period_end: false,
     };
   }
   dbUser = await checkAndResetMonthly(dbUser);
-  const limit = PLAN_LIMITS[dbUser.plan] ?? PLAN_LIMITS.free;
+  const effective = getEffectivePlan(dbUser);
+  const limit = PLAN_LIMITS[effective] ?? PLAN_LIMITS.free;
   if (!canRunAnalysis(dbUser)) {
     return NextResponse.json(
       {
         error: 'Limite atteinte pour ce mois',
         type: 'analysis',
-        plan: dbUser.plan,
+        plan: effective,
         used: dbUser.analyses_count,
         limit,
       },
@@ -637,7 +650,7 @@ async function postVisionAnalyze(
     );
   }
 
-  const plan = dbUser.plan;
+  const plan = effective;
   const hasOpenAI =
     !!process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'sk-your-key-here';
   if (plan === 'free' || !hasOpenAI) {
@@ -795,6 +808,11 @@ export async function POST(request: NextRequest) {
           hooks_count: 0,
           last_reset_at: new Date().toISOString(),
           created_at: new Date().toISOString(),
+          stripe_customer_id: null,
+          stripe_subscription_id: null,
+          subscription_status: null,
+          subscription_current_period_end: null,
+          subscription_cancel_at_period_end: false,
         };
         console.log('[analyze] profile row created on-the-fly for:', session.userId);
       }
@@ -802,10 +820,12 @@ export async function POST(request: NextRequest) {
       // Reset monthly counters if we've crossed a calendar-month boundary
       dbUser = await checkAndResetMonthly(dbUser);
 
-      const limit = PLAN_LIMITS[dbUser.plan] ?? PLAN_LIMITS.free;
+      const effectivePlan = getEffectivePlan(dbUser);
+      const limit = PLAN_LIMITS[effectivePlan] ?? PLAN_LIMITS.free;
 
       console.log('[analyze] limit check —', {
-        plan: dbUser.plan,
+        plan: effectivePlan,
+        storedPlan: dbUser.plan,
         count: dbUser.analyses_count,
         limit,
         allowed: canRunAnalysis(dbUser),
@@ -816,7 +836,7 @@ export async function POST(request: NextRequest) {
           {
             error: 'Limite atteinte pour ce mois',
             type:  'analysis',
-            plan:  dbUser.plan,
+            plan:  effectivePlan,
             used:  dbUser.analyses_count,
             limit,
           },
@@ -896,7 +916,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Analysis ─────────────────────────────────────────────────────────────
-    const plan = dbUser?.plan ?? 'free';
+    const plan = dbUser ? getEffectivePlan(dbUser) : 'free';
     const useOpenAI =
       (plan === 'pro' || plan === 'elite') &&
       !!process.env.OPENAI_API_KEY &&

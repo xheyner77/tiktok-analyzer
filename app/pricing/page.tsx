@@ -339,7 +339,7 @@ export default function PricingPage() {
           {[
             {
               q: `Quel est le quota d'analyses en Elite ?`,
-              a: `Le plan Elite inclut jusqu'à ${MAX_ANALYSES_ELITE} analyses par mois calendaire, réinitialisées le 1er de chaque mois.`,
+              a: `Le plan Elite inclut jusqu'à ${MAX_ANALYSES_ELITE} analyses par période de facturation (abonnement mensuel Stripe). Les compteurs sont réinitialisés à chaque renouvellement.`,
             },
             {
               q: 'Puis-je changer de plan à tout moment ?',
@@ -351,7 +351,7 @@ export default function PricingPage() {
             },
             {
               q: "Qu'est-ce que l'offre lancement -50 % ?",
-              a: `Pendant la phase de lancement, les plans Pro et Elite sont facturés ${DISPLAY_LAUNCH_PRO_EUR}€ et ${DISPLAY_LAUNCH_ELITE_EUR}€ au lieu de ${DISPLAY_CATALOG_PRO_EUR}€ et ${DISPLAY_CATALOG_ELITE_EUR}€ (paiement unique via Stripe, même contenu qu'ensuite).`,
+              a: `Pendant la phase de lancement, les abonnements Pro et Elite sont facturés ${DISPLAY_LAUNCH_PRO_EUR}€/mois et ${DISPLAY_LAUNCH_ELITE_EUR}€/mois au lieu de ${DISPLAY_CATALOG_PRO_EUR}€ et ${DISPLAY_CATALOG_ELITE_EUR}€ (renouvellement automatique via Stripe).`,
             },
           ].map((faq, i) => (
             <div key={i} className="bg-[#0f0f0f] border border-[#1a1a1a] rounded-xl p-4">

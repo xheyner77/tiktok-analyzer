@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { getSession } from '@/lib/session';
-import { getUserById } from '@/lib/auth';
+import { getUserById, getEffectivePlan } from '@/lib/auth';
 import NavbarUserMenu from './NavbarUserMenu';
 import NavbarMobileMenu from './NavbarMobileMenu';
 import FeedbackButton from './FeedbackButton';
@@ -8,7 +8,7 @@ import FeedbackButton from './FeedbackButton';
 export default async function Navbar() {
   const session = await getSession();
   const userProfile = session ? await getUserById(session.userId) : null;
-  const plan = userProfile?.plan ?? 'free';
+  const plan = userProfile ? getEffectivePlan(userProfile) : 'free';
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[#141414] bg-[#080808]/85 backdrop-blur-md">

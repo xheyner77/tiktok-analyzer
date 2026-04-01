@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/session';
-import { getUserById, PLAN_LIMITS, HOOK_LIMITS } from '@/lib/auth';
+import { getUserById, PLAN_LIMITS, HOOK_LIMITS, getEffectivePlan } from '@/lib/auth';
+import { isSubscriptionStatusAllowingAccess } from '@/lib/stripe-billing';
 import { getAnalyses } from '@/lib/analyses';
 import DashboardClient from './DashboardClient';
 
@@ -25,13 +26,21 @@ export default async function DashboardPage({
 
   const user = await getUserById(session.userId);
   const memberSince   = user?.created_at      ?? new Date().toISOString();
-  const plan          = user?.plan             ?? 'free';
+  const billingPlan   = user?.plan             ?? 'free';
+  const plan          = user ? getEffectivePlan(user) : 'free';
   const analysesCount = user?.analyses_count   ?? 0;
   const hooksCount    = user?.hooks_count      ?? 0;
   const analysesLimit = PLAN_LIMITS[plan]      ?? 3;
   const hooksLimit    = HOOK_LIMITS[plan]      ?? 0;
 
   const analyses = await getAnalyses(session.userId, plan);
+
+  const usesStripeSubscription = !!user?.stripe_subscription_id;
+  const showEliteUpgrade =
+    !!user &&
+    user.plan === 'pro' &&
+    !!user.stripe_subscription_id &&
+    isSubscriptionStatusAllowingAccess(user.subscription_status);
   // Stripe appends the real session ID — use it to verify the payment server-side
   const stripeSessionId = searchParams.session_id ?? null;
 
@@ -45,6 +54,9 @@ export default async function DashboardPage({
         <DashboardClient
           email={session.email}
           plan={plan}
+          billingPlan={billingPlan}
+          usesStripeSubscription={usesStripeSubscription}
+          showEliteUpgrade={showEliteUpgrade}
           analysesCount={analysesCount}
           analysesLimit={analysesLimit}
           hooksCount={hooksCount}

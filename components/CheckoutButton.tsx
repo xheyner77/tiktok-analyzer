@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { waitForBillingPlan } from '@/lib/wait-for-billing-sync';
 
 interface CheckoutButtonProps {
   plan: 'pro' | 'elite';
@@ -36,6 +37,19 @@ export default function CheckoutButton({ plan, className, children }: CheckoutBu
         // Persist the chosen plan so /dashboard can apply it after Stripe redirect
         localStorage.setItem('pendingPlan', plan);
         window.location.href = data.url;
+        return;
+      }
+
+      if (data.code === 'PRO_TO_ELITE_USE_UPGRADE') {
+        const r2 = await fetch('/api/upgrade-subscription', { method: 'POST' });
+        const d2 = await r2.json().catch(() => ({}));
+        if (r2.ok) {
+          const synced = await waitForBillingPlan('elite');
+          if (!synced) console.warn('[CheckoutButton] Webhook Elite lent — redirection.');
+          window.location.href = '/dashboard?t=' + Date.now();
+          return;
+        }
+        setErrorMsg(d2.error ?? 'Mise à niveau Elite impossible pour le moment.');
         return;
       }
 
