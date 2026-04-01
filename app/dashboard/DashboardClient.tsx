@@ -32,8 +32,8 @@ const planLabels: Record<Plan, string> = { free: 'Free', pro: 'Pro', elite: 'Eli
 
 const planColors: Record<Plan, string> = {
   free: 'bg-[#1a1a1a] text-gray-400 border-[#222]',
-  pro: 'bg-[#ff0050]/10 text-[#ff0050] border-[#ff0050]/20',
-  elite: 'bg-[#7928ca]/15 text-[#b060ff] border-[#7928ca]/25',
+  pro: 'bg-vn-fuchsia/10 text-vn-fuchsia border-vn-fuchsia/20',
+  elite: 'bg-vn-violet/15 text-vn-glow border-vn-violet/25',
 };
 
 function StatCard({ label, value, sub, icon }: {
@@ -170,7 +170,7 @@ function AnalysisHistoryItem({ row }: { row: AnalysisRow }) {
                   .filter(i => i.priority === 'haute')
                   .map((imp, idx) => (
                     <div key={idx} className="flex items-start gap-2">
-                      <span className="text-[#ff0050] mt-0.5 shrink-0 text-xs">→</span>
+                      <span className="text-vn-fuchsia mt-0.5 shrink-0 text-xs">→</span>
                       <p className="text-xs text-gray-400 leading-relaxed">{imp.tip}</p>
                     </div>
                   ))}
@@ -497,7 +497,7 @@ export default function DashboardClient({
 
       {/* Welcome header */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-[#ff0050] to-[#7928ca] flex items-center justify-center text-white font-bold text-base sm:text-lg shadow-lg shadow-[#ff0050]/20 shrink-0">
+        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-vn-fuchsia to-vn-indigo flex items-center justify-center text-white font-bold text-base sm:text-lg shadow-lg shadow-vn-fuchsia/20 shrink-0">
           {initials}
         </div>
         <div className="min-w-0 flex-1">
@@ -555,8 +555,8 @@ export default function DashboardClient({
             }
           />
           <div className="bg-[#111] border border-[#1a1a1a] rounded-2xl p-5 card-glow flex items-center gap-4">
-            <div className="w-8 h-8 rounded-lg bg-[#ff0050]/10 flex items-center justify-center shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-[#ff0050]">
+            <div className="w-8 h-8 rounded-lg bg-vn-fuchsia/10 flex items-center justify-center shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-vn-fuchsia">
                 <path d="M8 1a6 6 0 0 1 3.196 11.064.75.75 0 0 1-.064.372l-1.154 2.83a.75.75 0 0 1-.697.47H6.72a.75.75 0 0 1-.698-.47l-1.153-2.83a.75.75 0 0 1-.064-.372A6 6 0 0 1 8 1zm.75 8a.75.75 0 0 0-1.5 0v1.5a.75.75 0 0 0 1.5 0V9zm0-4.25a.75.75 0 0 0-1.5 0v2.5a.75.75 0 0 0 1.5 0v-2.5z" />
               </svg>
             </div>
@@ -577,13 +577,13 @@ export default function DashboardClient({
         <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-4">Actions rapides</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Link
-            href="/"
+            href="/analyzer"
             className={`group flex items-center gap-4 p-5 rounded-2xl border transition-all duration-200
               ${canAnalyze
-                ? 'bg-gradient-to-br from-[#ff0050]/8 to-[#7928ca]/8 border-[#ff0050]/20 hover:border-[#ff0050]/40 hover:from-[#ff0050]/12 hover:to-[#7928ca]/12'
+                ? 'bg-gradient-to-br from-vn-fuchsia/8 to-vn-indigo/8 border-vn-fuchsia/20 hover:border-vn-fuchsia/40 hover:from-vn-fuchsia/12 hover:to-vn-indigo/12'
                 : 'bg-[#111] border-[#1a1a1a] opacity-50 pointer-events-none'}`}
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#ff0050] to-[#7928ca] flex items-center justify-center shrink-0 shadow-md shadow-[#ff0050]/20">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-vn-fuchsia to-vn-indigo flex items-center justify-center shrink-0 shadow-md shadow-vn-fuchsia/20">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-white"><path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" /><path fillRule="evenodd" d="M.664 10.59a1.651 1.651 0 0 1 0-1.186A10.004 10.004 0 0 1 10 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0 1 10 17c-4.257 0-7.893-2.66-9.336-6.41Z" clipRule="evenodd" /></svg>
             </div>
             <div>
@@ -595,19 +595,19 @@ export default function DashboardClient({
 
           {plan === 'free' ? (
             <Link href="/pricing" className="group flex items-center gap-4 p-5 rounded-2xl bg-[#111] border border-[#1a1a1a] hover:border-[#2a1a4a] hover:bg-[#0f0a18] transition-all duration-200">
-              <div className="w-10 h-10 rounded-xl bg-[#7928ca]/15 border border-[#7928ca]/25 flex items-center justify-center shrink-0">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-[#b060ff]"><path fillRule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z" clipRule="evenodd" /></svg>
+              <div className="w-10 h-10 rounded-xl bg-vn-violet/15 border border-vn-violet/25 flex items-center justify-center shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-vn-glow"><path fillRule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z" clipRule="evenodd" /></svg>
               </div>
               <div>
-                <p className="font-semibold text-sm text-white group-hover:text-[#c084fc] transition-colors">Passer à Pro</p>
+                <p className="font-semibold text-sm text-white group-hover:text-vn-glow transition-colors">Passer à Pro</p>
                 <p className="text-xs text-gray-500 mt-0.5">{`${MAX_ANALYSES_PRO} analyses/mois • ${DISPLAY_CATALOG_PRO_EUR}€/mois`}</p>
               </div>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-gray-600 ml-auto group-hover:text-[#b060ff] transition-colors"><path fillRule="evenodd" d="M6.22 4.22a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06l-3.25 3.25a.75.75 0 0 1-1.06-1.06L9.19 8 6.22 5.03a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" /></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-gray-600 ml-auto group-hover:text-vn-glow transition-colors"><path fillRule="evenodd" d="M6.22 4.22a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06l-3.25 3.25a.75.75 0 0 1-1.06-1.06L9.19 8 6.22 5.03a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" /></svg>
             </Link>
           ) : (
-            <Link href="/" className="group flex items-center gap-4 p-5 rounded-2xl bg-[#111] border border-[#1a1a1a] hover:border-[#222] transition-all duration-200">
-              <div className="w-10 h-10 rounded-xl bg-[#ff0050]/10 border border-[#ff0050]/20 flex items-center justify-center shrink-0">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-[#ff0050]"><path d="M5.25 3A2.25 2.25 0 0 0 3 5.25v9.5A2.25 2.25 0 0 0 5.25 17h9.5A2.25 2.25 0 0 0 17 14.75v-9.5A2.25 2.25 0 0 0 14.75 3h-9.5ZM10 8a.75.75 0 0 1 .75.75v1.5h1.5a.75.75 0 0 1 0 1.5h-1.5v1.5a.75.75 0 0 1-1.5 0v-1.5h-1.5a.75.75 0 0 1 0-1.5h1.5v-1.5A.75.75 0 0 1 10 8Z" /></svg>
+            <Link href="/analyzer" className="group flex items-center gap-4 p-5 rounded-2xl bg-[#111] border border-[#1a1a1a] hover:border-[#222] transition-all duration-200">
+              <div className="w-10 h-10 rounded-xl bg-vn-fuchsia/10 border border-vn-fuchsia/20 flex items-center justify-center shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-vn-fuchsia"><path d="M5.25 3A2.25 2.25 0 0 0 3 5.25v9.5A2.25 2.25 0 0 0 5.25 17h9.5A2.25 2.25 0 0 0 17 14.75v-9.5A2.25 2.25 0 0 0 14.75 3h-9.5ZM10 8a.75.75 0 0 1 .75.75v1.5h1.5a.75.75 0 0 1 0 1.5h-1.5v1.5a.75.75 0 0 1-1.5 0v-1.5h-1.5a.75.75 0 0 1 0-1.5h1.5v-1.5A.75.75 0 0 1 10 8Z" /></svg>
               </div>
               <div>
                 <p className="font-semibold text-sm text-white">Nouvelle analyse</p>
@@ -620,7 +620,7 @@ export default function DashboardClient({
       </div>
 
       {showEliteUpgrade && (
-        <div className="bg-gradient-to-br from-[#7928ca]/15 to-[#ff0050]/10 border border-[#a855f7]/25 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="bg-gradient-to-br from-vn-violet/15 to-vn-fuchsia/10 border border-vn-violet/25 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <p className="text-sm font-semibold text-white">Passer à Elite</p>
             <p className="text-xs text-gray-400 mt-1">
@@ -631,7 +631,7 @@ export default function DashboardClient({
             type="button"
             disabled={eliteUpgradeLoading}
             onClick={handleEliteUpgrade}
-            className="shrink-0 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-[#7928ca] to-[#ff0050] hover:opacity-90 disabled:opacity-50"
+            className="shrink-0 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-vn-indigo to-vn-fuchsia hover:opacity-90 disabled:opacity-50"
           >
             {eliteUpgradeLoading ? 'Mise à niveau…' : `Elite — ${DISPLAY_CATALOG_ELITE_EUR}€/mois`}
           </button>
@@ -652,7 +652,7 @@ export default function DashboardClient({
         {plan === 'free' ? (
           /* Free plan — locked with upsell */
           <div className="bg-[#111] border border-[#1a1a1a] rounded-2xl p-6 text-center card-glow">
-            <div className="w-10 h-10 rounded-xl bg-[#7928ca]/10 border border-[#7928ca]/20 flex items-center justify-center mx-auto mb-3">
+            <div className="w-10 h-10 rounded-xl bg-vn-violet/10 border border-vn-violet/20 flex items-center justify-center mx-auto mb-3">
               <svg viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-[#b060ff]">
                 <path fillRule="evenodd" d="M8 1a3.5 3.5 0 0 0-3.5 3.5V7A1.5 1.5 0 0 0 3 8.5v5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 11.5 7V4.5A3.5 3.5 0 0 0 8 1Zm2 6V4.5a2 2 0 1 0-4 0V7h4Z" clipRule="evenodd" />
               </svg>
@@ -661,7 +661,7 @@ export default function DashboardClient({
             <p className="text-xs text-gray-500 mb-4">Retrouvez toutes vos analyses passées et suivez votre progression.</p>
             <Link
               href="/pricing"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-lg bg-gradient-to-r from-[#ff0050] to-[#7928ca] text-white hover:opacity-90 transition-opacity"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-lg bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:opacity-90 transition-opacity"
             >
               Passer à Pro →
             </Link>
@@ -683,10 +683,10 @@ export default function DashboardClient({
       </div>
 
       {/* Tip */}
-      <div className="bg-gradient-to-br from-[#ff0050]/5 to-[#7928ca]/5 border border-[#ff0050]/10 rounded-2xl p-5">
+      <div className="bg-gradient-to-br from-vn-fuchsia/5 to-vn-indigo/5 border border-vn-fuchsia/10 rounded-2xl p-5">
         <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[#ff0050]/10 flex items-center justify-center shrink-0 mt-0.5">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-[#ff0050]">
+          <div className="w-8 h-8 rounded-lg bg-vn-fuchsia/10 flex items-center justify-center shrink-0 mt-0.5">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-vn-fuchsia">
               <path d="M8 1a6 6 0 0 1 3.196 11.064.75.75 0 0 1-.064.372l-1.154 2.83a.75.75 0 0 1-.697.47H6.72a.75.75 0 0 1-.698-.47l-1.153-2.83a.75.75 0 0 1-.064-.372A6 6 0 0 1 8 1zm.75 8a.75.75 0 0 0-1.5 0v1.5a.75.75 0 0 0 1.5 0V9zm0-4.25a.75.75 0 0 0-1.5 0v2.5a.75.75 0 0 0 1.5 0v-2.5z" />
             </svg>
           </div>
@@ -709,7 +709,7 @@ export default function DashboardClient({
               </p>
               <p className="text-xs text-gray-600">
                 Plan facturé :{' '}
-                <span className={billingPlan === 'elite' ? 'text-[#c084fc]' : 'text-[#ff6080]'}>
+                <span className={billingPlan === 'elite' ? 'text-vn-glow' : 'text-vn-fuchsia'}>
                   {billingPlan === 'elite' ? 'Elite' : 'Pro'}
                 </span>
               </p>

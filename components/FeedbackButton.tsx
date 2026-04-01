@@ -98,7 +98,7 @@ export default function FeedbackButton() {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Ambient glow */}
-        <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-64 h-24 rounded-full bg-gradient-to-br from-[#ff0050]/10 to-[#7928ca]/10 blur-2xl pointer-events-none" />
+        <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-64 h-24 rounded-full bg-gradient-to-br from-vn-fuchsia/10 to-vn-indigo/10 blur-2xl pointer-events-none" />
 
         <div className="relative p-6">
           {/* Close */}
@@ -114,7 +114,7 @@ export default function FeedbackButton() {
 
           {status === 'success' ? (
             <div className="py-6 flex flex-col items-center gap-4 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#ff0050]/15 to-[#7928ca]/15 border border-[#ff0050]/20 flex items-center justify-center text-2xl">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-vn-fuchsia/15 to-vn-indigo/15 border border-vn-fuchsia/20 flex items-center justify-center text-2xl">
                 🙏
               </div>
               <div>
@@ -168,7 +168,7 @@ export default function FeedbackButton() {
               <button
                 onClick={handleSubmit}
                 disabled={!message.trim() || status === 'sending'}
-                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#ff0050] to-[#7928ca] text-white font-semibold text-sm hover:opacity-90 transition-all duration-200 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-[#ff0050]/15"
+                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white font-semibold text-sm hover:opacity-90 transition-all duration-200 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-vn-fuchsia/15"
               >
                 {status === 'sending' ? (
                   <span className="flex items-center justify-center gap-2">

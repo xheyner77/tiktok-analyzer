@@ -4,11 +4,14 @@
 
 @layer base {
   body {
-    @apply bg-[#080808] text-white antialiased overflow-x-hidden;
+    @apply bg-vn-bg text-white antialiased overflow-x-hidden;
   }
 
-  /* Prevent browsers from drawing red/blue focus outlines on non-interactive
-     scrollable containers (e.g. modal overlays with overflow:auto/scroll). */
+  ::selection {
+    background: rgba(232, 121, 249, 0.25);
+    color: #fff;
+  }
+
   div:focus {
     outline: none;
   }
@@ -33,36 +36,75 @@
 
 @layer utilities {
   .gradient-text {
-    @apply bg-gradient-to-r from-[#ff0050] to-[#7928ca] bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-vn-fuchsia via-vn-violet to-vn-indigo bg-clip-text text-transparent;
+  }
+
+  /** Accent court pour un mot dans un titre display */
+  .gradient-text-hero {
+    background: linear-gradient(105deg, #f0abfc 0%, #c084fc 35%, #818cf8 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 
   .gradient-border {
-    background: linear-gradient(#111, #111) padding-box,
-      linear-gradient(135deg, #ff0050, #7928ca) border-box;
+    background: linear-gradient(#12121a, #12121a) padding-box,
+      linear-gradient(135deg, #e879f9, #6366f1) border-box;
     border: 1px solid transparent;
   }
 
   .card-glow {
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04),
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.04),
       0 4px 24px rgba(0, 0, 0, 0.4);
   }
 
+  .vn-glass {
+    @apply bg-white/[0.03] backdrop-blur-xl border border-white/[0.08];
+  }
+
+  /** Fond landing : maille + halos (aucune image externe) */
+  .landing-mesh {
+    background-image:
+      radial-gradient(ellipse 100% 80% at 50% -30%, rgba(232, 121, 249, 0.12), transparent 55%),
+      radial-gradient(ellipse 60% 50% at 100% 20%, rgba(99, 102, 241, 0.08), transparent 50%),
+      radial-gradient(ellipse 50% 40% at 0% 60%, rgba(167, 139, 250, 0.06), transparent 45%),
+      linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size:
+      100% 100%,
+      100% 100%,
+      100% 100%,
+      72px 72px,
+      72px 72px;
+  }
+
+  .landing-section {
+    @apply max-w-7xl mx-auto px-5 sm:px-8 lg:px-10;
+  }
+
+  .landing-heading-xl {
+    @apply font-display font-bold tracking-tight text-white;
+    letter-spacing: -0.03em;
+  }
+
   .pro-pricing-card {
-    background: #0d0d0d;
-    border: 1px solid rgba(255, 0, 80, 0.28);
+    background: #0d0d12;
+    border: 1px solid rgba(232, 121, 249, 0.28);
     box-shadow:
       0 0 0 1px rgba(255, 255, 255, 0.03),
-      0 0 40px -16px rgba(255, 0, 80, 0.18),
+      0 0 40px -16px rgba(232, 121, 249, 0.2),
       0 8px 32px rgba(0, 0, 0, 0.45);
   }
 
   .elite-pricing-card {
-    background: radial-gradient(ellipse 90% 60% at 50% 0%, rgba(121, 40, 202, 0.22) 0%, #090910 55%),
+    background:
+      radial-gradient(ellipse 90% 60% at 50% 0%, rgba(139, 92, 246, 0.22) 0%, #090910 55%),
       #090910;
-    border: 1px solid rgba(168, 85, 247, 0.55);
+    border: 1px solid rgba(167, 139, 250, 0.45);
     box-shadow:
       0 0 0 1px rgba(216, 180, 254, 0.08),
-      0 0 90px -20px rgba(139, 92, 246, 0.55),
+      0 0 90px -20px rgba(139, 92, 246, 0.45),
       0 24px 64px -16px rgba(0, 0, 0, 0.7),
       inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }

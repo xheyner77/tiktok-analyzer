@@ -15,8 +15,8 @@ interface NavbarMobileMenuProps {
 
 const PLAN_COLORS: Record<Plan, string> = {
   free:  'bg-[#1a1a1a] text-gray-400',
-  pro:   'bg-[#ff0050]/10 text-[#ff0050]',
-  elite: 'bg-[#7928ca]/15 text-[#c084fc]',
+  pro:   'bg-vn-fuchsia/10 text-vn-fuchsia',
+  elite: 'bg-vn-violet/15 text-vn-glow',
 };
 
 const PLAN_LABELS: Record<Plan, string> = {
@@ -45,9 +45,12 @@ export default function NavbarMobileMenu({ isLoggedIn, email, plan = 'free' }: N
   }
 
   const navLinks = [
-    { href: '/',               label: 'Analyser',         icon: '🎯' },
-    { href: '/hook-generator', label: 'Hook Generator',   icon: '⚡' },
-    { href: '/pricing',        label: 'Tarifs',           icon: '💎' },
+    { href: '/', label: 'Accueil', icon: '⌂' },
+    { href: '/#capacites', label: 'Capacités', icon: '◇' },
+    { href: '/#workflow', label: 'Parcours', icon: '→' },
+    { href: '/analyzer', label: 'Analyser', icon: '🎯' },
+    { href: '/hook-generator', label: 'Hooks', icon: '⚡' },
+    { href: '/pricing', label: 'Tarifs', icon: '💎' },
     ...(isLoggedIn ? [{ href: '/dashboard', label: 'Dashboard', icon: '📊' }] : []),
   ];
 
@@ -61,7 +64,7 @@ export default function NavbarMobileMenu({ isLoggedIn, email, plan = 'free' }: N
       />
 
       {/* Sheet */}
-      <div className="fixed top-14 left-0 right-0 z-[81] bg-[#0d0d0d] border-b border-[#1e1e1e] shadow-2xl">
+      <div className="fixed top-16 left-0 right-0 z-[81] bg-vn-bg/98 backdrop-blur-lg border-b border-white/[0.08] shadow-2xl">
         <div className="px-4 py-3 space-y-1">
           {/* Nav links */}
           {navLinks.map(({ href, label, icon }) => (
@@ -81,7 +84,7 @@ export default function NavbarMobileMenu({ isLoggedIn, email, plan = 'free' }: N
             <>
               {/* User info */}
               <div className="flex items-center gap-3 px-3 py-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#ff0050] to-[#7928ca] flex items-center justify-center text-white text-xs font-bold shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-vn-fuchsia to-vn-indigo flex items-center justify-center text-white text-xs font-bold shrink-0">
                   {email?.slice(0, 2).toUpperCase()}
                 </div>
                 <div className="min-w-0">
@@ -95,7 +98,7 @@ export default function NavbarMobileMenu({ isLoggedIn, email, plan = 'free' }: N
               {plan !== 'elite' && (
                 <Link
                   href="/pricing"
-                  className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-[#c084fc] hover:bg-[#7928ca]/10 transition-colors"
+                  className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-vn-glow hover:bg-vn-violet/10 transition-colors"
                 >
                   <span className="text-base w-5 text-center">⭐</span>
                   {plan === 'pro' ? 'Passer à Elite' : 'Passer à Pro'}
@@ -120,9 +123,9 @@ export default function NavbarMobileMenu({ isLoggedIn, email, plan = 'free' }: N
               </Link>
               <Link
                 href="/signup"
-                className="flex-1 py-2.5 rounded-xl text-center text-sm font-semibold text-white bg-gradient-to-r from-[#ff0050] to-[#7928ca] hover:opacity-90 transition-opacity shadow-md shadow-[#ff0050]/20"
+                className="flex-1 py-2.5 rounded-full text-center text-sm font-semibold text-white bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:opacity-90 transition-opacity shadow-md shadow-vn-fuchsia/20"
               >
-                S&apos;inscrire
+                Commencer
               </Link>
             </div>
           )}

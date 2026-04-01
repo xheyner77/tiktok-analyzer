@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { BrandIcon } from './BrandLogo';
 
 interface AuthTransitionProps {
   show: boolean;
@@ -73,7 +74,7 @@ export default function AuthTransition({ show, onComplete }: AuthTransitionProps
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-[#080808] flex items-center justify-center"
+      className="fixed inset-0 z-50 bg-vn-bg flex items-center justify-center"
       style={{
         opacity: mounted ? 1 : 0,
         transition: 'opacity 0.35s ease',
@@ -82,9 +83,9 @@ export default function AuthTransition({ show, onComplete }: AuthTransitionProps
       {/* ── Ambient glows ───────────────────────────────────────────────────── */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Large outer glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full bg-gradient-to-br from-[#ff0050]/8 to-[#7928ca]/8 blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full bg-gradient-to-br from-vn-fuchsia/8 to-vn-indigo/8 blur-3xl" />
         {/* Pulsing inner glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] h-[320px] rounded-full bg-gradient-to-br from-[#ff0050]/10 to-[#7928ca]/10 blur-2xl animate-pulse" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] h-[320px] rounded-full bg-gradient-to-br from-vn-fuchsia/10 to-vn-indigo/10 blur-2xl animate-pulse" />
         {/* Subtle grid */}
         <div
           className="absolute inset-0 opacity-[0.03]"
@@ -106,24 +107,9 @@ export default function AuthTransition({ show, onComplete }: AuthTransitionProps
       >
         {/* Logo */}
         <div className="flex items-center gap-2.5">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#ff0050] to-[#7928ca] flex items-center justify-center shadow-lg shadow-[#ff0050]/30">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="white"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="w-5 h-5"
-            >
-              <path d="M9 18V5l12-2v13" />
-              <circle cx="6" cy="18" r="3" />
-              <circle cx="18" cy="16" r="3" />
-            </svg>
-          </div>
-          <span className="text-base font-bold text-white">
-            TikTok<span className="gradient-text">Analyzer</span>
+          <BrandIcon className="w-10 h-10 rounded-xl" />
+          <span className="text-base font-bold text-white font-display">
+            Viral<span className="gradient-text">ynz</span>
           </span>
         </div>
 
@@ -132,7 +118,7 @@ export default function AuthTransition({ show, onComplete }: AuthTransitionProps
           {/* Outer glow ring */}
           <div
             className="absolute w-20 h-20 rounded-full opacity-20 animate-ping"
-            style={{ background: 'radial-gradient(circle, #ff0050, #7928ca)' }}
+            style={{ background: 'radial-gradient(circle, #e879f9, #6366f1)' }}
           />
           {/* Spinning arc */}
           <div className="w-16 h-16 animate-spin" style={{ animationDuration: '1.1s' }}>
@@ -152,20 +138,20 @@ export default function AuthTransition({ show, onComplete }: AuthTransitionProps
               />
               <defs>
                 <linearGradient id="auth-spinner-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#ff0050" />
-                  <stop offset="100%" stopColor="#7928ca" />
+                  <stop offset="0%" stopColor="#e879f9" />
+                  <stop offset="100%" stopColor="#6366f1" />
                 </linearGradient>
               </defs>
             </svg>
           </div>
           {/* Center dot */}
-          <div className="absolute w-3 h-3 rounded-full bg-gradient-to-br from-[#ff0050] to-[#7928ca] shadow-md shadow-[#ff0050]/40" />
+          <div className="absolute w-3 h-3 rounded-full bg-gradient-to-br from-vn-fuchsia to-vn-indigo shadow-md shadow-vn-fuchsia/40" />
         </div>
 
         {/* Text block */}
         <div className="flex flex-col items-center gap-2 text-center" style={{ minHeight: '3rem' }}>
           <p className="text-base font-semibold text-white leading-snug">
-            Préparation de ton espace d&apos;analyse...
+            Préparation de ton espace Viralynz...
           </p>
           {/* Step text with fade transition */}
           <p
@@ -181,11 +167,11 @@ export default function AuthTransition({ show, onComplete }: AuthTransitionProps
         <div className="flex flex-col items-center gap-2 w-64">
           <div className="w-full h-[3px] bg-[#1a1a1a] rounded-full overflow-hidden">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-[#ff0050] to-[#7928ca]"
+              className="h-full rounded-full bg-gradient-to-r from-vn-fuchsia to-vn-indigo"
               style={{
                 width: `${progress}%`,
                 transition: `width ${TOTAL_MS - 150}ms cubic-bezier(0.4, 0, 0.15, 1)`,
-                boxShadow: '0 0 10px #ff005055',
+                boxShadow: '0 0 10px rgba(232,121,249,0.35)',
               }}
             />
           </div>

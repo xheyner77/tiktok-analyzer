@@ -4,6 +4,7 @@ import { getUserById, getEffectivePlan } from '@/lib/auth';
 import NavbarUserMenu from './NavbarUserMenu';
 import NavbarMobileMenu from './NavbarMobileMenu';
 import FeedbackButton from './FeedbackButton';
+import BrandLogo from './BrandLogo';
 
 export default async function Navbar() {
   const session = await getSession();
@@ -11,71 +12,85 @@ export default async function Navbar() {
   const plan = userProfile ? getEffectivePlan(userProfile) : 'free';
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[#141414] bg-[#080808]/85 backdrop-blur-md">
-      <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
+    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/[0.07] bg-vn-bg/80 backdrop-blur-xl backdrop-saturate-150">
+      <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between gap-4">
+        <BrandLogo href="/" />
 
-        {/* ── Logo ──────────────────────────────────────────────────────────── */}
-        <Link href="/" className="flex items-center gap-2.5 group shrink-0">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#ff0050] to-[#7928ca] flex items-center justify-center shadow-sm shadow-[#ff0050]/30 group-hover:opacity-90 transition-opacity">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-              <path d="M9 18V5l12-2v13" />
-              <circle cx="6" cy="18" r="3" />
-              <circle cx="18" cy="16" r="3" />
-            </svg>
-          </div>
-          <span className="text-sm font-semibold text-white tracking-tight">
-            TikTok<span className="gradient-text">Analyzer</span>
-          </span>
-        </Link>
-
-        {/* ── Desktop nav — hidden below md ─────────────────────────────────── */}
-        <div className="hidden md:flex items-center gap-1">
+        <div className="hidden lg:flex items-center gap-1">
+          <Link
+            href="/"
+            className="text-[13px] font-medium text-gray-400 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-white/[0.04]"
+          >
+            Accueil
+          </Link>
+          <Link
+            href="/#capacites"
+            className="text-[13px] font-medium text-gray-400 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-white/[0.04]"
+          >
+            Capacités
+          </Link>
+          <Link
+            href="/#workflow"
+            className="text-[13px] font-medium text-gray-400 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-white/[0.04]"
+          >
+            Parcours
+          </Link>
           {session && (
-            <Link href="/dashboard" className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5">
+            <Link
+              href="/dashboard"
+              className="text-[13px] font-medium text-gray-400 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-white/[0.04]"
+            >
               Dashboard
             </Link>
           )}
-          <Link href="/" className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5">
+          <Link
+            href="/analyzer"
+            className="text-[13px] font-medium text-gray-400 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-white/[0.04]"
+          >
             Analyser
           </Link>
-          <Link href="/hook-generator" className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5">
-            Hook Generator
+          <Link
+            href="/hook-generator"
+            className="text-[13px] font-medium text-gray-400 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-white/[0.04]"
+          >
+            Hooks
           </Link>
-          <Link href="/pricing" className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5">
+          <Link
+            href="/pricing"
+            className="text-[13px] font-medium text-gray-400 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-white/[0.04]"
+          >
             Tarifs
           </Link>
 
-          <div className="mx-1 w-px h-4 bg-[#222]" aria-hidden />
+          <div className="mx-2 w-px h-4 bg-white/10 shrink-0" aria-hidden />
           <FeedbackButton />
 
           {session ? (
-            <div className="ml-2">
+            <div className="ml-1 pl-1">
               <NavbarUserMenu email={session.email} plan={plan} />
             </div>
           ) : (
             <>
-              <Link href="/login" className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5">
+              <Link
+                href="/login"
+                className="text-[13px] font-medium text-gray-400 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-white/[0.04]"
+              >
                 Connexion
               </Link>
-              <Link href="/signup" className="ml-1 text-xs font-semibold px-3.5 py-2 rounded-lg bg-gradient-to-r from-[#ff0050] to-[#7928ca] text-white hover:opacity-90 transition-opacity shadow-sm shadow-[#ff0050]/20">
-                S&apos;inscrire
+              <Link
+                href="/signup"
+                className="ml-1 text-[13px] font-semibold px-4 py-2 rounded-full bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:opacity-95 transition-opacity shadow-md shadow-vn-fuchsia/20"
+              >
+                Commencer
               </Link>
             </>
           )}
         </div>
 
-        {/* ── Mobile right — visible below md ───────────────────────────────── */}
-        <div className="flex md:hidden items-center gap-2">
-          {/* Feedback icon-only */}
+        <div className="flex lg:hidden items-center gap-2">
           <FeedbackButton />
-          {/* Hamburger — handles login state + full menu */}
-          <NavbarMobileMenu
-            isLoggedIn={!!session}
-            email={session?.email}
-            plan={plan}
-          />
+          <NavbarMobileMenu isLoggedIn={!!session} email={session?.email} plan={plan} />
         </div>
-
       </div>
     </nav>
   );

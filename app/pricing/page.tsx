@@ -34,7 +34,7 @@ const plans: Plan[] = [
     price: 'Gratuit',
     description: 'Pour découvrir la plateforme et tester vos premières vidéos.',
     cta: 'Commencer gratuitement',
-    ctaHref: '/',
+    ctaHref: '/analyzer',
     variant: 'free',
     features: [
       { label: `${MAX_ANALYSES_FREE} analyses gratuites`, included: true },
@@ -96,7 +96,7 @@ function CheckIcon({ included, elite }: { included: boolean; elite?: boolean }) 
       <svg
         viewBox="0 0 16 16"
         fill="currentColor"
-        className={`w-4 h-4 shrink-0 mt-px ${elite ? 'text-[#c084fc]' : 'text-[#ff0050]'}`}
+        className={`w-4 h-4 shrink-0 mt-px ${elite ? 'text-vn-glow' : 'text-vn-fuchsia'}`}
       >
         <path
           fillRule="evenodd"
@@ -127,8 +127,8 @@ function PricingCard({ plan }: { plan: Plan }) {
           <span
             className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-3 py-1 rounded-full whitespace-nowrap
               ${isElite
-                ? 'bg-gradient-to-r from-[#7928ca] via-[#9333ea] to-[#a855f7] text-white shadow-lg shadow-[#7928ca]/40 ring-1 ring-white/15'
-                : 'bg-[#111] border border-[#ff0050]/40 text-[#ff6680]'
+                ? 'bg-gradient-to-r from-vn-violet via-vn-indigo to-vn-fuchsia text-white shadow-lg shadow-vn-violet/40 ring-1 ring-white/15'
+                : 'bg-[#111] border border-vn-fuchsia/40 text-vn-fuchsia'
               }`}
           >
             {plan.badge}
@@ -140,7 +140,7 @@ function PricingCard({ plan }: { plan: Plan }) {
       <div
         className={`relative flex flex-col flex-1 rounded-2xl transition-all duration-300
           ${isElite
-            ? 'elite-pricing-card p-7 ring-1 ring-[#a855f7]/30'
+            ? 'elite-pricing-card p-7 ring-1 ring-vn-violet/30'
             : isPro
             ? 'pro-pricing-card p-6'
             : 'bg-[#0d0d0d] border border-[#1d1d1d] p-6'
@@ -151,9 +151,9 @@ function PricingCard({ plan }: { plan: Plan }) {
           <span
             className={`inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-md uppercase tracking-widest mb-3
               ${isElite
-                ? 'bg-[#7928ca]/25 text-[#d8b4fe] border border-[#a855f7]/30'
+                ? 'bg-vn-violet/25 text-vn-glow border border-vn-violet/30'
                 : isPro
-                ? 'bg-[#ff0050]/10 text-[#ff6680] border border-[#ff0050]/20'
+                ? 'bg-vn-fuchsia/10 text-vn-fuchsia border border-vn-fuchsia/20'
                 : 'bg-[#1a1a1a] text-gray-500 border border-[#242424]'
               }`}
           >
@@ -187,8 +187,8 @@ function PricingCard({ plan }: { plan: Plan }) {
               plan={plan.variant as 'pro' | 'elite'}
               className={`w-full text-center rounded-xl font-semibold text-sm transition-all duration-200 block active:scale-[0.98]
                 ${isElite
-                  ? 'py-3.5 bg-gradient-to-r from-[#7928ca] to-[#a855f7] text-white hover:opacity-90 shadow-lg shadow-[#7928ca]/30 ring-1 ring-white/10'
-                  : 'py-3 bg-gradient-to-r from-[#ff0050] to-[#7928ca] text-white hover:opacity-90 shadow-md shadow-[#ff0050]/15'
+                  ? 'py-3.5 bg-gradient-to-r from-vn-violet to-vn-fuchsia text-white hover:opacity-90 shadow-lg shadow-vn-violet/30 ring-1 ring-white/10'
+                  : 'py-3 bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:opacity-90 shadow-md shadow-vn-fuchsia/15'
                 }`}
             >
               {plan.cta}
@@ -252,19 +252,19 @@ function PricingCard({ plan }: { plan: Plan }) {
 
 export default function PricingPage() {
   return (
-    <main className="min-h-screen bg-[#080808] overflow-x-hidden">
+    <main className="min-h-screen bg-vn-bg overflow-x-hidden">
       {/* Ambient glows */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-40 left-1/4 w-[600px] h-[600px] rounded-full bg-[#ff0050]/4 blur-3xl" />
-        <div className="absolute -top-20 right-1/4 w-[600px] h-[600px] rounded-full bg-[#7928ca]/6 blur-3xl" />
+        <div className="absolute -top-40 left-1/4 w-[600px] h-[600px] rounded-full bg-vn-fuchsia/6 blur-3xl" />
+        <div className="absolute -top-20 right-1/4 w-[600px] h-[600px] rounded-full bg-vn-indigo/8 blur-3xl" />
       </div>
 
-      <div className="relative max-w-5xl mx-auto px-4 sm:px-6 py-16 pb-28">
+      <div className="relative max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-16 pb-28">
 
         {/* Hero */}
         <div className="text-center mb-16">
           <div className="flex flex-col items-center gap-2 mb-5">
-            <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-[#ff0050]/10 text-[#ff0050] border border-[#ff0050]/20">
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-vn-fuchsia/10 text-vn-fuchsia border border-vn-fuchsia/20">
               <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
                 <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" />
               </svg>
@@ -277,7 +277,7 @@ export default function PricingPage() {
           </h1>
           <p className="text-gray-400 text-lg max-w-xl mx-auto leading-relaxed">
             Des analyses précises, des conseils actionnables et des recommandations
-            personnalisées pour dominer TikTok.
+            personnalisées pour scaler ton contenu court — TikTok aujourd&apos;hui, plus demain.
           </p>
         </div>
 

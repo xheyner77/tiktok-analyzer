@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import AuthTransition from '@/components/AuthTransition';
 import { PENDING_PLAN_KEY } from '@/components/GuestGate';
+import BrandLogo from '@/components/BrandLogo';
 
 // ── Email confirmation screen ─────────────────────────────────────────────────
 
@@ -30,21 +31,12 @@ function EmailConfirmationPending({ email }: { email: string }) {
     <div className="relative w-full max-w-sm animate-fade-up text-center">
       {/* Logo */}
       <div className="flex flex-col items-center mb-8">
-        <Link href="/" className="flex items-center gap-2.5 mb-6">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#ff0050] to-[#7928ca] flex items-center justify-center shadow-lg shadow-[#ff0050]/25">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-              <path d="M9 18V5l12-2v13" />
-              <circle cx="6" cy="18" r="3" />
-              <circle cx="18" cy="16" r="3" />
-            </svg>
-          </div>
-          <span className="text-base font-bold text-white">TikTok<span className="gradient-text">Analyzer</span></span>
-        </Link>
+        <BrandLogo size="large" className="mb-6" />
       </div>
 
       <div className="bg-[#111] border border-[#1a1a1a] rounded-2xl p-7 card-glow">
         {/* Icon */}
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#ff0050]/15 to-[#7928ca]/15 border border-[#ff0050]/20 flex items-center justify-center text-2xl mx-auto mb-5">
+        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-vn-fuchsia/15 to-vn-indigo/15 border border-vn-fuchsia/20 flex items-center justify-center text-2xl mx-auto mb-5">
           ✉️
         </div>
 
@@ -60,7 +52,7 @@ function EmailConfirmationPending({ email }: { email: string }) {
         <button
           onClick={handleResend}
           disabled={resendStatus === 'sending' || resendStatus === 'sent'}
-          className="w-full py-3 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#ff0050] to-[#7928ca] text-white hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#ff0050]/15 mb-3"
+          className="w-full py-3 rounded-xl font-semibold text-sm bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-vn-fuchsia/15 mb-3"
         >
           {resendStatus === 'sending' ? (
             <span className="flex items-center justify-center gap-2">
@@ -176,9 +168,9 @@ export default function SignupPage() {
   // Show email confirmation pending screen
   if (pendingConfirmation) {
     return (
-      <main className="min-h-screen bg-[#080808] flex items-center justify-center px-4">
+      <main className="min-h-screen bg-vn-bg flex items-center justify-center px-4">
         <div className="fixed inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-[#7928ca]/5 to-[#ff0050]/5 blur-3xl" />
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-vn-indigo/5 to-vn-fuchsia/5 blur-3xl" />
         </div>
         <EmailConfirmationPending email={email} />
       </main>
@@ -186,7 +178,7 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#080808] flex items-center justify-center px-4">
+    <main className="min-h-screen bg-vn-bg flex items-center justify-center px-4">
       <AuthTransition
         show={showTransition}
         onComplete={() => {
@@ -196,8 +188,8 @@ export default function SignupPage() {
             // User chose a paid plan from GuestGate → pricing page
             window.location.href = '/pricing';
           } else if (pendingPlan === 'free') {
-            // User chose Free from GuestGate → home to analyze
-            window.location.href = '/';
+            // User chose Free from GuestGate → analyzer
+            window.location.href = '/analyzer';
           } else {
             // Normal signup (no GuestGate) → dashboard
             window.location.href = '/dashboard';
@@ -207,23 +199,14 @@ export default function SignupPage() {
 
       {/* Ambient glow */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-[#7928ca]/5 to-[#ff0050]/5 blur-3xl" />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-vn-indigo/5 to-vn-fuchsia/5 blur-3xl" />
       </div>
 
       <div className="relative w-full max-w-sm animate-fade-up">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <Link href="/" className="flex items-center gap-2.5 mb-6">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#ff0050] to-[#7928ca] flex items-center justify-center shadow-lg shadow-[#ff0050]/25">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-                <path d="M9 18V5l12-2v13" />
-                <circle cx="6" cy="18" r="3" />
-                <circle cx="18" cy="16" r="3" />
-              </svg>
-            </div>
-            <span className="text-base font-bold text-white">TikTok<span className="gradient-text">Analyzer</span></span>
-          </Link>
-          <h1 className="text-2xl font-bold text-white">Créer un compte</h1>
+          <BrandLogo size="large" className="mb-6" />
+          <h1 className="text-2xl font-bold text-white font-display">Créer un compte</h1>
           <p className="text-gray-500 text-sm mt-1">3 analyses gratuites à la création</p>
         </div>
 
@@ -240,7 +223,7 @@ export default function SignupPage() {
                 placeholder="vous@exemple.com"
                 autoComplete="email"
                 disabled={isLoading}
-                className="w-full bg-[#0e0e0e] border border-[#222] hover:border-[#2a2a2a] focus:border-[#ff0050]/40 focus:ring-2 focus:ring-[#ff0050]/8 rounded-xl px-4 py-3 text-white placeholder-gray-600 text-sm outline-none transition-all disabled:opacity-50"
+                className="w-full bg-[#0e0e0e] border border-[#222] hover:border-[#2a2a2a] focus:border-vn-fuchsia/40 focus:ring-2 focus:ring-vn-fuchsia/8 rounded-xl px-4 py-3 text-white placeholder-gray-600 text-sm outline-none transition-all disabled:opacity-50"
               />
             </div>
 
@@ -255,7 +238,7 @@ export default function SignupPage() {
                   placeholder="8 caractères minimum"
                   autoComplete="new-password"
                   disabled={isLoading}
-                  className="w-full bg-[#0e0e0e] border border-[#222] hover:border-[#2a2a2a] focus:border-[#ff0050]/40 focus:ring-2 focus:ring-[#ff0050]/8 rounded-xl px-4 py-3 pr-11 text-white placeholder-gray-600 text-sm outline-none transition-all disabled:opacity-50"
+                  className="w-full bg-[#0e0e0e] border border-[#222] hover:border-[#2a2a2a] focus:border-vn-fuchsia/40 focus:ring-2 focus:ring-vn-fuchsia/8 rounded-xl px-4 py-3 pr-11 text-white placeholder-gray-600 text-sm outline-none transition-all disabled:opacity-50"
                 />
                 <button
                   type="button"
@@ -310,7 +293,7 @@ export default function SignupPage() {
                 className={`w-full bg-[#0e0e0e] border rounded-xl px-4 py-3 text-white placeholder-gray-600 text-sm outline-none transition-all disabled:opacity-50
                   ${confirm.length > 0 && password !== confirm
                     ? 'border-red-500/40 focus:border-red-500/40'
-                    : 'border-[#222] hover:border-[#2a2a2a] focus:border-[#ff0050]/40 focus:ring-2 focus:ring-[#ff0050]/8'
+                    : 'border-[#222] hover:border-[#2a2a2a] focus:border-vn-fuchsia/40 focus:ring-2 focus:ring-vn-fuchsia/8'
                   }`}
               />
               {confirm.length > 0 && password !== confirm && (
@@ -332,7 +315,7 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={isLoading || (confirm.length > 0 && password !== confirm)}
-              className="w-full rounded-xl py-3.5 font-semibold text-white text-sm bg-gradient-to-r from-[#ff0050] to-[#7928ca] hover:opacity-90 active:scale-[0.99] transition-all shadow-lg shadow-[#ff0050]/15 disabled:opacity-50 disabled:cursor-not-allowed mt-1"
+              className="w-full rounded-xl py-3.5 font-semibold text-white text-sm bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:opacity-90 active:scale-[0.99] transition-all shadow-lg shadow-vn-fuchsia/15 disabled:opacity-50 disabled:cursor-not-allowed mt-1"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">

@@ -14,8 +14,8 @@ const PLAN_LABELS: Record<Plan, string> = {
 
 const PLAN_COLORS: Record<Plan, string> = {
   free:  'bg-[#1a1a1a] text-gray-500',
-  pro:   'bg-[#ff0050]/10 text-[#ff0050] border border-[#ff0050]/20',
-  elite: 'bg-[#7928ca]/15 text-[#c084fc] border border-[#7928ca]/25',
+  pro:   'bg-vn-fuchsia/10 text-vn-fuchsia border border-vn-fuchsia/20',
+  elite: 'bg-vn-violet/15 text-vn-glow border border-vn-violet/25',
 };
 
 interface NavbarUserMenuProps {
@@ -48,7 +48,7 @@ export default function NavbarUserMenu({ email, plan }: NavbarUserMenuProps) {
         className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/5 transition-colors"
       >
         {/* Avatar */}
-        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#ff0050] to-[#7928ca] flex items-center justify-center text-white text-xs font-bold shadow-sm">
+        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-vn-fuchsia to-vn-indigo flex items-center justify-center text-white text-xs font-bold shadow-sm">
           {initials}
         </div>
         <span className="text-sm text-gray-300 hidden sm:block max-w-[120px] truncate">
@@ -111,9 +111,9 @@ export default function NavbarUserMenu({ email, plan }: NavbarUserMenuProps) {
                 <Link
                   href="/pricing"
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-[#c084fc] hover:text-[#d8a4ff] hover:bg-[#7928ca]/10 transition-colors"
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-vn-glow hover:text-violet-200 hover:bg-vn-violet/10 transition-colors"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-[#7928ca]">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-vn-violet">
                     <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" />
                   </svg>
                   {plan === 'pro' ? 'Passer à Elite' : 'Passer à Pro'}

@@ -37,12 +37,12 @@ export default function PremiumGate({ onReset }: PremiumGateProps) {
     <div className="animate-fade-up space-y-6">
       {/* Header */}
       <div className="text-center space-y-3">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-[#ff0050]/15 to-[#7928ca]/15 border border-[#ff0050]/20 mb-1">
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-vn-fuchsia/15 to-vn-indigo/15 border border-vn-fuchsia/25 mb-1">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="url(#lg)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
             <defs>
               <linearGradient id="lg" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#ff0050" />
-                <stop offset="100%" stopColor="#7928ca" />
+                <stop offset="0%" stopColor="#e879f9" />
+                <stop offset="100%" stopColor="#6366f1" />
               </linearGradient>
             </defs>
             <rect x="3" y="11" width="18" height="11" rx="2" />
@@ -51,7 +51,7 @@ export default function PremiumGate({ onReset }: PremiumGateProps) {
         </div>
         <h2 className="text-2xl font-bold text-white">Tes 3 analyses gratuites sont épuisées</h2>
         <p className="text-gray-400 text-sm max-w-sm mx-auto leading-relaxed">
-          Choisis un plan pour continuer à analyser tes vidéos TikTok et maximiser ta viralité.
+          Choisis un plan pour continuer à analyser tes vidéos courtes et affiner hook, montage et rétention avec Viralynz.
         </p>
       </div>
 
@@ -93,13 +93,13 @@ export default function PremiumGate({ onReset }: PremiumGateProps) {
         <div
           className="relative rounded-2xl p-5 card-glow"
           style={{
-            background: 'linear-gradient(#0f0f0f, #0f0f0f) padding-box, linear-gradient(135deg, #ff0050, #7928ca) border-box',
+            background: 'linear-gradient(#0f0f0f, #0f0f0f) padding-box, linear-gradient(135deg, #e879f9, #6366f1) border-box',
             border: '1px solid transparent',
           }}
         >
           {/* Popular badge */}
           <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-            <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-gradient-to-r from-[#ff0050] to-[#7928ca] text-white shadow-lg shadow-[#ff0050]/25 whitespace-nowrap">
+            <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white shadow-lg shadow-vn-fuchsia/25 whitespace-nowrap">
               ⭐ Le plus populaire
             </span>
           </div>
@@ -119,7 +119,7 @@ export default function PremiumGate({ onReset }: PremiumGateProps) {
           <div className="space-y-2.5 mb-5">
             {proFeatures.map((f) => (
               <div key={f} className="flex items-center gap-2">
-                <CheckIcon className="w-3.5 h-3.5 text-[#ff0050] shrink-0" />
+                <CheckIcon className="w-3.5 h-3.5 text-vn-fuchsia shrink-0" />
                 <span className="text-xs text-gray-300">{f}</span>
               </div>
             ))}
@@ -127,18 +127,18 @@ export default function PremiumGate({ onReset }: PremiumGateProps) {
 
           <Link
             href="/pricing"
-            className="block w-full rounded-xl py-3 text-sm font-semibold text-white text-center bg-gradient-to-r from-[#ff0050] to-[#7928ca] hover:opacity-90 active:scale-[0.99] transition-all shadow-lg shadow-[#ff0050]/20"
+            className="block w-full rounded-xl py-3 text-sm font-semibold text-white text-center bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:opacity-90 active:scale-[0.99] transition-all shadow-lg shadow-vn-fuchsia/20"
           >
             Choisir Pro →
           </Link>
         </div>
 
         {/* ── Elite ──────────────────────────────────────────────── */}
-        <div className="bg-[#0d0a14] border border-[#7928ca]/25 rounded-2xl p-5 card-glow">
+        <div className="bg-[#0d0a14] border border-vn-violet/30 rounded-2xl p-5 card-glow">
           <div className="mb-4">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-[#b060ff] uppercase tracking-widest">Elite</span>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#7928ca]/15 text-[#b060ff] border border-[#7928ca]/25 whitespace-nowrap">
+              <span className="text-xs font-semibold text-vn-glow uppercase tracking-widest">Elite</span>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-vn-violet/15 text-vn-glow border border-vn-violet/25 whitespace-nowrap">
                 Créateurs sérieux
               </span>
             </div>
@@ -161,7 +161,7 @@ export default function PremiumGate({ onReset }: PremiumGateProps) {
 
           <Link
             href="/pricing"
-            className="block w-full rounded-xl py-3 text-sm font-semibold text-[#b060ff] text-center bg-[#7928ca]/10 border border-[#7928ca]/30 hover:bg-[#7928ca]/20 hover:border-[#7928ca]/50 active:scale-[0.99] transition-all"
+            className="block w-full rounded-xl py-3 text-sm font-semibold text-vn-glow text-center bg-vn-violet/10 border border-vn-violet/30 hover:bg-vn-violet/20 hover:border-vn-violet/50 active:scale-[0.99] transition-all"
           >
             Choisir Elite →
           </Link>

@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import AuthTransition from '@/components/AuthTransition';
+import BrandLogo from '@/components/BrandLogo';
 
 // Separated into its own component because useSearchParams() requires
 // a Suspense boundary in Next.js 14 App Router. Without it the page
@@ -87,18 +88,9 @@ function LoginForm() {
     <div className="relative w-full max-w-sm animate-fade-up">
       {/* Logo */}
       <div className="flex flex-col items-center mb-8">
-        <Link href="/" className="flex items-center gap-2.5 mb-6">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#ff0050] to-[#7928ca] flex items-center justify-center shadow-lg shadow-[#ff0050]/25">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-              <path d="M9 18V5l12-2v13" />
-              <circle cx="6" cy="18" r="3" />
-              <circle cx="18" cy="16" r="3" />
-            </svg>
-          </div>
-          <span className="text-base font-bold text-white">TikTok<span className="gradient-text">Analyzer</span></span>
-        </Link>
-        <h1 className="text-2xl font-bold text-white">Connexion</h1>
-        <p className="text-gray-500 text-sm mt-1">Accédez à votre espace d&apos;analyse</p>
+        <BrandLogo size="large" className="mb-6" />
+        <h1 className="text-2xl font-bold text-white font-display">Connexion</h1>
+        <p className="text-gray-500 text-sm mt-1">Accède à ton espace Viralynz</p>
       </div>
 
       {/* Card */}
@@ -114,7 +106,7 @@ function LoginForm() {
               placeholder="vous@exemple.com"
               autoComplete="email"
               disabled={isLoading}
-              className="w-full bg-[#0e0e0e] border border-[#222] hover:border-[#2a2a2a] focus:border-[#ff0050]/40 focus:ring-2 focus:ring-[#ff0050]/8 rounded-xl px-4 py-3 text-white placeholder-gray-600 text-sm outline-none transition-all disabled:opacity-50"
+              className="w-full bg-[#0e0e0e] border border-[#222] hover:border-[#2a2a2a] focus:border-vn-fuchsia/40 focus:ring-2 focus:ring-vn-fuchsia/8 rounded-xl px-4 py-3 text-white placeholder-gray-600 text-sm outline-none transition-all disabled:opacity-50"
             />
           </div>
 
@@ -129,7 +121,7 @@ function LoginForm() {
                 placeholder="••••••••"
                 autoComplete="current-password"
                 disabled={isLoading}
-                className="w-full bg-[#0e0e0e] border border-[#222] hover:border-[#2a2a2a] focus:border-[#ff0050]/40 focus:ring-2 focus:ring-[#ff0050]/8 rounded-xl px-4 py-3 pr-11 text-white placeholder-gray-600 text-sm outline-none transition-all disabled:opacity-50"
+                className="w-full bg-[#0e0e0e] border border-[#222] hover:border-[#2a2a2a] focus:border-vn-fuchsia/40 focus:ring-2 focus:ring-vn-fuchsia/8 rounded-xl px-4 py-3 pr-11 text-white placeholder-gray-600 text-sm outline-none transition-all disabled:opacity-50"
               />
               <button
                 type="button"
@@ -194,7 +186,7 @@ function LoginForm() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full rounded-xl py-3.5 font-semibold text-white text-sm bg-gradient-to-r from-[#ff0050] to-[#7928ca] hover:opacity-90 active:scale-[0.99] transition-all shadow-lg shadow-[#ff0050]/15 disabled:opacity-50 disabled:cursor-not-allowed mt-1"
+            className="w-full rounded-xl py-3.5 font-semibold text-white text-sm bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:opacity-90 active:scale-[0.99] transition-all shadow-lg shadow-vn-fuchsia/15 disabled:opacity-50 disabled:cursor-not-allowed mt-1"
           >
             {isLoading ? (
               <span className="flex items-center justify-center gap-2">
@@ -225,10 +217,10 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="min-h-screen bg-[#080808] flex items-center justify-center px-4">
+    <main className="min-h-screen bg-vn-bg flex items-center justify-center px-4">
       {/* Ambient glow */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-[#ff0050]/5 to-[#7928ca]/5 blur-3xl" />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-vn-fuchsia/5 to-vn-indigo/5 blur-3xl" />
       </div>
 
       {/* Suspense required by Next.js 14 when a child uses useSearchParams() */}

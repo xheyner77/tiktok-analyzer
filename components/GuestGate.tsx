@@ -104,7 +104,7 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
 
   function handleLogin() {
     saveUrl();
-    router.push('/login?redirect=/');
+    router.push('/login?redirect=/analyzer');
   }
 
   return (
@@ -129,7 +129,7 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top ambient glow */}
-        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-40 rounded-full bg-gradient-to-br from-[#ff0050]/12 to-[#7928ca]/12 blur-3xl pointer-events-none" />
+        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-40 rounded-full bg-gradient-to-br from-vn-fuchsia/12 to-vn-indigo/12 blur-3xl pointer-events-none" />
 
         <div className="relative p-6">
           {/* Close */}
@@ -145,7 +145,7 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
 
           {/* ── Header ─────────────────────────────────────────────────────── */}
           <div className="text-center mb-7 pr-8">
-            <div className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-[#ff0050]/10 text-[#ff0050] border border-[#ff0050]/20 mb-4">
+            <div className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-vn-fuchsia/10 text-vn-fuchsia border border-vn-fuchsia/20 mb-4">
               <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
                 <path fillRule="evenodd" d="M8 1a3.5 3.5 0 0 0-3.5 3.5V7A1.5 1.5 0 0 0 3 8.5v5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 11.5 7V4.5A3.5 3.5 0 0 0 8 1Zm2 6V4.5a2 2 0 1 0-4 0V7h4Z" clipRule="evenodd" />
               </svg>
@@ -212,7 +212,7 @@ function PlanCard({ plan, onSelect }: { plan: PlanConfig; onSelect: () => void }
       {/* Popular badge */}
       {plan.badge && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap">
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-gradient-to-r from-[#ff0050] to-[#7928ca] text-white shadow-lg shadow-[#ff0050]/20">
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white shadow-lg shadow-vn-fuchsia/20">
             <svg viewBox="0 0 16 16" fill="currentColor" className="w-2.5 h-2.5">
               <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" />
             </svg>
@@ -226,9 +226,9 @@ function PlanCard({ plan, onSelect }: { plan: PlanConfig; onSelect: () => void }
         <span
           className={`text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wider
             ${isPro
-              ? 'bg-[#ff0050]/10 text-[#ff0050] border border-[#ff0050]/20'
+              ? 'bg-vn-fuchsia/10 text-vn-fuchsia border border-vn-fuchsia/20'
               : isElite
-              ? 'bg-[#7928ca]/15 text-[#b060ff] border border-[#7928ca]/25'
+              ? 'bg-vn-violet/15 text-vn-glow border border-vn-violet/25'
               : 'bg-[#1a1a1a] text-gray-500 border border-[#222]'
             }`}
         >
@@ -238,7 +238,7 @@ function PlanCard({ plan, onSelect }: { plan: PlanConfig; onSelect: () => void }
 
       {/* Price */}
       <div className="mb-3">
-        <span className={`text-xl font-bold ${isElite ? 'text-[#c084fc]' : 'text-white'}`}>
+        <span className={`text-xl font-bold ${isElite ? 'text-vn-glow' : 'text-white'}`}>
           {plan.price}
         </span>
         {plan.period && (
@@ -254,7 +254,7 @@ function PlanCard({ plan, onSelect }: { plan: PlanConfig; onSelect: () => void }
               viewBox="0 0 16 16"
               fill="currentColor"
               className={`w-3 h-3 shrink-0 mt-0.5
-                ${isPro ? 'text-[#ff0050]' : isElite ? 'text-[#b060ff]' : 'text-gray-600'}`}
+                ${isPro ? 'text-vn-fuchsia' : isElite ? 'text-vn-glow' : 'text-gray-600'}`}
             >
               <path fillRule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" />
             </svg>
@@ -268,9 +268,9 @@ function PlanCard({ plan, onSelect }: { plan: PlanConfig; onSelect: () => void }
         onClick={onSelect}
         className={`w-full rounded-xl py-2.5 font-semibold text-xs transition-all duration-200 active:scale-[0.98]
           ${isPro
-            ? 'bg-gradient-to-r from-[#ff0050] to-[#7928ca] text-white hover:opacity-90 shadow-md shadow-[#ff0050]/20'
+            ? 'bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:opacity-90 shadow-md shadow-vn-fuchsia/20'
             : isElite
-            ? 'bg-[#7928ca]/20 border border-[#7928ca]/40 text-[#c084fc] hover:bg-[#7928ca]/30 hover:border-[#7928ca]/60'
+            ? 'bg-vn-violet/20 border border-vn-violet/40 text-vn-glow hover:bg-vn-violet/30 hover:border-vn-violet/60'
             : 'bg-[#1a1a1a] border border-[#2a2a2a] text-gray-300 hover:bg-[#222] hover:border-[#333]'
           }`}
       >

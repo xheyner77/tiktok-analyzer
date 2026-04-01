@@ -286,10 +286,10 @@ export default function HookGeneratorPage() {
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <main className="min-h-screen bg-[#080808] overflow-x-hidden">
+    <main className="min-h-screen bg-vn-bg overflow-x-hidden">
       {/* Ambient glow */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-64 left-1/2 -translate-x-1/2 w-[700px] h-[500px] rounded-full bg-gradient-to-br from-[#7928ca]/8 to-[#ff0050]/6 blur-3xl" />
+        <div className="absolute -top-64 left-1/2 -translate-x-1/2 w-[700px] h-[500px] rounded-full bg-gradient-to-br from-vn-indigo/8 to-vn-fuchsia/6 blur-3xl" />
       </div>
 
       {/* Guest gate portal */}
@@ -302,7 +302,7 @@ export default function HookGeneratorPage() {
 
         {/* ── Header ─────────────────────────────────────────────────────────── */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#7928ca]/10 border border-[#7928ca]/20 text-[#c084fc] text-xs font-semibold mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-vn-violet/10 border border-vn-violet/20 text-vn-glow text-xs font-semibold mb-4">
             <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
               <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" />
             </svg>
@@ -311,7 +311,7 @@ export default function HookGeneratorPage() {
 
           <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3 leading-tight">
             Hook{' '}
-            <span className="bg-gradient-to-r from-[#ff0050] to-[#7928ca] bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-vn-fuchsia to-vn-indigo bg-clip-text text-transparent">
               Generator
             </span>
           </h1>
@@ -323,7 +323,7 @@ export default function HookGeneratorPage() {
         {/* ── Free plan upsell ────────────────────────────────────────────────── */}
         {authLoaded && authUser && plan === 'free' && (
           <div className="mb-8 rounded-2xl bg-[#0f0a18] border border-[#2d1a4a] p-6 text-center">
-            <div className="w-12 h-12 rounded-xl bg-[#7928ca]/15 border border-[#7928ca]/25 flex items-center justify-center text-xl mx-auto mb-4">
+            <div className="w-12 h-12 rounded-xl bg-vn-violet/15 border border-vn-violet/25 flex items-center justify-center text-xl mx-auto mb-4">
               🔒
             </div>
             <h2 className="text-base font-bold text-white mb-2">Fonctionnalité Pro & Elite</h2>
@@ -332,7 +332,7 @@ export default function HookGeneratorPage() {
             </p>
             <Link
               href="/pricing"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#ff0050] to-[#7928ca] text-white text-sm font-semibold hover:opacity-90 transition-opacity shadow-md shadow-[#ff0050]/20"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white text-sm font-semibold hover:opacity-90 transition-opacity shadow-md shadow-vn-fuchsia/20"
             >
               <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
                 <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" />
@@ -345,7 +345,7 @@ export default function HookGeneratorPage() {
         {/* ── Guest CTA ───────────────────────────────────────────────────────── */}
         {authLoaded && !authUser && (
           <div className="mb-8 rounded-2xl bg-[#0d0d0d] border border-[#1e1e1e] p-6 text-center">
-            <div className="w-12 h-12 rounded-xl bg-[#ff0050]/10 border border-[#ff0050]/20 flex items-center justify-center text-xl mx-auto mb-4">
+            <div className="w-12 h-12 rounded-xl bg-vn-fuchsia/10 border border-vn-fuchsia/20 flex items-center justify-center text-xl mx-auto mb-4">
               ⚡
             </div>
             <h2 className="text-base font-bold text-white mb-2">Connecte-toi pour générer des hooks</h2>
@@ -355,7 +355,7 @@ export default function HookGeneratorPage() {
             <div className="flex items-center justify-center gap-3">
               <Link
                 href="/signup"
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#ff0050] to-[#7928ca] text-white text-sm font-semibold hover:opacity-90 transition-opacity shadow-md shadow-[#ff0050]/20"
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white text-sm font-semibold hover:opacity-90 transition-opacity shadow-md shadow-vn-fuchsia/20"
               >
                 Créer un compte
               </Link>
@@ -384,15 +384,15 @@ export default function HookGeneratorPage() {
                   className="h-full rounded-full transition-all duration-500"
                   style={{
                     width: `${Math.min(100, effectiveLimit > 0 ? (used / effectiveLimit) * 100 : 0)}%`,
-                    background: used >= effectiveLimit ? '#ef4444' : 'linear-gradient(to right, #ff0050, #7928ca)',
+                    background: used >= effectiveLimit ? '#ef4444' : 'linear-gradient(to right, #e879f9, #6366f1)',
                   }}
                 />
               </div>
             </div>
             <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
               plan === 'elite'
-                ? 'bg-[#7928ca]/15 text-[#c084fc] border border-[#7928ca]/25'
-                : 'bg-[#ff0050]/10 text-[#ff0050] border border-[#ff0050]/20'
+                ? 'bg-vn-violet/15 text-vn-glow border border-vn-violet/25'
+                : 'bg-vn-fuchsia/10 text-vn-fuchsia border border-vn-fuchsia/20'
             }`}>
               {plan === 'elite' ? 'Elite' : 'Pro'}
             </span>
@@ -405,7 +405,7 @@ export default function HookGeneratorPage() {
           {/* Contexte */}
           <div>
             <label className="block text-xs font-semibold text-gray-400 mb-2">
-              Contexte de ta vidéo <span className="text-[#ff0050]">*</span>
+              Contexte de ta vidéo <span className="text-vn-fuchsia">*</span>
             </label>
             <textarea
               value={context}
@@ -413,7 +413,7 @@ export default function HookGeneratorPage() {
               placeholder="Ex : Je remets à sa place quelqu'un qui m'a critiqué sur ma façon de m'habiller..."
               rows={3}
               maxLength={300}
-              className="w-full bg-[#0d0d0d] border border-[#1e1e1e] hover:border-[#2a2a2a] focus:border-[#7928ca]/40 focus:ring-1 focus:ring-[#7928ca]/20 text-white text-sm placeholder-gray-700 rounded-xl px-4 py-3 resize-none transition-all duration-150 outline-none"
+              className="w-full bg-[#0d0d0d] border border-[#1e1e1e] hover:border-[#2a2a2a] focus:border-vn-violet/40 focus:ring-1 focus:ring-vn-violet/20 text-white text-sm placeholder-gray-700 rounded-xl px-4 py-3 resize-none transition-all duration-150 outline-none"
             />
             <p className="text-right text-[11px] text-gray-700 mt-1 tabular-nums">{context.length} / 300</p>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -437,7 +437,7 @@ export default function HookGeneratorPage() {
               <select
                 value={scene}
                 onChange={(e) => setScene(e.target.value)}
-                className="w-full bg-[#0d0d0d] border border-[#1e1e1e] hover:border-[#2a2a2a] focus:border-[#7928ca]/40 text-white text-sm rounded-xl px-3 py-2.5 outline-none transition-all appearance-none cursor-pointer"
+                className="w-full bg-[#0d0d0d] border border-[#1e1e1e] hover:border-[#2a2a2a] focus:border-vn-violet/40 text-white text-sm rounded-xl px-3 py-2.5 outline-none transition-all appearance-none cursor-pointer"
               >
                 {SCENES.map((s) => (
                   <option key={s} value={s}>{s}</option>
@@ -454,7 +454,7 @@ export default function HookGeneratorPage() {
                 onChange={(e) => setPerson(e.target.value)}
                 placeholder="Ex : mon ex, un hater..."
                 maxLength={50}
-                className="w-full bg-[#0d0d0d] border border-[#1e1e1e] hover:border-[#2a2a2a] focus:border-[#7928ca]/40 text-white text-sm placeholder-gray-700 rounded-xl px-3 py-2.5 outline-none transition-all"
+                className="w-full bg-[#0d0d0d] border border-[#1e1e1e] hover:border-[#2a2a2a] focus:border-vn-violet/40 text-white text-sm placeholder-gray-700 rounded-xl px-3 py-2.5 outline-none transition-all"
               />
             </div>
           </div>
@@ -469,7 +469,7 @@ export default function HookGeneratorPage() {
                   onClick={() => setTone(t.id)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150
                     ${tone === t.id
-                      ? 'bg-[#7928ca]/20 border border-[#7928ca]/50 text-[#c084fc]'
+                      ? 'bg-vn-violet/20 border border-vn-violet/50 text-vn-glow'
                       : 'bg-[#0d0d0d] border border-[#1e1e1e] text-gray-500 hover:border-[#2a2a2a] hover:text-gray-300'
                     }`}
                 >
@@ -491,7 +491,7 @@ export default function HookGeneratorPage() {
                   disabled={authUser?.plan && authUser.plan !== 'free' && n > remaining}
                   className={`w-12 h-10 rounded-lg text-sm font-bold transition-all duration-150 disabled:opacity-35 disabled:cursor-not-allowed
                     ${count === n
-                      ? 'bg-gradient-to-r from-[#ff0050] to-[#7928ca] text-white shadow-md shadow-[#ff0050]/20'
+                      ? 'bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white shadow-md shadow-vn-fuchsia/20'
                       : 'bg-[#0d0d0d] border border-[#1e1e1e] text-gray-500 hover:border-[#2a2a2a] hover:text-gray-300'
                     }`}
                 >
@@ -520,7 +520,7 @@ export default function HookGeneratorPage() {
             className={`w-full py-3.5 rounded-xl font-bold text-sm transition-all duration-200 active:scale-[0.99] shadow-lg
               ${loading || (!!authUser && !canUse)
                 ? 'bg-[#1a1a1a] border border-[#2a2a2a] text-gray-600 cursor-not-allowed'
-                : 'bg-gradient-to-r from-[#ff0050] to-[#7928ca] text-white hover:opacity-90 shadow-[#ff0050]/20'
+                : 'bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:opacity-90 shadow-vn-fuchsia/20'
               }`}
           >
             {loading ? (
@@ -652,7 +652,7 @@ export default function HookGeneratorPage() {
                   onClick={() => setHistoryFilter('favorites')}
                   className={`text-xs px-2.5 py-1 rounded-md border ${
                     historyFilter === 'favorites'
-                      ? 'border-[#ff0050]/40 text-[#ff6080] bg-[#1b0a12]'
+                      ? 'border-vn-fuchsia/40 text-vn-fuchsia bg-vn-fuchsia/5'
                       : 'border-[#1f1f1f] text-gray-500'
                   }`}
                 >
@@ -667,7 +667,7 @@ export default function HookGeneratorPage() {
                 value={historyQuery}
                 onChange={(e) => setHistoryQuery(e.target.value)}
                 placeholder="Rechercher dans l'historique..."
-                className="w-full bg-[#0d0d0d] border border-[#1e1e1e] hover:border-[#2a2a2a] focus:border-[#7928ca]/40 text-white text-sm placeholder-gray-700 rounded-lg px-3 py-2 outline-none transition-all"
+                className="w-full bg-[#0d0d0d] border border-[#1e1e1e] hover:border-[#2a2a2a] focus:border-vn-violet/40 text-white text-sm placeholder-gray-700 rounded-lg px-3 py-2 outline-none transition-all"
               />
             </div>
 
@@ -702,7 +702,7 @@ export default function HookGeneratorPage() {
                         onClick={() => toggleFavorite(item)}
                         className={`text-[11px] px-2 py-1 rounded-md border ${
                           item.is_favorite
-                            ? 'border-[#ff0050]/40 text-[#ff6080] bg-[#1b0a12]'
+                            ? 'border-vn-fuchsia/40 text-vn-fuchsia bg-vn-fuchsia/5'
                             : 'border-[#1f1f1f] text-gray-500'
                         }`}
                       >

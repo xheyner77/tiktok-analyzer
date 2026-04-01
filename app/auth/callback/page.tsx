@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
+import BrandLogo from '@/components/BrandLogo';
 
 /*
  * /auth/callback — landing page after Supabase email confirmation.
@@ -51,16 +52,7 @@ function CallbackContent() {
     return (
       <div className="relative w-full max-w-sm animate-fade-up text-center">
         <div className="flex flex-col items-center mb-8">
-          <Link href="/" className="flex items-center gap-2.5 mb-6">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#ff0050] to-[#7928ca] flex items-center justify-center shadow-lg shadow-[#ff0050]/25">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-                <path d="M9 18V5l12-2v13" />
-                <circle cx="6" cy="18" r="3" />
-                <circle cx="18" cy="16" r="3" />
-              </svg>
-            </div>
-            <span className="text-base font-bold text-white">TikTok<span className="bg-gradient-to-r from-[#ff0050] to-[#7928ca] bg-clip-text text-transparent">Analyzer</span></span>
-          </Link>
+          <BrandLogo size="large" className="mb-6" />
         </div>
 
         <div className="bg-[#111] border border-[#1a1a1a] rounded-2xl p-7 card-glow">
@@ -76,7 +68,7 @@ function CallbackContent() {
           )}
           <Link
             href="/signup"
-            className="block w-full py-3 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#ff0050] to-[#7928ca] text-white hover:opacity-90 transition-all shadow-lg shadow-[#ff0050]/15 mb-3 text-center"
+            className="block w-full py-3 rounded-xl font-semibold text-sm bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:opacity-90 transition-all shadow-lg shadow-vn-fuchsia/15 mb-3 text-center"
           >
             Renvoyer l&apos;email de confirmation
           </Link>
@@ -95,16 +87,7 @@ function CallbackContent() {
   return (
     <div className="relative w-full max-w-sm animate-fade-up text-center">
       <div className="flex flex-col items-center mb-8">
-        <Link href="/" className="flex items-center gap-2.5 mb-6">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#ff0050] to-[#7928ca] flex items-center justify-center shadow-lg shadow-[#ff0050]/25">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-              <path d="M9 18V5l12-2v13" />
-              <circle cx="6" cy="18" r="3" />
-              <circle cx="18" cy="16" r="3" />
-            </svg>
-          </div>
-          <span className="text-base font-bold text-white">TikTok<span className="bg-gradient-to-r from-[#ff0050] to-[#7928ca] bg-clip-text text-transparent">Analyzer</span></span>
-        </Link>
+        <BrandLogo size="large" className="mb-6" />
       </div>
 
       <div className="bg-[#111] border border-[#1a1a1a] rounded-2xl p-7 card-glow">
@@ -123,7 +106,7 @@ function CallbackContent() {
 
         <Link
           href="/login"
-          className="block w-full py-3.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#ff0050] to-[#7928ca] text-white hover:opacity-90 transition-all shadow-lg shadow-[#ff0050]/15 text-center"
+          className="block w-full py-3.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:opacity-90 transition-all shadow-lg shadow-vn-fuchsia/15 text-center"
         >
           Se connecter →
         </Link>
@@ -134,9 +117,9 @@ function CallbackContent() {
 
 export default function AuthCallbackPage() {
   return (
-    <main className="min-h-screen bg-[#080808] flex items-center justify-center px-4">
+    <main className="min-h-screen bg-vn-bg flex items-center justify-center px-4">
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-[#7928ca]/5 to-[#ff0050]/5 blur-3xl" />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-vn-indigo/5 to-vn-fuchsia/5 blur-3xl" />
       </div>
       <Suspense fallback={
         <div className="flex items-center gap-3">
