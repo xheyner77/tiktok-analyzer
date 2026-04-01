@@ -82,6 +82,23 @@ function IconSpark({ className = 'w-5 h-5' }: { className?: string }) {
   );
 }
 
+function HeroTrustStars({ className = '' }: { className?: string }) {
+  return (
+    <div className={`flex items-center justify-center gap-0.5 ${className}`} aria-hidden>
+      {Array.from({ length: 5 }).map((_, i) => (
+        <svg
+          key={i}
+          viewBox="0 0 20 20"
+          className="w-4 h-4 sm:w-[17px] sm:h-[17px] text-vn-fuchsia drop-shadow-[0_0_8px_rgba(232,121,249,0.35)]"
+          fill="currentColor"
+        >
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+        </svg>
+      ))}
+    </div>
+  );
+}
+
 function SectionEyebrow({
   children,
   align = 'left',
@@ -244,51 +261,75 @@ export default function HomeLanding() {
       >
         <div className="absolute inset-x-0 top-0 h-[min(78vh,820px)] landing-band-magenta pointer-events-none opacity-90" aria-hidden />
         <div className="landing-section relative">
-          <div className="text-center max-w-5xl mx-auto px-1">
-            <div className="inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-full border border-white/[0.09] landing-hero-badge px-5 py-2.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.14em] text-gray-400 mb-9 sm:mb-11">
-              <span className="flex items-center gap-2 normal-case tracking-normal text-white font-medium">
+          <div className="text-center max-w-5xl mx-auto px-2 sm:px-1">
+            <div className="inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-full border border-white/[0.1] landing-hero-badge px-5 py-2.5 sm:px-6 sm:py-3 text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500 mb-10 sm:mb-12 shadow-[0_0_40px_-12px_rgba(232,121,249,0.15)] transition-shadow duration-300 hover:shadow-[0_0_48px_-10px_rgba(232,121,249,0.22)] hover:border-white/[0.14]">
+              <span className="flex items-center gap-2 normal-case tracking-normal text-white font-semibold">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-vn-fuchsia opacity-35" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-vn-fuchsia shadow-[0_0_12px_rgba(232,121,249,0.6)]" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-vn-fuchsia shadow-[0_0_14px_rgba(232,121,249,0.75)]" />
                 </span>
                 Analyse vidéo IA
               </span>
-              <span className="text-white/12 hidden sm:inline">·</span>
+              <span className="text-white/15 hidden sm:inline" aria-hidden>
+                ·
+              </span>
               <span className="normal-case tracking-normal text-gray-500 font-medium">TikTok · Intelligence virale</span>
             </div>
 
-            <h1 className="landing-heading-xl landing-hero-title-glow text-[2.5rem] leading-[1.02] sm:text-5xl md:text-6xl lg:text-[3.85rem] xl:text-[4.35rem] 2xl:text-[4.6rem]">
-              Comprends enfin
-              <span className="block mt-2 sm:mt-3">
-                <span className="gradient-text-hero">pourquoi ta vidéo</span>
-                <span className="text-white"> performe — ou non.</span>
+            <h1 className="landing-heading-xl landing-hero-title-glow text-[2.65rem] leading-[1.03] sm:text-5xl sm:leading-[1.02] md:text-6xl md:leading-[1.01] lg:text-[4rem] lg:leading-[0.99] xl:text-[4.5rem] 2xl:text-[4.85rem] mx-auto tracking-[-0.035em] px-1">
+              <span className="text-white block">Arrête de poster au hasard.</span>
+              <span className="block mt-3 sm:mt-4">
+                <span className="gradient-text-hero">L’IA t’explique</span>
+                <span className="text-white"> pourquoi ta vidéo marche</span>
+                <span className="text-gray-200"> — et quoi corriger en premier.</span>
               </span>
             </h1>
 
-            <p className="mt-8 sm:mt-10 text-base sm:text-lg md:text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed font-medium">
-              Viralynz lit ton contenu comme un top performer :{' '}
-              <span className="text-gray-400 font-normal">hook, rétention, montage, structure et CTA.</span> Tu identifies
-              les blocages, tu priorises les corrections — et tu arrêtes de publier à l’aveugle.
+            <p className="mt-9 sm:mt-11 md:mt-12 text-[1.05rem] sm:text-lg md:text-xl text-gray-200 max-w-xl mx-auto leading-snug sm:leading-relaxed font-medium">
+              Publier sans comprendre, c’est du temps perdu.
+              <span className="text-gray-400 font-normal block sm:inline sm:before:content-[' '] mt-1.5 sm:mt-0">
+                Viralynz lit hook, rétention et montage — tu repars avec des priorités claires, tout de suite.
+              </span>
             </p>
 
-            <div className="mt-10 sm:mt-11 flex flex-col sm:flex-row flex-wrap gap-3 justify-center">
-              <Link
-                href="/analyzer"
-                className="inline-flex justify-center items-center min-h-[54px] rounded-full px-10 text-sm font-semibold text-white bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_20px_50px_-12px_rgba(232,121,249,0.45),0_12px_36px_-16px_rgba(0,0,0,0.6)]"
-              >
-                Analyser une vidéo
-              </Link>
+            <div className="mt-11 sm:mt-12 md:mt-14 flex flex-col sm:flex-row flex-wrap gap-4 sm:gap-3 justify-center items-stretch sm:items-start">
+              <div className="flex flex-col items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
+                <div className="relative w-full sm:w-auto group">
+                  <div
+                    className="absolute -inset-1 rounded-full bg-gradient-to-r from-vn-fuchsia/50 via-vn-violet/40 to-vn-indigo/50 opacity-60 blur-lg transition duration-300 group-hover:opacity-90 group-hover:blur-xl"
+                    aria-hidden
+                  />
+                  <div
+                    className="absolute -inset-px rounded-full bg-gradient-to-r from-vn-fuchsia/30 to-vn-indigo/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    aria-hidden
+                  />
+                  <Link
+                    href="/analyzer"
+                    className="relative inline-flex justify-center items-center w-full sm:w-auto min-h-[56px] rounded-full px-10 sm:px-11 text-[15px] font-semibold text-white bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:brightness-110 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-[0_0_0_1px_rgba(255,255,255,0.1),0_8px_32px_-8px_rgba(232,121,249,0.55),0_24px_56px_-16px_rgba(99,102,241,0.25)]"
+                  >
+                    Lancer mon analyse IA
+                  </Link>
+                </div>
+                <p className="text-[12px] sm:text-[13px] text-gray-500 font-medium tracking-tight">
+                  {MAX_ANALYSES_FREE} analyses gratuites — sans carte
+                </p>
+              </div>
               <Link
                 href="/signup"
-                className="inline-flex justify-center items-center min-h-[54px] rounded-full px-10 text-sm font-semibold text-gray-100 border border-white/[0.12] bg-white/[0.04] hover:bg-white/[0.09] hover:border-white/[0.2] transition-all shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-sm"
+                className="inline-flex justify-center items-center min-h-[56px] rounded-full px-10 sm:px-11 text-[15px] font-semibold text-gray-100 border border-white/[0.14] bg-white/[0.05] hover:bg-white/[0.1] hover:border-white/[0.24] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-sm w-full sm:w-auto"
               >
                 Créer un compte
               </Link>
             </div>
 
-            <p className="mt-9 text-sm text-gray-500 max-w-md mx-auto leading-relaxed">
-              {MAX_ANALYSES_FREE} analyses gratuites pour valider le workflow — sans carte bancaire.
-            </p>
+            <div className="mt-10 sm:mt-12 flex flex-col items-center gap-2.5 max-w-md mx-auto">
+              <HeroTrustStars />
+              <p className="text-[13px] sm:text-sm text-gray-400 leading-relaxed text-center">
+                Utilisé par des <span className="text-gray-300">créateurs</span>,{' '}
+                <span className="text-gray-300">agences</span> et <span className="text-gray-300">e‑com</span> qui veulent
+                performer avec méthode.
+              </p>
+            </div>
           </div>
 
           <div className="mt-16 sm:mt-20 lg:mt-28 relative px-0 sm:px-2">
