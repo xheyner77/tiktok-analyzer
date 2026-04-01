@@ -9,49 +9,7 @@ import {
 } from '@/lib/plan-limits';
 import { DISPLAY_CATALOG_ELITE_EUR, DISPLAY_CATALOG_PRO_EUR } from '@/lib/stripe-pricing';
 import LandingProductMockup from '@/components/landing/LandingProductMockup';
-import {
-  credibilityBlocks,
-  faqItems,
-  platformRoadmap,
-  roadmapColumns,
-} from '@/components/landing/landing-copy';
-
-const workflowSteps = [
-  {
-    n: '01',
-    title: 'Importe ta vidéo',
-    body: 'Fichier court (MP4 recommandé) + lien TikTok fortement conseillé pour croiser avec les signaux publics.',
-  },
-  {
-    n: '02',
-    title: 'Reçois le diagnostic IA',
-    body: 'Hook, montage, rétention, structure et CTA : une lecture ordonnée — pas un commentaire vague.',
-  },
-  {
-    n: '03',
-    title: 'Améliore avec méthode',
-    body: 'Tu sais quoi retoucher en premier. Le générateur de hooks t’aide à challenger l’ouverture — en complément, pas à la place de l’analyse.',
-  },
-];
-
-const audiences = [
-  {
-    title: 'Créateurs & personal brands',
-    desc: 'Passe de l’impression au critère : quoi tester sur la prochaine vidéo.',
-  },
-  {
-    title: 'E‑commerce & UGC',
-    desc: 'Aligne démos, preuves sociales et scripts sur une même grille de lecture.',
-  },
-  {
-    title: 'Agences social & studios',
-    desc: 'Retours clients plus nets : moins de « refais plus dynamique » sans repère.',
-  },
-  {
-    title: 'Marketeurs & growth',
-    desc: 'Moins de volume aveugle : chaque itération repose sur des priorités claires.',
-  },
-];
+import { faqItems, platformRoadmap } from '@/components/landing/landing-copy';
 
 function FaqChevron() {
   return (
@@ -99,45 +57,18 @@ function HeroTrustStars({ className = '' }: { className?: string }) {
   );
 }
 
-function SectionEyebrow({
-  children,
-  align = 'left',
-}: {
-  children: ReactNode;
-  align?: 'left' | 'center';
-}) {
-  if (align === 'center') {
-    return (
-      <div className="flex justify-center mb-5 sm:mb-6">
-        <div className="inline-flex items-center gap-3 sm:gap-4">
-          <span className="h-px w-10 sm:w-16 bg-gradient-to-r from-transparent via-vn-fuchsia/45 to-vn-fuchsia/20 rounded-full" />
-          <p className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.22em] text-gray-500">{children}</p>
-          <span className="h-px w-10 sm:w-16 bg-gradient-to-l from-transparent via-vn-violet/45 to-vn-violet/20 rounded-full" />
-        </div>
-      </div>
-    );
-  }
-  return (
-    <div className="flex items-center gap-3 mb-4 sm:mb-5">
-      <span className="h-px w-12 sm:w-20 shrink-0 bg-gradient-to-r from-vn-fuchsia/55 to-transparent rounded-full" />
-      <p className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.22em] text-gray-500">{children}</p>
-    </div>
-  );
-}
-
 const toolkitSections: {
   featured?: boolean;
   bonus?: boolean;
-  soon?: boolean;
   title: string;
   body: string;
   icon: ReactNode;
+  className: string;
 }[] = [
   {
     featured: true,
     title: 'Analyse vidéo IA',
-    body:
-      'Vision sur les frames clés + contexte (durée, fichier, stats TikTok quand le lien est dispo). Tu obtiens une lecture honnête de ce qui retient — ou fait fuir.',
+    body: 'Le coeur de Viralynz : diagnostic hook, montage, rétention et CTA avec priorités claires.',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path
@@ -147,19 +78,22 @@ const toolkitSections: {
         />
       </svg>
     ),
+    className:
+      'lg:col-span-2 lg:row-span-2 rounded-3xl border border-vn-fuchsia/20 bg-gradient-to-br from-vn-fuchsia/[0.08] via-vn-surface/70 to-vn-indigo/[0.08]',
   },
   {
     title: 'Diagnostic hook',
-    body: 'L’ouverture décryptée : promesse, curiosité, clarté du sujet — avec des repères actionnables pour la prochaine prise.',
+    body: 'Comprends en quelques minutes si ton ouverture retient, intrigue et donne envie de rester.',
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L6 12l7.5 7.5M6 12h13.5" />
       </svg>
     ),
+    className: 'rounded-3xl border border-white/[0.08] bg-vn-surface/50',
   },
   {
     title: 'Rétention & structure',
-    body: 'Où l’attention risque de chuter, comment la narration tient (ou lâche), et quoi resserrer pour garder la cadence.',
+    body: 'Repère où l’attention chute, ce qui coupe le rythme, et ce qui doit être ajusté en priorité.',
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path
@@ -169,10 +103,11 @@ const toolkitSections: {
         />
       </svg>
     ),
+    className: 'rounded-3xl border border-white/[0.08] bg-vn-surface/50',
   },
   {
     title: 'Montage & rythme',
-    body: 'Coupes, dynamique visuelle, charge cognitive : des repères pour alléger ou intensifier au bon moment.',
+    body: 'Coupes, intensité visuelle, lisibilité : des recommandations actionnables vidéo après vidéo.',
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path
@@ -182,10 +117,11 @@ const toolkitSections: {
         />
       </svg>
     ),
+    className: 'rounded-3xl border border-white/[0.08] bg-vn-surface/50',
   },
   {
     title: 'Recommandations priorisées',
-    body: 'Une liste courte, ordonnée : ce qui bouge le score en premier — applicable avant la prochaine publication.',
+    body: 'Pas de bruit : uniquement les changements qui ont le plus de potentiel sur la prochaine publication.',
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path
@@ -195,50 +131,21 @@ const toolkitSections: {
         />
       </svg>
     ),
+    className: 'rounded-3xl border border-white/[0.08] bg-vn-surface/50',
   },
   {
     bonus: true,
     title: 'Hook generator',
-    body: 'Des accroches courtes, testables tout de suite — pour challenger ton angle une fois le diagnostic posé.',
+    body: 'Fonction bonus : génère des hooks testables rapidement, une fois l’analyse vidéo terminée.',
     icon: <IconSpark className="w-5 h-5" />,
-  },
-  {
-    soon: true,
-    title: 'Insights multi‑plateformes',
-    body: 'Même discipline produit : TikTok aujourd’hui, Reels & Shorts demain — pour une intelligence virale portable.',
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M6 20.25h12m-7.5-3v3m3-3v3m-10.125-3h17.25c.621 0 1.125-.504 1.125-1.125V4.875c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125z"
-        />
-      </svg>
-    ),
+    className: 'rounded-3xl border border-vn-fuchsia/25 bg-gradient-to-br from-vn-fuchsia/[0.1] to-vn-surface/50',
   },
 ];
 
-const benefitPillars = [
-  {
-    title: 'Du temps',
-    body: 'Moins d’aller‑retour flou. Tu sais quoi couper, quoi renforcer, quoi retester en premier.',
-  },
-  {
-    title: 'De la clarté',
-    body: 'Une grille partagée entre créateur, marque et agence — le même langage sur la table.',
-  },
-  {
-    title: 'De meilleures décisions',
-    body: 'Arbitrer avec des signaux structurés plutôt qu’avec une impression de scroll infini.',
-  },
-  {
-    title: 'Moins de tests inutiles',
-    body: 'Repère les frictions avant la mise en ligne — pas seulement après un flop.',
-  },
-  {
-    title: 'Plus de chances de perf',
-    body: 'Pas de promesse magique : des choix informés à chaque itération, sur un format impitoyable.',
-  },
+const keyStats = [
+  { value: '1 workflow', label: 'De la vidéo au plan d’action' },
+  { value: '3 offres', label: 'Free · Pro · Elite' },
+  { value: 'TikTok live', label: 'Reels & Shorts en roadmap' },
 ];
 
 export default function HomeLanding() {
@@ -255,7 +162,7 @@ export default function HomeLanding() {
       </div>
 
       {/* ── Hero ───────────────────────────────────────── */}
-      <section className="relative pt-12 sm:pt-16 lg:pt-20 overflow-visible" id="top">
+      <section className="relative pt-12 sm:pt-16 lg:pt-20 pb-20 sm:pb-24 overflow-visible" id="top">
         <div className="absolute inset-x-0 top-0 h-[min(82vh,900px)] landing-band-magenta pointer-events-none opacity-95" aria-hidden />
         <div className="landing-section relative">
           <div className="text-center max-w-[94rem] mx-auto px-2 sm:px-1">
@@ -348,348 +255,99 @@ export default function HomeLanding() {
             />
             <LandingProductMockup variant="hero" className="hero-mockup-pulse" />
           </div>
-
-          <div className="mt-14 sm:mt-16 flex flex-wrap justify-center gap-2 sm:gap-3 max-w-4xl mx-auto">
-            {[
-              'Diagnostic assisté par IA',
-              'Priorités claires — pas un score opaque',
-              'Hook generator en complément',
-              'Pensé créateurs, marques & agences',
-            ].map((label) => (
-              <span
-                key={label}
-                className="text-xs sm:text-[13px] font-medium text-gray-400 px-4 py-2.5 rounded-full border border-white/[0.08] bg-black/40 backdrop-blur-md shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
-              >
-                {label}
-              </span>
-            ))}
-          </div>
         </div>
       </section>
 
-      <div className="landing-section px-5 sm:px-8 lg:px-10 py-2">
-        <div className="landing-section-line-strong" />
-      </div>
-
-      {/* ── Produit / mockup massif ───────────────────── */}
-      <section
-        id="produit"
-        className="relative py-24 sm:py-32 lg:py-40 scroll-mt-24 landing-band border-t border-white/[0.04]"
-      >
+      <section className="relative pb-20 sm:pb-24">
         <div className="landing-section">
-          <div className="max-w-3xl lg:max-w-4xl mb-14 sm:mb-20 lg:mb-24">
-            <SectionEyebrow>Le produit</SectionEyebrow>
-            <h2 className="landing-heading-xl text-3xl sm:text-4xl lg:text-[3rem] xl:text-[3.15rem] leading-[1.08]">
-              Une interface pensée pour la décision — pas pour le bruit.
+          <div className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 mb-8">
+            Conçu pour les créateurs short-form
+          </div>
+          <p className="text-center text-4xl sm:text-5xl font-display font-bold text-white mb-10">
+            Viral<span className="gradient-text">ynz</span>
+          </p>
+          <div className="landing-arc-divider mb-16 sm:mb-20" />
+          <div className="text-center max-w-4xl mx-auto mb-14 sm:mb-16">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-vn-fuchsia mb-5">L’arsenal viral</p>
+            <h2 className="landing-heading-xl text-3xl sm:text-4xl lg:text-[3rem]">
+              Tout ce qu’il te faut pour dominer le format court
             </h2>
-            <p className="mt-6 text-base sm:text-lg text-gray-400 leading-relaxed max-w-2xl">
-              Chaque écran ramène à l’essentiel : ce que la vidéo montre, ce que l’IA en déduit, et ce que tu dois traiter
-              en premier. Le hook generator arrive après — quand tu veux tester des angles, pas quand tu devines.
-            </p>
           </div>
-
-          <LandingProductMockup variant="showcase" />
         </div>
       </section>
 
-      {/* ── Toolkit ───────────────────────────────────── */}
-      <section
-        id="fonctions"
-        className="relative py-24 sm:py-32 lg:py-36 scroll-mt-24 border-t border-white/[0.05] bg-gradient-to-b from-black/20 via-transparent to-black/25"
-      >
-        <div className="landing-section">
-          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 mb-14 sm:mb-20 lg:mb-24">
-            <div className="max-w-2xl">
-              <SectionEyebrow>
-                <span className="text-vn-violet">Tout ce qu’il te faut</span>
-              </SectionEyebrow>
-              <h2 className="landing-heading-xl text-3xl sm:text-4xl lg:text-[2.9rem] leading-tight">
-                L’arsenal pour décoder le court format
-              </h2>
-              <p className="mt-4 text-base sm:text-lg text-gray-400 leading-relaxed">
-                Le cœur, c’est l’analyse vidéo. Le reste accélère ton exécution — sans diluer la promesse.
-              </p>
-            </div>
-            <Link
-              href="/analyzer"
-              className="inline-flex items-center gap-2 text-sm font-semibold text-vn-violet hover:text-white transition-colors shrink-0"
-            >
-              Ouvrir l’analyseur
-              <span aria-hidden>→</span>
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
+      <section id="fonctions" className="relative pb-24 sm:pb-28 lg:pb-32">
+        <div className="landing-section max-w-6xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 auto-rows-fr">
             {toolkitSections.map((card) => (
               <div
                 key={card.title}
-                className={`toolkit-card-premium group p-6 sm:p-8 transition-all duration-500 hover:-translate-y-1 hover:border-white/[0.14] hover:shadow-[0_24px_64px_-28px_rgba(0,0,0,0.75),0_0_0_1px_rgba(232,121,249,0.06)] ${
-                  card.featured
-                    ? 'lg:col-span-2 lg:min-h-[300px] flex flex-col justify-between ring-1 ring-vn-fuchsia/10 shadow-[0_0_80px_-40px_rgba(232,121,249,0.35)]'
-                    : ''
-                } ${card.bonus ? 'lg:col-span-1 border-vn-fuchsia/20 bg-gradient-to-b from-vn-fuchsia/[0.06] to-black/20' : ''} ${
-                  card.soon ? 'lg:col-span-1 border-white/[0.07] bg-white/[0.03]' : ''
-                }`}
+                className={`${card.className} relative overflow-hidden p-6 sm:p-7 landing-card-deep transition-all duration-300 hover:-translate-y-0.5`}
               >
-                <div>
-                  <div className="flex items-start justify-between gap-3 mb-5">
-                    <div
-                      className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
-                        card.featured
-                          ? 'bg-gradient-to-br from-vn-fuchsia/25 to-vn-indigo/20 text-vn-fuchsia'
-                          : card.bonus
-                            ? 'bg-vn-fuchsia/15 text-vn-fuchsia'
-                            : 'bg-white/[0.06] text-vn-violet'
-                      }`}
-                    >
-                      {card.icon}
-                    </div>
-                    <div className="flex flex-wrap gap-2 justify-end">
-                      {card.featured ? (
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-white/10 text-white border border-white/10">
-                          Cœur du produit
-                        </span>
-                      ) : null}
-                      {card.bonus ? (
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border border-vn-fuchsia/35 text-vn-fuchsia">
-                          Bonus
-                        </span>
-                      ) : null}
-                      {card.soon ? (
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border border-white/15 text-gray-400">
-                          Roadmap
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-                  <h3 className="font-display text-lg sm:text-xl font-bold text-white mb-3">{card.title}</h3>
-                  <p className="text-sm sm:text-[15px] text-gray-400 leading-relaxed">{card.body}</p>
+                <div className="w-11 h-11 rounded-2xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-vn-fuchsia mb-5">
+                  {card.icon}
                 </div>
-                {card.featured ? (
-                  <div className="mt-8 pt-6 border-t border-white/[0.06] flex flex-wrap gap-2">
-                    {['Vision', 'Scores', 'Priorités', 'Historique'].map((t) => (
+                <h3 className="font-display text-xl font-bold text-white mb-2.5">{card.title}</h3>
+                <p className="text-sm text-gray-400 leading-relaxed">{card.body}</p>
+                {card.featured && (
+                  <div className="mt-6 flex flex-wrap gap-2">
+                    {['Hook', 'Rétention', 'Montage', 'CTA'].map((tag) => (
                       <span
-                        key={t}
-                        className="text-[11px] font-medium text-gray-500 px-3 py-1 rounded-full bg-black/40 border border-white/[0.06]"
+                        key={tag}
+                        className="text-[11px] px-2.5 py-1 rounded-full border border-white/10 bg-black/30 text-gray-400"
                       >
-                        {t}
+                        {tag}
                       </span>
                     ))}
                   </div>
-                ) : null}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Bénéfices ─────────────────────────────────── */}
-      <section
-        id="gains"
-        className="relative py-28 sm:py-32 lg:py-40 scroll-mt-24 border-t border-white/[0.05] bg-gradient-to-b from-vn-indigo/[0.05] via-transparent to-black/30"
-      >
-        <div className="landing-section">
-          <div className="text-center max-w-2xl mx-auto mb-16 sm:mb-24">
-            <SectionEyebrow align="center">
-              <span className="text-vn-fuchsia">Ce que tu gagnes</span>
-            </SectionEyebrow>
-            <h2 className="landing-heading-xl text-3xl sm:text-4xl lg:text-[2.75rem]">Moins de hasard. Plus de contrôle.</h2>
-            <p className="mt-5 text-gray-400 text-sm sm:text-base leading-relaxed">
-              Viralynz ne promet pas la viralité : il rend tes choix plus lucides — à chaque vidéo.
-            </p>
-          </div>
-
-          <div className="grid sm:grid-cols-2 xl:grid-cols-5 gap-4 sm:gap-5">
-            {benefitPillars.map((b, i) => (
-              <div
-                key={b.title}
-                className="landing-card-deep landing-card-accent-top rounded-2xl p-6 sm:p-7 pt-8 text-left transition-all duration-300"
-              >
-                <span className="text-[10px] font-mono text-gray-600 mb-4 block tracking-wider">0{i + 1}</span>
-                <h3 className="font-display font-bold text-white text-base mb-2">{b.title}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">{b.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Crédibilité ──────────────────────────────── */}
-      <section
-        id="confiance"
-        className="relative py-24 sm:py-28 lg:py-36 scroll-mt-24 border-t border-white/[0.05] landing-band"
-      >
-        <div className="landing-section">
-          <div className="max-w-3xl mb-14 sm:mb-16">
-            <SectionEyebrow>
-              <span className="text-vn-violet">Crédibilité</span>
-            </SectionEyebrow>
-            <h2 className="landing-heading-xl text-3xl sm:text-4xl lg:text-[2.85rem] leading-tight">
-              Sérieux produit, sans storytelling creux
-            </h2>
-            <p className="mt-5 text-gray-400 text-sm sm:text-base leading-relaxed max-w-2xl">
-              Pas de chiffres inventés : une promesse honnête — la clarté sur ce que tu publies.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-5 lg:gap-7">
-            {credibilityBlocks.map((c) => (
-              <div
-                key={c.title}
-                className="landing-card-deep landing-card-accent-top rounded-3xl p-7 sm:p-8 pt-9 transition-all duration-300"
-              >
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-vn-violet/25 to-vn-indigo/15 flex items-center justify-center mb-6 text-vn-violet ring-1 ring-white/10 shadow-lg">
-                  <IconSpark className="w-5 h-5" />
-                </div>
-                <h3 className="font-display font-bold text-white text-lg mb-3">{c.title}</h3>
-                <p className="text-sm text-gray-400 leading-relaxed">{c.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Audiences ─────────────────────────────────── */}
-      <section
-        id="profils"
-        className="relative py-20 sm:py-28 lg:py-32 border-t border-white/[0.05] bg-black/20"
-      >
-        <div className="landing-section">
-          <SectionEyebrow align="center">
-            <span className="text-gray-500">Profils</span>
-          </SectionEyebrow>
-          <h2 className="landing-heading-xl text-3xl sm:text-4xl text-center mb-5">Qui en tire le plus ?</h2>
-          <p className="text-center text-gray-400 max-w-xl mx-auto mb-14 text-sm sm:text-base leading-relaxed">
-            Du créateur solo à l’équipe qui produit en volume — même exigence sur la clarté.
-          </p>
-          <div className="grid sm:grid-cols-2 gap-4 sm:gap-6 max-w-5xl mx-auto">
-            {audiences.map((a) => (
-              <div
-                key={a.title}
-                className="landing-card-deep rounded-2xl p-6 sm:p-8 transition-all duration-300 hover:border-vn-fuchsia/20"
-              >
-                <h3 className="font-display font-bold text-white mb-2 text-lg">{a.title}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">{a.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Parcours ─────────────────────────────────── */}
-      <section
-        id="workflow"
-        className="relative py-28 sm:py-32 lg:py-40 border-y border-white/[0.06] scroll-mt-24 bg-gradient-to-b from-white/[0.02] via-transparent to-black/25"
-      >
-        <div className="landing-section">
-          <div className="text-center max-w-2xl mx-auto mb-16 sm:mb-24">
-            <SectionEyebrow align="center">
-              <span className="text-vn-fuchsia">Parcours</span>
-            </SectionEyebrow>
-            <h2 className="landing-heading-xl text-3xl sm:text-4xl lg:text-[2.75rem]">
-              De la vidéo au plan d’action — en trois étapes
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-10 md:gap-8 relative max-w-5xl mx-auto">
-            <div
-              className="hidden md:block absolute top-[2.75rem] left-[10%] right-[10%] h-px bg-gradient-to-r from-transparent via-white/18 to-transparent"
-              aria-hidden
-            />
-            {workflowSteps.map((s) => (
-              <div
-                key={s.n}
-                className="relative text-center md:text-left landing-card-deep landing-card-accent-top rounded-2xl p-7 sm:p-8 pt-9"
-              >
-                <span className="inline-flex font-display text-4xl sm:text-5xl font-bold gradient-text-hero opacity-95 mb-5">
-                  {s.n}
-                </span>
-                <h3 className="font-display text-lg font-bold text-white mb-2">{s.title}</h3>
-                <p className="text-sm text-gray-400 leading-relaxed max-w-xs mx-auto md:mx-0">{s.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Roadmap plateformes ──────────────────────── */}
-      <section id="roadmap" className="relative py-24 sm:py-32 lg:py-36 scroll-mt-24 border-t border-white/[0.05]">
-        <div className="landing-section">
-          <div className="text-center max-w-2xl mx-auto mb-14 sm:mb-20">
-            <SectionEyebrow align="center">
-              <span className="text-vn-violet">Roadmap</span>
-            </SectionEyebrow>
-            <h2 className="landing-heading-xl text-3xl sm:text-4xl lg:text-[2.75rem]">TikTok d’abord. Le reste suit.</h2>
-            <p className="mt-5 text-gray-400 text-sm sm:text-base leading-relaxed">
-              On bâtit une intelligence virale portable : même méthode, nouvelles surfaces vidéo.
-            </p>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-16 sm:mb-20">
-            {platformRoadmap.map((p) => (
-              <div
-                key={p.name}
-                className={`rounded-2xl border p-6 sm:p-7 text-left transition-all duration-300 hover:-translate-y-0.5 ${
-                  p.status === 'live'
-                    ? 'border-emerald-400/30 bg-gradient-to-b from-emerald-500/[0.1] to-black/35 shadow-[0_0_40px_-20px_rgba(52,211,153,0.25)]'
-                    : 'landing-card-deep'
-                }`}
-              >
-                <div className="flex items-center justify-between gap-2 mb-3">
-                  <h3 className="font-display font-bold text-white">{p.name}</h3>
-                  <span
-                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                      p.status === 'live'
-                        ? 'bg-emerald-500/20 text-emerald-300'
-                        : 'bg-white/10 text-gray-400'
-                    }`}
-                  >
-                    {p.status === 'live' ? 'Live' : 'À venir'}
+                )}
+                {card.bonus && (
+                  <span className="absolute top-4 right-4 text-[10px] uppercase tracking-wider font-semibold text-vn-fuchsia">
+                    Bonus
                   </span>
-                </div>
-                <p className="text-sm text-gray-500 leading-relaxed">{p.desc}</p>
+                )}
               </div>
             ))}
           </div>
+          <p className="text-center mt-8 sm:mt-10">
+            <Link
+              href="/analyzer"
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white text-sm font-semibold px-7 py-3.5 hover:brightness-110 transition"
+            >
+              Découvrir les fonctionnalités
+              <span aria-hidden>→</span>
+            </Link>
+          </p>
+        </div>
+      </section>
 
-          <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
-            {roadmapColumns.map((col) => (
-              <div
-                key={col.phase}
-                className="landing-card-deep rounded-3xl p-7 sm:p-8 relative overflow-hidden"
-              >
-                <div
-                  className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${col.accent}`}
-                  aria-hidden
-                />
-                <p className="text-xs font-bold uppercase tracking-[0.2em] text-gray-400 mb-6">{col.phase}</p>
-                <ul className="space-y-4">
-                  {col.items.map((item) => (
-                    <li key={item} className="text-sm text-gray-400 flex gap-3 leading-relaxed">
-                      <span className="text-vn-fuchsia shrink-0 mt-0.5">▸</span>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
+      <section id="gains" className="relative py-20 sm:py-24 border-y border-white/[0.06]">
+        <div className="landing-section">
+          <p className="text-xs text-center font-semibold uppercase tracking-[0.22em] text-vn-violet mb-4">Chiffres clés</p>
+          <p className="text-center text-white text-lg sm:text-2xl font-medium mb-10 sm:mb-12">
+            Une base solide pour créer, corriger et scaler tes vidéos
+          </p>
+          <div className="grid md:grid-cols-3 gap-4 sm:gap-6 max-w-4xl mx-auto">
+            {keyStats.map((stat) => (
+              <div key={stat.value} className="text-center landing-card-deep rounded-2xl p-6 sm:p-7">
+                <p className="font-display text-3xl sm:text-4xl gradient-text">{stat.value}</p>
+                <p className="text-sm text-gray-400 mt-2">{stat.label}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Tarifs ───────────────────────────────────── */}
       <section
         id="tarifs"
-        className="relative py-28 sm:py-32 lg:py-40 border-t border-white/[0.06] scroll-mt-24 bg-gradient-to-b from-black/35 via-vn-void to-black/40"
+        className="relative py-24 sm:py-28 lg:py-32 border-t border-white/[0.06] scroll-mt-24 bg-gradient-to-b from-black/35 via-vn-void to-black/40"
       >
         <div className="landing-section">
-          <div className="text-center mb-14 sm:mb-20 max-w-2xl mx-auto">
-            <SectionEyebrow align="center">
-              <span className="text-vn-fuchsia">Tarifs</span>
-            </SectionEyebrow>
-            <h2 className="landing-heading-xl text-3xl sm:text-4xl lg:text-[2.75rem]">Commence gratuitement</h2>
-            <p className="mt-3 text-gray-400 text-sm sm:text-base">
-              Passe sur Pro ou Elite quand l’analyse vidéo est dans ton rythme de production.
+          <div className="text-center mb-14 sm:mb-16 max-w-3xl mx-auto">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-vn-fuchsia mb-5">Tarifs</p>
+            <h2 className="landing-heading-xl text-3xl sm:text-4xl lg:text-[3rem]">Choisis le plan adapté à ton activité</h2>
+            <p className="mt-4 text-gray-400 text-sm sm:text-base">
+              Commence gratuitement puis scale sur Pro ou Elite quand l’analyse vidéo devient ton avantage.
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-5 max-w-5xl mx-auto items-stretch">
@@ -779,12 +437,10 @@ export default function HomeLanding() {
       {/* ── FAQ ──────────────────────────────────────── */}
       <section
         id="faq"
-        className="relative py-24 sm:py-32 border-t border-white/[0.06] scroll-mt-24 bg-black/15"
+        className="relative py-24 sm:py-28 border-t border-white/[0.06] scroll-mt-24 bg-black/15"
       >
         <div className="landing-section max-w-3xl">
-          <SectionEyebrow align="center">
-            <span className="text-gray-500">FAQ</span>
-          </SectionEyebrow>
+          <p className="text-xs text-center font-semibold uppercase tracking-[0.22em] text-vn-fuchsia mb-5">FAQ</p>
           <h2 className="landing-heading-xl text-3xl sm:text-4xl text-center mb-5">Questions fréquentes</h2>
           <p className="text-center text-gray-500 text-sm sm:text-base mb-12 sm:mb-14 max-w-lg mx-auto leading-relaxed">
             Transparence avant paiement — le même niveau d’exigence que dans le produit.
@@ -808,10 +464,36 @@ export default function HomeLanding() {
         </div>
       </section>
 
-      {/* ── CTA final ───────────────────────────────── */}
-      <section className="relative py-28 sm:py-36 px-5 sm:px-8 border-t border-white/[0.05]">
+      <section id="roadmap" className="relative py-24 sm:py-28 border-t border-white/[0.05]">
         <div className="landing-section max-w-4xl">
-          <div className="relative rounded-[2rem] p-[1px] bg-gradient-to-br from-white/15 via-vn-fuchsia/35 to-vn-indigo/40 shadow-[0_32px_100px_-40px_rgba(232,121,249,0.35)]">
+          <p className="text-xs text-center font-semibold uppercase tracking-[0.22em] text-vn-fuchsia mb-5">Roadmap</p>
+          <h2 className="landing-heading-xl text-3xl sm:text-4xl text-center mb-4">Plateformes à venir</h2>
+          <p className="text-center text-gray-400 max-w-xl mx-auto text-sm sm:text-base mb-12">
+            Viralynz évolue en continu. TikTok aujourd’hui, puis extension vers d’autres formats courts.
+          </p>
+          <div className="grid sm:grid-cols-2 gap-4">
+            {platformRoadmap
+              .filter((p) => p.status !== 'live')
+              .map((p) => (
+                <div key={p.name} className="landing-card-deep rounded-2xl p-6 sm:p-7">
+                  <div className="flex items-center justify-between gap-3 mb-2">
+                    <p className="text-white font-semibold">{p.name}</p>
+                    <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-1 rounded-full bg-white/10 text-gray-300">
+                      Prévu
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-400">{p.desc}</p>
+                </div>
+              ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA final ───────────────────────────────── */}
+      <section className="relative py-28 sm:py-36 px-5 sm:px-8 border-t border-white/[0.05] overflow-hidden">
+        <div className="absolute inset-x-0 top-0 h-52 final-icon-wall opacity-80" aria-hidden />
+        <div className="landing-section max-w-4xl">
+          <div className="relative rounded-[2rem] p-[1px] bg-gradient-to-br from-white/15 via-vn-fuchsia/35 to-vn-indigo/40 shadow-[0_32px_100px_-40px_rgba(232,121,249,0.35)] mt-20">
             <div className="relative rounded-[calc(2rem-1px)] overflow-hidden bg-[#06060c] ring-1 ring-white/[0.06]">
               <div
                 className="absolute inset-0 bg-gradient-to-br from-vn-fuchsia/18 via-[#0a0a12] to-vn-indigo/18"
@@ -819,27 +501,20 @@ export default function HomeLanding() {
               />
               <div className="absolute inset-0 landing-mesh opacity-40 mix-blend-overlay" aria-hidden />
               <div className="relative px-8 sm:px-12 lg:px-16 py-14 sm:py-16 lg:py-20 text-center">
-              <h2 className="landing-heading-xl text-3xl sm:text-4xl lg:text-[2.6rem] mb-5">
-                Passe du feeling au <span className="gradient-text-hero">diagnostic</span>.
-              </h2>
-              <p className="text-gray-400 max-w-lg mx-auto mb-10 text-sm sm:text-base leading-relaxed">
-                Analyse ta prochaine vidéo avec Viralynz : une grille de lecture nette, des priorités — puis des hooks pour
-                challenger l’ouverture si tu veux aller plus vite.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center items-stretch sm:items-center max-w-md sm:max-w-none mx-auto">
-                <Link
-                  href="/analyzer"
-                  className="inline-flex justify-center items-center min-h-[52px] rounded-full px-10 text-sm font-semibold bg-white text-vn-bg hover:bg-gray-100 transition-colors"
-                >
-                  Lancer une analyse
-                </Link>
-                <Link
-                  href="/signup"
-                  className="inline-flex justify-center items-center min-h-[52px] rounded-full px-10 text-sm font-semibold border border-white/25 text-white hover:bg-white/10 transition-colors"
-                >
-                  Créer mon compte
-                </Link>
-              </div>
+                <h2 className="landing-heading-xl text-3xl sm:text-4xl lg:text-[2.8rem] mb-5">
+                  Prends une longueur d’avance sur les autres.
+                </h2>
+                <p className="text-gray-400 max-w-lg mx-auto mb-10 text-sm sm:text-base leading-relaxed">
+                  Rejoins les créateurs qui pilotent leurs performances avec méthode. Essai gratuit, sans engagement.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center items-stretch sm:items-center max-w-md sm:max-w-none mx-auto">
+                  <Link
+                    href="/analyzer"
+                    className="inline-flex justify-center items-center min-h-[52px] rounded-full px-10 text-sm font-semibold bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:brightness-110 transition-colors"
+                  >
+                    Essayer gratuitement
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
