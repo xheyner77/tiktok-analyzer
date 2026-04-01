@@ -66,7 +66,6 @@ export default function Home() {
       setUploadTiktokUrl(pendingUrl);
       localStorage.removeItem(PENDING_URL_KEY);
     }
-
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) setGuestCount(parseInt(stored, 10));
     setMounted(true);
@@ -77,31 +76,25 @@ export default function Home() {
         if (data.user) {
           setAuthUser(data.user);
           try {
-            const stored = localStorage.getItem(`pinned_analyses_${data.user.id}`);
-            if (stored) setPinnedIds(JSON.parse(stored));
+            const s = localStorage.getItem(`pinned_analyses_${data.user.id}`);
+            if (s) setPinnedIds(JSON.parse(s));
           } catch {}
           refreshHistory();
         }
       })
-      .catch((err) => {
-        console.error('[Home] /api/auth/me failed:', err);
-      })
+      .catch((err) => console.error('[Home] /api/auth/me failed:', err))
       .finally(() => setAuthLoaded(true));
   }, []);
 
   const isReady = mounted && authLoaded;
-
   const effectiveCount = authUser ? authUser.analyses_count : guestCount;
-  const effectiveLimit = authUser
-    ? (PLAN_LIMITS[authUser.plan] ?? GUEST_LIMIT)
-    : GUEST_LIMIT;
-
+  const effectiveLimit = authUser ? (PLAN_LIMITS[authUser.plan] ?? GUEST_LIMIT) : GUEST_LIMIT;
   const isLimitReached = isReady && effectiveCount >= effectiveLimit;
 
   const sortedHistory = [...history].sort((a, b) => {
-    const aPinned = pinnedIds.includes(a.id) ? 1 : 0;
-    const bPinned = pinnedIds.includes(b.id) ? 1 : 0;
-    if (aPinned !== bPinned) return bPinned - aPinned;
+    const ap = pinnedIds.includes(a.id) ? 1 : 0;
+    const bp = pinnedIds.includes(b.id) ? 1 : 0;
+    if (ap !== bp) return bp - ap;
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
@@ -116,55 +109,35 @@ export default function Home() {
       }
       setError(
         data?.limit
-          ? `Limite atteinte (${data.used ?? data.limit}/${data.limit}). Passe à un plan supérieur ou attends le prochain reset.`
+          ? `Limite atteinte (${data.used ?? data.limit}/${data.limit}). Passe \u00e0 un plan sup\u00e9rieur.`
           : 'Limite atteinte pour ton plan.'
       );
       return;
     }
-
-    if (response.status === 401) {
-      setError('Ta session a expiré. Reconnecte-toi puis réessaie.');
-      return;
-    }
-
+    if (response.status === 401) { setError('Ta session a expir\u00e9. Reconnecte-toi.'); return; }
     if (response.status === 400) {
       const data = await response.json().catch(() => ({} as { error?: string }));
-      setError(data?.error ?? 'Requête invalide.');
-      return;
+      setError(data?.error ?? 'Requ\u00eate invalide.'); return;
     }
-
     if (response.status === 403) {
       const data = await response.json().catch(() => ({} as { error?: string }));
-      setError(data?.error ?? 'Action non autorisée.');
-      return;
+      setError(data?.error ?? 'Action non autoris\u00e9e.'); return;
     }
-
     if (!response.ok) {
       const data = await response.json().catch(() => ({} as { error?: string }));
-      throw new Error(data?.error ?? 'Analyse échouée');
+      throw new Error(data?.error ?? 'Analyse \u00e9chou\u00e9e');
     }
 
     const rawText = await response.text();
     let data: AnalysisResult;
-    try {
-      data = JSON.parse(rawText) as AnalysisResult;
-    } catch (parseErr) {
-      console.error('[analyze] JSON.parse failed:', rawText.slice(0, 200));
-      throw parseErr;
-    }
+    try { data = JSON.parse(rawText) as AnalysisResult; }
+    catch (e) { console.error('[analyze] JSON.parse failed:', rawText.slice(0, 200)); throw e; }
 
     setResults(data);
     setCompareItem(null);
 
     if (authUser) {
-      fetch('/api/auth/me')
-        .then((r) => r.json())
-        .then((d) => {
-          if (d.user) setAuthUser(d.user);
-        })
-        .catch((err) => {
-          console.error('[Home] /api/auth/me refresh failed:', err);
-        });
+      fetch('/api/auth/me').then((r) => r.json()).then((d) => { if (d.user) setAuthUser(d.user); }).catch(() => {});
       refreshHistory();
     } else {
       const next = guestCount + 1;
@@ -175,10 +148,7 @@ export default function Home() {
 
   const analyzeFromUpload = async () => {
     if (isLimitReached) return;
-    if (!videoFile) {
-      setError('Choisis un fichier vid\u00e9o (MP4 recommand\u00e9).');
-      return;
-    }
+    if (!videoFile) { setError('Choisis un fichier vid\u00e9o (MP4 recommand\u00e9).'); return; }
 
     let normalized = '';
     if (uploadTiktokUrl.trim()) {
@@ -189,10 +159,7 @@ export default function Home() {
       }
     }
 
-    if (isReady && !authUser) {
-      setShowGuestGate(true);
-      return;
-    }
+    if (isReady && !authUser) { setShowGuestGate(true); return; }
 
     setError('');
     setIsLoading(true);
@@ -205,17 +172,11 @@ export default function Home() {
       const response = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          frames,
-          durationSec,
-          fileName: videoFile.name,
-          tiktokUrl: normalized || undefined,
-        }),
+        body: JSON.stringify({ frames, durationSec, fileName: videoFile.name, tiktokUrl: normalized || undefined }),
       });
       await processAnalyzeResponse(response);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Une erreur est survenue. Veuillez réessayer.';
-      setError(message);
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue. Veuillez r\u00e9essayer.');
     } finally {
       setExtractStatus('');
       setIsLoading(false);
@@ -225,12 +186,8 @@ export default function Home() {
   function togglePin(itemId: string) {
     if (!authUser) return;
     setPinnedIds((prev) => {
-      const next = prev.includes(itemId)
-        ? prev.filter((id) => id !== itemId)
-        : [itemId, ...prev].slice(0, 8);
-      try {
-        localStorage.setItem(`pinned_analyses_${authUser.id}`, JSON.stringify(next));
-      } catch {}
+      const next = prev.includes(itemId) ? prev.filter((id) => id !== itemId) : [itemId, ...prev].slice(0, 8);
+      try { localStorage.setItem(`pinned_analyses_${authUser.id}`, JSON.stringify(next)); } catch {}
       return next;
     });
   }
@@ -252,11 +209,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-vn-bg overflow-x-hidden">
-      <GuestGate
-        show={showGuestGate}
-        pendingUrl={uploadTiktokUrl}
-        onClose={() => setShowGuestGate(false)}
-      />
+      <GuestGate show={showGuestGate} pendingUrl={uploadTiktokUrl} onClose={() => setShowGuestGate(false)} />
 
       {/* Ambient glows */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
@@ -267,11 +220,12 @@ export default function Home() {
         )}
       </div>
 
-      <div className="relative max-w-2xl mx-auto px-4 py-10 pb-24">
+      {/* ── Narrow header + form ── */}
+      <div className="relative max-w-xl mx-auto px-4 pt-10 pb-6">
         <Header />
 
         <div className="mt-10 space-y-4">
-          {/* ── Upload form card ── */}
+          {/* Form card */}
           <div className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-5 sm:p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_8px_32px_rgba(0,0,0,0.4)]">
             <div className="space-y-4">
               <div>
@@ -308,10 +262,10 @@ export default function Home() {
               </div>
 
               <p className="text-[11px] text-gray-600 px-0.5 leading-relaxed">
-                L&apos;analyse visuelle porte sur le <span className="text-gray-500">fichier</span> import&eacute;. Le <span className="text-gray-500">lien TikTok</span> est fortement conseill&eacute; : il permet d&apos;ajouter les stats r&eacute;elles (vues, likes&hellip;). MP4 recommand&eacute;, dur&eacute;e max ~90 s.
+                L&apos;analyse visuelle porte sur le <span className="text-gray-500">fichier</span> import&eacute;. Le <span className="text-gray-500">lien TikTok</span> est fortement conseill&eacute; : stats r&eacute;elles (vues, likes&hellip;). MP4, dur&eacute;e max ~90 s.
               </p>
 
-              {/* CTA button */}
+              {/* CTA */}
               <div className="relative group">
                 {!isLimitReached && !isLoading && videoFile && (
                   <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-vn-fuchsia/45 via-vn-violet/35 to-vn-indigo/35 opacity-60 blur-md group-hover:opacity-90 transition-all duration-500" aria-hidden />
@@ -335,7 +289,7 @@ export default function Home() {
                       {extractStatus || 'Analyse en cours\u2026'}
                     </span>
                   ) : isLimitReached ? (
-                    <span>Acc&egrave;s Premium requis</span>
+                    <span>Acc\u00e8s Premium requis</span>
                   ) : (
                     <span className="flex items-center justify-center gap-2.5">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 shrink-0">
@@ -363,6 +317,40 @@ export default function Home() {
           )}
         </div>
 
+        {/* Loading state */}
+        {isLoading && (
+          <div className="mt-10">
+            <LoadingState statusLine={extractStatus || undefined} />
+          </div>
+        )}
+
+        {/* Premium gate */}
+        {isLimitReached && !isLoading && (
+          <div className="mt-10">
+            <PremiumGate onReset={authUser ? undefined : handleReset} />
+          </div>
+        )}
+      </div>
+
+      {/* ── Wide results section ── */}
+      {results && !isLoading && !isLimitReached && (
+        <div className="relative px-3 sm:px-5 xl:px-8 pb-10">
+          <div className="max-w-6xl mx-auto">
+            {/* Outer glow matching landing mockup */}
+            <div
+              className="absolute -inset-[3px] sm:-inset-5 rounded-[1.4rem] bg-gradient-to-br from-vn-fuchsia/32 via-vn-violet/14 to-vn-indigo/30 blur-2xl sm:blur-[40px] opacity-85 pointer-events-none"
+              aria-hidden
+            />
+            <div className="relative">
+              <ResultsPanel data={results} plan={authUser?.plan ?? 'free'} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Narrow bottom section: comparison + history ── */}
+      <div className="relative max-w-xl mx-auto px-4 pb-20">
+
         {/* Before / after comparison */}
         {results && compareItem && (
           <div className="mt-6 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
@@ -372,10 +360,10 @@ export default function Home() {
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               {[
-                { label: 'Global', prev: compareItem.result.viralityScore, cur: results.viralityScore },
-                { label: 'Hook', prev: compareItem.result.hook?.score ?? 0, cur: results.hook?.score ?? 0 },
-                { label: 'Montage', prev: compareItem.result.editing?.score ?? 0, cur: results.editing?.score ?? 0 },
-                { label: 'R&eacute;tention', prev: compareItem.result.retention?.score ?? 0, cur: results.retention?.score ?? 0 },
+                { label: 'Global',    prev: compareItem.result.viralityScore,         cur: results.viralityScore         },
+                { label: 'Hook',      prev: compareItem.result.hook?.score      ?? 0, cur: results.hook?.score      ?? 0 },
+                { label: 'Montage',   prev: compareItem.result.editing?.score   ?? 0, cur: results.editing?.score   ?? 0 },
+                { label: 'R\u00e9tention', prev: compareItem.result.retention?.score ?? 0, cur: results.retention?.score ?? 0 },
               ].map((m) => {
                 const delta = m.cur - m.prev;
                 const up = delta >= 0;
@@ -393,7 +381,7 @@ export default function Home() {
 
         {/* Multi-version comparison */}
         {compareItems.length >= 2 && (
-          <div className="mt-6 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
+          <div className="mt-4 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest min-w-0">Comparaison multi-versions ({compareItems.length}/3)</p>
               <button type="button" onClick={() => setCompareIds([])} className="text-[11px] text-gray-500 hover:text-gray-300 transition-colors">R&eacute;initialiser</button>
@@ -425,32 +413,12 @@ export default function Home() {
           </div>
         )}
 
-        {isLoading && (
-          <div className="mt-10">
-            <LoadingState statusLine={extractStatus || undefined} />
-          </div>
-        )}
-
-        {results && !isLoading && !isLimitReached && (
-          <div className="mt-10">
-            <ResultsPanel data={results} plan={authUser?.plan ?? 'free'} />
-          </div>
-        )}
-
-        {isLimitReached && !isLoading && (
-          <div className="mt-10">
-            <PremiumGate onReset={authUser ? undefined : handleReset} />
-          </div>
-        )}
-
         {/* Historique rapide */}
         {authUser && (
-          <div className="mt-12 rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.04] to-transparent p-4 sm:p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+          <div className="mt-10 rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.04] to-transparent p-4 sm:p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
             <div className="flex items-center justify-between mb-4">
               <p className="text-xs font-bold text-gray-500 uppercase tracking-[0.15em]">Historique rapide</p>
-              {historyLocked && (
-                <span className="text-[11px] text-vn-violet font-medium">D&eacute;bloque en Pro</span>
-              )}
+              {historyLocked && <span className="text-[11px] text-vn-violet font-medium">D&eacute;bloque en Pro</span>}
             </div>
 
             {historyLocked ? (
@@ -477,6 +445,7 @@ export default function Home() {
                         }
                         setResults(item.result);
                         setError('');
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
                       className="text-left flex-1 min-w-0 w-full sm:w-auto"
                     >
