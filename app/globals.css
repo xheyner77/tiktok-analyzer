@@ -365,65 +365,35 @@
     z-index: 0;
   }
 
-  /* ── Layer A : petites étoiles (1px) – dense, vitesse haute ─ */
+  /* ── Layer A : petites étoiles (1px) – espacées, vitesse haute ─ */
   .stars-layer-sm {
     position: absolute;
     inset: -15%;
     background-image:
-      radial-gradient(circle, rgba(255,255,255,0.92) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.72) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.86) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.60) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.80) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.67) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.76) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.56) 1px, transparent 1px),
       radial-gradient(circle, rgba(255,255,255,0.88) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.71) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.83) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.62) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.79) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.52) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.94) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.64) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.84) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.58) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.77) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.47) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.90) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.68) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.81) 1px, transparent 1px),
+      radial-gradient(circle, rgba(255,255,255,0.65) 1px, transparent 1px),
+      radial-gradient(circle, rgba(255,255,255,0.80) 1px, transparent 1px),
       radial-gradient(circle, rgba(255,255,255,0.55) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.74) 1px, transparent 1px);
-    background-size: 160px 160px;
+      radial-gradient(circle, rgba(255,255,255,0.76) 1px, transparent 1px),
+      radial-gradient(circle, rgba(255,255,255,0.70) 1px, transparent 1px),
+      radial-gradient(circle, rgba(255,255,255,0.60) 1px, transparent 1px),
+      radial-gradient(circle, rgba(255,255,255,0.84) 1px, transparent 1px),
+      radial-gradient(circle, rgba(255,255,255,0.50) 1px, transparent 1px),
+      radial-gradient(circle, rgba(255,255,255,0.72) 1px, transparent 1px);
+    background-size: 320px 320px;
     background-position:
-      12px 18px,
-      44px  6px,
-      79px 31px,
-      118px 10px,
-      151px 45px,
-      27px 64px,
-      68px 82px,
-      105px 57px,
-      143px 73px,
-      17px 118px,
-      52px 106px,
-      88px 137px,
-      131px 112px,
-      158px 145px,
-      22px 152px,
-      60px 140px,
-      97px 158px,
-      136px 130px,
-      7px  87px,
-      75px 96px,
-      110px 78px,
-      148px 92px,
-      35px 128px,
-      85px 50px,
-      125px 160px;
-    animation: starsMoveSm 45s linear infinite;
-    opacity: 0.70;
+      28px  42px,
+      102px 18px,
+      198px 72px,
+      278px 24px,
+      60px  160px,
+      155px 140px,
+      240px 178px,
+      16px  270px,
+      130px 292px,
+      290px 248px;
+    animation: starsMoveSm 55s linear infinite;
+    opacity: 0.65;
   }
 
   /* ── Layer B : étoiles moyennes (1.5px) – vitesse intermédiaire ─ */
@@ -431,84 +401,44 @@
     position: absolute;
     inset: -15%;
     background-image:
-      radial-gradient(circle, rgba(255,255,255,0.96) 1.5px, transparent 1.5px),
-      radial-gradient(circle, rgba(255,255,255,0.80) 1.5px, transparent 1.5px),
-      radial-gradient(circle, rgba(255,255,255,0.90) 1.5px, transparent 1.5px),
-      radial-gradient(circle, rgba(255,255,255,0.72) 1.5px, transparent 1.5px),
-      radial-gradient(circle, rgba(255,255,255,0.86) 1.5px, transparent 1.5px),
-      radial-gradient(circle, rgba(255,255,255,0.74) 1.5px, transparent 1.5px),
-      radial-gradient(circle, rgba(255,255,255,0.92) 1.5px, transparent 1.5px),
-      radial-gradient(circle, rgba(255,255,255,0.66) 1.5px, transparent 1.5px),
-      radial-gradient(circle, rgba(255,255,255,0.84) 1.5px, transparent 1.5px),
-      radial-gradient(circle, rgba(255,255,255,0.77) 1.5px, transparent 1.5px),
-      radial-gradient(circle, rgba(255,255,255,0.90) 1.5px, transparent 1.5px),
-      radial-gradient(circle, rgba(255,255,255,0.62) 1.5px, transparent 1.5px),
+      radial-gradient(circle, rgba(255,255,255,0.94) 1.5px, transparent 1.5px),
+      radial-gradient(circle, rgba(255,255,255,0.76) 1.5px, transparent 1.5px),
       radial-gradient(circle, rgba(255,255,255,0.88) 1.5px, transparent 1.5px),
-      radial-gradient(circle, rgba(255,255,255,0.70) 1.5px, transparent 1.5px),
-      radial-gradient(circle, rgba(255,255,255,0.95) 1.5px, transparent 1.5px),
-      radial-gradient(circle, rgba(255,255,255,0.78) 1.5px, transparent 1.5px),
-      radial-gradient(circle, rgba(255,255,255,0.83) 1.5px, transparent 1.5px),
-      radial-gradient(circle, rgba(255,255,255,0.65) 1.5px, transparent 1.5px),
-      radial-gradient(circle, rgba(255,255,255,0.91) 1.5px, transparent 1.5px),
-      radial-gradient(circle, rgba(255,255,255,0.73) 1.5px, transparent 1.5px);
-    background-size: 260px 260px;
+      radial-gradient(circle, rgba(255,255,255,0.68) 1.5px, transparent 1.5px),
+      radial-gradient(circle, rgba(255,255,255,0.82) 1.5px, transparent 1.5px),
+      radial-gradient(circle, rgba(255,255,255,0.60) 1.5px, transparent 1.5px),
+      radial-gradient(circle, rgba(255,255,255,0.90) 1.5px, transparent 1.5px);
+    background-size: 480px 480px;
     background-position:
-      24px 38px,
-      72px 12px,
-      130px 54px,
-      198px 24px,
-      242px 78px,
-      50px 110px,
-      108px 140px,
-      170px 98px,
-      230px 148px,
-      18px 195px,
-      88px 220px,
-      155px 182px,
-      218px 230px,
-      42px 248px,
-      120px 256px,
-      185px 210px,
-      250px 195px,
-      68px 170px,
-      148px 242px,
-      205px 162px;
-    animation: starsMoveMd 75s linear infinite;
-    opacity: 0.55;
+      44px  66px,
+      148px 24px,
+      262px 108px,
+      390px 52px,
+      90px  310px,
+      220px 370px,
+      420px 280px;
+    animation: starsMoveMd 90s linear infinite;
+    opacity: 0.50;
   }
 
-  /* ── Layer C : grosses étoiles (2px) – rares, lentes, scintillantes ─ */
+  /* ── Layer C : grosses étoiles (2px) – très rares, lentes, scintillantes ─ */
   .stars-layer-lg {
     position: absolute;
     inset: -15%;
     background-image:
       radial-gradient(circle, rgba(255,255,255,1.00) 2px, transparent 2px),
-      radial-gradient(circle, rgba(255,255,255,0.96) 2px, transparent 2px),
-      radial-gradient(circle, rgba(255,255,255,1.00) 2px, transparent 2px),
-      radial-gradient(circle, rgba(255,255,255,0.92) 2px, transparent 2px),
+      radial-gradient(circle, rgba(255,255,255,0.95) 2px, transparent 2px),
       radial-gradient(circle, rgba(255,255,255,1.00) 2px, transparent 2px),
       radial-gradient(circle, rgba(255,255,255,0.90) 2px, transparent 2px),
-      radial-gradient(circle, rgba(255,255,255,0.97) 2px, transparent 2px),
-      radial-gradient(circle, rgba(255,255,255,0.94) 2px, transparent 2px),
-      radial-gradient(circle, rgba(255,255,255,1.00) 2px, transparent 2px),
-      radial-gradient(circle, rgba(255,255,255,0.88) 2px, transparent 2px),
-      radial-gradient(circle, rgba(255,255,255,0.95) 2px, transparent 2px),
-      radial-gradient(circle, rgba(255,255,255,0.92) 2px, transparent 2px);
-    background-size: 420px 420px;
+      radial-gradient(circle, rgba(255,255,255,0.96) 2px, transparent 2px);
+    background-size: 680px 680px;
     background-position:
-      42px  56px,
-      126px 22px,
-      218px 88px,
-      330px 36px,
-      76px  190px,
-      188px 268px,
-      302px 172px,
-      396px 340px,
-      155px 380px,
-      265px 310px,
-      58px  340px,
-      360px 120px;
-    animation: starsMoveLg 120s linear infinite, starsTwinkle 5s ease-in-out infinite alternate;
+      68px  90px,
+      220px 40px,
+      420px 160px,
+      140px 490px,
+      560px 380px;
+    animation: starsMoveLg 130s linear infinite, starsTwinkle 5s ease-in-out infinite alternate;
     opacity: 0.85;
   }
 
@@ -524,17 +454,17 @@
   /* translate = exactement la taille du carreau → boucle parfaite */
   @keyframes starsMoveSm {
     0%   { transform: translate(0px, 0px); }
-    100% { transform: translate(160px, 160px); }
+    100% { transform: translate(320px, 320px); }
   }
 
   @keyframes starsMoveMd {
     0%   { transform: translate(0px, 0px); }
-    100% { transform: translate(260px, 260px); }
+    100% { transform: translate(480px, 480px); }
   }
 
   @keyframes starsMoveLg {
     0%   { transform: translate(0px, 0px); }
-    100% { transform: translate(420px, 420px); }
+    100% { transform: translate(680px, 680px); }
   }
 
   @keyframes starsTwinkle {
