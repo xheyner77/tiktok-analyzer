@@ -9,12 +9,7 @@ import {
   MAX_HOOKS_ELITE,
   MAX_HOOKS_PRO,
 } from '@/lib/plan-limits';
-import {
-  DISPLAY_CATALOG_ELITE_EUR,
-  DISPLAY_CATALOG_PRO_EUR,
-  DISPLAY_LAUNCH_ELITE_EUR,
-  DISPLAY_LAUNCH_PRO_EUR,
-} from '@/lib/stripe-pricing';
+import { DISPLAY_CATALOG_ELITE_EUR, DISPLAY_CATALOG_PRO_EUR } from '@/lib/stripe-pricing';
 
 export const PENDING_URL_KEY  = 'pending_tiktok_url';
 export const PENDING_PLAN_KEY = 'pending_plan_after_signup';
@@ -26,8 +21,6 @@ interface PlanConfig {
   name: string;
   badge?: string;
   price: string;
-  /** Prix catalogue barré (promo lancement) */
-  priceCatalog?: string;
   period?: string;
   features: string[];
   cta: string;
@@ -50,8 +43,7 @@ const PLANS: PlanConfig[] = [
     variant: 'pro',
     name: 'Pro',
     badge: 'Le plus populaire',
-    price: `${DISPLAY_LAUNCH_PRO_EUR}€`,
-    priceCatalog: `${DISPLAY_CATALOG_PRO_EUR}€`,
+    price: `${DISPLAY_CATALOG_PRO_EUR}€`,
     period: '/ mois',
     features: [
       `${MAX_ANALYSES_PRO} analyses / mois`,
@@ -64,8 +56,7 @@ const PLANS: PlanConfig[] = [
   {
     variant: 'elite',
     name: 'Elite',
-    price: `${DISPLAY_LAUNCH_ELITE_EUR}€`,
-    priceCatalog: `${DISPLAY_CATALOG_ELITE_EUR}€`,
+    price: `${DISPLAY_CATALOG_ELITE_EUR}€`,
     period: '/ mois',
     features: [
       `${MAX_ANALYSES_ELITE} analyses / mois`,
@@ -247,12 +238,6 @@ function PlanCard({ plan, onSelect }: { plan: PlanConfig; onSelect: () => void }
 
       {/* Price */}
       <div className="mb-3">
-        {plan.priceCatalog && (
-          <div className="text-xs text-gray-500 line-through mb-0.5">
-            {plan.priceCatalog}
-            {plan.period}
-          </div>
-        )}
         <span className={`text-xl font-bold ${isElite ? 'text-[#c084fc]' : 'text-white'}`}>
           {plan.price}
         </span>

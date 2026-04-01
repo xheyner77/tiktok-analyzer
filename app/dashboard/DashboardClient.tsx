@@ -8,7 +8,7 @@ import { Plan } from '@/lib/supabase';
 import { AnalysisRow } from '@/lib/analyses';
 import { getScoreTextColor, getRatingColors } from '@/lib/utils';
 import { MAX_ANALYSES_ELITE, MAX_ANALYSES_FREE, MAX_ANALYSES_PRO, MAX_HOOKS_ELITE } from '@/lib/plan-limits';
-import { DISPLAY_LAUNCH_ELITE_EUR, DISPLAY_LAUNCH_PRO_EUR } from '@/lib/stripe-pricing';
+import { DISPLAY_CATALOG_ELITE_EUR, DISPLAY_CATALOG_PRO_EUR } from '@/lib/stripe-pricing';
 import { waitForBillingPlan } from '@/lib/wait-for-billing-sync';
 
 interface DashboardClientProps {
@@ -600,7 +600,7 @@ export default function DashboardClient({
               </div>
               <div>
                 <p className="font-semibold text-sm text-white group-hover:text-[#c084fc] transition-colors">Passer à Pro</p>
-                <p className="text-xs text-gray-500 mt-0.5">{`${MAX_ANALYSES_PRO} analyses/mois • ${DISPLAY_LAUNCH_PRO_EUR}€/mois (lancement -50%)`}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{`${MAX_ANALYSES_PRO} analyses/mois • ${DISPLAY_CATALOG_PRO_EUR}€/mois`}</p>
               </div>
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-gray-600 ml-auto group-hover:text-[#b060ff] transition-colors"><path fillRule="evenodd" d="M6.22 4.22a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06l-3.25 3.25a.75.75 0 0 1-1.06-1.06L9.19 8 6.22 5.03a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" /></svg>
             </Link>
@@ -633,7 +633,7 @@ export default function DashboardClient({
             onClick={handleEliteUpgrade}
             className="shrink-0 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-[#7928ca] to-[#ff0050] hover:opacity-90 disabled:opacity-50"
           >
-            {eliteUpgradeLoading ? 'Mise à niveau…' : `Elite — ${DISPLAY_LAUNCH_ELITE_EUR}€/mois`}
+            {eliteUpgradeLoading ? 'Mise à niveau…' : `Elite — ${DISPLAY_CATALOG_ELITE_EUR}€/mois`}
           </button>
         </div>
       )}

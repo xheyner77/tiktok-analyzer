@@ -8,13 +8,7 @@ import {
   MAX_HOOKS_ELITE,
   MAX_HOOKS_PRO,
 } from '@/lib/plan-limits';
-import {
-  DISPLAY_CATALOG_ELITE_EUR,
-  DISPLAY_CATALOG_PRO_EUR,
-  DISPLAY_LAUNCH_ELITE_EUR,
-  DISPLAY_LAUNCH_PRO_EUR,
-  LAUNCH_OFFER_BADGE,
-} from '@/lib/stripe-pricing';
+import { DISPLAY_CATALOG_ELITE_EUR, DISPLAY_CATALOG_PRO_EUR } from '@/lib/stripe-pricing';
 
 interface Feature {
   label: string;
@@ -26,8 +20,6 @@ interface Plan {
   badge?: string;
   tagline?: string;
   price: string;
-  /** Prix catalogue barré (promo lancement) */
-  priceOriginal?: string;
   period?: string;
   description: string;
   cta: string;
@@ -58,8 +50,7 @@ const plans: Plan[] = [
   {
     name: 'Pro',
     badge: '⭐ Le plus populaire',
-    price: DISPLAY_LAUNCH_PRO_EUR,
-    priceOriginal: DISPLAY_CATALOG_PRO_EUR,
+    price: DISPLAY_CATALOG_PRO_EUR,
     period: '/ mois',
     description: 'Pour les créateurs sérieux qui veulent scaler leur contenu.',
     cta: 'Passer à Pro',
@@ -80,8 +71,7 @@ const plans: Plan[] = [
     name: 'Elite',
     badge: '🔥 Le meilleur choix',
     tagline: 'Le plan utilisé par les créateurs qui font +1M vues',
-    price: DISPLAY_LAUNCH_ELITE_EUR,
-    priceOriginal: DISPLAY_CATALOG_ELITE_EUR,
+    price: DISPLAY_CATALOG_ELITE_EUR,
     period: '/ mois',
     description: "Pour les agences et créateurs qui veulent dominer l'algorithme.",
     cta: 'Passer à Elite →',
@@ -171,16 +161,6 @@ function PricingCard({ plan }: { plan: Plan }) {
           </span>
 
           <div className="mb-2.5">
-            {plan.priceOriginal && plan.period && (
-              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mb-1">
-                <span className="text-base text-gray-500 line-through decoration-gray-500/70">
-                  {plan.priceOriginal}€{plan.period}
-                </span>
-                <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-400/95 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/25">
-                  {LAUNCH_OFFER_BADGE}
-                </span>
-              </div>
-            )}
             <div className="flex items-end gap-1.5">
               {plan.period ? (
                 <>
@@ -284,12 +264,6 @@ export default function PricingPage() {
         {/* Hero */}
         <div className="text-center mb-16">
           <div className="flex flex-col items-center gap-2 mb-5">
-            <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
-              <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
-                <path fillRule="evenodd" d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1ZM5.22 8.22a.75.75 0 0 1 1.06 0L8 9.94l1.72-1.72a.75.75 0 1 1 1.06 1.06l-2.25 2.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
-              </svg>
-              Offre lancement : -50&nbsp;% sur Pro &amp; Elite
-            </span>
             <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-[#ff0050]/10 text-[#ff0050] border border-[#ff0050]/20">
               <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
                 <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" />
@@ -350,8 +324,8 @@ export default function PricingPage() {
               a: 'Votre accès est suspendu jusqu\'à la souscription d\'un abonnement. Vos données sont conservées 30 jours.',
             },
             {
-              q: "Qu'est-ce que l'offre lancement -50 % ?",
-              a: `Pendant la phase de lancement, les abonnements Pro et Elite sont facturés ${DISPLAY_LAUNCH_PRO_EUR}€/mois et ${DISPLAY_LAUNCH_ELITE_EUR}€/mois au lieu de ${DISPLAY_CATALOG_PRO_EUR}€ et ${DISPLAY_CATALOG_ELITE_EUR}€ (renouvellement automatique via Stripe).`,
+              q: 'Comment fonctionne la facturation ?',
+              a: `Les plans Pro (${DISPLAY_CATALOG_PRO_EUR}€/mois) et Elite (${DISPLAY_CATALOG_ELITE_EUR}€/mois) sont des abonnements mensuels récurrents via Stripe. Tu peux annuler depuis ton compte ; le prélèvement suit la période de facturation affichée après paiement.`,
             },
           ].map((faq, i) => (
             <div key={i} className="bg-[#0f0f0f] border border-[#1a1a1a] rounded-xl p-4">
