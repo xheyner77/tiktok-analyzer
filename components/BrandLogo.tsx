@@ -3,34 +3,68 @@ import Link from 'next/link';
 type BrandLogoProps = {
   href?: string;
   className?: string;
-  /** Larger text for auth screens */
   size?: 'default' | 'large';
-  /** Show wordmark */
   showText?: boolean;
 };
 
+/**
+ * Icône V stylisée : double éclair / chevron montant — symbolise la viralité et la performance.
+ * Dégradé fuchsia → violet → indigo, glow ambiant sur hover.
+ */
 export function BrandIcon({ className = 'w-7 h-7' }: { className?: string }) {
   return (
-    <div
-      className={`rounded-xl bg-gradient-to-br from-vn-fuchsia via-vn-violet to-vn-indigo flex items-center justify-center shadow-lg shadow-vn-fuchsia/25 ${className}`}
-      aria-hidden
-    >
-      <svg viewBox="0 0 24 24" fill="none" className="w-[55%] h-[55%]" aria-hidden>
+    <div className={`relative flex items-center justify-center shrink-0 ${className}`} aria-hidden>
+      {/* Halo ambiant derrière l'icône */}
+      <span
+        className="absolute inset-0 rounded-[inherit] bg-gradient-to-br from-vn-fuchsia/50 via-vn-violet/35 to-vn-indigo/40 blur-[10px] opacity-70 transition-opacity duration-300 group-hover:opacity-100"
+        aria-hidden
+      />
+      <svg
+        viewBox="0 0 36 36"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="relative w-full h-full drop-shadow-[0_0_6px_rgba(232,121,249,0.55)]"
+      >
+        <defs>
+          <linearGradient id="vn-logo-grad" x1="4" y1="4" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+            <stop offset="0%"   stopColor="#f0abfc" />
+            <stop offset="45%"  stopColor="#a78bfa" />
+            <stop offset="100%" stopColor="#6366f1" />
+          </linearGradient>
+          <linearGradient id="vn-logo-grad2" x1="4" y1="32" x2="32" y2="4" gradientUnits="userSpaceOnUse">
+            <stop offset="0%"   stopColor="#e879f9" />
+            <stop offset="100%" stopColor="#818cf8" />
+          </linearGradient>
+        </defs>
+        {/* Fond arrondi semi-transparent */}
+        <rect width="36" height="36" rx="10" fill="url(#vn-logo-grad)" opacity="0.15" />
+        {/*
+          Lettre V stylisée avec un éclair intégré :
+          - branche gauche : descend en diagonale puis remonte vers le centre (en V)
+          - petit éclair au creux du V : triangle pointu vers le haut
+          - épaisseur variable pour effet premium
+        */}
+        {/* Grande forme V — épaisse, gradient fill */}
         <path
-          d="M4 18V6l8-2v14M4 18c0 1.5 1.5 3 3 3s3-1.5 3-3M12 4l8 2v10"
-          stroke="white"
-          strokeWidth="2"
+          d="M7 8 L14.5 26 L18 20 L21.5 26 L29 8"
+          stroke="url(#vn-logo-grad)"
+          strokeWidth="3.2"
           strokeLinecap="round"
           strokeLinejoin="round"
+          fill="none"
         />
-        <circle cx="7" cy="18" r="2" fill="white" />
+        {/* Accent central : petit éclair / flèche montante au creux du V */}
         <path
-          d="M18 14l2 2-2 2"
-          stroke="white"
-          strokeWidth="1.75"
+          d="M15.5 18 L18 13 L20.5 18"
+          stroke="url(#vn-logo-grad2)"
+          strokeWidth="2.2"
           strokeLinecap="round"
           strokeLinejoin="round"
+          fill="none"
+          opacity="0.9"
         />
+        {/* Point lumineux en bas du V */}
+        <circle cx="18" cy="26.5" r="1.5" fill="url(#vn-logo-grad2)" opacity="0.85" />
       </svg>
     </div>
   );
@@ -42,22 +76,26 @@ export default function BrandLogo({
   size = 'default',
   showText = true,
 }: BrandLogoProps) {
-  const textCls =
-    size === 'large'
-      ? 'text-lg font-bold tracking-tight'
-      : 'text-[15px] font-bold tracking-[-0.02em]';
+  const iconSize = size === 'large' ? 'w-10 h-10' : 'w-[2.1rem] h-[2.1rem]';
+  const textSize = size === 'large' ? 'text-[1.2rem]' : 'text-[1.05rem]';
 
   return (
     <Link
       href={href}
-      className={`flex items-center gap-2.5 group shrink-0 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vn-violet/60 ${className}`}
+      className={`flex items-center gap-2 group shrink-0 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vn-violet/60 ${className}`}
     >
-      <BrandIcon
-        className={`${size === 'large' ? 'w-9 h-9 rounded-xl' : 'w-8 h-8 rounded-[10px]'} transition-transform group-hover:scale-[1.02]`}
-      />
+      <BrandIcon className={`${iconSize} transition-transform duration-300 group-hover:scale-[1.06]`} />
       {showText && (
-        <span className={`text-white ${textCls}`}>
-          Viral<span className="gradient-text">ynz</span>
+        <span
+          className={`font-bold tracking-[-0.035em] ${textSize} leading-none`}
+          style={{
+            background: 'linear-gradient(105deg, #ffffff 30%, #d8b4fe 65%, #a78bfa 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}
+        >
+          Viralynz
         </span>
       )}
     </Link>
