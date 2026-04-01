@@ -163,6 +163,13 @@ export default function HomeLanding() {
 
       {/* ── Hero ───────────────────────────────────────── */}
       <section className="relative pt-12 sm:pt-16 lg:pt-20 pb-20 sm:pb-24 overflow-visible" id="top">
+        {/* ── Ciel étoilé animé — hero uniquement ─────── */}
+        <div className="stars-hero" aria-hidden>
+          <div className="stars-layer-sm" />
+          <div className="stars-layer-md" />
+          <div className="stars-layer-lg" />
+          <div className="stars-hero-mask" />
+        </div>
         <div className="absolute inset-x-0 top-0 h-[min(82vh,900px)] landing-band-magenta pointer-events-none opacity-95" aria-hidden />
         <div className="landing-section relative">
           <div className="text-center max-w-[94rem] mx-auto px-2 sm:px-1">
