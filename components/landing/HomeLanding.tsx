@@ -261,8 +261,8 @@ export default function HomeLanding() {
       >
         <div className="absolute inset-x-0 top-0 h-[min(78vh,820px)] landing-band-magenta pointer-events-none opacity-90" aria-hidden />
         <div className="landing-section relative">
-          <div className="text-center max-w-5xl mx-auto px-2 sm:px-1">
-            <div className="inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-full border border-white/[0.1] landing-hero-badge px-5 py-2.5 sm:px-6 sm:py-3 text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500 mb-10 sm:mb-12 shadow-[0_0_40px_-12px_rgba(232,121,249,0.15)] transition-shadow duration-300 hover:shadow-[0_0_48px_-10px_rgba(232,121,249,0.22)] hover:border-white/[0.14]">
+          <div className="text-center max-w-[88rem] mx-auto px-2 sm:px-1">
+            <div className="inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-full border border-white/[0.11] landing-hero-badge px-5 py-2.5 sm:px-6 sm:py-3 text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500 mb-11 sm:mb-14 shadow-[0_0_42px_-10px_rgba(232,121,249,0.18)] transition-all duration-500 hover:shadow-[0_0_62px_-8px_rgba(232,121,249,0.3)] hover:border-white/[0.18] hover:-translate-y-[1px]">
               <span className="flex items-center gap-2 normal-case tracking-normal text-white font-semibold">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-vn-fuchsia opacity-35" />
@@ -276,53 +276,57 @@ export default function HomeLanding() {
               <span className="normal-case tracking-normal text-gray-500 font-medium">TikTok · Intelligence virale</span>
             </div>
 
-            <h1 className="landing-heading-xl landing-hero-title-glow text-[2.65rem] leading-[1.03] sm:text-5xl sm:leading-[1.02] md:text-6xl md:leading-[1.01] lg:text-[4rem] lg:leading-[0.99] xl:text-[4.5rem] 2xl:text-[4.85rem] mx-auto tracking-[-0.035em] px-1">
-              <span className="text-white block">Arrête de poster au hasard.</span>
+            <h1 className="landing-heading-xl landing-hero-title-glow text-[2.85rem] leading-[1.01] sm:text-[3.7rem] sm:leading-[0.98] md:text-[4.4rem] md:leading-[0.97] lg:text-[5.2rem] lg:leading-[0.95] xl:text-[5.75rem] 2xl:text-[6.1rem] mx-auto tracking-[-0.038em] px-1 max-w-[15ch]">
+              <span className="text-white block">Poste moins.</span>
               <span className="block mt-3 sm:mt-4">
-                <span className="gradient-text-hero">L’IA t’explique</span>
-                <span className="text-white"> pourquoi ta vidéo marche</span>
-                <span className="text-gray-200"> — et quoi corriger en premier.</span>
+                <span className="gradient-text-hero">Performe mieux.</span>
+                <span className="text-white"> Domine le format court</span>
+                <span className="text-gray-100"> avec une vraie méthode.</span>
               </span>
             </h1>
 
-            <p className="mt-9 sm:mt-11 md:mt-12 text-[1.05rem] sm:text-lg md:text-xl text-gray-200 max-w-xl mx-auto leading-snug sm:leading-relaxed font-medium">
-              Publier sans comprendre, c’est du temps perdu.
-              <span className="text-gray-400 font-normal block sm:inline sm:before:content-[' '] mt-1.5 sm:mt-0">
-                Viralynz lit hook, rétention et montage — tu repars avec des priorités claires, tout de suite.
+            <p className="mt-10 sm:mt-12 md:mt-14 text-[1.08rem] sm:text-lg md:text-[1.34rem] text-gray-100 max-w-2xl mx-auto leading-snug sm:leading-relaxed font-medium">
+              Tu testes aujourd’hui au feeling.
+              <span className="text-gray-300 font-normal block mt-1.5 sm:mt-2">
+                Viralynz analyse hook, rétention et montage en minutes. Résultat : tu sais quoi poster, quoi corriger et
+                comment gagner en performance à chaque vidéo.
               </span>
             </p>
 
-            <div className="mt-11 sm:mt-12 md:mt-14 flex flex-col sm:flex-row flex-wrap gap-4 sm:gap-3 justify-center items-stretch sm:items-start">
+            <div className="mt-12 sm:mt-14 md:mt-16 flex flex-col sm:flex-row flex-wrap gap-4 sm:gap-3 justify-center items-stretch sm:items-start">
               <div className="flex flex-col items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
                 <div className="relative w-full sm:w-auto group">
                   <div
-                    className="absolute -inset-1 rounded-full bg-gradient-to-r from-vn-fuchsia/50 via-vn-violet/40 to-vn-indigo/50 opacity-60 blur-lg transition duration-300 group-hover:opacity-90 group-hover:blur-xl"
+                    className="absolute -inset-1.5 rounded-full bg-gradient-to-r from-vn-fuchsia/55 via-vn-violet/50 to-vn-indigo/50 opacity-70 blur-lg transition-all duration-500 group-hover:opacity-100 group-hover:blur-2xl group-hover:scale-[1.03]"
                     aria-hidden
                   />
                   <div
-                    className="absolute -inset-px rounded-full bg-gradient-to-r from-vn-fuchsia/30 to-vn-indigo/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    className="absolute -inset-px rounded-full bg-gradient-to-r from-vn-fuchsia/40 to-vn-indigo/35 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                     aria-hidden
                   />
                   <Link
                     href="/analyzer"
-                    className="relative inline-flex justify-center items-center w-full sm:w-auto min-h-[56px] rounded-full px-10 sm:px-11 text-[15px] font-semibold text-white bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:brightness-110 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-[0_0_0_1px_rgba(255,255,255,0.1),0_8px_32px_-8px_rgba(232,121,249,0.55),0_24px_56px_-16px_rgba(99,102,241,0.25)]"
+                    className="relative inline-flex justify-center items-center w-full sm:w-auto min-h-[58px] rounded-full px-11 sm:px-12 text-[15px] font-semibold text-white bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:brightness-110 hover:scale-[1.025] active:scale-[0.98] transition-all duration-300 shadow-[0_0_0_1px_rgba(255,255,255,0.1),0_12px_42px_-10px_rgba(232,121,249,0.65),0_28px_60px_-16px_rgba(99,102,241,0.35)]"
                   >
                     Lancer mon analyse IA
                   </Link>
                 </div>
-                <p className="text-[12px] sm:text-[13px] text-gray-500 font-medium tracking-tight">
+                <p className="text-[12px] sm:text-[13px] text-gray-400 font-medium tracking-tight">
                   {MAX_ANALYSES_FREE} analyses gratuites — sans carte
+                </p>
+                <p className="text-[12px] sm:text-[13px] text-vn-violet/90 font-medium tracking-tight">
+                  Passe de “je teste au hasard” à “je sais quoi poster”.
                 </p>
               </div>
               <Link
                 href="/signup"
-                className="inline-flex justify-center items-center min-h-[56px] rounded-full px-10 sm:px-11 text-[15px] font-semibold text-gray-100 border border-white/[0.14] bg-white/[0.05] hover:bg-white/[0.1] hover:border-white/[0.24] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-sm w-full sm:w-auto"
+                className="inline-flex justify-center items-center min-h-[58px] rounded-full px-10 sm:px-11 text-[15px] font-semibold text-gray-100 border border-white/[0.14] bg-white/[0.05] hover:bg-white/[0.1] hover:border-white/[0.24] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-sm w-full sm:w-auto"
               >
                 Créer un compte
               </Link>
             </div>
 
-            <div className="mt-10 sm:mt-12 flex flex-col items-center gap-2.5 max-w-md mx-auto">
+            <div className="mt-11 sm:mt-14 flex flex-col items-center gap-2.5 max-w-xl mx-auto">
               <HeroTrustStars />
               <p className="text-[13px] sm:text-sm text-gray-400 leading-relaxed text-center">
                 Utilisé par des <span className="text-gray-300">créateurs</span>,{' '}
@@ -332,8 +336,16 @@ export default function HomeLanding() {
             </div>
           </div>
 
-          <div className="mt-16 sm:mt-20 lg:mt-28 relative px-0 sm:px-2">
-            <LandingProductMockup variant="hero" />
+          <div className="mt-18 sm:mt-24 lg:mt-32 relative px-0 sm:px-2 hero-mockup-float">
+            <div
+              className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-10 sm:-top-16 w-[min(86vw,1080px)] h-[220px] rounded-[999px] bg-gradient-to-r from-vn-fuchsia/22 via-vn-violet/18 to-vn-indigo/18 blur-3xl opacity-90"
+              aria-hidden
+            />
+            <div
+              className="pointer-events-none absolute left-1/2 -translate-x-1/2 -bottom-16 sm:-bottom-20 w-[min(88vw,1140px)] h-[260px] rounded-[999px] bg-gradient-to-t from-vn-fuchsia/30 via-vn-indigo/14 to-transparent blur-3xl opacity-85"
+              aria-hidden
+            />
+            <LandingProductMockup variant="hero" className="hero-mockup-pulse" />
           </div>
 
           <div className="mt-14 sm:mt-16 flex flex-wrap justify-center gap-2 sm:gap-3 max-w-4xl mx-auto">

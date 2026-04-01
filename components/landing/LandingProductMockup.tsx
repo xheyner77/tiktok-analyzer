@@ -218,11 +218,15 @@ export default function LandingProductMockup({
       {isHero ? (
         <>
           <div
-            className="pointer-events-none absolute left-1/2 -translate-x-1/2 -bottom-[32%] w-[min(100%,920px)] h-[min(52vw,420px)] max-h-[480px] rounded-[100%] bg-gradient-to-t from-vn-fuchsia/30 via-vn-violet/12 to-transparent blur-3xl opacity-90"
+            className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-[18%] w-[min(98%,1080px)] h-[min(30vw,220px)] rounded-[100%] bg-gradient-to-b from-vn-fuchsia/30 via-vn-violet/12 to-transparent blur-3xl opacity-80"
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute left-1/2 -translate-x-1/2 -bottom-[34%] w-[min(100%,980px)] h-[min(54vw,460px)] max-h-[520px] rounded-[100%] bg-gradient-to-t from-vn-fuchsia/36 via-vn-violet/16 to-transparent blur-3xl opacity-95"
             aria-hidden
           />
           <div className="relative mx-auto w-full max-w-[min(100%,1240px)] [perspective:2200px]">
-            <div className="transform-gpu will-change-transform origin-[50%_0%] sm:[transform:rotateX(4.5deg)] transition-transform duration-500">
+            <div className="transform-gpu will-change-transform origin-[50%_0%] sm:[transform:rotateX(4.8deg)] transition-transform duration-500">
               {frame}
             </div>
           </div>

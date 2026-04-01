@@ -41,10 +41,11 @@
 
   /** Accent court pour un mot dans un titre display */
   .gradient-text-hero {
-    background: linear-gradient(105deg, #f0abfc 0%, #c084fc 35%, #818cf8 100%);
+    background: linear-gradient(102deg, #f5c5ff 0%, #d8a2ff 34%, #a8adff 68%, #8b95ff 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+    text-shadow: 0 0 26px rgba(232, 121, 249, 0.18);
   }
 
   .gradient-border {
@@ -281,5 +282,48 @@
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent);
     height: 1px;
     opacity: 0.5;
+  }
+
+  /** Hero motion: subtile présence premium */
+  .hero-mockup-float {
+    animation: heroMockupFloat 8s ease-in-out infinite;
+    will-change: transform;
+  }
+
+  .hero-mockup-pulse::before {
+    content: '';
+    position: absolute;
+    inset: -28px -16px -42px;
+    border-radius: 999px;
+    background:
+      radial-gradient(ellipse 60% 46% at 50% 25%, rgba(232, 121, 249, 0.22), transparent 64%),
+      radial-gradient(ellipse 52% 45% at 50% 80%, rgba(99, 102, 241, 0.18), transparent 68%);
+    filter: blur(28px);
+    opacity: 0.68;
+    z-index: -1;
+    animation: heroHaloPulse 6.5s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes heroMockupFloat {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-5px);
+    }
+  }
+
+  @keyframes heroHaloPulse {
+    0%,
+    100% {
+      opacity: 0.58;
+      transform: scale(0.985);
+    }
+    50% {
+      opacity: 0.84;
+      transform: scale(1.015);
+    }
   }
 }
