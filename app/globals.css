@@ -108,4 +108,178 @@
       0 24px 64px -16px rgba(0, 0, 0, 0.7),
       inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
+
+  /** Landing premium : halos & profondeur (pas d’assets externes) */
+  .landing-hero-aurora {
+    background:
+      radial-gradient(ellipse 120% 80% at 50% -40%, rgba(232, 121, 249, 0.22), transparent 55%),
+      radial-gradient(ellipse 70% 50% at 15% 30%, rgba(99, 102, 241, 0.12), transparent 50%),
+      radial-gradient(ellipse 60% 45% at 85% 25%, rgba(167, 139, 250, 0.1), transparent 48%);
+  }
+
+  .landing-grid-fine {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse 85% 70% at 50% 40%, black 15%, transparent 75%);
+  }
+
+  .landing-mockup-ring {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.08),
+      0 0 80px -20px rgba(232, 121, 249, 0.25),
+      0 0 120px -30px rgba(99, 102, 241, 0.2),
+      0 32px 100px -40px rgba(0, 0, 0, 0.85);
+  }
+
+  .landing-mockup-ring-deep {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.07),
+      0 0 100px -22px rgba(232, 121, 249, 0.38),
+      0 0 160px -48px rgba(99, 102, 241, 0.28),
+      0 48px 140px -40px rgba(0, 0, 0, 0.92);
+  }
+
+  .landing-section-line {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.08) 20%,
+      rgba(167, 139, 250, 0.25) 50%,
+      rgba(255, 255, 255, 0.08) 80%,
+      transparent
+    );
+  }
+
+  .toolkit-card-premium {
+    @apply relative overflow-hidden rounded-2xl sm:rounded-3xl border border-white/[0.07] bg-gradient-to-b from-white/[0.05] to-transparent;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 4px 24px rgba(0, 0, 0, 0.35);
+  }
+
+  .toolkit-card-premium::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      135deg,
+      rgba(232, 121, 249, 0.15),
+      transparent 40%,
+      transparent 60%,
+      rgba(99, 102, 241, 0.12)
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+  }
+
+  .toolkit-card-premium:hover::before {
+    opacity: 1;
+  }
+
+  /** Grain léger + vignette : profondeur sans image externe */
+  .landing-noise {
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .landing-vignette-page {
+    background: radial-gradient(ellipse 90% 65% at 50% -5%, transparent 40%, rgba(0, 0, 0, 0.5) 100%),
+      radial-gradient(ellipse 55% 45% at 100% 50%, rgba(0, 0, 0, 0.35), transparent 65%),
+      radial-gradient(ellipse 55% 45% at 0% 80%, rgba(0, 0, 0, 0.3), transparent 60%);
+  }
+
+  /** Bandeau de section (rythme) */
+  .landing-band {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 45%),
+      radial-gradient(ellipse 70% 40% at 50% 0%, rgba(99, 102, 241, 0.06), transparent 55%);
+  }
+
+  .landing-band-magenta {
+    background: linear-gradient(180deg, rgba(232, 121, 249, 0.04) 0%, transparent 50%),
+      radial-gradient(ellipse 65% 35% at 50% 0%, rgba(232, 121, 249, 0.07), transparent 60%);
+  }
+
+  /** Hero : halo derrière le titre */
+  .landing-hero-title-glow {
+    filter: drop-shadow(0 0 80px rgba(232, 121, 249, 0.12)) drop-shadow(0 0 120px rgba(99, 102, 241, 0.08));
+  }
+
+  /** Badge hero premium */
+  .landing-hero-badge {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      0 0 0 1px rgba(255, 255, 255, 0.06),
+      0 12px 40px -20px rgba(0, 0, 0, 0.6);
+  }
+
+  /** Cartes bénéfices / crédibilité */
+  .landing-card-deep {
+    background: linear-gradient(165deg, rgba(255, 255, 255, 0.06) 0%, rgba(8, 8, 14, 0.92) 42%, rgba(3, 3, 8, 0.98) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 4px 28px rgba(0, 0, 0, 0.45);
+  }
+
+  .landing-card-deep:hover {
+    border-color: rgba(167, 139, 250, 0.22);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 0 0 1px rgba(232, 121, 249, 0.08),
+      0 20px 50px -28px rgba(0, 0, 0, 0.65);
+  }
+
+  .landing-card-accent-top {
+    position: relative;
+  }
+
+  .landing-card-accent-top::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 1.25rem;
+    right: 1.25rem;
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, transparent, rgba(232, 121, 249, 0.5), rgba(99, 102, 241, 0.45), transparent);
+    opacity: 0.85;
+  }
+
+  /** Séparateur section plus présent */
+  .landing-section-line-strong {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.06) 12%,
+      rgba(232, 121, 249, 0.35) 50%,
+      rgba(99, 102, 241, 0.2) 62%,
+      rgba(255, 255, 255, 0.06) 88%,
+      transparent
+    );
+    box-shadow: 0 0 24px rgba(232, 121, 249, 0.08);
+  }
+
+  /** Mockup : reflet supérieur */
+  .landing-mockup-specular {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent);
+    height: 1px;
+    opacity: 0.5;
+  }
 }

@@ -15,6 +15,8 @@ const config: Config = {
       colors: {
         vn: {
           bg: '#050508',
+          /** Fond plus profond (landing / halos) */
+          void: '#030308',
           surface: '#0b0b10',
           elevated: '#12121a',
           line: 'rgba(255,255,255,0.06)',

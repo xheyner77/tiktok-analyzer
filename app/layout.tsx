@@ -19,15 +19,15 @@ const syne = Syne({
 export const metadata: Metadata = {
   metadataBase: new URL('https://viralynz.com'),
   title: {
-    default: 'Viralynz — Copilote IA pour vidéos courtes qui performent',
+    default: 'Viralynz — Analyse vidéo IA pour comprendre ce qui fait performer',
     template: '%s | Viralynz',
   },
   description:
-    'Viralynz : copilote IA pour vidéos courtes — décode hook, montage et rétention, génère des hooks prêts à tourner. Pour créateurs, marques et équipes growth.',
+    'Viralynz : intelligence virale pour le court format — analyse vidéo IA (hook, rétention, montage, CTA), priorités actionnables. Hook generator en complément. TikTok aujourd’hui, Reels & Shorts en roadmap.',
   openGraph: {
-    title: 'Viralynz',
+    title: 'Viralynz — Analyse vidéo IA',
     description:
-      'Copilote IA pour scaler le contenu court : analyse structurée, hooks, itérations plus rapides.',
+      'Comprends pourquoi ta vidéo performe ou non : diagnostic structuré, moins de publication au hasard. Pour créateurs, e‑com, UGC, agences.',
     url: 'https://viralynz.com',
     siteName: 'Viralynz',
     locale: 'fr_FR',
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Viralynz',
-    description: 'Analyse virale & hooks pour créateurs et marques.',
+    description: 'Analyse vidéo IA pour TikTok et le court format — hooks en accélérateur.',
   },
 };
 
@@ -49,7 +49,7 @@ export default function RootLayout({
     <html lang="fr" className={`${jakarta.variable} ${syne.variable}`}>
       <body className={`${jakarta.className} font-sans`}>
         <Navbar />
-        <div className="pt-16 min-h-[calc(100vh-0px)] overflow-x-hidden">{children}</div>
+        <div className="pt-[4.25rem] min-h-[calc(100vh-0px)] overflow-x-hidden">{children}</div>
       </body>
     </html>
   );

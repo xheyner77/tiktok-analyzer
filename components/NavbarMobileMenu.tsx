@@ -14,13 +14,15 @@ interface NavbarMobileMenuProps {
 }
 
 const PLAN_COLORS: Record<Plan, string> = {
-  free:  'bg-[#1a1a1a] text-gray-400',
-  pro:   'bg-vn-fuchsia/10 text-vn-fuchsia',
+  free: 'bg-[#1a1a1a] text-gray-400',
+  pro: 'bg-vn-fuchsia/10 text-vn-fuchsia',
   elite: 'bg-vn-violet/15 text-vn-glow',
 };
 
 const PLAN_LABELS: Record<Plan, string> = {
-  free: 'Plan Free', pro: 'Plan Pro', elite: 'Plan Elite',
+  free: 'Plan Free',
+  pro: 'Plan Pro',
+  elite: 'Plan Elite',
 };
 
 export default function NavbarMobileMenu({ isLoggedIn, email, plan = 'free' }: NavbarMobileMenuProps) {
@@ -28,15 +30,19 @@ export default function NavbarMobileMenu({ isLoggedIn, email, plan = 'free' }: N
   const [domReady, setDomReady] = useState(false);
   const pathname = usePathname();
 
-  useEffect(() => { setDomReady(true); }, []);
+  useEffect(() => {
+    setDomReady(true);
+  }, []);
 
-  // Close on route change
-  useEffect(() => { setOpen(false); }, [pathname]);
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
 
-  // Lock body scroll when open
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [open]);
 
   async function handleLogout() {
@@ -46,27 +52,27 @@ export default function NavbarMobileMenu({ isLoggedIn, email, plan = 'free' }: N
 
   const navLinks = [
     { href: '/', label: 'Accueil', icon: '⌂' },
-    { href: '/#capacites', label: 'Capacités', icon: '◇' },
-    { href: '/#workflow', label: 'Parcours', icon: '→' },
+    { href: '/#produit', label: 'Produit', icon: '◆' },
+    { href: '/#fonctions', label: 'Fonctionnalités', icon: '◇' },
+    { href: '/#gains', label: 'Bénéfices', icon: '↑' },
+    { href: '/#roadmap', label: 'Roadmap', icon: '→' },
+    { href: '/#tarifs', label: 'Tarifs', icon: '€' },
     { href: '/analyzer', label: 'Analyser', icon: '🎯' },
     { href: '/hook-generator', label: 'Hooks', icon: '⚡' },
-    { href: '/pricing', label: 'Tarifs', icon: '💎' },
+    { href: '/pricing', label: 'Plans détaillés', icon: '💎' },
     ...(isLoggedIn ? [{ href: '/dashboard', label: 'Dashboard', icon: '📊' }] : []),
   ];
 
   const panel = (
     <>
-      {/* Backdrop */}
       <div
         className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm"
         onClick={() => setOpen(false)}
         aria-hidden
       />
 
-      {/* Sheet */}
-      <div className="fixed top-16 left-0 right-0 z-[81] bg-vn-bg/98 backdrop-blur-lg border-b border-white/[0.08] shadow-2xl">
+      <div className="fixed top-[4.25rem] left-0 right-0 z-[81] bg-vn-bg/98 backdrop-blur-lg border-b border-white/[0.08] shadow-2xl">
         <div className="px-4 py-3 space-y-1">
-          {/* Nav links */}
           {navLinks.map(({ href, label, icon }) => (
             <Link
               key={href}
@@ -82,14 +88,15 @@ export default function NavbarMobileMenu({ isLoggedIn, email, plan = 'free' }: N
 
           {isLoggedIn ? (
             <>
-              {/* User info */}
               <div className="flex items-center gap-3 px-3 py-2">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-vn-fuchsia to-vn-indigo flex items-center justify-center text-white text-xs font-bold shrink-0">
                   {email?.slice(0, 2).toUpperCase()}
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-medium text-white truncate">{email}</p>
-                  <span className={`inline-block mt-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${PLAN_COLORS[plan]}`}>
+                  <span
+                    className={`inline-block mt-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${PLAN_COLORS[plan]}`}
+                  >
                     {PLAN_LABELS[plan]}
                   </span>
                 </div>
@@ -114,19 +121,27 @@ export default function NavbarMobileMenu({ isLoggedIn, email, plan = 'free' }: N
               </button>
             </>
           ) : (
-            <div className="flex gap-2 pb-1">
+            <div className="flex flex-col gap-2 pb-1">
               <Link
-                href="/login"
-                className="flex-1 py-2.5 rounded-xl text-center text-sm font-semibold text-gray-300 bg-[#111] border border-[#1e1e1e] hover:bg-[#181818] transition-all"
+                href="/analyzer"
+                className="w-full py-3 rounded-full text-center text-sm font-semibold text-white bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:opacity-95 transition-opacity shadow-md shadow-vn-fuchsia/20"
               >
-                Connexion
+                Essayer l’analyse
               </Link>
-              <Link
-                href="/signup"
-                className="flex-1 py-2.5 rounded-full text-center text-sm font-semibold text-white bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:opacity-90 transition-opacity shadow-md shadow-vn-fuchsia/20"
-              >
-                Commencer
-              </Link>
+              <div className="flex gap-2">
+                <Link
+                  href="/login"
+                  className="flex-1 py-2.5 rounded-xl text-center text-sm font-semibold text-gray-300 bg-[#111] border border-[#1e1e1e] hover:bg-[#181818] transition-all"
+                >
+                  Connexion
+                </Link>
+                <Link
+                  href="/signup"
+                  className="flex-1 py-2.5 rounded-full text-center text-sm font-semibold text-white border border-white/15 hover:bg-white/5 transition-colors"
+                >
+                  S’inscrire
+                </Link>
+              </div>
             </div>
           )}
         </div>
@@ -136,7 +151,6 @@ export default function NavbarMobileMenu({ isLoggedIn, email, plan = 'free' }: N
 
   return (
     <>
-      {/* Hamburger button */}
       <button
         onClick={() => setOpen((v) => !v)}
         className="flex items-center justify-center w-9 h-9 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
@@ -153,7 +167,6 @@ export default function NavbarMobileMenu({ isLoggedIn, email, plan = 'free' }: N
         )}
       </button>
 
-      {/* Mobile panel — rendered in body via portal to avoid stacking context issues */}
       {open && domReady && createPortal(panel, document.body)}
     </>
   );
