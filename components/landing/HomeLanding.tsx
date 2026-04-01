@@ -173,7 +173,7 @@ export default function HomeLanding() {
         <div className="absolute inset-x-0 top-0 h-[min(82vh,900px)] landing-band-magenta pointer-events-none opacity-95" aria-hidden />
         <div className="landing-section relative">
           <div className="text-center max-w-[94rem] mx-auto px-2 sm:px-1">
-            <div className="hero-badge-pill inline-flex items-center gap-2.5 rounded-full border border-white/[0.14] landing-hero-badge px-5 py-2.5 sm:px-6 sm:py-3 mb-12 sm:mb-14 cursor-default select-none group">
+            <Link href="/pricing" className="hero-badge-pill inline-flex items-center gap-2.5 rounded-full border border-white/[0.14] landing-hero-badge px-5 py-2.5 sm:px-6 sm:py-3 mb-12 sm:mb-14 cursor-pointer select-none group no-underline">
               {/* Étoile scintillante */}
               <svg className="hero-badge-star h-3.5 w-3.5 shrink-0 text-vn-fuchsia" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
                 <path d="M8 0l1.6 5.4H15l-4.4 3.2 1.6 5.4L8 11l-4.2 3L5.4 8.6 1 5.4h5.4z"/>
@@ -187,7 +187,7 @@ export default function HomeLanding() {
                   <path d="M3 8h10M9 4l4 4-4 4"/>
                 </svg>
               </span>
-            </div>
+            </Link>
 
             <h1 className="font-hero-inter font-black text-white landing-hero-title-glow max-[419px]:text-[2.05rem] max-[419px]:leading-[0.92] text-[2.45rem] leading-[0.93] sm:text-[3.35rem] sm:leading-[0.91] md:text-[4.1rem] md:leading-[0.90] lg:text-[4.9rem] lg:leading-[0.88] xl:text-[5.45rem] xl:leading-[0.87] 2xl:text-[5.9rem] 2xl:leading-[0.86] mx-auto px-3 sm:px-6 tracking-[-0.045em] max-w-none">
               <span className="text-white block">Domine TikTok.</span>
