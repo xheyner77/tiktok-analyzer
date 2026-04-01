@@ -173,16 +173,20 @@ export default function HomeLanding() {
         <div className="absolute inset-x-0 top-0 h-[min(82vh,900px)] landing-band-magenta pointer-events-none opacity-95" aria-hidden />
         <div className="landing-section relative">
           <div className="text-center max-w-[94rem] mx-auto px-2 sm:px-1">
-            <div className="inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-full border border-white/[0.12] landing-hero-badge px-5 py-2 sm:px-6 sm:py-2.5 text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.17em] text-gray-500 mb-12 sm:mb-14 shadow-[0_0_52px_-12px_rgba(232,121,249,0.24)] transition-all duration-500 hover:shadow-[0_0_76px_-10px_rgba(232,121,249,0.36)] hover:border-white/[0.2]">
-              <span className="flex items-center gap-2 normal-case tracking-normal text-white font-semibold">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-vn-fuchsia opacity-40" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-vn-fuchsia shadow-[0_0_16px_rgba(232,121,249,0.85)]" />
-                </span>
-                Analyse vidéo IA
+            <div className="hero-badge-pill inline-flex items-center gap-2.5 rounded-full border border-white/[0.14] landing-hero-badge px-5 py-2.5 sm:px-6 sm:py-3 mb-12 sm:mb-14 cursor-default select-none group">
+              {/* Étoile scintillante */}
+              <svg className="hero-badge-star h-3.5 w-3.5 shrink-0 text-vn-fuchsia" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+                <path d="M8 0l1.6 5.4H15l-4.4 3.2 1.6 5.4L8 11l-4.2 3L5.4 8.6 1 5.4h5.4z"/>
+              </svg>
+              <span className="hero-badge-text text-[11px] sm:text-[12px] font-semibold tracking-[0.12em] uppercase text-white/90 whitespace-nowrap">
+                L&apos;outil TikTok pour les Pros
               </span>
-              <span className="text-white/15 hidden sm:inline" aria-hidden>·</span>
-              <span className="normal-case tracking-normal text-gray-500 font-medium">TikTok · Insights de performance</span>
+              {/* Flèche qui glisse sur hover */}
+              <span className="hero-badge-arrow flex items-center overflow-hidden w-4" aria-hidden>
+                <svg className="h-3 w-3 shrink-0 text-white/50 transition-transform duration-300 group-hover:translate-x-0.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 8h10M9 4l4 4-4 4"/>
+                </svg>
+              </span>
             </div>
 
             <h1 className="font-hero-inter font-black text-white landing-hero-title-glow max-[419px]:text-[2.05rem] max-[419px]:leading-[0.92] text-[2.45rem] leading-[0.93] sm:text-[3.35rem] sm:leading-[0.91] md:text-[4.1rem] md:leading-[0.90] lg:text-[4.9rem] lg:leading-[0.88] xl:text-[5.45rem] xl:leading-[0.87] 2xl:text-[5.9rem] 2xl:leading-[0.86] mx-auto px-3 sm:px-6 tracking-[-0.045em] max-w-none">
