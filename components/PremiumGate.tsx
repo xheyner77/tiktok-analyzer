@@ -59,11 +59,11 @@ export default function PremiumGate({ onReset }: PremiumGateProps) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start">
 
         {/* ── Free (used) ────────────────────────────────────────── */}
-        <div className="bg-[#0e0e0e] border border-[#1a1a1a] rounded-2xl p-5 opacity-60">
+        <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 opacity-60">
           <div className="mb-4">
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Free</span>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#1a1a1a] text-gray-500 border border-[#222]">
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/[0.06] text-gray-500 border border-white/[0.09]">
                 Utilisé
               </span>
             </div>
@@ -84,16 +84,16 @@ export default function PremiumGate({ onReset }: PremiumGateProps) {
             ))}
           </div>
 
-          <div className="w-full rounded-xl py-2.5 text-xs font-semibold text-gray-600 bg-[#151515] text-center border border-[#1e1e1e] cursor-not-allowed">
+          <div className="w-full rounded-xl py-2.5 text-xs font-semibold text-gray-600 bg-white/[0.04] text-center border border-white/[0.07] cursor-not-allowed">
             Plan actuel
           </div>
         </div>
 
         {/* ── Pro (featured) ─────────────────────────────────────── */}
         <div
-          className="relative rounded-2xl p-5 card-glow"
+          className="relative rounded-2xl p-5 shadow-[0_8px_40px_-8px_rgba(232,121,249,0.25)]"
           style={{
-            background: 'linear-gradient(#0f0f0f, #0f0f0f) padding-box, linear-gradient(135deg, #e879f9, #6366f1) border-box',
+            background: 'linear-gradient(#09090f, #09090f) padding-box, linear-gradient(135deg, #e879f9, #6366f1) border-box',
             border: '1px solid transparent',
           }}
         >
@@ -134,7 +134,7 @@ export default function PremiumGate({ onReset }: PremiumGateProps) {
         </div>
 
         {/* ── Elite ──────────────────────────────────────────────── */}
-        <div className="bg-[#0d0a14] border border-vn-violet/30 rounded-2xl p-5 card-glow">
+        <div className="rounded-2xl border border-vn-violet/25 bg-gradient-to-b from-vn-violet/[0.07] to-transparent p-5">
           <div className="mb-4">
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-semibold text-vn-glow uppercase tracking-widest">Elite</span>

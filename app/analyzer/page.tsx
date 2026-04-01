@@ -37,15 +37,12 @@ export default function Home() {
   const [results, setResults] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState('');
 
-  // Guest tracking (localStorage)
   const [guestCount, setGuestCount] = useState(0);
   const [mounted, setMounted] = useState(false);
 
-  // Auth user (from /api/auth/me)
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [authLoaded, setAuthLoaded] = useState(false);
 
-  // Guest gate modal
   const [showGuestGate, setShowGuestGate] = useState(false);
   const [history, setHistory] = useState<AnalysisHistoryItem[]>([]);
   const [historyLocked, setHistoryLocked] = useState(false);
@@ -64,19 +61,16 @@ export default function Home() {
   }
 
   useEffect(() => {
-    // Restore a pending TikTok URL saved before login/signup
     const pendingUrl = localStorage.getItem(PENDING_URL_KEY);
     if (pendingUrl) {
       setUploadTiktokUrl(pendingUrl);
       localStorage.removeItem(PENDING_URL_KEY);
     }
 
-    // Read guest count from localStorage
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) setGuestCount(parseInt(stored, 10));
     setMounted(true);
 
-    // Check if user is authenticated
     fetch('/api/auth/me')
       .then((r) => r.json())
       .then((data) => {
@@ -95,7 +89,6 @@ export default function Home() {
       .finally(() => setAuthLoaded(true));
   }, []);
 
-  // ── Derive effective state ─────────────────────────────────────────────────
   const isReady = mounted && authLoaded;
 
   const effectiveCount = authUser ? authUser.analyses_count : guestCount;
@@ -103,8 +96,7 @@ export default function Home() {
     ? (PLAN_LIMITS[authUser.plan] ?? GUEST_LIMIT)
     : GUEST_LIMIT;
 
-  const isLimitReached =
-    isReady && effectiveCount >= effectiveLimit;
+  const isLimitReached = isReady && effectiveCount >= effectiveLimit;
 
   const sortedHistory = [...history].sort((a, b) => {
     const aPinned = pinnedIds.includes(a.id) ? 1 : 0;
@@ -115,7 +107,6 @@ export default function Home() {
 
   const compareItems = sortedHistory.filter((h) => compareIds.includes(h.id)).slice(0, 3);
 
-  // ── Handlers ───────────────────────────────────────────────────────────────
   const processAnalyzeResponse = async (response: Response) => {
     if (response.status === 429) {
       const data = await response.json().catch(() => ({} as Record<string, unknown>));
@@ -189,7 +180,6 @@ export default function Home() {
       return;
     }
 
-    // TikTok URL is optional -- validate only if provided
     let normalized = '';
     if (uploadTiktokUrl.trim()) {
       normalized = normalizeTikTokUrl(uploadTiktokUrl.trim());
@@ -207,11 +197,11 @@ export default function Home() {
     setError('');
     setIsLoading(true);
     setResults(null);
-    setExtractStatus('Extraction des images…');
+    setExtractStatus('Extraction des images\u2026');
 
     try {
       const { frames, durationSec } = await extractVideoFramesFromFile(videoFile);
-      setExtractStatus('Analyse par vision IA…');
+      setExtractStatus('Analyse par vision IA\u2026');
       const response = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -267,9 +257,11 @@ export default function Home() {
         pendingUrl={uploadTiktokUrl}
         onClose={() => setShowGuestGate(false)}
       />
-      {/* Ambient glow */}
+
+      {/* Ambient glows */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-64 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-br from-vn-fuchsia/8 to-vn-indigo/8 blur-3xl" />
+        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[500px] rounded-full bg-gradient-to-br from-vn-fuchsia/10 to-vn-indigo/10 blur-3xl" />
+        <div className="absolute top-1/3 -left-40 w-[400px] h-[400px] rounded-full bg-vn-violet/5 blur-3xl" />
         {isLimitReached && (
           <div className="absolute -top-64 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-br from-vn-indigo/10 to-vn-fuchsia/6 blur-3xl animate-pulse" />
         )}
@@ -278,74 +270,83 @@ export default function Home() {
       <div className="relative max-w-2xl mx-auto px-4 py-10 pb-24">
         <Header />
 
-        <div className="mt-10 space-y-3">
-          <div className="space-y-3">
-            <div>
-              <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-2 px-1">
-                Fichier vidéo <span className="text-vn-fuchsia/90 normal-case font-normal">(obligatoire)</span>
-              </label>
-              <input
-                type="file"
-                accept="video/*"
-                disabled={isLoading || isLimitReached}
-                onChange={(e) => setVideoFile(e.target.files?.[0] ?? null)}
-                className="block w-full text-sm text-gray-300 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-[#1a1a1a] file:text-white hover:file:bg-[#252525] border border-[#222] rounded-xl bg-[#111] px-3 py-2 disabled:opacity-50"
-              />
-              {videoFile && (
-                <p className="text-xs text-gray-500 mt-2 px-1 truncate" title={videoFile.name}>
-                  {videoFile.name}
-                </p>
-              )}
+        <div className="mt-10 space-y-4">
+          {/* ── Upload form card ── */}
+          <div className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-5 sm:p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_8px_32px_rgba(0,0,0,0.4)]">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-[0.15em] mb-2.5 px-0.5">
+                  Fichier vid&eacute;o <span className="text-vn-fuchsia/80 normal-case font-normal tracking-normal">(obligatoire)</span>
+                </label>
+                <input
+                  type="file"
+                  accept="video/*"
+                  disabled={isLoading || isLimitReached}
+                  onChange={(e) => setVideoFile(e.target.files?.[0] ?? null)}
+                  className="block w-full text-sm text-gray-300 file:mr-4 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:text-[13px] file:font-semibold file:bg-white/[0.08] file:text-white hover:file:bg-white/[0.14] file:transition-colors border border-white/[0.09] rounded-xl bg-white/[0.03] px-3 py-2 disabled:opacity-50 transition-colors"
+                />
+                {videoFile && (
+                  <p className="text-[11px] text-vn-violet/70 mt-2 px-0.5 truncate flex items-center gap-1.5" title={videoFile.name}>
+                    <span className="w-1.5 h-1.5 rounded-full bg-vn-fuchsia inline-block shrink-0" />
+                    {videoFile.name}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-[0.15em] mb-2.5 px-0.5">
+                  Lien TikTok <span className="text-gray-600 normal-case font-normal tracking-normal">(fortement conseill&eacute; &mdash; pour les stats)</span>
+                </label>
+                <input
+                  type="url"
+                  value={uploadTiktokUrl}
+                  onChange={(e) => setUploadTiktokUrl(e.target.value)}
+                  placeholder="https://www.tiktok.com/@\u2026/video/\u2026"
+                  disabled={isLoading || isLimitReached}
+                  className="w-full bg-white/[0.03] border border-white/[0.09] rounded-xl px-4 py-3.5 text-sm text-white placeholder-gray-600 outline-none hover:border-white/[0.15] focus:border-vn-violet/50 focus:ring-2 focus:ring-vn-violet/10 disabled:opacity-50 transition-colors"
+                />
+              </div>
+
+              <p className="text-[11px] text-gray-600 px-0.5 leading-relaxed">
+                L&apos;analyse visuelle porte sur le <span className="text-gray-500">fichier</span> import&eacute;. Le <span className="text-gray-500">lien TikTok</span> est fortement conseill&eacute; : il permet d&apos;ajouter les stats r&eacute;elles (vues, likes&hellip;). MP4 recommand&eacute;, dur&eacute;e max ~90 s.
+              </p>
+
+              {/* CTA button */}
+              <div className="relative group">
+                {!isLimitReached && !isLoading && videoFile && (
+                  <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-vn-fuchsia/45 via-vn-violet/35 to-vn-indigo/35 opacity-60 blur-md group-hover:opacity-90 transition-all duration-500" aria-hidden />
+                )}
+                <button
+                  type="button"
+                  onClick={() => void analyzeFromUpload()}
+                  disabled={isLoading || isLimitReached || !videoFile}
+                  className={`relative w-full rounded-xl py-4 font-semibold text-white text-[15px] transition-all duration-200 active:scale-[0.99] ${
+                    isLimitReached
+                      ? 'bg-white/[0.04] border border-white/[0.08] opacity-60 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed shadow-[0_8px_32px_-8px_rgba(232,121,249,0.45)]'
+                  }`}
+                >
+                  {isLoading ? (
+                    <span className="flex items-center justify-center gap-2.5">
+                      <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      {extractStatus || 'Analyse en cours\u2026'}
+                    </span>
+                  ) : isLimitReached ? (
+                    <span>Acc&egrave;s Premium requis</span>
+                  ) : (
+                    <span className="flex items-center justify-center gap-2.5">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 shrink-0">
+                        <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                      Analyser la vid&eacute;o
+                    </span>
+                  )}
+                </button>
+              </div>
             </div>
-            <div>
-              <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-2 px-1">
-                Lien TikTok <span className="text-gray-600 normal-case font-normal">(fortement conseillé — pour les stats)</span>
-              </label>
-              <input
-                type="url"
-                value={uploadTiktokUrl}
-                onChange={(e) => setUploadTiktokUrl(e.target.value)}
-                placeholder="https://www.tiktok.com/@…/video/…"
-                disabled={isLoading || isLimitReached}
-                className="w-full bg-[#111] border border-[#222] rounded-xl px-4 py-3.5 text-sm text-white placeholder-gray-600 outline-none hover:border-[#333] focus:border-vn-violet/50 focus:ring-2 focus:ring-vn-violet/10 disabled:opacity-50"
-              />
-            </div>
-            <p className="text-[11px] text-gray-600 px-1 leading-relaxed">
-              L’analyse visuelle porte sur le <span className="text-gray-500">fichier</span> importé. Le <span className="text-gray-500">lien TikTok</span> est fortement conseillé : il permet d’ajouter les stats réelles (vues, likes…) à ton analyse. Sans lien, l’analyse repose uniquement sur la vidéo importée. MP4 recommandé, durée max ~90 s.
-            </p>
-            <button
-              type="button"
-              onClick={() => void analyzeFromUpload()}
-              disabled={isLoading || isLimitReached || !videoFile}
-              className={`w-full relative overflow-hidden rounded-xl py-4 font-semibold text-white text-sm transition-all duration-200 active:scale-[0.99] shadow-lg ${
-                isLimitReached
-                  ? 'bg-[#1a1a2a] border border-[#2a1a3a] opacity-50 cursor-not-allowed shadow-none'
-                  : 'bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed shadow-vn-fuchsia/10'
-              }`}
-            >
-              {isLoading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  {extractStatus || 'Analyse en cours…'}
-                </span>
-              ) : isLimitReached ? (
-                <span>Accès Premium requis</span>
-              ) : (
-                <span className="flex items-center justify-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                    <path
-                      fillRule="evenodd"
-                      d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  Analyser la vidéo
-                </span>
-              )}
-            </button>
           </div>
 
           {isReady && !isLimitReached && (
@@ -356,45 +357,33 @@ export default function Home() {
           )}
 
           {error && (
-            <p className="text-red-400 text-sm text-center animate-fade-in">
-              {error}
-            </p>
+            <div className="rounded-xl border border-red-500/20 bg-red-500/[0.06] px-4 py-3 animate-fade-in">
+              <p className="text-red-400 text-sm text-center">{error}</p>
+            </div>
           )}
         </div>
 
         {/* Before / after comparison */}
         {results && compareItem && (
-          <div className="mt-6 rounded-2xl border border-[#1a1a1a] bg-[#0f0f0f] p-4">
+          <div className="mt-6 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest min-w-0">
-                Comparaison avant / après
-              </p>
-              <button
-                type="button"
-                onClick={() => setCompareItem(null)}
-                className="text-[11px] text-gray-500 hover:text-gray-300"
-              >
-                Fermer
-              </button>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest min-w-0">Comparaison avant / apr&egrave;s</p>
+              <button type="button" onClick={() => setCompareItem(null)} className="text-[11px] text-gray-500 hover:text-gray-300 transition-colors">Fermer</button>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               {[
                 { label: 'Global', prev: compareItem.result.viralityScore, cur: results.viralityScore },
                 { label: 'Hook', prev: compareItem.result.hook?.score ?? 0, cur: results.hook?.score ?? 0 },
                 { label: 'Montage', prev: compareItem.result.editing?.score ?? 0, cur: results.editing?.score ?? 0 },
-                { label: 'Rétention', prev: compareItem.result.retention?.score ?? 0, cur: results.retention?.score ?? 0 },
+                { label: 'R&eacute;tention', prev: compareItem.result.retention?.score ?? 0, cur: results.retention?.score ?? 0 },
               ].map((m) => {
                 const delta = m.cur - m.prev;
                 const up = delta >= 0;
                 return (
-                  <div key={m.label} className="rounded-lg border border-[#1d1d1d] bg-[#121212] px-3 py-2">
+                  <div key={m.label} className="rounded-lg border border-white/[0.07] bg-white/[0.03] px-3 py-2">
                     <p className="text-[11px] text-gray-500">{m.label}</p>
-                    <p className="text-sm font-bold text-white">
-                      {m.prev} → {m.cur}
-                    </p>
-                    <p className={`text-[11px] ${up ? 'text-green-400' : 'text-red-400'}`}>
-                      {up ? '+' : ''}{delta}
-                    </p>
+                    <p className="text-sm font-bold text-white">{m.prev} &rarr; {m.cur}</p>
+                    <p className={`text-[11px] ${up ? 'text-emerald-400' : 'text-red-400'}`}>{up ? '+' : ''}{delta}</p>
                   </div>
                 );
               })}
@@ -404,36 +393,26 @@ export default function Home() {
 
         {/* Multi-version comparison */}
         {compareItems.length >= 2 && (
-          <div className="mt-6 rounded-2xl border border-[#1a1a1a] bg-[#0f0f0f] p-4">
+          <div className="mt-6 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest min-w-0">
-                Comparaison multi-versions ({compareItems.length}/3)
-              </p>
-              <button
-                type="button"
-                onClick={() => setCompareIds([])}
-                className="text-[11px] text-gray-500 hover:text-gray-300"
-              >
-                Réinitialiser
-              </button>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest min-w-0">Comparaison multi-versions ({compareItems.length}/3)</p>
+              <button type="button" onClick={() => setCompareIds([])} className="text-[11px] text-gray-500 hover:text-gray-300 transition-colors">R&eacute;initialiser</button>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="text-gray-500 border-b border-[#1a1a1a]">
+                  <tr className="text-gray-500 border-b border-white/[0.07]">
                     <th className="text-left py-2 pr-2">Version</th>
                     <th className="text-left py-2 pr-2">Global</th>
                     <th className="text-left py-2 pr-2">Hook</th>
                     <th className="text-left py-2 pr-2">Montage</th>
-                    <th className="text-left py-2 pr-2">Rétention</th>
+                    <th className="text-left py-2 pr-2">R&eacute;tention</th>
                   </tr>
                 </thead>
                 <tbody>
                   {compareItems.map((item) => (
-                    <tr key={item.id} className="border-b border-[#151515] last:border-none">
-                      <td className="py-2 pr-2 text-gray-400">
-                        {new Date(item.created_at).toLocaleDateString('fr-FR')}
-                      </td>
+                    <tr key={item.id} className="border-b border-white/[0.05] last:border-none">
+                      <td className="py-2 pr-2 text-gray-400">{new Date(item.created_at).toLocaleDateString('fr-FR')}</td>
                       <td className="py-2 pr-2 text-white font-semibold">{item.result?.viralityScore ?? 0}</td>
                       <td className="py-2 pr-2 text-gray-300">{item.result?.hook?.score ?? 0}</td>
                       <td className="py-2 pr-2 text-gray-300">{item.result?.editing?.score ?? 0}</td>
@@ -464,30 +443,26 @@ export default function Home() {
           </div>
         )}
 
-        {/* Recent analyses + quick relaunch (moved to bottom for cleaner reading flow) */}
+        {/* Historique rapide */}
         {authUser && (
-          <div className="mt-12 bg-[#0d0d0d] border border-[#1a1a1a] rounded-2xl p-4">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
-                Historique rapide
-              </p>
+          <div className="mt-12 rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.04] to-transparent p-4 sm:p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-[0.15em]">Historique rapide</p>
               {historyLocked && (
-                <span className="text-[11px] text-vn-glow">Débloque en Pro</span>
+                <span className="text-[11px] text-vn-violet font-medium">D&eacute;bloque en Pro</span>
               )}
             </div>
 
             {historyLocked ? (
-              <p className="text-xs text-gray-600">
-                L&apos;historique complet est disponible en Pro/Elite.
-              </p>
+              <p className="text-xs text-gray-600">L&apos;historique complet est disponible en Pro/Elite.</p>
             ) : sortedHistory.length === 0 ? (
-              <p className="text-xs text-gray-600">Aucune analyse récente.</p>
+              <p className="text-xs text-gray-600">Aucune analyse r&eacute;cente.</p>
             ) : (
               <div className="space-y-2">
                 {sortedHistory.slice(0, 8).map((item) => (
                   <div
                     key={item.id}
-                    className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2 rounded-lg border border-[#1e1e1e] bg-[#111] px-3 py-2.5"
+                    className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2 rounded-xl border border-white/[0.07] bg-white/[0.03] px-3.5 py-3 hover:border-white/[0.12] transition-colors"
                   >
                     <button
                       type="button"
@@ -505,36 +480,33 @@ export default function Home() {
                       }}
                       className="text-left flex-1 min-w-0 w-full sm:w-auto"
                     >
-                      <p className="text-xs text-white break-all sm:break-normal sm:truncate">{item.video_url}</p>
-                      <p className="text-[11px] text-gray-600">
-                        Score {item.result?.viralityScore ?? 0} · {new Date(item.created_at).toLocaleDateString('fr-FR')}
+                      <p className="text-xs text-gray-300 break-all sm:break-normal sm:truncate">{item.video_url}</p>
+                      <p className="text-[11px] text-gray-600 mt-0.5">
+                        Score <span className="text-vn-violet font-semibold">{item.result?.viralityScore ?? 0}</span> &middot; {new Date(item.created_at).toLocaleDateString('fr-FR')}
                       </p>
                     </button>
-                    <div className="flex gap-2 shrink-0 self-stretch sm:self-center justify-end sm:justify-start">
+                    <div className="flex gap-1.5 shrink-0 self-stretch sm:self-center justify-end sm:justify-start">
                       <button
                         type="button"
                         onClick={() => togglePin(item.id)}
-                        className={`text-[11px] px-2.5 py-1.5 rounded-md border ${
+                        className={`text-[11px] px-2.5 py-1.5 rounded-lg border transition-colors ${
                           pinnedIds.includes(item.id)
-                            ? 'border-vn-fuchsia/40 text-vn-fuchsia bg-vn-fuchsia/5'
-                            : 'border-[#2a2a2a] text-gray-500 hover:text-white'
+                            ? 'border-vn-fuchsia/35 text-vn-fuchsia bg-vn-fuchsia/[0.08]'
+                            : 'border-white/[0.08] text-gray-500 hover:text-gray-300 hover:border-white/[0.15]'
                         }`}
                       >
-                        {pinnedIds.includes(item.id) ? 'Épinglé' : 'Pin'}
+                        {pinnedIds.includes(item.id) ? '\u00c9pingl\u00e9' : 'Pin'}
                       </button>
                       <button
                         type="button"
-                        onClick={() => {
-                          setCompareItem(item);
-                          toggleCompare(item.id);
-                        }}
-                        className={`text-[11px] px-2.5 py-1.5 rounded-md border ${
+                        onClick={() => { setCompareItem(item); toggleCompare(item.id); }}
+                        className={`text-[11px] px-2.5 py-1.5 rounded-lg border transition-colors ${
                           compareIds.includes(item.id)
-                            ? 'border-vn-violet/40 text-vn-glow bg-vn-violet/10'
-                            : 'border-[#2a2a2a] text-gray-400 hover:text-white'
+                            ? 'border-vn-violet/35 text-vn-violet bg-vn-violet/[0.08]'
+                            : 'border-white/[0.08] text-gray-500 hover:text-gray-300 hover:border-white/[0.15]'
                         }`}
                       >
-                        {compareIds.includes(item.id) ? 'Ajouté' : 'Comparer'}
+                        {compareIds.includes(item.id) ? 'Ajout\u00e9' : 'Comparer'}
                       </button>
                     </div>
                   </div>
