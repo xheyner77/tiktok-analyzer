@@ -334,11 +334,11 @@ export default function Home() {
 
       {/* ── Wide results section ── */}
       {results && !isLoading && !isLimitReached && (
-        <div className="relative px-3 sm:px-5 xl:px-8 pb-10">
-          <div className="max-w-6xl mx-auto">
+        <div className="relative px-2 sm:px-4 pb-10">
+          <div className="max-w-5xl mx-auto">
             {/* Outer glow matching landing mockup */}
             <div
-              className="absolute -inset-[3px] sm:-inset-5 rounded-[1.4rem] bg-gradient-to-br from-vn-fuchsia/32 via-vn-violet/14 to-vn-indigo/30 blur-2xl sm:blur-[40px] opacity-85 pointer-events-none"
+              className="absolute -inset-1 sm:-inset-4 rounded-[1.4rem] bg-gradient-to-br from-vn-fuchsia/30 via-vn-violet/12 to-vn-indigo/28 blur-2xl sm:blur-[36px] opacity-80 pointer-events-none"
               aria-hidden
             />
             <div className="relative">

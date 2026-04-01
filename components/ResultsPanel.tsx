@@ -291,10 +291,10 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
       </div>
 
       {/* ── Two-column dashboard ── */}
-      <div className="flex flex-col lg:flex-row min-h-0">
+      <div className="flex flex-col md:flex-row min-h-0">
 
         {/* ── Left column ── */}
-        <div className="flex-1 min-w-0 flex flex-col gap-3 p-4 sm:p-5 lg:border-r border-white/[0.05]">
+        <div className="flex-1 min-w-0 flex flex-col gap-3 p-4 sm:p-5 md:border-r border-white/[0.05]">
 
           {/* Score de viralité */}
           <div className="rounded-xl border border-white/[0.1] bg-[#111118] p-4 sm:p-5">
@@ -394,7 +394,7 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
                   </div>
                   <div className="flex justify-between mt-0.5">
                     <span className="text-[8px] text-gray-600">Moyenne</span>
-                    <span className="text-[8px] text-gray-600">Top cr&eacute;ateurs</span>
+                    <span className="text-[8px] text-gray-600">Top créateurs</span>
                   </div>
                 </div>
               </div>
@@ -445,15 +445,22 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
         </div>
 
         {/* ── Right column ── */}
-        <div className="w-full lg:w-[260px] xl:w-[280px] shrink-0 flex flex-col gap-3 p-4 sm:p-5">
+        <div className="w-full md:w-[260px] xl:w-[280px] shrink-0 flex flex-col gap-3 p-4 sm:p-5 md:pt-4">
 
-          {data.hook      && <SectionCard title="Analyse du Hook"       section={data.hook}      />}
-          {data.editing   && <SectionCard title="Analyse du Montage"    section={data.editing}   />}
-          {data.retention && <SectionCard title="Analyse de la Rétention" section={data.retention} />}
+          <SectionCard
+            title="Analyse du Hook"
+            section={data.hook ?? { score: 0, rating: 'Moyen', analysis: '', strengths: [], weaknesses: [] }}
+          />
+          <SectionCard
+            title="Analyse du Montage"
+            section={data.editing ?? { score: 0, rating: 'Moyen', analysis: '', strengths: [], weaknesses: [] }}
+          />
+          <SectionCard
+            title="Analyse de la Rétention"
+            section={data.retention ?? { score: 0, rating: 'Moyen', analysis: '', strengths: [], weaknesses: [] }}
+          />
 
-          {(data.improvements?.length ?? 0) > 0 && (
-            <RecoCard improvements={data.improvements ?? []} plan={plan} />
-          )}
+          <RecoCard improvements={data.improvements ?? []} plan={plan} />
 
           {/* Elite: Viral Tips */}
           {(data.viralTips?.length ?? 0) > 0 && (
