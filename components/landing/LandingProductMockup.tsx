@@ -2,54 +2,249 @@ import type { ReactNode } from 'react';
 
 type Variant = 'hero' | 'showcase';
 
-function BrowserChrome({ url, dense }: { url: string; dense?: boolean }) {
+/* ── Barre de navigateur ─────────────────────────────────── */
+function BrowserChrome({ url }: { url: string }) {
   return (
-    <div
-      className={`flex items-center gap-2 border-b border-white/[0.07] bg-gradient-to-b from-white/[0.08] to-black/55 ${
-        dense ? 'px-4 py-3.5 sm:px-5 sm:py-4' : 'px-4 py-3 sm:px-5 sm:py-3.5'
-      }`}
-    >
+    <div className="flex items-center gap-3 border-b border-white/[0.07] bg-[#0a0a10] px-4 py-3 sm:px-5 sm:py-3.5 shrink-0">
       <div className="flex gap-1.5 shrink-0">
-        <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]/90 shadow-sm" />
-        <span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]/90 shadow-sm" />
-        <span className="w-2.5 h-2.5 rounded-full bg-[#28c840]/90 shadow-sm" />
+        <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]/90" />
+        <span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]/90" />
+        <span className="w-2.5 h-2.5 rounded-full bg-[#28c840]/90" />
       </div>
-      <span className="text-[11px] sm:text-xs text-gray-400 font-medium truncate flex-1 text-center sm:text-left tracking-tight">
-        {url}
-      </span>
-      <span className="hidden sm:block text-[10px] text-gray-500 font-bold uppercase tracking-[0.18em] shrink-0">
+      <div className="flex-1 flex justify-center">
+        <span className="text-[11px] text-gray-500 bg-white/[0.06] border border-white/[0.08] rounded-md px-4 py-1 font-medium tracking-tight">
+          {url}
+        </span>
+      </div>
+      <span className="hidden sm:block text-[10px] text-vn-violet font-bold uppercase tracking-[0.18em] shrink-0">
         Analyse IA
       </span>
     </div>
   );
 }
 
-function ScorePill({
-  label,
-  value,
-  tone,
-  large,
-}: {
-  label: string;
-  value: number;
-  tone: 'pink' | 'violet' | 'indigo';
-  large?: boolean;
-}) {
-  const tones = {
-    pink: 'border-vn-fuchsia/25 bg-vn-fuchsia/[0.08] shadow-[0_0_24px_-8px_rgba(232,121,249,0.35)]',
-    violet: 'border-vn-violet/30 bg-vn-violet/[0.08] shadow-[0_0_24px_-8px_rgba(167,139,250,0.25)]',
-    indigo: 'border-vn-indigo/30 bg-vn-indigo/[0.08] shadow-[0_0_24px_-8px_rgba(99,102,241,0.28)]',
-  } as const;
+/* ── Barre de score mini ─────────────────────────────────── */
+function MiniBar({ pct, color }: { pct: number; color: string }) {
   return (
-    <div className={`rounded-xl border px-3.5 py-2.5 min-w-[5.85rem] ${tones[tone]}`}>
-      <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">{label}</p>
-      <p className={`font-bold text-white tabular-nums leading-tight ${large ? 'text-xl sm:text-2xl' : 'text-lg'}`}>
-        {value}
-      </p>
+    <div className="h-1.5 rounded-full bg-white/[0.07] overflow-hidden">
+      <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
     </div>
   );
 }
 
+/* ── Badge score ─────────────────────────────────────────── */
+function ScoreBadge({ label, value, color }: { label: string; value: number; color: string }) {
+  return (
+    <div className={`rounded-xl border bg-white/[0.04] px-3 py-2.5 text-center min-w-[4.5rem] ${color}`}>
+      <p className="text-[9px] uppercase tracking-widest text-gray-500 font-semibold mb-0.5">{label}</p>
+      <p className="text-[1.35rem] font-black text-white tabular-nums leading-none">{value}</p>
+    </div>
+  );
+}
+
+/* ── Main mockup dashboard ───────────────────────────────── */
+function Dashboard() {
+  const bars = [38, 52, 70, 65, 48, 44, 60, 76, 71, 55, 42, 36, 50, 64, 72, 58];
+
+  return (
+    <div className="flex h-full min-h-0">
+
+      {/* ── Sidebar ── */}
+      <aside className="hidden sm:flex flex-col w-[13rem] lg:w-[15rem] shrink-0 border-r border-white/[0.06] bg-[#080810] py-4 gap-1 px-2.5 overflow-hidden">
+        {/* Logo */}
+        <div className="flex items-center gap-2 px-2.5 pb-4 mb-1 border-b border-white/[0.06]">
+          <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-vn-fuchsia to-vn-indigo flex items-center justify-center shrink-0">
+            <svg viewBox="0 0 16 16" fill="none" className="w-3.5 h-3.5">
+              <path d="M3 13 L6.5 4 L8 8 L9.5 4 L13 13" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <span className="text-[13px] font-bold text-white tracking-tight">Viralynz</span>
+        </div>
+
+        {/* Nav items */}
+        {[
+          { icon: '▦', label: 'Dashboard', active: false },
+          { icon: '◈', label: 'Analyses', active: true },
+          { icon: '↗', label: 'Mes vidéos', active: false },
+          { icon: '⊕', label: 'Hook generator', active: false },
+          { icon: '◉', label: 'Insights', active: false },
+        ].map(({ icon, label, active }) => (
+          <div
+            key={label}
+            className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-[12px] font-medium cursor-default transition-colors ${
+              active
+                ? 'bg-vn-fuchsia/[0.12] text-white border border-vn-fuchsia/20'
+                : 'text-gray-500 hover:text-gray-300'
+            }`}
+          >
+            <span className={`text-[14px] leading-none ${active ? 'text-vn-fuchsia' : ''}`}>{icon}</span>
+            {label}
+            {active && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-vn-fuchsia shadow-[0_0_6px_rgba(232,121,249,0.8)]" />}
+          </div>
+        ))}
+
+        <div className="mt-auto pt-4 border-t border-white/[0.06] mx-1">
+          <div className="flex items-center gap-2 px-2 py-2">
+            <img
+              src="https://i.pravatar.cc/28?img=11"
+              alt=""
+              width={28}
+              height={28}
+              className="w-7 h-7 rounded-full border border-white/10 shrink-0"
+            />
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold text-gray-300 truncate">Mathys R.</p>
+              <p className="text-[10px] text-gray-600 truncate">Plan Pro</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* ── Main content ── */}
+      <main className="flex-1 min-w-0 flex flex-col overflow-hidden bg-[#05050c]">
+
+        {/* Top bar */}
+        <div className="flex items-center justify-between gap-3 px-5 py-3 border-b border-white/[0.05] shrink-0">
+          <div>
+            <p className="text-[11px] text-gray-500 font-medium tracking-wide uppercase mb-0.5">Analyse en cours</p>
+            <p className="text-[13px] font-semibold text-white truncate max-w-[200px] lg:max-w-sm">viral_hook_test_v3.mp4</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="hidden sm:flex items-center gap-1.5 text-[11px] text-emerald-400 font-semibold bg-emerald-400/[0.08] border border-emerald-400/20 px-3 py-1 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Analyse terminée
+            </span>
+          </div>
+        </div>
+
+        {/* Scores row */}
+        <div className="flex items-stretch gap-3 px-5 py-4 border-b border-white/[0.05] shrink-0">
+          {/* Score global */}
+          <div className="flex flex-col justify-center min-w-[5.5rem]">
+            <p className="text-[9px] uppercase tracking-[0.2em] text-gray-600 font-bold mb-1">Score global</p>
+            <p
+              className="text-[3.2rem] font-black tabular-nums leading-none"
+              style={{
+                background: 'linear-gradient(120deg, #f5c5ff 0%, #c084fc 45%, #818cf8 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                filter: 'drop-shadow(0 0 16px rgba(232,121,249,0.4))',
+              }}
+            >
+              84
+            </p>
+          </div>
+          <div className="w-px bg-white/[0.06] shrink-0 mx-1" />
+          {/* Sub-scores */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <ScoreBadge label="Hook" value={88} color="border-vn-fuchsia/25 shadow-[0_0_20px_-6px_rgba(232,121,249,0.3)]" />
+            <ScoreBadge label="Montage" value={76} color="border-vn-violet/25 shadow-[0_0_20px_-6px_rgba(167,139,250,0.25)]" />
+            <ScoreBadge label="Rétention" value={81} color="border-vn-indigo/25 shadow-[0_0_20px_-6px_rgba(99,102,241,0.25)]" />
+            <ScoreBadge label="CTA" value={69} color="border-white/10" />
+          </div>
+          <div className="ml-auto hidden lg:flex items-center gap-2">
+            <p className="text-[11px] text-gray-600 leading-snug max-w-[180px]">
+              Diagnostic vidéo : hook, montage, rétention — priorités actionnables.
+            </p>
+          </div>
+        </div>
+
+        {/* Chart + details */}
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-0 overflow-hidden">
+
+          {/* Left: chart */}
+          <div className="flex flex-col gap-4 p-5 border-r border-white/[0.05] overflow-auto">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[12px] font-semibold text-gray-300">Courbe d&apos;attention</p>
+              <span className="text-[10px] text-gray-600 uppercase tracking-[0.18em] font-bold">IA + frames</span>
+            </div>
+            {/* Bars */}
+            <div className="flex items-end gap-1 sm:gap-1.5 h-[88px] sm:h-[100px]">
+              {bars.map((h, i) => (
+                <div
+                  key={i}
+                  className="flex-1 rounded-t-[3px] min-w-[3px]"
+                  style={{
+                    height: `${h}%`,
+                    background: `linear-gradient(to top, rgba(99,102,241,0.6), rgba(167,139,250,0.75) 50%, rgba(232,121,249,0.9))`,
+                    boxShadow: h > 65 ? '0 -3px 10px -2px rgba(232,121,249,0.25)' : undefined,
+                  }}
+                />
+              ))}
+            </div>
+            {/* Insight */}
+            <div className="rounded-xl border border-vn-violet/15 bg-vn-violet/[0.06] px-4 py-3">
+              <p className="text-[12px] text-gray-300 leading-relaxed">
+                <span className="text-vn-violet font-semibold">Lecture IA : </span>
+                tension visuelle à renforcer dès la 2ᵉ seconde — stabiliser le sujet avant la promesse pour réduire le drop.
+              </p>
+            </div>
+            {/* Tags */}
+            <div className="flex flex-wrap gap-1.5">
+              {['Vision IA', 'Hook & ouverture', 'Rétention', 'Montage & rythme', 'CTA'].map((t) => (
+                <span key={t} className="text-[10px] font-medium px-2.5 py-1 rounded-full border border-white/[0.08] text-gray-500 bg-white/[0.03]">
+                  {t}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Right: priority cards */}
+          <div className="hidden lg:flex flex-col gap-3 p-4 overflow-auto">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-gray-600 font-bold">Priorités</p>
+
+            {[
+              {
+                rank: '01',
+                color: 'border-vn-fuchsia/20 bg-vn-fuchsia/[0.04]',
+                dot: 'bg-vn-fuchsia',
+                title: 'Hook trop lent',
+                desc: 'Couper les 1,5 premières sec. Aller droit au clash visuel.',
+              },
+              {
+                rank: '02',
+                color: 'border-vn-violet/20 bg-vn-violet/[0.04]',
+                dot: 'bg-vn-violet',
+                title: 'CTA absent avant 80%',
+                desc: 'Micro-phrase de CTA à placer entre 60-65% de la vidéo.',
+              },
+              {
+                rank: '03',
+                color: 'border-white/[0.07] bg-white/[0.02]',
+                dot: 'bg-gray-500',
+                title: 'Contraste plan large',
+                desc: "Renforcer le contraste sujet/fond sur le plan d\u2019ouverture.",
+              },
+            ].map((p) => (
+              <div key={p.rank} className={`rounded-xl border p-3.5 ${p.color}`}>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${p.dot}`} />
+                  <p className="text-[11px] font-bold text-white">{p.title}</p>
+                  <span className="ml-auto text-[10px] text-gray-600 font-mono">#{p.rank}</span>
+                </div>
+                <p className="text-[11px] text-gray-500 leading-relaxed">{p.desc}</p>
+              </div>
+            ))}
+
+            {/* Point fort */}
+            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.05] p-3.5 mt-1">
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                <p className="text-[11px] font-bold text-emerald-300">Point fort</p>
+              </div>
+              <p className="text-[11px] text-gray-500 leading-relaxed">
+                Rythme de coupe soutenu après 3 s — énergie bien maintenue jusqu'au milieu.
+              </p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+/* ── Export principal ────────────────────────────────────── */
 export default function LandingProductMockup({
   variant = 'hero',
   className = '',
@@ -59,155 +254,22 @@ export default function LandingProductMockup({
   className?: string;
   footerSlot?: ReactNode;
 }) {
-  const isShowcase = variant === 'showcase';
   const isHero = variant === 'hero';
 
   const frame = (
     <div className="relative">
+      {/* Glow extérieur */}
       <div
-        className={`absolute rounded-[inherit] opacity-95 ${
-          isHero
-            ? '-inset-[3px] sm:-inset-4 bg-gradient-to-br from-vn-fuchsia/45 via-vn-violet/20 to-vn-indigo/40 blur-2xl sm:blur-3xl'
-            : '-inset-[2px] sm:-inset-3 bg-gradient-to-br from-vn-fuchsia/35 via-vn-violet/15 to-vn-indigo/35 blur-2xl'
-        }`}
+        className="absolute -inset-[3px] sm:-inset-5 rounded-[inherit] bg-gradient-to-br from-vn-fuchsia/40 via-vn-violet/18 to-vn-indigo/38 blur-2xl sm:blur-[40px] opacity-90"
         aria-hidden
       />
-      <div
-        className={`relative overflow-hidden bg-gradient-to-b from-[#0c0c14] via-[#07070e] to-[#040408] landing-mockup-ring-deep ${
-          isHero
-            ? 'rounded-[1.2rem] sm:rounded-[1.45rem] ring-1 ring-white/[0.11]'
-            : 'rounded-[1.15rem] sm:rounded-[1.4rem] ring-1 ring-white/[0.1]'
-        }`}
-      >
-        <div className="absolute inset-x-8 sm:inset-x-12 top-0 landing-mockup-specular pointer-events-none" aria-hidden />
-        <BrowserChrome url="app.viralynz.com · Analyse vidéo" dense={isHero} />
-
-        <div className={isHero ? 'p-6 sm:p-10 lg:p-12 xl:p-14 2xl:p-16' : 'p-5 sm:p-8 lg:p-12'}>
-          {isShowcase ? (
-            <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.12fr)] gap-8 lg:gap-14 items-stretch">
-              <div className="relative rounded-2xl border border-white/[0.09] bg-gradient-to-b from-white/[0.06] via-[#0a0a10] to-black/55 overflow-hidden min-h-[240px] lg:min-h-[380px] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-vn-fuchsia/[0.07]" aria-hidden />
-                <div className="absolute inset-0 opacity-[0.07] landing-noise mix-blend-overlay pointer-events-none" />
-                <div className="absolute top-5 left-5 right-5 flex justify-between items-start gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/45">Lecture frame</span>
-                  <span className="text-[10px] font-mono text-vn-fuchsia bg-black/50 px-2.5 py-1 rounded-lg border border-white/10 shadow-lg">
-                    0:00 — 0:12
-                  </span>
-                </div>
-                <div className="absolute bottom-5 left-5 right-5 space-y-3">
-                  <div className="h-2 rounded-full bg-white/[0.07] overflow-hidden ring-1 ring-white/[0.05]">
-                    <div className="h-full w-[34%] rounded-full bg-gradient-to-r from-vn-fuchsia via-vn-violet to-vn-indigo shadow-[0_0_20px_rgba(232,121,249,0.35)]" />
-                  </div>
-                  <p className="text-xs sm:text-sm text-gray-300 leading-relaxed">
-                    <span className="text-white font-semibold">Ouverture :</span> sujet lisible, mais contraste faible sur
-                    le plan large — risque de drop avant la promesse.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-7">
-                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-8">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-[0.22em] text-gray-500 font-bold mb-2">Score global</p>
-                    <p className="font-display text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold gradient-text-hero tabular-nums leading-[0.95]">
-                      84
-                    </p>
-                    <p className="mt-3 text-sm text-gray-500 max-w-md leading-relaxed">
-                      Synthèse vision + contexte — priorise ce qui impacte l’accroche et la rétention.
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2.5">
-                    <ScorePill label="Hook" value={88} tone="pink" large />
-                    <ScorePill label="Montage" value={76} tone="violet" large />
-                    <ScorePill label="Rétention" value={81} tone="indigo" large />
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.04] to-black/40 p-6 sm:p-7 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-                  <p className="text-[11px] font-bold text-vn-violet uppercase tracking-[0.2em] mb-3">Priorité #1</p>
-                  <p className="text-sm sm:text-[15px] text-gray-200 leading-relaxed">
-                    Renforcer le contraste sujet / fond dans les 2 premières secondes et compresser l’entrée en promesse
-                    — avant d’ajouter du montage.
-                  </p>
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    {['Vision IA', 'Structure', 'CTA', 'Cadence'].map((t) => (
-                      <span
-                        key={t}
-                        className="text-[11px] font-medium px-3 py-1.5 rounded-full border border-white/10 text-gray-400 bg-black/40"
-                      >
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="grid sm:grid-cols-2 gap-3.5">
-                  {[
-                    { t: 'Point fort', d: 'Rythme de coupe soutenu après 3 s — maintient l’énergie.' },
-                    { t: 'Friction', d: 'CTA trop tardif : tester une micro‑phrase avant la moitié.' },
-                  ].map((x) => (
-                    <div
-                      key={x.t}
-                      className="rounded-xl border border-white/[0.07] bg-black/35 px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
-                    >
-                      <p className="text-xs font-semibold text-white mb-1.5">{x.t}</p>
-                      <p className="text-xs text-gray-500 leading-relaxed">{x.d}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="max-w-4xl mx-auto lg:max-w-none">
-              <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10 mb-10">
-                <div>
-                  <p className="text-[10px] uppercase tracking-[0.22em] text-gray-500 font-bold mb-2">Score global</p>
-                  <p className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-[5.25rem] font-bold gradient-text-hero tabular-nums leading-[0.92] landing-hero-title-glow">
-                    84
-                  </p>
-                  <p className="mt-4 text-sm sm:text-base text-gray-500 max-w-md leading-relaxed">
-                    Diagnostic vidéo : hook, montage, rétention — une lecture actionnable, pas un jugement flou.
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2.5">
-                  <ScorePill label="Hook" value={88} tone="pink" large />
-                  <ScorePill label="Montage" value={76} tone="violet" large />
-                  <ScorePill label="Rétention" value={81} tone="indigo" large />
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.05] via-[#0a0a12]/90 to-transparent p-7 sm:p-9 mb-8 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
-                <div className="flex items-center justify-between gap-4 mb-5">
-                  <p className="text-xs sm:text-sm font-semibold text-gray-300">Courbe d’attention (indicative)</p>
-                  <span className="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-bold">IA + frames</span>
-                </div>
-                <div className="h-28 sm:h-32 flex items-end gap-1 sm:gap-1.5 px-0.5">
-                  {[40, 55, 72, 68, 52, 48, 62, 78, 74, 58, 44, 38, 52, 66].map((h, i) => (
-                    <div
-                      key={i}
-                      className="flex-1 rounded-t-md bg-gradient-to-t from-vn-indigo/45 via-vn-violet/55 to-vn-fuchsia/75 opacity-95 min-w-[3px] shadow-[0_-4px_16px_-2px_rgba(232,121,249,0.15)]"
-                      style={{ height: `${h}%` }}
-                    />
-                  ))}
-                </div>
-                <p className="mt-5 text-sm sm:text-[15px] text-gray-300 leading-relaxed">
-                  <span className="text-vn-violet font-semibold">Lecture :</span> tension visuelle à renforcer tout de
-                  suite — puis stabiliser le sujet pour la promesse.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {['Vision IA', 'Hook & ouverture', 'Rétention', 'Montage & rythme', 'CTA'].map((t) => (
-                  <span
-                    key={t}
-                    className="text-[11px] font-medium px-3.5 py-1.5 rounded-full border border-white/10 text-gray-400 bg-black/35 backdrop-blur-sm"
-                  >
-                    {t}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+      {/* Fenêtre */}
+      <div className="relative overflow-hidden bg-[#05050c] rounded-[1.1rem] sm:rounded-[1.35rem] ring-1 ring-white/[0.10] shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_48px_120px_-30px_rgba(0,0,0,0.95)]">
+        {/* Reflet supérieur */}
+        <div className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none z-10" aria-hidden />
+        <BrowserChrome url="app.viralynz.com · Analyse vidéo" />
+        <div className="h-[360px] sm:h-[440px] md:h-[500px] lg:h-[540px] xl:h-[580px] overflow-hidden">
+          <Dashboard />
         </div>
       </div>
     </div>
@@ -218,15 +280,15 @@ export default function LandingProductMockup({
       {isHero ? (
         <>
           <div
-            className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-[20%] w-[min(100%,1220px)] h-[min(34vw,260px)] rounded-[100%] bg-gradient-to-b from-vn-fuchsia/34 via-vn-violet/18 to-transparent blur-3xl opacity-85"
+            className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-[18%] w-[min(100%,1200px)] h-[min(30vw,240px)] rounded-[100%] bg-gradient-to-b from-vn-fuchsia/30 via-vn-violet/15 to-transparent blur-3xl opacity-80"
             aria-hidden
           />
           <div
-            className="pointer-events-none absolute left-1/2 -translate-x-1/2 -bottom-[36%] w-[min(100%,1120px)] h-[min(58vw,520px)] max-h-[560px] rounded-[100%] bg-gradient-to-t from-vn-fuchsia/42 via-vn-violet/20 to-transparent blur-3xl opacity-95"
+            className="pointer-events-none absolute left-1/2 -translate-x-1/2 -bottom-[30%] w-[min(100%,1100px)] h-[min(50vw,460px)] max-h-[500px] rounded-[100%] bg-gradient-to-t from-vn-indigo/35 via-vn-violet/18 to-transparent blur-3xl opacity-90"
             aria-hidden
           />
           <div className="relative mx-auto w-full max-w-[min(100%,1340px)] [perspective:2200px]">
-            <div className="transform-gpu will-change-transform origin-[50%_0%] sm:[transform:rotateX(4.8deg)] transition-transform duration-500">
+            <div className="transform-gpu will-change-transform origin-[50%_0%] sm:[transform:rotateX(5deg)] transition-transform duration-500">
               {frame}
             </div>
           </div>
@@ -238,7 +300,6 @@ export default function LandingProductMockup({
           </div>
         </div>
       )}
-
       {footerSlot ? <div className="relative mt-8 sm:mt-10">{footerSlot}</div> : null}
     </div>
   );
