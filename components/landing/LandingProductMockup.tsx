@@ -82,7 +82,7 @@ export default function LandingProductMockup({
         <div className="absolute inset-x-8 sm:inset-x-12 top-0 landing-mockup-specular pointer-events-none" aria-hidden />
         <BrowserChrome url="app.viralynz.com · Analyse vidéo" dense={isHero} />
 
-        <div className={isHero ? 'p-6 sm:p-10 lg:p-12 xl:p-14' : 'p-5 sm:p-8 lg:p-12'}>
+        <div className={isHero ? 'p-6 sm:p-10 lg:p-12 xl:p-14 2xl:p-16' : 'p-5 sm:p-8 lg:p-12'}>
           {isShowcase ? (
             <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.12fr)] gap-8 lg:gap-14 items-stretch">
               <div className="relative rounded-2xl border border-white/[0.09] bg-gradient-to-b from-white/[0.06] via-[#0a0a10] to-black/55 overflow-hidden min-h-[240px] lg:min-h-[380px] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
@@ -218,14 +218,14 @@ export default function LandingProductMockup({
       {isHero ? (
         <>
           <div
-            className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-[18%] w-[min(98%,1080px)] h-[min(30vw,220px)] rounded-[100%] bg-gradient-to-b from-vn-fuchsia/30 via-vn-violet/12 to-transparent blur-3xl opacity-80"
+            className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-[20%] w-[min(100%,1220px)] h-[min(34vw,260px)] rounded-[100%] bg-gradient-to-b from-vn-fuchsia/34 via-vn-violet/18 to-transparent blur-3xl opacity-85"
             aria-hidden
           />
           <div
-            className="pointer-events-none absolute left-1/2 -translate-x-1/2 -bottom-[34%] w-[min(100%,980px)] h-[min(54vw,460px)] max-h-[520px] rounded-[100%] bg-gradient-to-t from-vn-fuchsia/36 via-vn-violet/16 to-transparent blur-3xl opacity-95"
+            className="pointer-events-none absolute left-1/2 -translate-x-1/2 -bottom-[36%] w-[min(100%,1120px)] h-[min(58vw,520px)] max-h-[560px] rounded-[100%] bg-gradient-to-t from-vn-fuchsia/42 via-vn-violet/20 to-transparent blur-3xl opacity-95"
             aria-hidden
           />
-          <div className="relative mx-auto w-full max-w-[min(100%,1240px)] [perspective:2200px]">
+          <div className="relative mx-auto w-full max-w-[min(100%,1340px)] [perspective:2200px]">
             <div className="transform-gpu will-change-transform origin-[50%_0%] sm:[transform:rotateX(4.8deg)] transition-transform duration-500">
               {frame}
             </div>
