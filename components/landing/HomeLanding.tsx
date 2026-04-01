@@ -185,19 +185,19 @@ export default function HomeLanding() {
               <span className="normal-case tracking-normal text-gray-500 font-medium">TikTok · Insights de performance</span>
             </div>
 
-            <h1 className="landing-heading-xl landing-hero-title-glow text-[2.9rem] leading-[0.99] sm:text-[3.9rem] sm:leading-[0.96] md:text-[4.8rem] md:leading-[0.95] lg:text-[5.7rem] lg:leading-[0.92] xl:text-[6.25rem] 2xl:text-[6.7rem] mx-auto tracking-[-0.04em] px-1 max-w-[13.5ch]">
-              <span className="text-white block">Arrête de deviner.</span>
-              <span className="block mt-2 sm:mt-3">
-                <span className="gradient-text-hero">Domine tes performances</span>
-                <span className="text-white"> vidéo.</span>
+            <h1 className="font-hero-inter font-black text-white landing-hero-title-glow text-[2.65rem] leading-[0.96] sm:text-[3.5rem] sm:leading-[0.94] md:text-[4.35rem] md:leading-[0.93] lg:text-[5.1rem] lg:leading-[0.91] xl:text-[5.65rem] xl:leading-[0.90] 2xl:text-[6.1rem] 2xl:leading-[0.89] mx-auto px-2 sm:px-4 tracking-[-0.045em] max-w-[min(100%,36ch)]">
+              <span className="text-white block">Domine TikTok.</span>
+              <span className="block mt-2 sm:mt-2.5 md:mt-3 gradient-text-hero">
+                Arrête de poster au hasard.
               </span>
             </h1>
 
-            <p className="mt-10 sm:mt-12 text-[1.06rem] sm:text-[1.2rem] md:text-[1.36rem] text-gray-100 max-w-2xl mx-auto leading-snug sm:leading-relaxed font-medium">
-              Tu publies beaucoup, mais sans certitude.
-              <span className="text-gray-300 font-normal block mt-1.5 sm:mt-2">
-                Viralynz transforme chaque vidéo en plan d’action clair : moins de tests inutiles, plus de contenu qui
-                performe.
+            <p className="mt-10 sm:mt-12 text-[1.02rem] sm:text-[1.14rem] md:text-[1.22rem] text-gray-400 max-w-xl mx-auto leading-relaxed font-normal tracking-[-0.01em]">
+              <span className="block text-gray-300/95">
+                Analyse hook, rétention et montage en quelques secondes.
+              </span>
+              <span className="block mt-2.5 sm:mt-3 text-gray-500">
+                Identifie ce qui bloque et corrige avant de reposter.
               </span>
             </p>
 

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Plus_Jakarta_Sans, Syne } from 'next/font/google';
+import { Inter, Plus_Jakarta_Sans, Syne } from 'next/font/google';
 import Navbar from '@/components/Navbar';
 import './globals.css';
 
@@ -13,6 +13,14 @@ const syne = Syne({
   subsets: ['latin'],
   variable: '--font-display',
   weight: ['600', '700', '800'],
+  display: 'swap',
+});
+
+/** Hero landing : même ressenti typographique que les landings type Vinteer (Inter Black / tight tracking) */
+const interHero = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter-hero',
+  weight: ['800', '900'],
   display: 'swap',
 });
 
@@ -46,7 +54,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fr" className={`${jakarta.variable} ${syne.variable}`}>
+    <html lang="fr" className={`${jakarta.variable} ${syne.variable} ${interHero.variable}`}>
       <body className={`${jakarta.className} font-sans`}>
         <Navbar />
         <div className="pt-[4.25rem] min-h-[calc(100vh-0px)] overflow-x-hidden">{children}</div>

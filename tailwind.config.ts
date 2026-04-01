@@ -11,6 +11,8 @@ const config: Config = {
       fontFamily: {
         sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
         display: ['var(--font-display)', 'var(--font-sans)', 'system-ui', 'sans-serif'],
+        /** Inter extra-bold — hero homepage (réf. Vinteer) */
+        'hero-inter': ['var(--font-inter-hero)', 'var(--font-sans)', 'system-ui', 'sans-serif'],
       },
       colors: {
         vn: {
