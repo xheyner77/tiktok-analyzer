@@ -162,7 +162,7 @@ export default function HomeLanding() {
       </div>
 
       {/* ── Hero ───────────────────────────────────────── */}
-      <section className="relative pt-12 sm:pt-16 lg:pt-20 pb-20 sm:pb-24 overflow-visible" id="top">
+      <section className="relative pt-8 sm:pt-10 lg:pt-14 pb-14 sm:pb-18 overflow-visible" id="top">
         {/* ── Ciel étoilé animé — hero uniquement ─────── */}
         <div className="stars-hero" aria-hidden>
           <div className="stars-layer-sm" />
@@ -173,7 +173,7 @@ export default function HomeLanding() {
         <div className="absolute inset-x-0 top-0 h-[min(82vh,900px)] landing-band-magenta pointer-events-none opacity-95" aria-hidden />
         <div className="landing-section relative">
           <div className="text-center max-w-[94rem] mx-auto px-2 sm:px-1">
-            <Link href="/pricing" className="hero-badge-pill inline-flex items-center gap-2.5 rounded-full border border-white/[0.14] landing-hero-badge px-5 py-2.5 sm:px-6 sm:py-3 mb-12 sm:mb-14 cursor-pointer select-none group no-underline">
+            <Link href="/pricing" className="hero-badge-pill inline-flex items-center gap-2.5 rounded-full border border-white/[0.14] landing-hero-badge px-5 py-2.5 sm:px-6 sm:py-3 mb-6 sm:mb-7 cursor-pointer select-none group no-underline">
               {/* Étoile scintillante */}
               <svg className="hero-badge-star h-3.5 w-3.5 shrink-0 text-vn-fuchsia" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
                 <path d="M8 0l1.6 5.4H15l-4.4 3.2 1.6 5.4L8 11l-4.2 3L5.4 8.6 1 5.4h5.4z"/>
@@ -196,12 +196,12 @@ export default function HomeLanding() {
               </span>
             </h1>
 
-            <p className="mt-5 sm:mt-6 text-[0.97rem] sm:text-[1.06rem] md:text-[1.13rem] text-gray-400 max-w-none mx-auto leading-relaxed font-normal tracking-[-0.01em]">
+            <p className="mt-3 sm:mt-4 text-[0.97rem] sm:text-[1.06rem] md:text-[1.13rem] text-gray-400 max-w-none mx-auto leading-relaxed font-normal tracking-[-0.01em]">
               <span className="block whitespace-nowrap">Analyse hook, rétention et montage en quelques secondes.</span>
               <span className="block mt-1.5 text-gray-500 whitespace-nowrap">Identifie ce qui bloque et corrige avant de reposter.</span>
             </p>
 
-            <div className="mt-8 sm:mt-10 flex justify-center">
+            <div className="mt-6 sm:mt-7 flex justify-center">
               <div className="relative group">
                 <div
                   className="absolute -inset-1.5 rounded-full bg-gradient-to-r from-vn-fuchsia/55 via-vn-violet/45 to-vn-indigo/45 opacity-70 blur-lg transition-all duration-500 group-hover:opacity-100 group-hover:blur-xl group-hover:scale-[1.04]"
@@ -219,7 +219,7 @@ export default function HomeLanding() {
               </div>
             </div>
 
-            <div className="mt-11 sm:mt-14 flex flex-col items-center gap-2.5 max-w-xl mx-auto">
+            <div className="mt-6 sm:mt-7 flex flex-col items-center gap-2 max-w-xl mx-auto">
               <div className="flex items-center gap-2.5">
                 <div className="flex -space-x-2">
                   {['CR', 'AG', 'EC', 'UG'].map((item) => (
@@ -240,7 +240,7 @@ export default function HomeLanding() {
             </div>
           </div>
 
-          <div className="mt-20 sm:mt-24 lg:mt-28 -mx-4 sm:-mx-8 lg:-mx-10 relative hero-mockup-float">
+          <div className="mt-10 sm:mt-12 lg:mt-14 -mx-4 sm:-mx-8 lg:-mx-10 relative hero-mockup-float">
             <div
               className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-12 sm:-top-20 w-[min(94vw,1320px)] h-[260px] rounded-[999px] bg-gradient-to-r from-vn-fuchsia/28 via-vn-violet/24 to-vn-indigo/20 blur-3xl opacity-95"
               aria-hidden
