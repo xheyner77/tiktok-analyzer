@@ -219,23 +219,36 @@ export default function HomeLanding() {
               </div>
             </div>
 
-            <div className="mt-6 sm:mt-7 flex flex-col items-center gap-2 max-w-xl mx-auto">
-              <div className="flex items-center gap-2.5">
-                <div className="flex -space-x-2">
-                  {['CR', 'AG', 'EC', 'UG'].map((item) => (
-                    <span
-                      key={item}
-                      className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/20 bg-vn-elevated text-[10px] font-semibold text-gray-300"
-                    >
-                      {item}
-                    </span>
+            <div className="mt-6 sm:mt-7 flex flex-col items-center gap-2.5">
+              {/* Avatar stack + badge +1300 */}
+              <div className="flex items-center gap-3">
+                <div className="flex -space-x-3">
+                  {[
+                    { seed: 'felix',   img: 'https://i.pravatar.cc/40?img=11' },
+                    { seed: 'sophie',  img: 'https://i.pravatar.cc/40?img=47' },
+                    { seed: 'marc',    img: 'https://i.pravatar.cc/40?img=12' },
+                    { seed: 'clara',   img: 'https://i.pravatar.cc/40?img=44' },
+                    { seed: 'thomas',  img: 'https://i.pravatar.cc/40?img=15' },
+                  ].map(({ seed, img }) => (
+                    <img
+                      key={seed}
+                      src={img}
+                      alt=""
+                      width={36}
+                      height={36}
+                      className="h-9 w-9 rounded-full border-[2.5px] border-[#030308] object-cover"
+                      aria-hidden
+                    />
                   ))}
+                  {/* Badge +1300 */}
+                  <span className="h-9 w-9 rounded-full border-[2.5px] border-[#030308] bg-vn-elevated flex items-center justify-center text-[9px] font-bold text-white tracking-tight shrink-0">
+                    +1300
+                  </span>
                 </div>
                 <HeroTrustStars />
               </div>
-              <p className="text-[13px] sm:text-sm text-gray-400 leading-relaxed text-center">
-                Pensé pour les <span className="text-gray-300">créateurs</span>, <span className="text-gray-300">agences</span> et{' '}
-                <span className="text-gray-300">e‑com</span> qui veulent un vrai avantage compétitif.
+              <p className="text-[13.5px] sm:text-[14px] text-gray-300 font-medium text-center">
+                Rejoins <span className="text-white font-bold">+1300</span> créateurs de contenu
               </p>
             </div>
           </div>
