@@ -185,10 +185,10 @@ export default function HomeLanding() {
               <span className="normal-case tracking-normal text-gray-500 font-medium">TikTok · Insights de performance</span>
             </div>
 
-            <h1 className="font-hero-inter font-black text-white landing-hero-title-glow text-[2.65rem] leading-[0.96] sm:text-[3.5rem] sm:leading-[0.94] md:text-[4.35rem] md:leading-[0.93] lg:text-[5.1rem] lg:leading-[0.91] xl:text-[5.65rem] xl:leading-[0.90] 2xl:text-[6.1rem] 2xl:leading-[0.89] mx-auto px-2 sm:px-4 tracking-[-0.045em] max-w-[min(100%,36ch)]">
+            <h1 className="font-hero-inter font-black text-white landing-hero-title-glow max-[419px]:text-[2.05rem] max-[419px]:leading-[0.92] text-[2.45rem] leading-[0.93] sm:text-[3.35rem] sm:leading-[0.91] md:text-[4.1rem] md:leading-[0.90] lg:text-[4.9rem] lg:leading-[0.88] xl:text-[5.45rem] xl:leading-[0.87] 2xl:text-[5.9rem] 2xl:leading-[0.86] mx-auto px-3 sm:px-6 tracking-[-0.045em] max-w-none">
               <span className="text-white block">Domine TikTok.</span>
-              <span className="block mt-2 sm:mt-2.5 md:mt-3 gradient-text-hero">
-                Arrête de poster au hasard.
+              <span className="block mt-1 sm:mt-1.5 md:mt-2 gradient-text-hero min-[420px]:whitespace-nowrap">
+                Arrête de poster au{'\u00A0'}hasard.
               </span>
             </h1>
 
