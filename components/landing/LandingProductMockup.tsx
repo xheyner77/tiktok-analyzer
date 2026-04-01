@@ -2,29 +2,60 @@ import type { ReactNode } from 'react';
 
 type Variant = 'hero' | 'showcase';
 
-/* ── Barre de navigateur ─────────────────────────────────── */
-function BrowserChrome({ url }: { url: string }) {
+/* ── Browser chrome ──────────────────────────────────────── */
+function BrowserChrome() {
   return (
-    <div className="flex items-center gap-3 border-b border-white/[0.07] bg-[#0a0a10] px-4 py-3 sm:px-5 sm:py-3.5 shrink-0">
+    <div className="flex items-center gap-3 border-b border-white/[0.08] bg-[#0a0a0f] px-4 py-3 sm:px-5 sm:py-3.5 shrink-0">
       <div className="flex gap-1.5 shrink-0">
         <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]/90" />
         <span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]/90" />
         <span className="w-2.5 h-2.5 rounded-full bg-[#28c840]/90" />
       </div>
       <div className="flex-1 flex justify-center">
-        <span className="text-[11px] text-gray-500 bg-white/[0.06] border border-white/[0.08] rounded-md px-4 py-1 font-medium tracking-tight">
-          {url}
+        <span className="text-[11px] text-gray-500 bg-white/[0.05] border border-white/[0.07] rounded-md px-4 py-1 font-medium tracking-tight">
+          app.viralynz.com · Analyse vidéo
         </span>
       </div>
-      <span className="hidden sm:block text-[10px] text-vn-violet font-bold uppercase tracking-[0.18em] shrink-0">
-        Analyse IA
-      </span>
+      <div className="flex items-center gap-1.5 shrink-0">
+        <span className="w-1.5 h-1.5 rounded-full bg-vn-fuchsia animate-pulse" />
+        <span className="hidden sm:block text-[10px] text-vn-fuchsia font-bold uppercase tracking-[0.18em]">Live</span>
+      </div>
     </div>
   );
 }
 
-/* ── Barre de score mini ─────────────────────────────────── */
-function MiniBar({ pct, color }: { pct: number; color: string }) {
+/* ── Circular gauge SVG ──────────────────────────────────── */
+function CircularGauge({ value, size = 110 }: { value: number; size?: number }) {
+  const r = (size - 14) / 2;
+  const circ = 2 * Math.PI * r;
+  const pct = value / 100;
+  const dash = circ * pct;
+  const gap  = circ - dash;
+  const cx = size / 2;
+  const cy = size / 2;
+
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0 -rotate-90">
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
+      <circle
+        cx={cx} cy={cy} r={r} fill="none"
+        stroke="url(#gaugeGrad)" strokeWidth="8"
+        strokeLinecap="round"
+        strokeDasharray={`${dash} ${gap}`}
+        style={{ filter: 'drop-shadow(0 0 6px rgba(251,191,36,0.6))' }}
+      />
+      <defs>
+        <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stopColor="#f59e0b" />
+          <stop offset="100%" stopColor="#fbbf24" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
+/* ── Progress bar ────────────────────────────────────────── */
+function ProgressBar({ pct, color = 'bg-emerald-400' }: { pct: number; color?: string }) {
   return (
     <div className="h-1.5 rounded-full bg-white/[0.07] overflow-hidden">
       <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
@@ -32,214 +63,185 @@ function MiniBar({ pct, color }: { pct: number; color: string }) {
   );
 }
 
-/* ── Badge score ─────────────────────────────────────────── */
-function ScoreBadge({ label, value, color }: { label: string; value: number; color: string }) {
+/* ── Badge qualité ───────────────────────────────────────── */
+function QualityBadge({ label, color }: { label: string; color: string }) {
   return (
-    <div className={`rounded-xl border bg-white/[0.04] px-3 py-2.5 text-center min-w-[4.5rem] ${color}`}>
-      <p className="text-[9px] uppercase tracking-widest text-gray-500 font-semibold mb-0.5">{label}</p>
-      <p className="text-[1.35rem] font-black text-white tabular-nums leading-none">{value}</p>
-    </div>
+    <span className={`text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${color}`}>
+      {label}
+    </span>
   );
 }
 
-/* ── Main mockup dashboard ───────────────────────────────── */
-function Dashboard() {
-  const bars = [38, 52, 70, 65, 48, 44, 60, 76, 71, 55, 42, 36, 50, 64, 72, 58];
-
+/* ── Dashboard complet ───────────────────────────────────── */
+function AnalyzerDashboard() {
   return (
-    <div className="flex h-full min-h-0">
+    <div className="h-full overflow-y-auto overflow-x-hidden bg-[#0d0d12] text-white">
+      <div className="flex flex-col lg:flex-row gap-0 min-h-full">
 
-      {/* ── Sidebar ── */}
-      <aside className="hidden sm:flex flex-col w-[13rem] lg:w-[15rem] shrink-0 border-r border-white/[0.06] bg-[#080810] py-4 gap-1 px-2.5 overflow-hidden">
-        {/* Logo */}
-        <div className="flex items-center gap-2 px-2.5 pb-4 mb-1 border-b border-white/[0.06]">
-          <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-vn-fuchsia to-vn-indigo flex items-center justify-center shrink-0">
-            <svg viewBox="0 0 16 16" fill="none" className="w-3.5 h-3.5">
-              <path d="M3 13 L6.5 4 L8 8 L9.5 4 L13 13" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-          <span className="text-[13px] font-bold text-white tracking-tight">Viralynz</span>
-        </div>
+        {/* ── Colonne gauche ── */}
+        <div className="flex-1 min-w-0 flex flex-col gap-3 p-4 sm:p-5 border-r border-white/[0.05]">
 
-        {/* Nav items */}
-        {[
-          { icon: '▦', label: 'Dashboard', active: false },
-          { icon: '◈', label: 'Analyses', active: true },
-          { icon: '↗', label: 'Mes vidéos', active: false },
-          { icon: '⊕', label: 'Hook generator', active: false },
-          { icon: '◉', label: 'Insights', active: false },
-        ].map(({ icon, label, active }) => (
-          <div
-            key={label}
-            className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-[12px] font-medium cursor-default transition-colors ${
-              active
-                ? 'bg-vn-fuchsia/[0.12] text-white border border-vn-fuchsia/20'
-                : 'text-gray-500 hover:text-gray-300'
-            }`}
-          >
-            <span className={`text-[14px] leading-none ${active ? 'text-vn-fuchsia' : ''}`}>{icon}</span>
-            {label}
-            {active && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-vn-fuchsia shadow-[0_0_6px_rgba(232,121,249,0.8)]" />}
-          </div>
-        ))}
-
-        <div className="mt-auto pt-4 border-t border-white/[0.06] mx-1">
-          <div className="flex items-center gap-2 px-2 py-2">
-            <img
-              src="https://i.pravatar.cc/28?img=11"
-              alt=""
-              width={28}
-              height={28}
-              className="w-7 h-7 rounded-full border border-white/10 shrink-0"
-            />
-            <div className="min-w-0">
-              <p className="text-[11px] font-semibold text-gray-300 truncate">Mathys R.</p>
-              <p className="text-[10px] text-gray-600 truncate">Plan Pro</p>
+          {/* Score de viralité */}
+          <div className="rounded-xl border border-white/[0.1] bg-[#111118] p-4 sm:p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">Score de viralité</p>
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-vn-fuchsia/20 text-vn-fuchsia border border-vn-fuchsia/25 uppercase tracking-wide">Vision</span>
             </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* ── Main content ── */}
-      <main className="flex-1 min-w-0 flex flex-col overflow-hidden bg-[#05050c]">
-
-        {/* Top bar */}
-        <div className="flex items-center justify-between gap-3 px-5 py-3 border-b border-white/[0.05] shrink-0">
-          <div>
-            <p className="text-[11px] text-gray-500 font-medium tracking-wide uppercase mb-0.5">Analyse en cours</p>
-            <p className="text-[13px] font-semibold text-white truncate max-w-[200px] lg:max-w-sm">viral_hook_test_v3.mp4</p>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="hidden sm:flex items-center gap-1.5 text-[11px] text-emerald-400 font-semibold bg-emerald-400/[0.08] border border-emerald-400/20 px-3 py-1 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Analyse terminée
-            </span>
-          </div>
-        </div>
-
-        {/* Scores row */}
-        <div className="flex items-stretch gap-3 px-5 py-4 border-b border-white/[0.05] shrink-0">
-          {/* Score global */}
-          <div className="flex flex-col justify-center min-w-[5.5rem]">
-            <p className="text-[9px] uppercase tracking-[0.2em] text-gray-600 font-bold mb-1">Score global</p>
-            <p
-              className="text-[3.2rem] font-black tabular-nums leading-none"
-              style={{
-                background: 'linear-gradient(120deg, #f5c5ff 0%, #c084fc 45%, #818cf8 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                filter: 'drop-shadow(0 0 16px rgba(232,121,249,0.4))',
-              }}
-            >
-              84
-            </p>
-          </div>
-          <div className="w-px bg-white/[0.06] shrink-0 mx-1" />
-          {/* Sub-scores */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <ScoreBadge label="Hook" value={88} color="border-vn-fuchsia/25 shadow-[0_0_20px_-6px_rgba(232,121,249,0.3)]" />
-            <ScoreBadge label="Montage" value={76} color="border-vn-violet/25 shadow-[0_0_20px_-6px_rgba(167,139,250,0.25)]" />
-            <ScoreBadge label="Rétention" value={81} color="border-vn-indigo/25 shadow-[0_0_20px_-6px_rgba(99,102,241,0.25)]" />
-            <ScoreBadge label="CTA" value={69} color="border-white/10" />
-          </div>
-          <div className="ml-auto hidden lg:flex items-center gap-2">
-            <p className="text-[11px] text-gray-600 leading-snug max-w-[180px]">
-              Diagnostic vidéo : hook, montage, rétention — priorités actionnables.
-            </p>
-          </div>
-        </div>
-
-        {/* Chart + details */}
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-0 overflow-hidden">
-
-          {/* Left: chart */}
-          <div className="flex flex-col gap-4 p-5 border-r border-white/[0.05] overflow-auto">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-[12px] font-semibold text-gray-300">Courbe d&apos;attention</p>
-              <span className="text-[10px] text-gray-600 uppercase tracking-[0.18em] font-bold">IA + frames</span>
-            </div>
-            {/* Bars */}
-            <div className="flex items-end gap-1 sm:gap-1.5 h-[88px] sm:h-[100px]">
-              {bars.map((h, i) => (
-                <div
-                  key={i}
-                  className="flex-1 rounded-t-[3px] min-w-[3px]"
-                  style={{
-                    height: `${h}%`,
-                    background: `linear-gradient(to top, rgba(99,102,241,0.6), rgba(167,139,250,0.75) 50%, rgba(232,121,249,0.9))`,
-                    boxShadow: h > 65 ? '0 -3px 10px -2px rgba(232,121,249,0.25)' : undefined,
-                  }}
-                />
-              ))}
-            </div>
-            {/* Insight */}
-            <div className="rounded-xl border border-vn-violet/15 bg-vn-violet/[0.06] px-4 py-3">
-              <p className="text-[12px] text-gray-300 leading-relaxed">
-                <span className="text-vn-violet font-semibold">Lecture IA : </span>
-                tension visuelle à renforcer dès la 2ᵉ seconde — stabiliser le sujet avant la promesse pour réduire le drop.
-              </p>
-            </div>
-            {/* Tags */}
-            <div className="flex flex-wrap gap-1.5">
-              {['Vision IA', 'Hook & ouverture', 'Rétention', 'Montage & rythme', 'CTA'].map((t) => (
-                <span key={t} className="text-[10px] font-medium px-2.5 py-1 rounded-full border border-white/[0.08] text-gray-500 bg-white/[0.03]">
-                  {t}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Right: priority cards */}
-          <div className="hidden lg:flex flex-col gap-3 p-4 overflow-auto">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-gray-600 font-bold">Priorités</p>
-
-            {[
-              {
-                rank: '01',
-                color: 'border-vn-fuchsia/20 bg-vn-fuchsia/[0.04]',
-                dot: 'bg-vn-fuchsia',
-                title: 'Hook trop lent',
-                desc: 'Couper les 1,5 premières sec. Aller droit au clash visuel.',
-              },
-              {
-                rank: '02',
-                color: 'border-vn-violet/20 bg-vn-violet/[0.04]',
-                dot: 'bg-vn-violet',
-                title: 'CTA absent avant 80%',
-                desc: 'Micro-phrase de CTA à placer entre 60-65% de la vidéo.',
-              },
-              {
-                rank: '03',
-                color: 'border-white/[0.07] bg-white/[0.02]',
-                dot: 'bg-gray-500',
-                title: 'Contraste plan large',
-                desc: "Renforcer le contraste sujet/fond sur le plan d\u2019ouverture.",
-              },
-            ].map((p) => (
-              <div key={p.rank} className={`rounded-xl border p-3.5 ${p.color}`}>
-                <div className="flex items-center gap-2 mb-1.5">
-                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${p.dot}`} />
-                  <p className="text-[11px] font-bold text-white">{p.title}</p>
-                  <span className="ml-auto text-[10px] text-gray-600 font-mono">#{p.rank}</span>
+            <div className="flex items-center gap-4 sm:gap-6">
+              {/* Gauge */}
+              <div className="relative shrink-0">
+                <CircularGauge value={68} size={96} />
+                <div className="absolute inset-0 flex flex-col items-center justify-center rotate-90">
+                  <span className="text-[1.6rem] font-black text-amber-400 leading-none tabular-nums" style={{ textShadow: '0 0 20px rgba(251,191,36,0.5)' }}>68</span>
+                  <span className="text-[9px] text-gray-500 font-medium">/100</span>
                 </div>
-                <p className="text-[11px] text-gray-500 leading-relaxed">{p.desc}</p>
+              </div>
+              {/* Détails */}
+              <div className="flex-1 min-w-0">
+                <p className="text-[9px] uppercase tracking-[0.18em] text-gray-600 font-bold mb-2">Détail structurel</p>
+                <div className="flex gap-2">
+                  {[
+                    { label: 'Hook',      val: 80 },
+                    { label: 'Montage',   val: 70 },
+                    { label: 'Rétention', val: 70 },
+                  ].map(({ label, val }) => (
+                    <div key={label} className="flex-1 rounded-lg bg-white/[0.04] border border-white/[0.07] px-2 py-2 text-center">
+                      <p className="text-[9px] text-gray-500 mb-0.5">{label}</p>
+                      <p className="text-base font-black text-emerald-400 leading-none tabular-nums">{val}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-2 flex gap-2">
+                  <QualityBadge label="Potentiel" color="bg-amber-400/15 text-amber-300 border border-amber-400/25" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Stats publiques */}
+          <div className="rounded-xl border border-white/[0.08] bg-[#111118] p-4 sm:p-5">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">Stats publiques détectées</p>
+              <span className="text-[9px] text-gray-600 font-medium">Source : page TikTok</span>
+            </div>
+            <div className="grid grid-cols-4 gap-1.5 sm:gap-2 mb-2">
+              {[
+                { label: 'Vues',         val: '213,9k' },
+                { label: 'Likes',        val: '2,2k' },
+                { label: 'Commentaires', val: '180' },
+                { label: 'Partages',     val: '154' },
+              ].map(({ label, val }) => (
+                <div key={label} className="rounded-lg bg-white/[0.03] border border-white/[0.06] px-2 py-2">
+                  <p className="text-[8px] text-gray-500 mb-0.5">{label}</p>
+                  <p className="text-[13px] font-black text-white leading-none">{val}</p>
+                </div>
+              ))}
+            </div>
+            {/* Analyse comparative */}
+            <div className="mt-3 rounded-lg bg-white/[0.02] border border-white/[0.06] p-3">
+              <p className="text-[9px] uppercase tracking-[0.18em] text-gray-600 font-bold mb-1.5">Analyse comparative</p>
+              <div className="flex items-center gap-2">
+                <span className="text-xl font-black text-emerald-400 leading-none shrink-0">Top 10%</span>
+                <div className="flex-1">
+                  <div className="h-1.5 rounded-full bg-white/[0.07] overflow-hidden">
+                    <div className="h-full w-[90%] rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400" />
+                  </div>
+                  <div className="flex justify-between mt-0.5">
+                    <span className="text-[8px] text-gray-600">Moyenne</span>
+                    <span className="text-[8px] text-gray-600">Top créateurs</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Synthèse */}
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { label: 'Score de structure', val: '75',            sub: 'Qualité perçue hook, montage, rétention' },
+              { label: 'Performance observée', val: '54',          sub: 'Performance correcte' },
+              { label: 'Verdict final',        val: null,          sub: 'Retravailler packaging/timing' },
+            ].map(({ label, val, sub }) => (
+              <div key={label} className="rounded-xl bg-white/[0.03] border border-white/[0.07] p-3">
+                <p className="text-[8px] uppercase tracking-wide text-gray-600 font-bold mb-1">{label}</p>
+                {val && <p className="text-[1.4rem] font-black text-white leading-none mb-1">{val}</p>}
+                <p className="text-[9px] text-gray-500 leading-snug">{sub}</p>
               </div>
             ))}
+          </div>
+        </div>
 
-            {/* Point fort */}
-            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.05] p-3.5 mt-1">
-              <div className="flex items-center gap-2 mb-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                <p className="text-[11px] font-bold text-emerald-300">Point fort</p>
+        {/* ── Colonne droite ── */}
+        <div className="w-full lg:w-[260px] xl:w-[280px] shrink-0 flex flex-col gap-3 p-4 sm:p-5">
+
+          {/* Analyses détaillées */}
+          {[
+            { title: 'Analyse du Hook',      score: 80, quality: 'Bon',   qcolor: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/25', bar: 80, barColor: 'bg-emerald-400',
+              forts: ['Phrase percutante', 'Pertinence du sujet'], faibles: ['Peut manquer d\'originalité'] },
+            { title: 'Analyse du Montage',   score: 70, quality: 'Moyen', qcolor: 'bg-amber-400/20 text-amber-300 border border-amber-400/25', bar: 70, barColor: 'bg-amber-400',
+              forts: ['Cohérence visuelle', 'Sous-titres efficaces'], faibles: ['Transitions peu marquées', 'Rythme parfois lent'] },
+          ].map(({ title, score, quality, qcolor, bar, barColor, forts, faibles }) => (
+            <div key={title} className="rounded-xl border border-white/[0.08] bg-[#111118] p-3 sm:p-4">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <p className="text-[11px] font-bold text-white">{title}</p>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="text-[13px] font-black text-white tabular-nums">{score}</span>
+                  <QualityBadge label={quality} color={qcolor} />
+                </div>
               </div>
-              <p className="text-[11px] text-gray-500 leading-relaxed">
-                Rythme de coupe soutenu après 3 s — énergie bien maintenue jusqu'au milieu.
-              </p>
+              <ProgressBar pct={bar} color={barColor} />
+              <div className="mt-2.5 space-y-1.5">
+                <p className="text-[8px] uppercase tracking-[0.18em] text-gray-600 font-bold">Points forts</p>
+                {forts.map(f => (
+                  <div key={f} className="flex items-center gap-1.5">
+                    <span className="text-emerald-400 text-[10px] font-bold shrink-0">✓</span>
+                    <span className="text-[10px] text-gray-400">{f}</span>
+                  </div>
+                ))}
+                <p className="text-[8px] uppercase tracking-[0.18em] text-gray-600 font-bold pt-1">Points faibles</p>
+                {faibles.map(f => (
+                  <div key={f} className="flex items-center gap-1.5">
+                    <span className="text-red-400 text-[10px] font-bold shrink-0">×</span>
+                    <span className="text-[10px] text-gray-400">{f}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {/* Recommandations */}
+          <div className="rounded-xl border border-white/[0.08] bg-[#111118] p-3 sm:p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="w-5 h-5 rounded-full bg-vn-fuchsia/20 border border-vn-fuchsia/30 flex items-center justify-center shrink-0">
+                <span className="text-[9px] text-vn-fuchsia">✦</span>
+              </span>
+              <div>
+                <p className="text-[11px] font-bold text-white leading-tight">Recommandations</p>
+                <p className="text-[9px] text-gray-600">10 conseils personnalisés</p>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              {[
+                { n: 1, text: 'Ajouter des effets visuels pour dynamiser le montage.', priority: 'haute',   pc: 'bg-red-500/20 text-red-300 border border-red-500/25' },
+                { n: 2, text: 'Incorporer des punchlines inattendues.', priority: 'haute',                  pc: 'bg-red-500/20 text-red-300 border border-red-500/25' },
+                { n: 3, text: 'Utiliser des transitions plus marquées.', priority: 'moyenne',               pc: 'bg-amber-400/20 text-amber-300 border border-amber-400/25' },
+                { n: 4, text: 'Raccourcir pour un rythme plus soutenu.', priority: 'moyenne',               pc: 'bg-amber-400/20 text-amber-300 border border-amber-400/25' },
+                { n: 5, text: 'Ajouter un call-to-action en fin de vidéo.', priority: 'basse',             pc: 'bg-blue-500/20 text-blue-300 border border-blue-500/25' },
+              ].map(({ n, text, priority, pc }) => (
+                <div key={n} className="flex gap-2 p-2 rounded-lg bg-white/[0.02] border border-white/[0.05]">
+                  <span className="text-[10px] font-bold text-gray-600 shrink-0 w-3 pt-px">{n}</span>
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-gray-300 leading-snug mb-1">{text}</p>
+                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide ${pc}`}>
+                      Priorité {priority}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
@@ -260,16 +262,15 @@ export default function LandingProductMockup({
     <div className="relative">
       {/* Glow extérieur */}
       <div
-        className="absolute -inset-[3px] sm:-inset-5 rounded-[inherit] bg-gradient-to-br from-vn-fuchsia/40 via-vn-violet/18 to-vn-indigo/38 blur-2xl sm:blur-[40px] opacity-90"
+        className="absolute -inset-[3px] sm:-inset-5 rounded-[inherit] bg-gradient-to-br from-vn-fuchsia/38 via-vn-violet/16 to-vn-indigo/35 blur-2xl sm:blur-[40px] opacity-90"
         aria-hidden
       />
       {/* Fenêtre */}
-      <div className="relative overflow-hidden bg-[#05050c] rounded-[1.1rem] sm:rounded-[1.35rem] ring-1 ring-white/[0.10] shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_48px_120px_-30px_rgba(0,0,0,0.95)]">
-        {/* Reflet supérieur */}
+      <div className="relative overflow-hidden bg-[#0d0d12] rounded-[1.1rem] sm:rounded-[1.3rem] ring-1 ring-white/[0.10] shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_48px_120px_-30px_rgba(0,0,0,0.95)]">
         <div className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none z-10" aria-hidden />
-        <BrowserChrome url="app.viralynz.com · Analyse vidéo" />
-        <div className="h-[360px] sm:h-[440px] md:h-[500px] lg:h-[540px] xl:h-[580px] overflow-hidden">
-          <Dashboard />
+        <BrowserChrome />
+        <div className="h-[400px] sm:h-[480px] md:h-[540px] lg:h-[580px] xl:h-[620px] overflow-hidden">
+          <AnalyzerDashboard />
         </div>
       </div>
     </div>
