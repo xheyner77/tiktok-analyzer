@@ -65,6 +65,42 @@ function getSmartTip(weakest: { key: string; score: number } | null): string {
   return "Pour booster la rétention, ajoute des sous-titres et textes à l'écran sur les moments clés de ta vidéo.";
 }
 
+type Dim = { key: 'hook' | 'editing' | 'retention'; label: string; score: number };
+
+function getActionPlan(dims: Dim[]): { emoji: string; title: string; action: string; cta: string }[] {
+  const actions: { emoji: string; title: string; action: string; cta: string }[] = [];
+  const sorted = [...dims].sort((a, b) => a.score - b.score);
+  for (const d of sorted.slice(0, 3)) {
+    if (d.key === 'hook') actions.push({
+      emoji: '🎣',
+      title: 'Améliore ton Hook',
+      action: `Score actuel ${d.score}/100 — commence ta vidéo par une question choc, un chiffre ou une tension dès la 1re seconde.`,
+      cta: 'Analyser mon hook',
+    });
+    else if (d.key === 'editing') actions.push({
+      emoji: '✂️',
+      title: 'Améliore ton Montage',
+      action: `Score actuel ${d.score}/100 — réduis chaque plan à 1–2s max, synchronise les cuts sur la musique, coupe toutes les pauses.`,
+      cta: 'Analyser mon montage',
+    });
+    else actions.push({
+      emoji: '📉',
+      title: 'Améliore ta Rétention',
+      action: `Score actuel ${d.score}/100 — ajoute un rebondissement à mi-vidéo, des textes à l'écran et un micro-hook toutes les 7s.`,
+      cta: 'Analyser ma rétention',
+    });
+  }
+  // Always fill up to 3 actions
+  const extras = [
+    { emoji: '🚀', title: 'Optimise ton CTA', action: "Termine chaque vidéo par un CTA clair — pose une question ou demande un follow. Ça booste l'engagement.", cta: 'Analyser' },
+    { emoji: '🎵', title: 'Utilise les tendances audio', action: "Utilise des sons en tendance dans ta niche — l'algo TikTok booste les vidéos avec de l'audio viral.", cta: 'Analyser' },
+    { emoji: '📲', title: 'Optimise ta description', action: "3–5 hashtags de niche + une phrase d'accroche dans la description augmentent la portée organique.", cta: 'Analyser' },
+  ];
+  let i = 0;
+  while (actions.length < 3 && i < extras.length) { actions.push(extras[i]); i++; }
+  return actions.slice(0, 3);
+}
+
 function getBenchmark(hookScore: number | null): { top: string; sub: string } {
   if (hookScore === null) return { top: 'Pas encore de data', sub: 'Analyse une vidéo pour te positionner' };
   if (hookScore >= 80) return { top: 'Top 10%', sub: 'sur les hooks TikTok' };
@@ -419,14 +455,17 @@ export default function DashboardClient({
   const criticalTips = hauteImprovements.slice(0, 3);
   const showCritical = criticalDims.length > 0 || criticalTips.length > 0;
 
-  // Hero phrase
+  // Hero phrase — negative framing for urgency
   const heroPhrase = useMemo(() => {
     if (!hasHistory) return "Lance ta première analyse pour débloquer tes insights de performance.";
-    if (trend !== null && trend > 3) return `Tu progresses — +${trend} pts sur tes 3 dernières vidéos. Garde le rythme.`;
-    if (trend !== null && trend < -3) return `Tes dernières vidéos perdent ${Math.abs(trend)} pts. Travaille ton ${weakest?.label ?? 'contenu'} en priorité.`;
-    if (weakest && weakest.score < 50) return `Tu peux gagner +${potential ?? '?'} pts en améliorant ton ${weakest.label}.`;
-    if (potential !== null && potential > 10) return `Tu as ${potential} pts de progression possible sur tes prochaines vidéos.`;
-    return `Score moyen de ${avgScore} — tu approches le seuil viral. Continue.`;
+    if (trend !== null && trend > 3) return `Tu progresses — +${trend} pts sur tes 3 dernières vidéos. Continue comme ça.`;
+    if (weakest && weakest.score < 55) {
+      const lost = Math.round(Math.max(1, (55 - weakest.score) * 0.6));
+      return `Tu perds -${lost} pts à cause de ton ${weakest.label} faible. Corrige ça maintenant.`;
+    }
+    if (trend !== null && trend < -3) return `Tes dernières vidéos baissent de ${Math.abs(trend)} pts. Interviens sur ton ${weakest?.label ?? 'contenu'}.`;
+    if (potential !== null && potential > 10) return `Tu as +${potential} pts de progression possible — corrige tes faiblesses et performe.`;
+    return `Score moyen de ${avgScore} — tu approches le seuil viral. Maintiens ce niveau.`;
   }, [hasHistory, trend, weakest, potential, avgScore]);
 
   // Second weakest dimension (for potential card)
@@ -435,6 +474,7 @@ export default function DashboardClient({
     : null;
 
   const benchmark = getBenchmark(avgHookScore);
+  const actionPlan = getActionPlan(dims);
 
   // ── Handlers ────────────────────────────────────────────────────────────
   async function handleEliteUpgrade() {
@@ -579,7 +619,10 @@ export default function DashboardClient({
               </div>
 
               {/* Dynamic coach phrase */}
-              <p className="text-[13px] font-semibold text-gray-300 leading-snug">{heroPhrase}</p>
+              <p className="text-[14px] font-bold text-white leading-snug">{heroPhrase}</p>
+              {hasHistory && weakest && (
+                <p className="text-[12px] text-gray-500 mt-0.5">Corrige ça et ta prochaine vidéo peut performer.</p>
+              )}
 
               {/* Weakest / strongest summary */}
               {hasHistory && weakest && strongest && weakest.key !== strongest.key && (
@@ -603,7 +646,7 @@ export default function DashboardClient({
             <div className="shrink-0">
               <Link href="/analyzer" className={`inline-flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm text-white transition-all ${canAnalyze ? 'bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:brightness-110 shadow-lg shadow-vn-fuchsia/25' : 'bg-white/[0.06] border border-white/[0.10] opacity-60 cursor-not-allowed pointer-events-none'}`}>
                 <svg viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4"><path d="M9.196.944a.75.75 0 0 0-1.483.183l.175 1.417A8.001 8.001 0 0 0 2.25 8.5h1.5a6.5 6.5 0 0 1 4.637-6.224l.175 1.417a.75.75 0 0 0 1.374.293l1.346-3a.75.75 0 0 0-.623-1.045l-1.463.003Z" /><path d="M5.483 13.897a.75.75 0 0 1-.957-.408l-.565-1.356a6.5 6.5 0 0 1-1.711-5.633h-1.5A8 8 0 0 0 4 14.75a.75.75 0 0 0 .957.408l1.346-3a.75.75 0 0 0-.82-1.261Z" /></svg>
-                Nouvelle analyse
+                {hasHistory ? 'Corriger ma prochaine vidéo' : 'Nouvelle analyse'}
               </Link>
             </div>
           </div>
@@ -838,6 +881,39 @@ export default function DashboardClient({
                 </div>
               </div>
             )}
+
+            {/* ── Plan d'action ── */}
+            <div className="relative overflow-hidden rounded-2xl border border-vn-violet/20 bg-gradient-to-br from-vn-violet/[0.06] to-vn-indigo/[0.03] p-5">
+              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-vn-violet/40 to-transparent" />
+              <div className="flex items-center gap-2 mb-5">
+                <span className="text-base">🎯</span>
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-vn-violet/70">Plan d&apos;action</p>
+                <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-vn-violet/15 text-vn-violet border border-vn-violet/20">
+                  {actionPlan.length} étapes
+                </span>
+              </div>
+              <div className="space-y-3">
+                {actionPlan.map((step, idx) => (
+                  <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.05] hover:border-white/[0.09] transition-colors">
+                    <div className="w-7 h-7 rounded-lg bg-vn-violet/15 border border-vn-violet/20 flex items-center justify-center shrink-0 text-sm font-black text-vn-violet mt-0.5">
+                      {idx + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-bold text-white leading-tight mb-0.5">
+                        {step.emoji} {step.title}
+                      </p>
+                      <p className="text-[11px] text-gray-500 leading-snug">{step.action}</p>
+                    </div>
+                    <Link
+                      href="/analyzer"
+                      className="shrink-0 text-[10px] font-semibold text-vn-violet/70 hover:text-vn-violet transition-colors px-2.5 py-1.5 rounded-lg hover:bg-vn-violet/10 border border-transparent hover:border-vn-violet/20 self-start mt-0.5 whitespace-nowrap"
+                    >
+                      → Corriger
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </div>
 
           </>
         ) : plan !== 'free' && (
