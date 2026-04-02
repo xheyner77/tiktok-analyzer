@@ -191,21 +191,6 @@ export default function ChangelogPage() {
             </div>
           ))}
 
-          {/* Coming soon */}
-          <div className="relative flex gap-6 sm:gap-8 pt-4">
-            <div className="flex flex-col items-center shrink-0 pt-1">
-              <div className="w-3 h-3 rounded-full border-2 border-white/[0.15] bg-vn-void" />
-            </div>
-            <div className="flex-1 pb-4">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-700 mb-2">Prochainement</p>
-              <p className="text-[13.5px] text-gray-600 leading-relaxed">
-                Instagram Reels, YouTube Shorts, exports d&apos;équipe et bien plus encore.{' '}
-                <Link href="/#faq" className="text-vn-fuchsia/70 hover:text-vn-fuchsia transition-colors underline underline-offset-2">
-                  En savoir plus
-                </Link>
-              </p>
-            </div>
-          </div>
         </div>
       </section>
 
