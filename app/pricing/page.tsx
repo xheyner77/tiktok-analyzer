@@ -181,9 +181,6 @@ export default function PricingPage() {
 
             {/* ── PRO — ELEVATED ── */}
             <div className="md:-mt-8 md:z-10 relative">
-              {/* Outer glow */}
-              <div className="absolute -inset-px rounded-[1.25rem] bg-gradient-to-b from-vn-fuchsia/40 via-vn-fuchsia/10 to-vn-indigo/20 blur-[1px] pointer-events-none" />
-
               {/* Popular badge above */}
               <div className="flex justify-center mb-3 relative z-10">
                 <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-4 py-1 rounded-full bg-vn-fuchsia text-white shadow-lg shadow-vn-fuchsia/40">
@@ -191,9 +188,10 @@ export default function PricingPage() {
                 </span>
               </div>
 
-              <div className="relative flex flex-col rounded-[1.1rem] border border-vn-fuchsia/40 bg-gradient-to-b from-[#110815] to-[#0a0810] p-7 shadow-[0_0_120px_-20px_rgba(232,121,249,0.45)] z-10">
-                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-vn-fuchsia/80 to-transparent rounded-t-[1.1rem]" />
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(232,121,249,0.06),transparent_65%)] rounded-[1.1rem] pointer-events-none" />
+              <div className="relative flex flex-col rounded-[1.1rem] border border-vn-fuchsia/30 bg-gradient-to-b from-[#110815] to-[#0a0810] p-7 shadow-[0_8px_40px_-12px_rgba(232,121,249,0.25)] z-10 overflow-hidden">
+                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-vn-fuchsia/70 to-transparent rounded-t-[1.1rem]" />
+                {/* Particles inside card */}
+                <FloatingParticles count={28} className="opacity-60" />
 
                 <div className="relative mb-7">
                   <div className="flex items-center justify-between mb-5">
