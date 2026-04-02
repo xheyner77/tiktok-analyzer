@@ -182,7 +182,7 @@ export default function HomeLanding() {
                     <Arrow className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
                   </Link>
                 </div>
-                <Link href="#comment"
+                <Link href="/features"
                   className="inline-flex items-center gap-2 min-h-[52px] rounded-full px-7 text-[15px] font-medium text-gray-300 border border-white/[0.1] bg-white/[0.03] hover:bg-white/[0.06] hover:text-white hover:border-white/[0.18] transition-all duration-300">
                   Voir comment ça marche
                 </Link>
