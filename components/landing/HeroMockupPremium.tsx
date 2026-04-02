@@ -103,27 +103,81 @@ function AttentionCurve() {
 
 /* ─────────────────────────────────────────────────────────────── */
 
+function MobilePlanAction() {
+  return (
+    <div
+      className="mt-4 rounded-[14px] p-3.5 sm:hidden"
+      style={{
+        background: 'linear-gradient(145deg, rgba(232,121,249,0.06), rgba(99,102,241,0.04))',
+        border: '1px solid rgba(232,121,249,0.14)',
+      }}
+    >
+      <p className="text-[10px] font-bold text-white mb-2.5 flex items-center gap-1.5">
+        <span aria-hidden>🎯</span> Plan d&apos;action
+      </p>
+      <ul className="space-y-2">
+        {['Couper l\'intro à 2s', 'Pattern interrupt à 5s', 'Hook visuel dès l\'image 1'].map((a, i) => (
+          <li key={i} className="flex items-start gap-2.5">
+            <span
+              className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black text-white"
+              style={{ background: 'linear-gradient(135deg, #e879f9, #6366f1)' }}
+            >
+              {i + 1}
+            </span>
+            <span className="text-[11px] text-gray-400 leading-snug pt-0.5">{a}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export default function HeroMockupPremium() {
   return (
     <div
-      className="relative pt-6 pb-10 pl-2 pr-2 sm:pt-10 sm:pb-24 sm:pl-8 sm:pr-10 lg:pt-12 lg:pb-28 lg:pl-6 lg:pr-10 xl:pl-12 xl:pr-16 select-none pointer-events-none"
+      className="relative pt-6 pb-8 pl-3 pr-3 sm:pt-10 sm:pb-24 sm:pl-8 sm:pr-10 lg:pt-12 lg:pb-28 lg:pl-6 lg:pr-10 xl:pl-12 xl:pr-16 select-none pointer-events-none"
       aria-hidden
     >
-      {/* ── Deep ambient layers ────────────────────────────────── */}
+      {/* ── Deep ambient layers (softer on mobile) ─────────────── */}
       <div className="absolute inset-0 -z-10 overflow-visible pointer-events-none">
-        {/* Large outer bloom */}
-        <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-[130%] h-[90%]"
-          style={{ background: 'radial-gradient(ellipse at 50% 35%, rgba(232,121,249,0.18) 0%, rgba(99,102,241,0.10) 45%, transparent 70%)', filter: 'blur(50px)', animation: 'heroHaloPulse 5s ease-in-out infinite' }} />
-        {/* Tight inner cone */}
-        <div className="absolute top-8 left-[20%] right-[20%] h-[65%]"
+        <div
+          className="absolute -top-12 left-1/2 -translate-x-1/2 w-[130%] h-[90%] opacity-70 sm:opacity-100"
+          style={{ background: 'radial-gradient(ellipse at 50% 35%, rgba(232,121,249,0.14) 0%, rgba(99,102,241,0.08) 45%, transparent 70%)', filter: 'blur(50px)', animation: 'heroHaloPulse 5s ease-in-out infinite' }}
+        />
+        <div className="absolute top-8 left-[20%] right-[20%] h-[65%] hidden sm:block"
           style={{ background: 'radial-gradient(ellipse at 50% 25%, rgba(232,121,249,0.22) 0%, transparent 60%)', filter: 'blur(24px)', animation: 'heroHaloPulse 3.5s ease-in-out 1.2s infinite' }} />
-        {/* Bottom bleed */}
-        <div className="absolute bottom-0 left-[25%] right-[25%] h-[30%]"
+        <div className="absolute bottom-0 left-[25%] right-[25%] h-[30%] hidden sm:block"
           style={{ background: 'radial-gradient(ellipse at 50% 100%, rgba(99,102,241,0.14) 0%, transparent 65%)', filter: 'blur(30px)' }} />
       </div>
 
-      {/* ══ FLOATING: "Insight détecté" — top center ═══════════ */}
-      <motion.div {...from(0, -16, 1.0)} className="absolute top-0 left-1/2 -translate-x-1/2 z-30 whitespace-nowrap">
+      {/* Mobile: status chips in flow (no overlap) */}
+      <div className="flex flex-wrap items-center justify-center gap-2 mb-4 sm:hidden">
+        <div
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-semibold text-white/80"
+          style={{ background: 'rgba(8,8,16,0.92)', border: '1px solid rgba(255,255,255,0.08)' }}
+        >
+          <span className="relative flex h-1.5 w-1.5 shrink-0">
+            <span className="animate-ping absolute h-1.5 w-1.5 rounded-full bg-emerald-400 opacity-50" />
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+          </span>
+          IA active
+        </div>
+        <div
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-semibold text-vn-fuchsia"
+          style={{ background: 'rgba(8,8,16,0.92)', border: '1px solid rgba(232,121,249,0.2)' }}
+        >
+          <span>✨</span> Insight viral
+        </div>
+        <div
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-semibold"
+          style={{ color: '#86efac', background: 'rgba(8,8,16,0.92)', border: '1px solid rgba(74,222,128,0.2)' }}
+        >
+          🔥 Hook 71
+        </div>
+      </div>
+
+      {/* ══ FLOATING: "Insight détecté" — desktop only ═══════════ */}
+      <motion.div {...from(0, -16, 1.0)} className="hidden sm:block absolute top-0 left-1/2 -translate-x-1/2 z-30 whitespace-nowrap">
         <div className="mock-float-b">
           <div className="flex items-center gap-2 px-4 py-2 rounded-full"
             style={{ background: 'rgba(8,8,16,0.95)', border: '1px solid rgba(232,121,249,0.22)', backdropFilter: 'blur(14px)', boxShadow: '0 0 28px -6px rgba(232,121,249,0.35), 0 8px 32px rgba(0,0,0,0.6)' }}>
@@ -141,7 +195,7 @@ export default function HeroMockupPremium() {
       <motion.div
         {...up(0.15)}
         whileHover={{ scale: 1.012, y: -6, transition: { duration: 0.35, ease: E } }}
-        className="relative rounded-[22px] overflow-hidden cursor-default"
+        className="relative rounded-[22px] overflow-hidden cursor-default w-full max-w-sm mx-auto sm:max-w-none sm:mx-0"
         style={{
           background: 'linear-gradient(155deg, #11111e 0%, #09090f 100%)',
           border: '1px solid rgba(255,255,255,0.09)',
@@ -215,6 +269,30 @@ export default function HeroMockupPremium() {
             style={{ background: 'linear-gradient(to top, #09090f, transparent)' }} />
         </div>
 
+        {/* Mobile: courbe + jauge intégrées (pas de chevauchement) */}
+        <div className="sm:hidden px-3.5 pt-3.5 pb-1 border-t border-white/[0.05]">
+          <div className="flex gap-3 items-stretch">
+            <div
+              className="flex-1 min-w-0 rounded-xl px-3 py-2.5"
+              style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)' }}
+            >
+              <p className="text-[8px] font-bold uppercase tracking-[0.12em] text-gray-600 mb-1.5">Courbe attention</p>
+              <div className="scale-[0.92] origin-top-left -ml-0.5">
+                <AttentionCurve />
+              </div>
+            </div>
+            <div
+              className="shrink-0 w-[96px] rounded-xl flex flex-col items-center justify-center py-2 px-1"
+              style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)' }}
+            >
+              <div className="scale-[0.88] origin-center">
+                <ScoreGauge score={68} />
+              </div>
+              <p className="text-[8px] text-gray-600 mt-0.5 text-center leading-tight">Potentiel</p>
+            </div>
+          </div>
+        </div>
+
         {/* ── Score block ─────────────────────────────────────── */}
         <div className="p-4 sm:p-5">
           <div className="flex items-start justify-between mb-4">
@@ -271,11 +349,13 @@ export default function HeroMockupPremium() {
               Rétention critique — chute à 6s, montage trop lent
             </p>
           </div>
+
+          <MobilePlanAction />
         </div>
       </motion.div>
 
-      {/* ══ FLOATING: Score gauge (top-right) ══════════════════ */}
-      <motion.div {...from(20, 0, 0.5)} className="absolute top-8 right-1 sm:-top-4 sm:-right-6 lg:-right-10 z-20 scale-90 sm:scale-100 origin-top-right">
+      {/* ══ FLOATING: Score gauge (top-right) — desktop ════════ */}
+      <motion.div {...from(20, 0, 0.5)} className="hidden sm:block absolute top-8 right-1 sm:-top-4 sm:-right-6 lg:-right-10 z-20 scale-90 sm:scale-100 origin-top-right">
         <div className="mock-float-a">
           <div className="p-3 rounded-2xl"
             style={{ background: 'linear-gradient(145deg, rgba(14,14,26,0.98), rgba(9,9,15,0.99))', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(16px)', boxShadow: '0 0 56px -12px rgba(232,121,249,0.35), 0 24px 64px rgba(0,0,0,0.75)' }}>
@@ -285,8 +365,8 @@ export default function HeroMockupPremium() {
         </div>
       </motion.div>
 
-      {/* ══ FLOATING: AI badge (top-left) ══════════════════════ */}
-      <motion.div {...from(0, -14, 0.3)} className="absolute top-8 left-3 sm:top-1 sm:left-4 lg:left-0 z-20">
+      {/* ══ FLOATING: AI badge (top-left) — desktop ════════════ */}
+      <motion.div {...from(0, -14, 0.3)} className="hidden sm:block absolute top-8 left-3 sm:top-1 sm:left-4 lg:left-0 z-20">
         <div className="mock-float-b">
           <div className="flex items-center gap-2 px-3 py-2 rounded-full"
             style={{ background: 'rgba(8,8,16,0.96)', border: '1px solid rgba(255,255,255,0.09)', backdropFilter: 'blur(14px)', boxShadow: '0 8px 32px rgba(0,0,0,0.55)' }}>
@@ -299,8 +379,8 @@ export default function HeroMockupPremium() {
         </div>
       </motion.div>
 
-      {/* ══ FLOATING: Hook score pill (mid-right) ══════════════ */}
-      <motion.div {...from(18, 0, 0.75)} className="absolute top-[8rem] right-1 sm:top-[9rem] sm:-right-4 lg:-right-12 z-20">
+      {/* ══ FLOATING: Hook score pill — desktop ═══════════════ */}
+      <motion.div {...from(18, 0, 0.75)} className="hidden sm:block absolute top-[8rem] right-1 sm:top-[9rem] sm:-right-4 lg:-right-12 z-20">
         <div className="mock-float-d">
           <div className="flex items-center gap-2 px-3.5 py-2 rounded-full"
             style={{ background: 'rgba(8,8,16,0.96)', border: '1px solid rgba(74,222,128,0.22)', backdropFilter: 'blur(12px)', boxShadow: '0 0 22px -6px rgba(74,222,128,0.25), 0 8px 28px rgba(0,0,0,0.55)' }}>
@@ -310,8 +390,8 @@ export default function HeroMockupPremium() {
         </div>
       </motion.div>
 
-      {/* ══ FLOATING: Action plan (bottom-right) ══════════════ */}
-      <motion.div {...from(0, 20, 0.7)} className="absolute top-[11rem] right-1 sm:top-auto sm:-bottom-12 sm:-right-4 lg:-right-10 z-20 w-[175px] scale-75 sm:scale-100 origin-top-right">
+      {/* ══ FLOATING: Action plan — desktop ═══════════════════ */}
+      <motion.div {...from(0, 20, 0.7)} className="hidden sm:block absolute top-[11rem] right-1 sm:top-auto sm:-bottom-12 sm:-right-4 lg:-right-10 z-20 w-[175px] scale-75 sm:scale-100 origin-top-right">
         <div className="mock-float-c">
           <div className="p-4 rounded-2xl"
             style={{ background: 'linear-gradient(145deg, rgba(14,14,26,0.98), rgba(9,9,15,0.99))', border: '1px solid rgba(232,121,249,0.16)', backdropFilter: 'blur(16px)', boxShadow: '0 0 44px -10px rgba(232,121,249,0.22), 0 24px 60px rgba(0,0,0,0.75)' }}>
@@ -331,8 +411,8 @@ export default function HeroMockupPremium() {
         </div>
       </motion.div>
 
-      {/* ══ FLOATING: Retention chart (bottom-left) ═══════════ */}
-      <motion.div {...from(-20, 0, 0.6)} className="absolute top-24 left-1 sm:top-auto sm:-bottom-7 sm:-left-4 lg:-left-10 z-20 scale-75 sm:scale-100 origin-top-left">
+      {/* ══ FLOATING: Retention chart — desktop ═══════════════ */}
+      <motion.div {...from(-20, 0, 0.6)} className="hidden sm:block absolute top-24 left-1 sm:top-auto sm:-bottom-7 sm:-left-4 lg:-left-10 z-20 scale-75 sm:scale-100 origin-top-left">
         <div className="mock-float-b">
           <div className="px-4 py-3.5 rounded-2xl"
             style={{ background: 'rgba(9,9,15,0.96)', border: '1px solid rgba(255,255,255,0.07)', backdropFilter: 'blur(14px)', boxShadow: '0 10px 44px rgba(0,0,0,0.65)' }}>
@@ -342,8 +422,8 @@ export default function HeroMockupPremium() {
         </div>
       </motion.div>
 
-      {/* ══ FLOATING: Rétention warning (bottom-center) ═══════ */}
-      <motion.div {...from(0, 14, 0.9)} className="absolute bottom-2 sm:-bottom-1 left-1/2 -translate-x-1/2 z-20 whitespace-nowrap">
+      {/* ══ FLOATING: Rétention warning — desktop ═════════════ */}
+      <motion.div {...from(0, 14, 0.9)} className="hidden sm:block absolute bottom-2 sm:-bottom-1 left-1/2 -translate-x-1/2 z-20 whitespace-nowrap">
         <div className="mock-float-a" style={{ animationDelay: '2.4s' }}>
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full"
             style={{ background: 'rgba(8,8,16,0.96)', border: '1px solid rgba(239,68,68,0.2)', backdropFilter: 'blur(12px)', boxShadow: '0 0 20px -6px rgba(239,68,68,0.2)' }}>
