@@ -20,12 +20,6 @@ export default async function Navbar() {
         <BrandLogo href="/" />
 
         <div className="hidden lg:flex items-center gap-0.5 flex-1 justify-center max-w-3xl mx-4">
-          <Link href="/#produit" className={linkCls}>
-            Produit
-          </Link>
-          <Link href="/#fonctions" className={linkCls}>
-            Comment ça marche
-          </Link>
           <Link href="/features" className={linkCls}>
             Fonctionnalités
           </Link>
