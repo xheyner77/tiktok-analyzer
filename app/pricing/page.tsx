@@ -15,48 +15,67 @@ import { DISPLAY_CATALOG_ELITE_EUR, DISPLAY_CATALOG_PRO_EUR } from '@/lib/stripe
 /* ── Icons ───────────────────────────────────────────────────────────────── */
 function CheckFuchsia() {
   return (
-    <svg viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 shrink-0 text-vn-fuchsia">
+    <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3 sm:w-4 sm:h-4 shrink-0 text-vn-fuchsia">
       <path fillRule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" />
     </svg>
   );
 }
 function CheckViolet() {
   return (
-    <svg viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 shrink-0 text-violet-400">
+    <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3 sm:w-4 sm:h-4 shrink-0 text-violet-400">
       <path fillRule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" />
     </svg>
   );
 }
 function CheckGray() {
   return (
-    <svg viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 shrink-0 text-gray-600">
+    <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3 sm:w-4 sm:h-4 shrink-0 text-gray-600">
       <path fillRule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" />
     </svg>
   );
 }
 function CrossIcon() {
   return (
-    <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 shrink-0 text-gray-700 mt-0.5">
+    <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0 text-gray-700">
       <path d="M5.28 4.22a.75.75 0 0 0-1.06 1.06L6.94 8l-2.72 2.72a.75.75 0 1 0 1.06 1.06L8 9.06l2.72 2.72a.75.75 0 1 0 1.06-1.06L9.06 8l2.72-2.72a.75.75 0 0 0-1.06-1.06L8 6.94 5.28 4.22Z" />
     </svg>
   );
 }
 
 /* ── Comparison helpers ──────────────────────────────────────────────────── */
-const comparisonRows: { label: string; free: boolean | string; pro: boolean | string; elite: boolean | string }[] = [
-  { label: 'Analyses / mois',               free: `${MAX_ANALYSES_FREE}`,        pro: `${MAX_ANALYSES_PRO}`,      elite: `${MAX_ANALYSES_ELITE}` },
-  { label: 'Score de viralité',             free: true,  pro: true,  elite: true },
-  { label: 'Hook · Montage · Rétention',    free: true,  pro: true,  elite: true },
-  { label: 'Recommandations IA',            free: 'Basiques', pro: 'Avancées', elite: 'Complètes' },
-  { label: 'Dashboard coach IA',            free: true,  pro: true,  elite: true },
-  { label: "Plan d'action personnalisé",    free: false, pro: true,  elite: true },
-  { label: 'Générateur de hooks',           free: false, pro: `${MAX_HOOKS_PRO}/mois`, elite: `${MAX_HOOKS_ELITE}/mois` },
-  { label: 'Historique',                    free: false, pro: `${HISTORY_LIMITS.pro} analyses`, elite: 'Illimité' },
-  { label: 'Stratégie Elite & Insights',    free: false, pro: false, elite: true },
-  { label: 'Support',                       free: 'Email', pro: 'Email', elite: 'Prioritaire' },
+const comparisonRows: {
+  label: string;
+  mobileLabel: string;
+  free: boolean | string;
+  pro: boolean | string;
+  elite: boolean | string;
+  /** Texte court pour cellules texte sur très petit écran */
+  mobileFree?: string;
+  mobilePro?: string;
+  mobileElite?: string;
+}[] = [
+  { label: 'Analyses / mois', mobileLabel: 'Analyses', free: `${MAX_ANALYSES_FREE}`, pro: `${MAX_ANALYSES_PRO}`, elite: `${MAX_ANALYSES_ELITE}` },
+  { label: 'Score de viralité', mobileLabel: 'Score', free: true, pro: true, elite: true },
+  { label: 'Hook · Montage · Rétention', mobileLabel: 'H·M·R', free: true, pro: true, elite: true },
+  { label: 'Recommandations IA', mobileLabel: 'Reco. IA', free: 'Basiques', pro: 'Avancées', elite: 'Complètes', mobileFree: 'Bas.', mobilePro: 'Av.', mobileElite: 'Compl.' },
+  { label: 'Dashboard coach IA', mobileLabel: 'Dashboard', free: true, pro: true, elite: true },
+  { label: "Plan d'action personnalisé", mobileLabel: 'Plan act.', free: false, pro: true, elite: true },
+  { label: 'Générateur de hooks', mobileLabel: 'Hooks', free: false, pro: `${MAX_HOOKS_PRO}/mois`, elite: `${MAX_HOOKS_ELITE}/mois`, mobilePro: `${MAX_HOOKS_PRO}/m`, mobileElite: `${MAX_HOOKS_ELITE}/m` },
+  { label: 'Historique', mobileLabel: 'Historique', free: false, pro: `${HISTORY_LIMITS.pro} analyses`, elite: 'Illimité', mobilePro: `${HISTORY_LIMITS.pro}`, mobileElite: '∞' },
+  { label: 'Stratégie Elite & Insights', mobileLabel: 'Strat. Elite', free: false, pro: false, elite: true },
+  { label: 'Support', mobileLabel: 'Support', free: 'Email', pro: 'Email', elite: 'Prioritaire', mobileElite: 'Prior.' },
 ];
 
-function CellVal({ v, accent }: { v: boolean | string; accent?: 'fuchsia' | 'violet' }) {
+function CellVal({
+  v,
+  accent,
+  mobileText,
+}: {
+  v: boolean | string;
+  accent?: 'fuchsia' | 'violet';
+  /** Libellé court sur mobile (masqué à partir de sm) */
+  mobileText?: string;
+}) {
   if (v === false) return <CrossIcon />;
   if (v === true) {
     if (accent === 'violet') return <CheckViolet />;
@@ -64,7 +83,17 @@ function CellVal({ v, accent }: { v: boolean | string; accent?: 'fuchsia' | 'vio
     return <CheckGray />;
   }
   const cls = accent === 'violet' ? 'text-violet-300' : accent === 'fuchsia' ? 'text-vn-fuchsia' : 'text-gray-400';
-  return <span className={`text-[12px] font-semibold ${cls}`}>{v}</span>;
+  const short = mobileText ?? v;
+  return (
+    <>
+      <span className={`sm:hidden font-semibold leading-[1.15] text-center block max-w-full break-words ${cls} text-[8px]`}>
+        {short}
+      </span>
+      <span className={`hidden sm:block font-semibold leading-tight text-center ${cls} text-[12px]`}>
+        {v}
+      </span>
+    </>
+  );
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
@@ -452,47 +481,61 @@ export default function PricingPage() {
             </h2>
           </div>
 
-          {/* Scrollable wrapper on mobile */}
-          <div className="overflow-x-auto -mx-5 sm:mx-0 px-5 sm:px-0">
-            <div className="min-w-[540px] rounded-2xl border border-white/[0.07] overflow-hidden">
+          {/* Tableau fluide pleine largeur (sans scroll horizontal) */}
+          <div className="w-full min-w-0 -mx-1 px-1 sm:mx-0 sm:px-0">
+            <div className="w-full min-w-0 rounded-2xl border border-white/[0.07] overflow-hidden">
               {/* Header */}
-              <div className="grid grid-cols-4">
-                <div className="p-4 sm:p-5 bg-white/[0.02] border-b border-r border-white/[0.06]">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-600">Fonctionnalité</p>
+              <div className="grid w-full min-w-0 grid-cols-[minmax(0,1.05fr)_minmax(0,0.72fr)_minmax(0,0.72fr)_minmax(0,0.72fr)] sm:grid-cols-4">
+                <div className="min-w-0 p-2 sm:p-5 bg-white/[0.02] border-b border-r border-white/[0.06] flex items-center">
+                  <p className="text-[7px] sm:text-[10px] font-bold uppercase tracking-[0.08em] sm:tracking-widest text-gray-600 leading-tight">
+                    <span className="sm:hidden">Fonct.</span>
+                    <span className="hidden sm:inline">Fonctionnalité</span>
+                  </p>
                 </div>
-                <div className="p-4 sm:p-5 bg-white/[0.02] border-b border-r border-white/[0.06] text-center">
-                  <p className="text-[12px] font-bold text-gray-500">Starter</p>
-                  <p className="text-[10px] text-gray-700 mt-0.5">Gratuit</p>
+                <div className="min-w-0 p-2 sm:p-5 bg-white/[0.02] border-b border-r border-white/[0.06] text-center flex flex-col justify-center">
+                  <p className="text-[10px] sm:text-[12px] font-bold text-gray-500 leading-tight">Starter</p>
+                  <p className="text-[8px] sm:text-[10px] text-gray-700 mt-0.5 leading-tight">Gratuit</p>
                 </div>
-                <div className="p-4 sm:p-5 border-b border-r border-vn-fuchsia/20 text-center bg-gradient-to-b from-vn-fuchsia/[0.07] to-vn-fuchsia/[0.03] relative">
+                <div className="min-w-0 p-2 sm:p-5 border-b border-r border-vn-fuchsia/20 text-center bg-gradient-to-b from-vn-fuchsia/[0.07] to-vn-fuchsia/[0.03] relative flex flex-col justify-center">
                   <div className="absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-vn-fuchsia/60 to-transparent" />
-                  <p className="text-[12px] font-bold text-vn-fuchsia">Pro</p>
-                  <p className="text-[10px] text-vn-fuchsia/50 mt-0.5">{DISPLAY_CATALOG_PRO_EUR}€/mois</p>
+                  <p className="text-[10px] sm:text-[12px] font-bold text-vn-fuchsia leading-tight">Pro</p>
+                  <p className="text-[8px] text-vn-fuchsia/50 mt-0.5 leading-tight tabular-nums sm:text-[10px]">
+                    <span className="sm:hidden">{DISPLAY_CATALOG_PRO_EUR}€/m</span>
+                    <span className="hidden sm:inline">{DISPLAY_CATALOG_PRO_EUR}€/mois</span>
+                  </p>
                 </div>
-                <div className="p-4 sm:p-5 bg-white/[0.02] border-b border-white/[0.06] text-center">
-                  <p className="text-[12px] font-bold text-violet-300">Elite</p>
-                  <p className="text-[10px] text-gray-600 mt-0.5">{DISPLAY_CATALOG_ELITE_EUR}€/mois</p>
+                <div className="min-w-0 p-2 sm:p-5 bg-white/[0.02] border-b border-white/[0.06] text-center flex flex-col justify-center">
+                  <p className="text-[10px] sm:text-[12px] font-bold text-violet-300 leading-tight">Elite</p>
+                  <p className="text-[8px] text-gray-600 mt-0.5 leading-tight tabular-nums sm:text-[10px]">
+                    <span className="sm:hidden">{DISPLAY_CATALOG_ELITE_EUR}€/m</span>
+                    <span className="hidden sm:inline">{DISPLAY_CATALOG_ELITE_EUR}€/mois</span>
+                  </p>
                 </div>
               </div>
 
               {/* Rows */}
               {comparisonRows.map((row, i) => (
-                <div key={i} className={`grid grid-cols-4 ${i < comparisonRows.length - 1 ? 'border-b border-white/[0.04]' : ''} ${i % 2 !== 0 ? 'bg-white/[0.01]' : ''}`}>
-                  <div className="px-4 sm:px-5 py-3 sm:py-3.5 text-[11px] sm:text-[12px] text-gray-400 border-r border-white/[0.04] flex items-center font-medium">{row.label}</div>
-                  <div className="px-3 sm:px-5 py-3 sm:py-3.5 flex items-center justify-center border-r border-white/[0.04]">
-                    <CellVal v={row.free} />
+                <div
+                  key={i}
+                  className={`grid w-full min-w-0 grid-cols-[minmax(0,1.05fr)_minmax(0,0.72fr)_minmax(0,0.72fr)_minmax(0,0.72fr)] sm:grid-cols-4 ${i < comparisonRows.length - 1 ? 'border-b border-white/[0.04]' : ''} ${i % 2 !== 0 ? 'bg-white/[0.01]' : ''}`}
+                >
+                  <div className="min-w-0 px-1.5 sm:px-5 py-2 sm:py-3.5 text-[8px] sm:text-[12px] text-gray-400 border-r border-white/[0.04] flex items-center font-medium leading-snug">
+                    <span className="sm:hidden">{row.mobileLabel}</span>
+                    <span className="hidden sm:inline">{row.label}</span>
                   </div>
-                  <div className="px-3 sm:px-5 py-3 sm:py-3.5 flex items-center justify-center border-r border-vn-fuchsia/[0.08] bg-vn-fuchsia/[0.03]">
-                    <CellVal v={row.pro} accent="fuchsia" />
+                  <div className="min-w-0 px-1 sm:px-5 py-2 sm:py-3.5 flex items-center justify-center border-r border-white/[0.04]">
+                    <CellVal v={row.free} mobileText={row.mobileFree} />
                   </div>
-                  <div className="px-3 sm:px-5 py-3 sm:py-3.5 flex items-center justify-center">
-                    <CellVal v={row.elite} accent="violet" />
+                  <div className="min-w-0 px-1 sm:px-5 py-2 sm:py-3.5 flex items-center justify-center border-r border-vn-fuchsia/[0.08] bg-vn-fuchsia/[0.03]">
+                    <CellVal v={row.pro} accent="fuchsia" mobileText={row.mobilePro} />
+                  </div>
+                  <div className="min-w-0 px-1 sm:px-5 py-2 sm:py-3.5 flex items-center justify-center">
+                    <CellVal v={row.elite} accent="violet" mobileText={row.mobileElite} />
                   </div>
                 </div>
               ))}
             </div>
           </div>
-          <p className="text-[11px] text-gray-700 text-center sm:hidden mt-2">← Faire glisser pour voir tout le tableau</p>
         </section>
 
         {/* ═══════════════════════════════════════════════ */}
