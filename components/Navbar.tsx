@@ -26,7 +26,7 @@ export default async function Navbar() {
           <Link href="/#fonctions" className={linkCls}>
             Comment ça marche
           </Link>
-          <Link href="/#gains" className={linkCls}>
+          <Link href="/features" className={linkCls}>
             Fonctionnalités
           </Link>
           <Link href="/pricing" className={linkCls}>

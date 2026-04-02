@@ -637,6 +637,7 @@ export default function HomeLanding() {
             {/* FIX: added Changelog link in footer nav */}
             <nav className="flex flex-wrap gap-x-8 gap-y-3 text-[13px] text-gray-600">
               <Link href="/analyzer" className="hover:text-white transition-colors">Analyser</Link>
+              <Link href="/features" className="hover:text-white transition-colors">Fonctionnalités</Link>
               <Link href="/hook-generator" className="hover:text-white transition-colors">Hooks</Link>
               <Link href="/pricing" className="hover:text-white transition-colors">Tarifs</Link>
               <Link href="/changelog" className="hover:text-white transition-colors">Nouveautés</Link>
