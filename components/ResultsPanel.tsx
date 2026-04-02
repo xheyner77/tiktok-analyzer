@@ -175,9 +175,9 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
 
       <div className="h-px bg-gradient-to-r from-transparent via-white/12 to-transparent" />
 
-      {/* 1. HERO */}
+      {/* 1. HERO — centré sur mobile, aligné à gauche à partir de sm */}
       <div className="px-7 sm:px-10 pt-10 pb-8">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-7 sm:gap-10">
+        <div className="flex flex-col items-center text-center sm:flex-row sm:items-center sm:text-left gap-7 sm:gap-10">
 
           {/* Gauge ring */}
           <div className="relative shrink-0">
@@ -191,9 +191,9 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
             </div>
           </div>
 
-          {/* Right — status + headline + pillar scores */}
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-2 mb-4">
+          {/* Right — status + headline + mini-scores piliers */}
+          <div className="flex-1 min-w-0 w-full flex flex-col items-center sm:items-start">
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-4">
               <span className={`text-[10px] font-bold px-3 py-1 rounded-full ${vb.cls}`}>{vb.label}</span>
               {data.analysisSource === 'vision_upload' && (
                 <span className="text-[9px] font-bold px-2.5 py-0.5 rounded-full bg-vn-fuchsia/15 text-vn-fuchsia border border-vn-fuchsia/20 uppercase tracking-wide">
@@ -207,16 +207,16 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
               )}
             </div>
 
-            <p className="text-[1.25rem] sm:text-[1.45rem] font-bold text-white leading-tight mb-6 max-w-lg">
+            <p className="text-[1.25rem] sm:text-[1.45rem] font-bold text-white leading-tight mb-6 max-w-lg mx-auto sm:mx-0">
               {summary}
             </p>
 
-            <div className="flex gap-7 sm:gap-10">
+            <div className="flex gap-7 sm:gap-10 justify-center sm:justify-start">
               {pillars.map(({ title, s }) => {
                 const score = s?.score ?? 0;
                 const c = scoreColors(score);
                 return (
-                  <div key={title}>
+                  <div key={title} className="text-center sm:text-left">
                     <p className={`${label9} mb-1`}>{title}</p>
                     <p className="text-[1.75rem] font-black leading-none tabular-nums"
                       style={{ color: c.hex }}>{score}</p>
@@ -233,17 +233,17 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
       {/* 2. PROBLÈME PRINCIPAL + PLAN D'ACTION */}
       <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-white/[0.06]">
 
-        <div className="px-7 sm:px-10 py-8">
+        <div className="px-7 sm:px-10 py-8 text-center sm:text-left">
           <p className={`${label9} mb-5`}>Problème principal</p>
-          <div className="flex items-start gap-4">
-            <div className="w-0.5 self-stretch rounded-full bg-red-500/50 shrink-0" />
-            <p className="text-[15px] font-semibold text-white leading-snug">{mainProb}</p>
+          <div className="flex items-start gap-4 justify-center sm:justify-start">
+            <div className="w-0.5 self-stretch rounded-full bg-red-500/50 shrink-0 hidden sm:block" aria-hidden />
+            <p className="text-[15px] font-semibold text-white leading-snug max-w-xl sm:max-w-none">{mainProb}</p>
           </div>
         </div>
 
-        <div className="px-7 sm:px-10 py-8">
+        <div className="px-7 sm:px-10 py-8 text-center sm:text-left">
           <p className={`${label9} mb-5`}>À corriger maintenant</p>
-          <ol className="space-y-3">
+          <ol className="space-y-3 text-left max-w-lg mx-auto sm:max-w-none sm:mx-0">
             {visible.map((imp, i) => (
               <li key={i} className="flex items-start gap-3.5">
                 <span className="text-[11px] font-black text-gray-700 shrink-0 w-4 mt-px">{i + 1}</span>
@@ -254,25 +254,27 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
 
           {/* Locked extra recommendations for free users */}
           {plan === 'free' && locked > 0 && (
-            <div className="relative mt-4 rounded-xl overflow-hidden border border-vn-fuchsia/20 bg-gradient-to-br from-vn-fuchsia/[0.04] to-transparent">
-              {/* Blurred fake items */}
-              <div className="blur-sm pointer-events-none select-none opacity-35 p-4 space-y-3" aria-hidden>
+            <div className="relative mt-5 rounded-2xl overflow-hidden border border-vn-fuchsia/25 bg-[#08080f] min-h-[168px]">
+              <div className="blur-sm pointer-events-none select-none opacity-30 p-5 space-y-3 min-h-[168px]" aria-hidden>
                 {Array.from({ length: Math.min(locked, 3) }).map((_, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <span className="text-[11px] font-black text-gray-700 shrink-0 w-4">{VISIBLE_FREE + i + 1}</span>
-                    <div className="h-2.5 rounded-full bg-gray-600 mt-1" style={{ width: `${78 - i * 14}%` }} />
+                    <div className="h-2.5 rounded-full bg-gray-600 mt-1 flex-1 max-w-[90%]" />
                   </div>
                 ))}
               </div>
-              {/* Overlay */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-t from-[#0d0d12]/95 via-[#0d0d12]/75 to-transparent px-4 py-4">
-                <span className="text-[9px] font-bold px-2.5 py-0.5 rounded-full bg-vn-fuchsia/20 text-vn-fuchsia border border-vn-fuchsia/35 uppercase tracking-widest mb-2">Plan Pro</span>
-                <p className="text-[12px] font-bold text-white text-center mb-3">
-                  +{locked} recommandation{locked > 1 ? 's' : ''} débloquée{locked > 1 ? 's' : ''} en Pro
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-5 py-8 gap-3 bg-[#0d0d12]/[0.97]">
+                <span className="text-[9px] font-bold px-3 py-1 rounded-full bg-vn-fuchsia/18 text-vn-fuchsia border border-vn-fuchsia/35 uppercase tracking-[0.14em]">
+                  Plan Pro
+                </span>
+                <p className="text-[13px] font-bold text-white leading-snug max-w-[240px]">
+                  +{locked} recommandation{locked > 1 ? 's' : ''} en plus avec Pro
                 </p>
-                <Link href="/pricing"
-                  className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-4 py-2 rounded-lg bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_4px_16px_-4px_rgba(232,121,249,0.4)]">
-                  ⭐ Débloquer avec Pro →
+                <Link
+                  href="/pricing"
+                  className="inline-flex items-center justify-center gap-1.5 text-[12px] font-semibold px-5 py-2.5 rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_6px_20px_-6px_rgba(232,121,249,0.45)] mt-1"
+                >
+                  ⭐ Débloquer avec Pro
                 </Link>
               </div>
             </div>
@@ -290,30 +292,33 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
             const score = s?.score ?? 0;
             const c     = scoreColors(score);
             return (
-              <div key={title} className="flex flex-col gap-0">
-                <div className="flex items-end gap-3 mb-3">
+              <div key={title} className="flex flex-col gap-0 items-center text-center md:items-stretch md:text-left max-w-md mx-auto md:max-w-none md:mx-0 w-full">
+                <div className="flex items-end gap-3 mb-3 w-full justify-center md:justify-start">
                   <span className="text-[2.8rem] font-black leading-none tabular-nums"
                     style={{ color: c.hex, textShadow: `0 0 28px ${c.glow}` }}>{score}</span>
-                  <div className="flex-1 pb-1">
+                  <div className="flex-1 min-w-0 max-w-[200px] md:max-w-none pb-1">
                     <p className="text-[12px] font-bold text-white mb-2">{title}</p>
                     <PBar pct={score} cls={scoreBarCls(score)} />
                   </div>
                 </div>
 
                 {(s?.strengths?.length ?? 0) > 0 && (
-                  <div className="mt-3 space-y-1.5">
+                  <div className="mt-3 space-y-1.5 w-full max-w-sm mx-auto md:mx-0 text-left">
                     {(s?.strengths ?? []).slice(0, pillarDetailCap).map((f, i) => (
                       <p key={i} className="text-[12px] text-gray-400 leading-snug">
                         <span className="text-emerald-400 font-bold mr-1.5">✓</span>{f}
                       </p>
                     ))}
                     {plan === 'free' && (s?.strengths?.length ?? 0) > pillarDetailCap && (
-                      <div className="relative rounded-lg overflow-hidden border border-white/[0.06] mt-1">
-                        <div className="blur-sm pointer-events-none select-none opacity-30 px-1 py-2" aria-hidden>
-                          <p className="text-[12px] text-gray-500 truncate">✓ …</p>
+                      <div className="relative mt-2 rounded-xl overflow-hidden border border-vn-fuchsia/15 min-h-[4.5rem]">
+                        <div className="blur-sm pointer-events-none select-none opacity-25 px-4 py-4 min-h-[4.5rem]" aria-hidden>
+                          <p className="text-[11px] text-gray-500 leading-relaxed">✓ Autres forces visibles sur ta vidéo…</p>
                         </div>
-                        <div className="absolute inset-0 flex items-center justify-center bg-[#0d0d12]/88">
-                          <span className="text-[9px] font-bold text-vn-fuchsia/90 uppercase tracking-wider">+ Pro</span>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center gap-1.5 px-3 py-3 bg-[#0d0d12]/[0.96]">
+                          <span className="text-[9px] font-bold text-vn-fuchsia uppercase tracking-[0.12em]">Plan Pro</span>
+                          <Link href="/pricing" className="text-[10px] font-semibold text-white/90 hover:text-white">
+                            Voir tout →
+                          </Link>
                         </div>
                       </div>
                     )}
@@ -321,19 +326,22 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
                 )}
 
                 {(s?.weaknesses?.length ?? 0) > 0 && (
-                  <div className="mt-2 space-y-1.5">
+                  <div className="mt-2 space-y-1.5 w-full max-w-sm mx-auto md:mx-0 text-left">
                     {(s?.weaknesses ?? []).slice(0, pillarDetailCap).map((w, i) => (
                       <p key={i} className="text-[12px] text-gray-500 leading-snug">
                         <span className="text-red-400 font-bold mr-1.5">×</span>{w}
                       </p>
                     ))}
                     {plan === 'free' && (s?.weaknesses?.length ?? 0) > pillarDetailCap && (
-                      <div className="relative rounded-lg overflow-hidden border border-white/[0.06] mt-1">
-                        <div className="blur-sm pointer-events-none select-none opacity-30 px-1 py-2" aria-hidden>
-                          <p className="text-[12px] text-gray-500 truncate">× …</p>
+                      <div className="relative mt-2 rounded-xl overflow-hidden border border-vn-fuchsia/15 min-h-[4.5rem]">
+                        <div className="blur-sm pointer-events-none select-none opacity-25 px-4 py-4 min-h-[4.5rem]" aria-hidden>
+                          <p className="text-[11px] text-gray-500 leading-relaxed">× Autres points à corriger…</p>
                         </div>
-                        <div className="absolute inset-0 flex items-center justify-center bg-[#0d0d12]/88">
-                          <span className="text-[9px] font-bold text-vn-fuchsia/90 uppercase tracking-wider">+ Pro</span>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center gap-1.5 px-3 py-3 bg-[#0d0d12]/[0.96]">
+                          <span className="text-[9px] font-bold text-vn-fuchsia uppercase tracking-[0.12em]">Plan Pro</span>
+                          <Link href="/pricing" className="text-[10px] font-semibold text-white/90 hover:text-white">
+                            Voir tout →
+                          </Link>
                         </div>
                       </div>
                     )}
@@ -342,14 +350,19 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
 
                 {reco && (
                   plan === 'free' ? (
-                    <div className="relative mt-4 pt-3 border-t border-white/[0.05] rounded-b-lg overflow-hidden min-h-[3.25rem]">
-                      <p className="text-[12px] text-vn-violet/80 leading-snug blur-sm select-none opacity-35 pointer-events-none" aria-hidden>
-                        → {reco}
-                      </p>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-gradient-to-t from-[#0d0d12]/95 via-[#0d0d12]/80 to-transparent px-2">
-                        <span className="text-[9px] font-bold text-vn-fuchsia uppercase tracking-widest">Plan Pro</span>
-                        <Link href="/pricing" className="text-[10px] font-semibold text-white hover:text-vn-fuchsia transition-colors">
-                          Voir la reco pilier →
+                    <div className="relative mt-4 rounded-xl overflow-hidden border border-white/[0.08] min-h-[5.5rem]">
+                      <div className="border-t border-white/[0.06] pt-0 min-h-[5.5rem]">
+                        <p className="text-[12px] text-vn-violet/70 leading-snug blur-sm select-none opacity-30 pointer-events-none px-4 py-5" aria-hidden>
+                          → {reco}
+                        </p>
+                      </div>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center text-center gap-2 px-4 py-5 bg-[#0d0d12]/[0.97]">
+                        <span className="text-[9px] font-bold text-vn-fuchsia uppercase tracking-[0.12em]">Reco pilier · Pro</span>
+                        <Link
+                          href="/pricing"
+                          className="inline-flex items-center justify-center text-[11px] font-semibold px-4 py-2 rounded-lg bg-gradient-to-r from-vn-fuchsia/90 to-vn-indigo/90 text-white hover:brightness-110 transition-all"
+                        >
+                          Débloquer
                         </Link>
                       </div>
                     </div>
@@ -369,8 +382,8 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
       {hasStats && (
         <>
           <Hr />
-          <div className="px-7 sm:px-10 py-8">
-            <div className="flex items-center justify-between mb-6">
+          <div className="px-7 sm:px-10 py-8 text-center sm:text-left">
+            <div className="flex flex-col sm:flex-row items-center sm:items-center justify-center sm:justify-between gap-2 mb-6">
               <p className={label9}>Stats publiques</p>
               <span className="text-[9px] text-gray-700">
                 {data.observedStatsSource === 'live_page'   ? 'Source\u00a0: TikTok' :
@@ -379,7 +392,7 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
               </span>
             </div>
 
-            <div className="flex flex-wrap gap-8 sm:gap-12 mb-6">
+            <div className="flex flex-wrap gap-8 sm:gap-12 mb-6 justify-center sm:justify-start">
               {[
                 { label: 'Vues',         val: fmt(metrics.views)    },
                 { label: 'Likes',        val: fmt(metrics.likes)    },
@@ -395,7 +408,7 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
               ))}
             </div>
 
-            <div className="flex items-center gap-4 max-w-sm">
+            <div className="flex items-center gap-4 max-w-sm mx-auto sm:mx-0">
               <span className="text-[1.15rem] font-black shrink-0" style={{ color: bench.hex }}>
                 Top {bench.pct}%
               </span>
@@ -413,20 +426,25 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
 
             {data.comparativeInsight && (
               plan === 'free' ? (
-                <div className="relative mt-3 rounded-xl overflow-hidden border border-white/[0.07] max-w-lg">
-                  <p className="text-[12px] text-gray-500 leading-relaxed px-3 py-3 blur-md select-none opacity-40 pointer-events-none" aria-hidden>
+                <div className="relative mt-5 rounded-2xl overflow-hidden border border-white/[0.1] max-w-lg mx-auto sm:mx-0 min-h-[156px] bg-[#08080f]">
+                  <p className="text-[12px] text-gray-500 leading-relaxed px-4 py-8 blur-md select-none opacity-35 pointer-events-none min-h-[156px]" aria-hidden>
                     {data.comparativeInsight}
                   </p>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-b from-[#0d0d12]/90 via-[#0d0d12]/85 to-[#0d0d12]/90 px-4 py-4">
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-vn-fuchsia">Analyse comparative · Pro</span>
-                    <p className="text-[11px] text-gray-500 text-center leading-snug">Contexte stats, benchmark et lecture algo complète.</p>
-                    <Link href="/pricing" className="text-[11px] font-semibold text-white bg-gradient-to-r from-vn-fuchsia to-vn-indigo px-3 py-1.5 rounded-lg hover:brightness-110">
-                      Débloquer →
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center gap-2.5 px-5 py-8 bg-[#0d0d12]/[0.97]">
+                    <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-vn-fuchsia">Analyse comparative · Pro</span>
+                    <p className="text-[11px] text-gray-400 leading-relaxed max-w-[220px]">
+                      Contexte stats, benchmark et lecture algo complète.
+                    </p>
+                    <Link
+                      href="/pricing"
+                      className="inline-flex items-center justify-center text-[11px] font-semibold px-4 py-2 rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:brightness-110 transition-all shadow-[0_4px_16px_-4px_rgba(232,121,249,0.35)] mt-1"
+                    >
+                      Débloquer
                     </Link>
                   </div>
                 </div>
               ) : (
-                <p className="mt-3 text-[12px] text-gray-500 leading-relaxed max-w-lg">
+                <p className="mt-3 text-[12px] text-gray-500 leading-relaxed max-w-lg mx-auto sm:mx-0">
                   {data.comparativeInsight}
                 </p>
               )
@@ -440,23 +458,26 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
       {/* 5. VERDICT + STRATÉGIE */}
       <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-white/[0.06]">
 
-        <div className="px-7 sm:px-10 py-8">
+        <div className="px-7 sm:px-10 py-8 text-center sm:text-left">
           {data.finalVerdict ? (
-            <p className="text-[14px] text-gray-300 leading-relaxed">{data.finalVerdict}</p>
+            <p className="text-[14px] text-gray-300 leading-relaxed max-w-xl mx-auto sm:mx-0">{data.finalVerdict}</p>
           ) : (
             <p className="text-[14px] text-gray-500">Voir l&apos;analyse détaillée ci-dessus.</p>
           )}
           {data.comparativePriority && (
             plan === 'free' ? (
-              <div className="relative mt-3 rounded-xl overflow-hidden border border-vn-violet/15 min-h-[3rem]">
-                <p className="text-[12px] text-vn-violet/80 leading-snug px-1 blur-md select-none opacity-35 pointer-events-none" aria-hidden>
+              <div className="relative mt-4 rounded-2xl overflow-hidden border border-vn-violet/20 min-h-[104px] max-w-xl mx-auto sm:mx-0 bg-[#08080f]">
+                <p className="text-[12px] text-vn-violet/70 leading-snug px-4 py-6 blur-md select-none opacity-30 pointer-events-none min-h-[104px]" aria-hidden>
                   → {data.comparativePriority}
                 </p>
-                <div className="absolute inset-0 flex items-center justify-center bg-[#0d0d12]/92 px-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[9px] font-bold text-vn-violet uppercase tracking-wider">Priorité Pro</span>
-                    <Link href="/pricing" className="text-[10px] font-semibold text-white underline-offset-2 hover:underline">Débloquer</Link>
-                  </div>
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center gap-2.5 px-5 py-6 bg-[#0d0d12]/[0.97]">
+                  <span className="text-[9px] font-bold text-vn-violet uppercase tracking-[0.12em]">Action prioritaire · Pro</span>
+                  <Link
+                    href="/pricing"
+                    className="inline-flex items-center justify-center text-[11px] font-semibold px-4 py-2 rounded-xl bg-gradient-to-r from-vn-violet to-vn-indigo text-white hover:brightness-110 transition-all"
+                  >
+                    Débloquer
+                  </Link>
                 </div>
               </div>
             ) : (
@@ -472,14 +493,22 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
           )}
           {typeof data.observedPerformanceScore === 'number' && (
             plan === 'free' ? (
-              <div className="relative mt-4 rounded-xl overflow-hidden border border-white/[0.06] py-3 px-4 min-h-[4.5rem]">
-                <div className="blur-md select-none opacity-30 pointer-events-none flex items-baseline gap-2" aria-hidden>
-                  <span className="text-[2.2rem] font-black text-white leading-none">00</span>
-                  <span className="text-[11px] text-gray-500">Performance observée</span>
+              <div className="relative mt-5 rounded-2xl overflow-hidden border border-white/[0.1] min-h-[132px] max-w-md mx-auto sm:mx-0 bg-[#08080f]">
+                <div className="flex flex-col items-center justify-center blur-md select-none opacity-25 pointer-events-none py-10 px-4 min-h-[132px]" aria-hidden>
+                  <span className="text-[2.5rem] font-black text-white leading-none tabular-nums">00</span>
+                  <span className="text-[11px] text-gray-500 mt-1">Performance observée</span>
                 </div>
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0d0d12]/93 gap-1">
-                  <span className="text-[9px] font-bold text-vn-fuchsia uppercase tracking-wider">Score observé · Pro</span>
-                  <Link href="/pricing" className="text-[10px] font-semibold text-gray-300 hover:text-white">Voir les plans</Link>
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center gap-2 px-5 py-8 bg-[#0d0d12]/[0.97]">
+                  <span className="text-[9px] font-bold text-vn-fuchsia uppercase tracking-[0.12em]">Score observé · Pro</span>
+                  <p className="text-[10px] text-gray-500 max-w-[200px] leading-snug">
+                    Compare structure et stats réelles en un seul indicateur.
+                  </p>
+                  <Link
+                    href="/pricing"
+                    className="text-[11px] font-semibold text-white hover:text-vn-fuchsia transition-colors mt-0.5"
+                  >
+                    Voir les plans →
+                  </Link>
                 </div>
               </div>
             ) : (
@@ -497,41 +526,43 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
 
         {/* Stratégie — locked for free users */}
         {plan === 'free' ? (
-          <div className="relative px-7 sm:px-10 py-8 overflow-hidden">
-            {/* Blurred fake content */}
-            <div className="blur-sm pointer-events-none select-none opacity-30" aria-hidden>
+          <div className="relative px-7 sm:px-10 py-8 overflow-hidden min-h-[260px]">
+            <div className="blur-sm pointer-events-none select-none opacity-25 min-h-[220px]" aria-hidden>
               <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-gray-600 mb-5">Stratégie</p>
               <div className="mb-5">
                 <p className="text-[12px] text-gray-500 mb-1">En améliorant le hook</p>
                 <p className="text-[3rem] font-black leading-none text-emerald-400">+22</p>
                 <p className="text-[11px] text-gray-600 mt-1">points de score potentiel</p>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 max-w-xs">
                 <div className="h-3 rounded-full bg-gray-700 w-4/5" />
                 <div className="h-3 rounded-full bg-gray-700 w-3/5" />
                 <div className="h-3 rounded-full bg-gray-700 w-2/3" />
               </div>
             </div>
-            {/* Lock overlay */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-t from-[#0d0d12]/97 via-[#0d0d12]/82 to-transparent px-6">
-              <div className="text-center">
-                <div className="w-10 h-10 rounded-xl bg-vn-fuchsia/15 border border-vn-fuchsia/25 flex items-center justify-center mx-auto mb-3">
-                  <svg viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-vn-fuchsia">
-                    <path fillRule="evenodd" d="M8 1a3.5 3.5 0 0 0-3.5 3.5V7A1.5 1.5 0 0 0 3 8.5v5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 11.5 7V4.5A3.5 3.5 0 0 0 8 1Zm2 6V4.5a2 2 0 1 0-4 0V7h4Z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <span className="inline-block text-[9px] font-bold px-2.5 py-0.5 rounded-full bg-vn-fuchsia/20 text-vn-fuchsia border border-vn-fuchsia/35 uppercase tracking-widest mb-2">Plan Pro</span>
-                <p className="text-[13px] font-bold text-white mb-1">Stratégie personnalisée</p>
-                <p className="text-[11px] text-gray-500 mb-3 max-w-[180px] mx-auto leading-snug">Gain potentiel, plan de progression et stratégie IA.</p>
-                <Link href="/pricing"
-                  className="inline-flex items-center gap-1.5 text-[12px] font-semibold px-5 py-2.5 rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_6px_20px_-6px_rgba(232,121,249,0.45)]">
-                  ⭐ Passer à Pro →
-                </Link>
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6 py-10 bg-[#0d0d12]/[0.96]">
+              <div className="w-11 h-11 rounded-xl bg-vn-fuchsia/15 border border-vn-fuchsia/30 flex items-center justify-center mb-4">
+                <svg viewBox="0 0 16 16" fill="currentColor" className="w-[18px] h-[18px] text-vn-fuchsia" aria-hidden>
+                  <path fillRule="evenodd" d="M8 1a3.5 3.5 0 0 0-3.5 3.5V7A1.5 1.5 0 0 0 3 8.5v5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 11.5 7V4.5A3.5 3.5 0 0 0 8 1Zm2 6V4.5a2 2 0 1 0-4 0V7h4Z" clipRule="evenodd" />
+                </svg>
               </div>
+              <span className="text-[9px] font-bold px-3 py-1 rounded-full bg-vn-fuchsia/18 text-vn-fuchsia border border-vn-fuchsia/35 uppercase tracking-[0.14em] mb-3">
+                Plan Pro
+              </span>
+              <p className="text-[14px] font-bold text-white mb-2">Stratégie personnalisée</p>
+              <p className="text-[11px] text-gray-400 mb-5 max-w-[220px] mx-auto leading-relaxed">
+                Gain potentiel, plan de progression et stratégie IA sur 30 jours.
+              </p>
+              <Link
+                href="/pricing"
+                className="inline-flex items-center justify-center gap-1.5 text-[12px] font-semibold px-6 py-3 rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_8px_24px_-8px_rgba(232,121,249,0.45)]"
+              >
+                ⭐ Passer à Pro
+              </Link>
             </div>
           </div>
         ) : (
-          <div className="px-7 sm:px-10 py-8">
+          <div className="px-7 sm:px-10 py-8 text-center sm:text-left">
             <p className={`${label9} mb-5`}>Stratégie</p>
             {projection && (
               <div className="mb-5">
@@ -562,12 +593,12 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
       {/* 6. ELITE — Insights viraux */}
       <Hr />
       {plan === 'elite' && (data.viralTips?.length ?? 0) > 0 ? (
-        <div className="px-7 sm:px-10 py-8">
-          <div className="flex items-center gap-3 mb-6">
+        <div className="px-7 sm:px-10 py-8 text-center md:text-left">
+          <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-2 sm:gap-3 mb-6">
             <p className={label9}>Insights viraux</p>
             <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-vn-fuchsia/15 text-vn-fuchsia border border-vn-fuchsia/20 uppercase tracking-wide">Elite</span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3 text-left max-w-lg mx-auto md:max-w-none md:mx-0">
             {(data.viralTips ?? []).map((tip, i) => (
               <p key={i} className="text-[12px] text-gray-400 leading-snug">
                 <span className="text-vn-fuchsia font-black mr-2">{i + 1}</span>{tip}
@@ -577,13 +608,13 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
         </div>
       ) : plan !== 'elite' && (
         /* Locked Elite insights preview */
-        <div className="relative overflow-hidden border-t-0">
-          <div className="blur-sm pointer-events-none select-none opacity-35 px-7 sm:px-10 py-8" aria-hidden>
-            <div className="flex items-center gap-3 mb-5">
+        <div className="relative overflow-hidden border-t-0 min-h-[300px]">
+          <div className="blur-sm pointer-events-none select-none opacity-30 px-7 sm:px-10 py-10 min-h-[280px]" aria-hidden>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mb-6">
               <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-gray-600">Insights viraux</p>
               <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-300 border border-violet-500/20 uppercase tracking-wide">Elite</span>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3 max-w-lg mx-auto">
               {['Ton hook crée une tension narrative rare — continue sur cet angle spécifique.','Tes cuts synchronisés sur le beat placent ta vidéo dans le top 8% du format.','La rétention après 15s est anormalement haute — exploite cette fenêtre.','Détecté : pattern de viralité secondaire sur les 3 premières secondes.'].map((tip, i) => (
                 <p key={i} className="text-[12px] text-gray-400 leading-snug">
                   <span className="text-vn-fuchsia font-black mr-2">{i + 1}</span>{tip}
@@ -591,29 +622,34 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
               ))}
             </div>
           </div>
-          {/* Lock overlay */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-t from-[#0d0d12]/97 via-[#0d0d12]/84 to-transparent px-6 py-8">
-            <div className="text-center max-w-xs">
-              <div className="w-11 h-11 rounded-2xl bg-vn-violet/15 border border-vn-violet/30 flex items-center justify-center mx-auto mb-3">
-                <svg viewBox="0 0 16 16" fill="currentColor" className="w-4.5 h-4.5 text-violet-400">
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6 py-10 bg-[#0d0d12]/[0.97]">
+            <div className="max-w-[280px] flex flex-col items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-vn-violet/15 border border-vn-violet/35 flex items-center justify-center">
+                <svg viewBox="0 0 16 16" fill="currentColor" className="w-[18px] h-[18px] text-violet-400" aria-hidden>
                   <path fillRule="evenodd" d="M8 1a3.5 3.5 0 0 0-3.5 3.5V7A1.5 1.5 0 0 0 3 8.5v5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 11.5 7V4.5A3.5 3.5 0 0 0 8 1Zm2 6V4.5a2 2 0 1 0-4 0V7h4Z" clipRule="evenodd" />
                 </svg>
               </div>
-              <span className="inline-block text-[9px] font-bold px-2.5 py-0.5 rounded-full bg-vn-violet/20 text-violet-300 border border-vn-violet/35 uppercase tracking-widest mb-2">Plan Elite</span>
-              <p className="text-[14px] font-black text-white mb-1">Insights viraux exclusifs</p>
-              <p className="text-[11px] text-gray-500 mb-4 leading-snug">
-                Détection des patterns viraux uniques de ta vidéo, benchmarks top créateurs et stratégie de contenu avancée.
+              <span className="text-[9px] font-bold px-3 py-1 rounded-full bg-vn-violet/20 text-violet-300 border border-vn-violet/35 uppercase tracking-[0.14em]">
+                Plan Elite
+              </span>
+              <p className="text-[15px] font-black text-white leading-tight">Insights viraux exclusifs</p>
+              <p className="text-[11px] text-gray-400 leading-relaxed">
+                Patterns viraux, benchmarks top créateurs et stratégie avancée.
               </p>
-              <div className="flex flex-wrap items-center justify-center gap-1.5 mb-4">
-                {['🔮 Patterns viraux','📊 Benchmark top %','⚡ Stratégie avancée'].map((f, i) => (
-                  <span key={i} className="inline-flex items-center gap-1 text-[10px] font-medium px-2.5 py-1 rounded-full bg-vn-violet/10 text-violet-300/80 border border-vn-violet/20">{f}</span>
+              <div className="flex flex-wrap justify-center gap-2 w-full pt-1">
+                {['🔮 Patterns', '📊 Benchmark', '⚡ Stratégie'].map((f, i) => (
+                  <span key={i} className="inline-flex items-center text-[10px] font-medium px-2.5 py-1.5 rounded-full bg-vn-violet/12 text-violet-200/90 border border-vn-violet/25">
+                    {f}
+                  </span>
                 ))}
               </div>
-              <Link href="/pricing"
-                className="inline-flex items-center gap-2 text-[12px] font-bold px-6 py-3 rounded-xl bg-gradient-to-r from-vn-violet to-vn-fuchsia text-white hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_6px_24px_-6px_rgba(139,92,246,0.45)]">
-                🔥 Passer à Elite →
+              <Link
+                href="/pricing"
+                className="inline-flex items-center justify-center gap-2 text-[12px] font-bold px-6 py-3 rounded-xl bg-gradient-to-r from-vn-violet to-vn-fuchsia text-white hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_8px_28px_-8px_rgba(139,92,246,0.5)] mt-2 w-full max-w-[240px]"
+              >
+                🔥 Passer à Elite
               </Link>
-              <p className="text-[10px] text-gray-700 mt-2">Sans engagement · Annule en 1 clic</p>
+              <p className="text-[10px] text-gray-600 pt-1">Sans engagement · Annule en 1 clic</p>
             </div>
           </div>
         </div>
@@ -621,12 +657,12 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
 
       {/* 7. CTA */}
       <Hr />
-      <div className="px-7 sm:px-10 py-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="px-7 sm:px-10 py-8 flex flex-col items-center text-center sm:flex-row sm:items-center sm:text-left justify-between gap-4">
         <div>
           <p className="text-[14px] font-semibold text-white">Prêt à corriger&nbsp;?</p>
           <p className="text-[11px] text-gray-600 mt-0.5">Analyse une autre vidéo ou génère des hooks optimisés.</p>
         </div>
-        <div className="flex gap-2.5 shrink-0 flex-wrap">
+        <div className="flex gap-2.5 shrink-0 flex-wrap justify-center sm:justify-end">
           {onReset ? (
             <button type="button" onClick={onReset}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_8px_24px_-8px_rgba(232,121,249,0.4)]">

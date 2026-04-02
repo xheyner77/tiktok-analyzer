@@ -168,7 +168,7 @@ export default function SignupPage() {
   // Show email confirmation pending screen
   if (pendingConfirmation) {
     return (
-      <main className="min-h-screen flex items-center justify-center px-4">
+      <main className="flex min-h-dvh items-center justify-center px-4 py-8 [padding-bottom:max(2rem,env(safe-area-inset-bottom,0px)+1rem)]">
         <div className="fixed inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-vn-indigo/5 to-vn-fuchsia/5 blur-3xl" />
         </div>
@@ -178,7 +178,7 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4">
+    <main className="flex min-h-dvh items-center justify-center px-4 py-8 [padding-bottom:max(2rem,env(safe-area-inset-bottom,0px)+1rem)]">
       <AuthTransition
         show={showTransition}
         onComplete={() => {

@@ -254,17 +254,15 @@ export default function Home() {
   };
 
   return (
-    <main className="relative min-h-screen overflow-x-hidden">
+    <main className="relative min-h-dvh overflow-x-hidden pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
       <GuestGate show={showGuestGate} pendingUrl={uploadTiktokUrl} onClose={() => setShowGuestGate(false)} />
 
-      {/* Ambient glows + particles */}
-      <div className="absolute top-0 inset-x-0 h-[520px] pointer-events-none overflow-hidden">
-        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[500px] rounded-full bg-gradient-to-br from-vn-fuchsia/10 to-vn-indigo/10 blur-3xl" />
-        <div className="absolute top-1/3 -left-40 w-[400px] h-[400px] rounded-full bg-vn-violet/5 blur-3xl" />
+      {/* Particules légères — pas de halos colorés (évite le voile sur les étoiles du fond) */}
+      <div className="absolute top-0 inset-x-0 h-[420px] pointer-events-none overflow-hidden">
         {isLimitReached && (
-          <div className="absolute -top-64 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-br from-vn-indigo/10 to-vn-fuchsia/6 blur-3xl animate-pulse" />
+          <div className="absolute -top-48 left-1/2 -translate-x-1/2 w-[480px] h-[480px] rounded-full bg-gradient-to-br from-vn-indigo/6 to-vn-fuchsia/4 blur-3xl animate-pulse opacity-80" />
         )}
-        <FloatingParticles count={32} />
+        <FloatingParticles count={24} />
       </div>
 
       {/* ── Narrow header + form ── */}

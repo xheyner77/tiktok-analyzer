@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter, Plus_Jakarta_Sans, Syne } from 'next/font/google';
 import Navbar from '@/components/Navbar';
 import FooterWrapper from '@/components/FooterWrapper';
@@ -25,6 +25,12 @@ const interHero = Inter({
   weight: ['800', '900'],
   display: 'swap',
 });
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://viralynz.com'),
@@ -60,7 +66,7 @@ export default function RootLayout({
       <body className={`${jakarta.className} font-sans bg-vn-bg text-white antialiased`}>
         <StarsBackdrop />
         <Navbar />
-        <div className="relative z-[1] pt-[4.25rem] min-h-[calc(100vh-0px)] overflow-x-hidden">{children}</div>
+        <div className="relative z-[1] pt-[4.25rem] min-h-dvh overflow-x-hidden">{children}</div>
         <FooterWrapper />
       </body>
     </html>
