@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import BrandLogo from '@/components/BrandLogo';
 
 const YEAR = new Date().getFullYear();
 
@@ -30,26 +31,6 @@ function IconInstagram() {
   );
 }
 
-function LogoMark() {
-  return (
-    <div className="flex items-center gap-2">
-      <svg viewBox="0 0 32 32" fill="none" className="w-6 h-6" aria-hidden>
-        <rect width="32" height="32" rx="8" fill="url(#fg)" />
-        <path d="M9 23 L16 9 L23 23" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-        <path d="M11.5 18.5 L20.5 18.5" stroke="white" strokeWidth="2" strokeLinecap="round" />
-        <defs>
-          <linearGradient id="fg" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#e879f9" />
-            <stop offset="1" stopColor="#6366f1" />
-          </linearGradient>
-        </defs>
-      </svg>
-      <span className="text-[17px] font-black text-white tracking-tight">
-        Viral<span className="bg-gradient-to-r from-vn-fuchsia to-vn-indigo bg-clip-text text-transparent">ynz</span>
-      </span>
-    </div>
-  );
-}
 
 export default function Footer() {
   return (
@@ -61,7 +42,7 @@ export default function Footer() {
 
           {/* Brand column */}
           <div className="flex flex-col gap-5">
-            <LogoMark />
+            <BrandLogo />
             <p className="text-[22px] font-black text-white leading-tight tracking-tight max-w-[200px]">
               Lance-toi<br />dès maintenant.
             </p>

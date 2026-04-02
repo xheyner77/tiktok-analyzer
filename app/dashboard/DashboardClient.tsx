@@ -7,7 +7,7 @@ import { createPortal } from 'react-dom';
 import { Plan } from '@/lib/supabase';
 import { AnalysisRow } from '@/lib/analyses';
 import { getScoreTextColor, getRatingColors } from '@/lib/utils';
-import { MAX_ANALYSES_ELITE, MAX_ANALYSES_PRO, MAX_HOOKS_ELITE } from '@/lib/plan-limits';
+import { MAX_ANALYSES_ELITE, MAX_ANALYSES_PRO, MAX_HOOKS_ELITE, MAX_HOOKS_PRO } from '@/lib/plan-limits';
 import { DISPLAY_CATALOG_ELITE_EUR, DISPLAY_CATALOG_PRO_EUR } from '@/lib/stripe-pricing';
 import { waitForBillingPlan } from '@/lib/wait-for-billing-sync';
 
@@ -428,6 +428,149 @@ function AnalysisHistoryPaginated({
   );
 }
 
+/* ── Locked plan section ─────────────────────────────────────────────────── */
+function LockedSection({
+  targetPlan, price, badge, title, subtitle, features,
+}: {
+  targetPlan: 'pro' | 'elite';
+  price: string;
+  badge: string;
+  title: string;
+  subtitle: string;
+  features: { icon: string; text: string }[];
+}) {
+  const isPro = targetPlan === 'pro';
+  return (
+    <div className={`relative rounded-2xl overflow-hidden border ${
+      isPro
+        ? 'border-vn-fuchsia/25 bg-gradient-to-br from-vn-fuchsia/[0.05] to-vn-indigo/[0.03]'
+        : 'border-vn-violet/28 bg-gradient-to-br from-vn-violet/[0.07] to-vn-indigo/[0.04]'
+    }`}>
+      {/* ── Blurred fake preview ── */}
+      <div className="blur-sm pointer-events-none select-none opacity-40 p-5 space-y-3" aria-hidden>
+        {isPro ? (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-xl border border-vn-fuchsia/20 bg-vn-fuchsia/[0.08] p-4">
+                <p className="text-[9px] uppercase tracking-widest text-gray-500 mb-1.5">Priorité du moment</p>
+                <p className="text-sm font-black text-white mb-1">Améliore ton Hook</p>
+                <p className="text-[11px] text-gray-400">Score actuel 48/100</p>
+                <div className="mt-2 h-1.5 rounded-full bg-white/10 w-4/5" />
+              </div>
+              <div className="rounded-xl border border-emerald-400/15 bg-emerald-400/[0.05] p-4">
+                <p className="text-[9px] uppercase tracking-widest text-gray-500 mb-1">Potentiel</p>
+                <p className="text-3xl font-black text-emerald-400">+24</p>
+                <p className="text-[10px] text-gray-500 mt-0.5">pts possibles</p>
+              </div>
+            </div>
+            <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-4">
+              <p className="text-[9px] uppercase tracking-widest text-gray-500 mb-3">Ta progression</p>
+              {(['Hook','Montage','Rétention'] as const).map((l, i) => (
+                <div key={l} className="mb-2 last:mb-0">
+                  <div className="flex justify-between mb-1">
+                    <span className="text-[12px] text-gray-300">{l}</span>
+                    <span className="text-[12px] font-black" style={{color:['#4ade80','#fbbf24','#f87171'][i]}}>{[74,62,48][i]}</span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-white/[0.08]">
+                    <div className="h-full rounded-full" style={{width:`${[74,62,48][i]}%`,background:['#4ade80','#fbbf24','#f87171'][i]}} />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="rounded-xl border border-vn-violet/20 bg-vn-violet/[0.06] p-4">
+              <p className="text-[9px] uppercase tracking-widest text-gray-600 mb-3">Plan d&apos;action</p>
+              {['🎣 Améliore ton Hook — Score 48/100','✂️ Accélère ton montage — plans trop longs','📉 Renforce la rétention à mi-vidéo'].map((a, i) => (
+                <div key={i} className="flex items-start gap-2.5 p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.05] mb-1.5 last:mb-0">
+                  <div className="w-5 h-5 rounded-md bg-vn-violet/20 text-[9px] font-black text-vn-violet flex items-center justify-center shrink-0">{i+1}</div>
+                  <span className="text-[11px] text-gray-400">{a}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="grid grid-cols-3 gap-2">
+              {[{l:'Analyses',v:'200',s:'/mois'},{l:'Hooks',v:'500',s:'/mois'},{l:'Historique',v:'∞',s:'illimité'}].map(({l,v,s})=>(
+                <div key={l} className="rounded-xl border border-vn-violet/20 bg-vn-violet/[0.08] p-3 text-center">
+                  <p className="text-[9px] text-gray-600 uppercase tracking-wide mb-1">{l}</p>
+                  <p className="text-2xl font-black text-violet-300">{v}</p>
+                  <p className="text-[9px] text-gray-600">{s}</p>
+                </div>
+              ))}
+            </div>
+            <div className="rounded-xl border border-vn-violet/15 bg-vn-violet/[0.04] p-4">
+              <p className="text-[9px] uppercase tracking-widest text-violet-400/60 mb-2.5">Stratégie &amp; Insights viraux</p>
+              {['Détection des trends avant qu\'ils explosent','Analyse comparative vs top créateurs de ta niche','Stratégie de contenu IA personnalisée semaine par semaine','Support prioritaire — réponse en moins de 24h'].map(f=>(
+                <div key={f} className="flex items-center gap-2 mb-2">
+                  <div className="w-1.5 h-1.5 rounded-full shrink-0 bg-violet-400" />
+                  <p className="text-[11px] text-gray-400">{f}</p>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* ── Lock overlay ── */}
+      <div className={`absolute inset-0 flex flex-col items-center justify-center p-6 bg-gradient-to-t ${
+        isPro
+          ? 'from-[#0b0810]/97 via-[#0b0810]/82 to-[#0b0810]/10'
+          : 'from-[#080b14]/97 via-[#080b14]/84 to-[#080b14]/10'
+      }`}>
+        <div className="text-center max-w-sm w-full">
+          {/* Lock icon */}
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4 ${
+            isPro ? 'bg-vn-fuchsia/15 border border-vn-fuchsia/30' : 'bg-vn-violet/15 border border-vn-violet/30'
+          }`}>
+            <svg viewBox="0 0 16 16" fill="currentColor" className={`w-5 h-5 ${isPro ? 'text-vn-fuchsia' : 'text-violet-400'}`}>
+              <path fillRule="evenodd" d="M8 1a3.5 3.5 0 0 0-3.5 3.5V7A1.5 1.5 0 0 0 3 8.5v5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 11.5 7V4.5A3.5 3.5 0 0 0 8 1Zm2 6V4.5a2 2 0 1 0-4 0V7h4Z" clipRule="evenodd" />
+            </svg>
+          </div>
+
+          {/* Badge */}
+          <span className={`inline-block text-[10px] font-bold px-3 py-1 rounded-full border uppercase tracking-[0.15em] mb-3 ${
+            isPro
+              ? 'bg-vn-fuchsia/20 text-vn-fuchsia border-vn-fuchsia/35'
+              : 'bg-vn-violet/20 text-violet-300 border-vn-violet/35'
+          }`}>{badge}</span>
+
+          <h3 className="text-[1.15rem] font-black text-white mb-2 leading-snug">{title}</h3>
+          <p className="text-[13px] text-gray-400 leading-relaxed mb-4">{subtitle}</p>
+
+          {/* Feature pills */}
+          <div className="flex flex-wrap items-center justify-center gap-1.5 mb-5">
+            {features.map((f, i) => (
+              <span key={i} className={`inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full border ${
+                isPro
+                  ? 'bg-vn-fuchsia/10 text-vn-fuchsia/80 border-vn-fuchsia/20'
+                  : 'bg-vn-violet/10 text-violet-300/80 border-vn-violet/20'
+              }`}>
+                {f.icon} {f.text}
+              </span>
+            ))}
+          </div>
+
+          {/* CTA */}
+          <Link
+            href="/pricing"
+            className={`inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r hover:brightness-110 active:scale-[0.98] transition-all ${
+              isPro
+                ? 'from-vn-fuchsia to-vn-indigo shadow-[0_8px_32px_-8px_rgba(232,121,249,0.5)]'
+                : 'from-vn-violet to-vn-fuchsia shadow-[0_8px_32px_-8px_rgba(139,92,246,0.45)]'
+            }`}
+          >
+            {isPro ? '⭐' : '🔥'} {isPro ? 'Passer à Pro' : 'Passer à Elite'} — {price}€/mois
+            <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
+              <path fillRule="evenodd" d="M6.22 4.22a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06L7.28 11.78a.75.75 0 0 1-1.06-1.06L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
+            </svg>
+          </Link>
+          <p className="text-[10px] text-gray-700 mt-2.5">Sans engagement · Annule en 1 clic</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Main component ──────────────────────────────────────────────────────── */
 export default function DashboardClient({
   email,
@@ -782,6 +925,26 @@ export default function DashboardClient({
         </div>
 
         {/* ═══════════════════════════════════════════════════════════════ */}
+        {/* LOCKED PRO (free users only) */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {plan === 'free' && (
+          <LockedSection
+            targetPlan="pro"
+            price={DISPLAY_CATALOG_PRO_EUR}
+            badge="Fonctionnalités Pro"
+            title="Débloque ton coach IA complet"
+            subtitle="Plan d'action priorisé, progression détaillée, générateur de hooks et historique complet. Tout ce dont tu as besoin pour progresser vraiment."
+            features={[
+              { icon: '🎯', text: `${MAX_ANALYSES_PRO} analyses/mois` },
+              { icon: '📊', text: 'Coach IA complet' },
+              { icon: '⚡', text: `${MAX_HOOKS_PRO} hooks/mois` },
+              { icon: '📋', text: 'Historique 30 analyses' },
+              { icon: '🏆', text: "Plan d'action priorisé" },
+            ]}
+          />
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════ */}
         {/* COACH SECTIONS — only if data available */}
         {/* ═══════════════════════════════════════════════════════════════ */}
         {hasHistory ? (
@@ -1028,7 +1191,27 @@ export default function DashboardClient({
           </div>
         )}
 
-        {/* ── Elite upgrade banner ── */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {/* LOCKED ELITE (free + pro users) */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {plan !== 'elite' && (
+          <LockedSection
+            targetPlan="elite"
+            price={DISPLAY_CATALOG_ELITE_EUR}
+            badge="Fonctionnalités Elite"
+            title="Passe en mode Elite et domine TikTok"
+            subtitle="Volume max, stratégie virale IA exclusive, détection des trends avant qu'ils explosent. Pour les créateurs qui veulent vraiment dominer l'algorithme."
+            features={[
+              { icon: '📈', text: `${MAX_ANALYSES_ELITE} analyses/mois` },
+              { icon: '⚡', text: `${MAX_HOOKS_ELITE} hooks/mois` },
+              { icon: '♾️', text: 'Historique illimité' },
+              { icon: '🔮', text: 'Insights viraux exclusifs' },
+              { icon: '💬', text: 'Support prioritaire' },
+            ]}
+          />
+        )}
+
+        {/* ── Elite upgrade banner (Pro + Stripe only — quick 1-click upgrade) ── */}
         {showEliteUpgrade && (
           <div className="relative overflow-hidden rounded-2xl border border-vn-violet/30 bg-gradient-to-br from-vn-violet/10 to-vn-fuchsia/[0.06] p-6">
             <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-vn-violet/50 to-transparent pointer-events-none" />
