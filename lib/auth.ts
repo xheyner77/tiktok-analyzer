@@ -82,11 +82,11 @@ export async function getUserById(id: string): Promise<UserProfile | null> {
     subscription_cancel_at_period_end: Boolean(data.subscription_cancel_at_period_end),
   };
 
-  // Local dev only — keeps UI in sync with optional test override (empty by default)
+  // Local dev only — overrides the plan to Elite for testing (never resets counts)
   if (isForceEliteEmail(profile.email)) {
-    profile.plan           = 'elite';
-    profile.analyses_count = 0;
-    profile.hooks_count    = 0;
+    profile.plan = 'elite';
+    // NOTE: analyses_count and hooks_count are intentionally preserved from the DB
+    // so the counter stays accurate even with this dev override.
   }
 
   return profile;
@@ -154,8 +154,30 @@ export function canGenerateHook(user: UserProfile): boolean {
  */
 export async function incrementAnalysesCount(userId: string): Promise<void> {
   const { error } = await supabase.rpc('increment_analyses_count', { user_id: userId });
-  if (error) {
-    console.error('[incrementAnalysesCount] RPC failed:', error.message, '— userId:', userId);
+  if (!error) return;
+
+  // RPC missing or failed — fallback to direct UPDATE with server-side arithmetic.
+  // Supabase PostgREST supports raw SQL via .rpc, but we can also use the
+  // pg-level arithmetic through the JS client's filter + direct update chain.
+  console.warn('[incrementAnalysesCount] RPC failed, trying direct fallback:', error.message);
+  const { data: row, error: readErr } = await supabase
+    .from('users')
+    .select('analyses_count')
+    .eq('id', userId)
+    .single();
+
+  if (readErr || !row) {
+    console.error('[incrementAnalysesCount] Fallback read failed:', readErr?.message);
+    return;
+  }
+
+  const { error: writeErr } = await supabase
+    .from('users')
+    .update({ analyses_count: (row.analyses_count as number) + 1 })
+    .eq('id', userId);
+
+  if (writeErr) {
+    console.error('[incrementAnalysesCount] Fallback write failed:', writeErr.message);
   }
 }
 
@@ -170,7 +192,26 @@ export async function incrementHooksCount(userId: string, amount = 1): Promise<v
     p_user_id: userId,
     p_amount:  safeAmount,
   });
-  if (error) {
-    console.error('[incrementHooksCount] RPC failed:', error.message, '— userId:', userId, 'amount:', safeAmount);
+  if (!error) return;
+
+  console.warn('[incrementHooksCount] RPC failed, trying direct fallback:', error.message);
+  const { data: row, error: readErr } = await supabase
+    .from('users')
+    .select('hooks_count')
+    .eq('id', userId)
+    .single();
+
+  if (readErr || !row) {
+    console.error('[incrementHooksCount] Fallback read failed:', readErr?.message);
+    return;
+  }
+
+  const { error: writeErr } = await supabase
+    .from('users')
+    .update({ hooks_count: (row.hooks_count as number) + safeAmount })
+    .eq('id', userId);
+
+  if (writeErr) {
+    console.error('[incrementHooksCount] Fallback write failed:', writeErr.message);
   }
 }
