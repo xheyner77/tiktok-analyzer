@@ -240,14 +240,7 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
         </div>
 
         <div className="px-7 sm:px-10 py-8">
-          <div className="flex items-center justify-between mb-5">
-            <p className={label9}>À corriger maintenant</p>
-            {locked > 0 && (
-              <Link href="/pricing" className="text-[9px] text-vn-fuchsia hover:opacity-80 transition-opacity">
-                +{locked} avec Pro →
-              </Link>
-            )}
-          </div>
+          <p className={`${label9} mb-5`}>À corriger maintenant</p>
           <ol className="space-y-3">
             {visible.map((imp, i) => (
               <li key={i} className="flex items-start gap-3.5">
@@ -256,6 +249,32 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
               </li>
             ))}
           </ol>
+
+          {/* Locked extra recommendations for free users */}
+          {plan === 'free' && locked > 0 && (
+            <div className="relative mt-4 rounded-xl overflow-hidden border border-vn-fuchsia/20 bg-gradient-to-br from-vn-fuchsia/[0.04] to-transparent">
+              {/* Blurred fake items */}
+              <div className="blur-sm pointer-events-none select-none opacity-35 p-4 space-y-3" aria-hidden>
+                {Array.from({ length: Math.min(locked, 3) }).map((_, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <span className="text-[11px] font-black text-gray-700 shrink-0 w-4">{VISIBLE_FREE + i + 1}</span>
+                    <div className="h-2.5 rounded-full bg-gray-600 mt-1" style={{ width: `${78 - i * 14}%` }} />
+                  </div>
+                ))}
+              </div>
+              {/* Overlay */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-t from-[#0d0d12]/95 via-[#0d0d12]/75 to-transparent px-4 py-4">
+                <span className="text-[9px] font-bold px-2.5 py-0.5 rounded-full bg-vn-fuchsia/20 text-vn-fuchsia border border-vn-fuchsia/35 uppercase tracking-widest mb-2">Plan Pro</span>
+                <p className="text-[12px] font-bold text-white text-center mb-3">
+                  +{locked} recommandation{locked > 1 ? 's' : ''} débloquée{locked > 1 ? 's' : ''} en Pro
+                </p>
+                <Link href="/pricing"
+                  className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-4 py-2 rounded-lg bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_4px_16px_-4px_rgba(232,121,249,0.4)]">
+                  ⭐ Débloquer avec Pro →
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
 
       </div>
@@ -398,53 +417,128 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
           )}
         </div>
 
-        <div className="px-7 sm:px-10 py-8">
-          <p className={`${label9} mb-5`}>Stratégie</p>
-
-          {projection && (
-            <div className="mb-5">
-              <p className="text-[12px] text-gray-500 mb-1">{projection.label}</p>
-              <p className="text-[3rem] font-black leading-none" style={{ color: '#34d399', textShadow: 'rgba(52,211,153,0.3)' }}>
-                +{projection.gain}
-              </p>
-              <p className="text-[11px] text-gray-600 mt-1">points de score potentiel</p>
+        {/* Stratégie — locked for free users */}
+        {plan === 'free' ? (
+          <div className="relative px-7 sm:px-10 py-8 overflow-hidden">
+            {/* Blurred fake content */}
+            <div className="blur-sm pointer-events-none select-none opacity-30" aria-hidden>
+              <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-gray-600 mb-5">Stratégie</p>
+              <div className="mb-5">
+                <p className="text-[12px] text-gray-500 mb-1">En améliorant le hook</p>
+                <p className="text-[3rem] font-black leading-none text-emerald-400">+22</p>
+                <p className="text-[11px] text-gray-600 mt-1">points de score potentiel</p>
+              </div>
+              <div className="space-y-2">
+                <div className="h-3 rounded-full bg-gray-700 w-4/5" />
+                <div className="h-3 rounded-full bg-gray-700 w-3/5" />
+                <div className="h-3 rounded-full bg-gray-700 w-2/3" />
+              </div>
             </div>
-          )}
-
-          {data.strategy ? (
-            <p className="text-[13px] text-gray-400 leading-relaxed">{data.strategy}</p>
-          ) : (
-            <p className="text-[13px] text-gray-500 leading-relaxed">
-              {(() => {
-                const weak = pillars.filter(p => (p.s?.score ?? 0) < 70).slice(0, 2).map(p => p.title.toLowerCase());
-                return weak.length
-                  ? `Concentre-toi sur ${weak.join(' et ')} pour maximiser ta portée.`
-                  : 'Continue sur cette trajectoire — optimise chaque nouvelle vidéo.';
-              })()}
-            </p>
-          )}
-        </div>
+            {/* Lock overlay */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-t from-[#0d0d12]/97 via-[#0d0d12]/82 to-transparent px-6">
+              <div className="text-center">
+                <div className="w-10 h-10 rounded-xl bg-vn-fuchsia/15 border border-vn-fuchsia/25 flex items-center justify-center mx-auto mb-3">
+                  <svg viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-vn-fuchsia">
+                    <path fillRule="evenodd" d="M8 1a3.5 3.5 0 0 0-3.5 3.5V7A1.5 1.5 0 0 0 3 8.5v5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 11.5 7V4.5A3.5 3.5 0 0 0 8 1Zm2 6V4.5a2 2 0 1 0-4 0V7h4Z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <span className="inline-block text-[9px] font-bold px-2.5 py-0.5 rounded-full bg-vn-fuchsia/20 text-vn-fuchsia border border-vn-fuchsia/35 uppercase tracking-widest mb-2">Plan Pro</span>
+                <p className="text-[13px] font-bold text-white mb-1">Stratégie personnalisée</p>
+                <p className="text-[11px] text-gray-500 mb-3 max-w-[180px] mx-auto leading-snug">Gain potentiel, plan de progression et stratégie IA.</p>
+                <Link href="/pricing"
+                  className="inline-flex items-center gap-1.5 text-[12px] font-semibold px-5 py-2.5 rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_6px_20px_-6px_rgba(232,121,249,0.45)]">
+                  ⭐ Passer à Pro →
+                </Link>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="px-7 sm:px-10 py-8">
+            <p className={`${label9} mb-5`}>Stratégie</p>
+            {projection && (
+              <div className="mb-5">
+                <p className="text-[12px] text-gray-500 mb-1">{projection.label}</p>
+                <p className="text-[3rem] font-black leading-none" style={{ color: '#34d399', textShadow: 'rgba(52,211,153,0.3)' }}>
+                  +{projection.gain}
+                </p>
+                <p className="text-[11px] text-gray-600 mt-1">points de score potentiel</p>
+              </div>
+            )}
+            {data.strategy ? (
+              <p className="text-[13px] text-gray-400 leading-relaxed">{data.strategy}</p>
+            ) : (
+              <p className="text-[13px] text-gray-500 leading-relaxed">
+                {(() => {
+                  const weak = pillars.filter(p => (p.s?.score ?? 0) < 70).slice(0, 2).map(p => p.title.toLowerCase());
+                  return weak.length
+                    ? `Concentre-toi sur ${weak.join(' et ')} pour maximiser ta portée.`
+                    : 'Continue sur cette trajectoire — optimise chaque nouvelle vidéo.';
+                })()}
+              </p>
+            )}
+          </div>
+        )}
 
       </div>
 
       {/* 6. ELITE — Insights viraux */}
-      {(data.viralTips?.length ?? 0) > 0 && (
-        <>
-          <Hr />
-          <div className="px-7 sm:px-10 py-8">
-            <div className="flex items-center gap-3 mb-6">
-              <p className={label9}>Insights viraux</p>
-              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-vn-fuchsia/15 text-vn-fuchsia border border-vn-fuchsia/20 uppercase tracking-wide">Elite</span>
+      <Hr />
+      {plan === 'elite' && (data.viralTips?.length ?? 0) > 0 ? (
+        <div className="px-7 sm:px-10 py-8">
+          <div className="flex items-center gap-3 mb-6">
+            <p className={label9}>Insights viraux</p>
+            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-vn-fuchsia/15 text-vn-fuchsia border border-vn-fuchsia/20 uppercase tracking-wide">Elite</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3">
+            {(data.viralTips ?? []).map((tip, i) => (
+              <p key={i} className="text-[12px] text-gray-400 leading-snug">
+                <span className="text-vn-fuchsia font-black mr-2">{i + 1}</span>{tip}
+              </p>
+            ))}
+          </div>
+        </div>
+      ) : plan !== 'elite' && (
+        /* Locked Elite insights preview */
+        <div className="relative overflow-hidden border-t-0">
+          <div className="blur-sm pointer-events-none select-none opacity-35 px-7 sm:px-10 py-8" aria-hidden>
+            <div className="flex items-center gap-3 mb-5">
+              <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-gray-600">Insights viraux</p>
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-300 border border-violet-500/20 uppercase tracking-wide">Elite</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3">
-              {(data.viralTips ?? []).map((tip, i) => (
+              {['Ton hook crée une tension narrative rare — continue sur cet angle spécifique.','Tes cuts synchronisés sur le beat placent ta vidéo dans le top 8% du format.','La rétention après 15s est anormalement haute — exploite cette fenêtre.','Détecté : pattern de viralité secondaire sur les 3 premières secondes.'].map((tip, i) => (
                 <p key={i} className="text-[12px] text-gray-400 leading-snug">
                   <span className="text-vn-fuchsia font-black mr-2">{i + 1}</span>{tip}
                 </p>
               ))}
             </div>
           </div>
-        </>
+          {/* Lock overlay */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-t from-[#0d0d12]/97 via-[#0d0d12]/84 to-transparent px-6 py-8">
+            <div className="text-center max-w-xs">
+              <div className="w-11 h-11 rounded-2xl bg-vn-violet/15 border border-vn-violet/30 flex items-center justify-center mx-auto mb-3">
+                <svg viewBox="0 0 16 16" fill="currentColor" className="w-4.5 h-4.5 text-violet-400">
+                  <path fillRule="evenodd" d="M8 1a3.5 3.5 0 0 0-3.5 3.5V7A1.5 1.5 0 0 0 3 8.5v5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 11.5 7V4.5A3.5 3.5 0 0 0 8 1Zm2 6V4.5a2 2 0 1 0-4 0V7h4Z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <span className="inline-block text-[9px] font-bold px-2.5 py-0.5 rounded-full bg-vn-violet/20 text-violet-300 border border-vn-violet/35 uppercase tracking-widest mb-2">Plan Elite</span>
+              <p className="text-[14px] font-black text-white mb-1">Insights viraux exclusifs</p>
+              <p className="text-[11px] text-gray-500 mb-4 leading-snug">
+                Détection des patterns viraux uniques de ta vidéo, benchmarks top créateurs et stratégie de contenu avancée.
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-1.5 mb-4">
+                {['🔮 Patterns viraux','📊 Benchmark top %','⚡ Stratégie avancée'].map((f, i) => (
+                  <span key={i} className="inline-flex items-center gap-1 text-[10px] font-medium px-2.5 py-1 rounded-full bg-vn-violet/10 text-violet-300/80 border border-vn-violet/20">{f}</span>
+                ))}
+              </div>
+              <Link href="/pricing"
+                className="inline-flex items-center gap-2 text-[12px] font-bold px-6 py-3 rounded-xl bg-gradient-to-r from-vn-violet to-vn-fuchsia text-white hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_6px_24px_-6px_rgba(139,92,246,0.45)]">
+                🔥 Passer à Elite →
+              </Link>
+              <p className="text-[10px] text-gray-700 mt-2">Sans engagement · Annule en 1 clic</p>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* 7. CTA */}
