@@ -106,7 +106,7 @@ function AttentionCurve() {
 export default function HeroMockupPremium() {
   return (
     <div
-      className="relative pt-12 pb-28 pl-12 pr-14 lg:pl-6 lg:pr-10 xl:pl-12 xl:pr-16 select-none pointer-events-none"
+      className="relative pt-6 pb-16 pl-4 pr-5 sm:pt-10 sm:pb-24 sm:pl-8 sm:pr-10 lg:pt-12 lg:pb-28 lg:pl-6 lg:pr-10 xl:pl-12 xl:pr-16 select-none pointer-events-none"
       aria-hidden
     >
       {/* ── Deep ambient layers ────────────────────────────────── */}

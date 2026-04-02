@@ -54,7 +54,7 @@ function LogoMark() {
 export default function Footer() {
   return (
     <footer className="relative bg-vn-void border-t border-white/[0.07]">
-      <div className="max-w-6xl mx-auto px-5 sm:px-8 lg:px-10 py-14 sm:py-16">
+      <div className="max-w-6xl mx-auto px-5 sm:px-8 lg:px-10 py-10 sm:py-14 lg:py-16">
 
         {/* Main grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr] gap-10 lg:gap-8">

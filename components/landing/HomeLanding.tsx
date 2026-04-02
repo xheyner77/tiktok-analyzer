@@ -305,7 +305,7 @@ export default function HomeLanding() {
                 <svg className="hero-badge-star h-3.5 w-3.5 shrink-0 text-vn-fuchsia" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
                   <path d="M8 0l1.6 5.4H15l-4.4 3.2 1.6 5.4L8 11l-4.2 3L5.4 8.6 1 5.4h5.4z"/>
                 </svg>
-                <span className="hero-badge-text text-[11px] sm:text-[12px] font-semibold tracking-[0.12em] uppercase text-white/90 whitespace-nowrap">
+                <span className="hero-badge-text text-[10px] sm:text-[11px] font-semibold tracking-[0.10em] sm:tracking-[0.12em] uppercase text-white/90 whitespace-nowrap">
                   L&apos;outil TikTok pour les créateurs
                 </span>
                 <span className="hero-badge-arrow flex items-center overflow-hidden w-4" aria-hidden>
@@ -324,7 +324,7 @@ export default function HomeLanding() {
               </h1>
 
               {/* Subtitle */}
-              <p className="mt-6 sm:mt-7 text-[1rem] sm:text-[1.07rem] text-gray-400 max-w-[420px] leading-relaxed font-normal tracking-[-0.01em]">
+              <p className="mt-6 sm:mt-7 text-[1rem] sm:text-[1.07rem] text-gray-400 max-w-[420px] mx-auto lg:mx-0 leading-relaxed font-normal tracking-[-0.01em]">
                 L&apos;IA te montre exactement pourquoi —{' '}
                 et comment corriger ça immédiatement.
               </p>
@@ -403,7 +403,7 @@ export default function HomeLanding() {
       {/* ══ STATS STRIP ═══════════════════════════════════════════ */}
       <div className="border-y border-white/[0.06] bg-white/[0.012] py-5">
         <div className={`max-w-5xl ${SI}`}>
-          <div className="flex flex-wrap justify-center lg:justify-between gap-x-10 gap-y-4">
+          <div className="flex flex-wrap justify-center lg:justify-between gap-x-6 sm:gap-x-10 gap-y-4">
             {[
               { val: '10 000+',  label: 'vidéos analysées' },
               { val: '1 300+',   label: 'créateurs actifs' },
@@ -1055,8 +1055,15 @@ export default function HomeLanding() {
           <FadeUp delay={0.06}>
             <div className="relative mb-14 sm:mb-16 max-w-2xl mx-auto">
               <div className="flex items-center justify-between mb-3">
-                {['v1 — TikTok', 'v2 — Multi-plateforme', 'v3 — IA prédictive'].map((v, i) => (
-                  <span key={v} className={`text-[11px] font-bold tracking-wide ${i === 0 ? 'text-emerald-400' : i === 1 ? 'text-vn-violet' : 'text-gray-600'}`}>{v}</span>
+                {[
+                  { full: 'v1 — TikTok', short: 'v1' },
+                  { full: 'v2 — Multi-plateforme', short: 'v2' },
+                  { full: 'v3 — IA prédictive', short: 'v3' },
+                ].map(({ full, short }, i) => (
+                  <span key={full} className={`text-[11px] font-bold tracking-wide ${i === 0 ? 'text-emerald-400' : i === 1 ? 'text-vn-violet' : 'text-gray-600'}`}>
+                    <span className="hidden sm:inline">{full}</span>
+                    <span className="sm:hidden">{short}</span>
+                  </span>
                 ))}
               </div>
               <div className="h-[3px] rounded-full bg-white/[0.07] overflow-hidden">

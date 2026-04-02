@@ -93,7 +93,7 @@ export default function PricingPage() {
           </div>
 
           <div className="space-y-4">
-            <h1 className="text-4xl sm:text-5xl md:text-[3.75rem] font-black text-white tracking-tight leading-[1.05]">
+            <h1 className="text-[2.1rem] sm:text-[2.8rem] md:text-[3.75rem] font-black text-white tracking-tight leading-[1.05]">
               Arrête de deviner.
               <br />
               <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">
@@ -106,13 +106,13 @@ export default function PricingPage() {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-6">
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6">
             {[
               'Commence gratuitement',
               'Sans carte bancaire',
               'Annulation à tout moment',
             ].map((t) => (
-              <span key={t} className="flex items-center gap-2 text-[12px] text-gray-500">
+              <span key={t} className="flex items-center gap-2 text-[11px] sm:text-[12px] text-gray-500">
                 <span className="w-4 h-4 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
                   <svg viewBox="0 0 16 16" fill="currentColor" className="w-2.5 h-2.5 text-emerald-500">
                     <path fillRule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" />
@@ -346,7 +346,7 @@ export default function PricingPage() {
           </div>
 
           {/* Trust bar */}
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-8 text-[11px] text-gray-600">
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 sm:gap-8 text-[11px] text-gray-600">
             {[
               { icon: '🔒', label: 'Paiement sécurisé Stripe' },
               { icon: '↩', label: 'Remboursement 7 jours' },
@@ -449,43 +449,47 @@ export default function PricingPage() {
             </h2>
           </div>
 
-          <div className="rounded-2xl border border-white/[0.07] overflow-hidden">
-            {/* Header */}
-            <div className="grid grid-cols-4">
-              <div className="p-5 bg-white/[0.02] border-b border-r border-white/[0.06]">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-600">Fonctionnalité</p>
+          {/* Scrollable wrapper on mobile */}
+          <div className="overflow-x-auto -mx-5 sm:mx-0 px-5 sm:px-0">
+            <div className="min-w-[540px] rounded-2xl border border-white/[0.07] overflow-hidden">
+              {/* Header */}
+              <div className="grid grid-cols-4">
+                <div className="p-4 sm:p-5 bg-white/[0.02] border-b border-r border-white/[0.06]">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-600">Fonctionnalité</p>
+                </div>
+                <div className="p-4 sm:p-5 bg-white/[0.02] border-b border-r border-white/[0.06] text-center">
+                  <p className="text-[12px] font-bold text-gray-500">Starter</p>
+                  <p className="text-[10px] text-gray-700 mt-0.5">Gratuit</p>
+                </div>
+                <div className="p-4 sm:p-5 border-b border-r border-vn-fuchsia/20 text-center bg-gradient-to-b from-vn-fuchsia/[0.07] to-vn-fuchsia/[0.03] relative">
+                  <div className="absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-vn-fuchsia/60 to-transparent" />
+                  <p className="text-[12px] font-bold text-vn-fuchsia">Pro</p>
+                  <p className="text-[10px] text-vn-fuchsia/50 mt-0.5">{DISPLAY_CATALOG_PRO_EUR}€/mois</p>
+                </div>
+                <div className="p-4 sm:p-5 bg-white/[0.02] border-b border-white/[0.06] text-center">
+                  <p className="text-[12px] font-bold text-violet-300">Elite</p>
+                  <p className="text-[10px] text-gray-600 mt-0.5">{DISPLAY_CATALOG_ELITE_EUR}€/mois</p>
+                </div>
               </div>
-              <div className="p-5 bg-white/[0.02] border-b border-r border-white/[0.06] text-center">
-                <p className="text-[12px] font-bold text-gray-500">Starter</p>
-                <p className="text-[10px] text-gray-700 mt-0.5">Gratuit</p>
-              </div>
-              <div className="p-5 border-b border-r border-vn-fuchsia/20 text-center bg-gradient-to-b from-vn-fuchsia/[0.07] to-vn-fuchsia/[0.03] relative">
-                <div className="absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-vn-fuchsia/60 to-transparent" />
-                <p className="text-[12px] font-bold text-vn-fuchsia">Pro</p>
-                <p className="text-[10px] text-vn-fuchsia/50 mt-0.5">{DISPLAY_CATALOG_PRO_EUR}€/mois</p>
-              </div>
-              <div className="p-5 bg-white/[0.02] border-b border-white/[0.06] text-center">
-                <p className="text-[12px] font-bold text-violet-300">Elite</p>
-                <p className="text-[10px] text-gray-600 mt-0.5">{DISPLAY_CATALOG_ELITE_EUR}€/mois</p>
-              </div>
-            </div>
 
-            {/* Rows */}
-            {comparisonRows.map((row, i) => (
-              <div key={i} className={`grid grid-cols-4 ${i < comparisonRows.length - 1 ? 'border-b border-white/[0.04]' : ''} ${i % 2 !== 0 ? 'bg-white/[0.01]' : ''}`}>
-                <div className="px-5 py-3.5 text-[12px] text-gray-400 border-r border-white/[0.04] flex items-center font-medium">{row.label}</div>
-                <div className="px-5 py-3.5 flex items-center justify-center border-r border-white/[0.04]">
-                  <CellVal v={row.free} />
+              {/* Rows */}
+              {comparisonRows.map((row, i) => (
+                <div key={i} className={`grid grid-cols-4 ${i < comparisonRows.length - 1 ? 'border-b border-white/[0.04]' : ''} ${i % 2 !== 0 ? 'bg-white/[0.01]' : ''}`}>
+                  <div className="px-4 sm:px-5 py-3 sm:py-3.5 text-[11px] sm:text-[12px] text-gray-400 border-r border-white/[0.04] flex items-center font-medium">{row.label}</div>
+                  <div className="px-3 sm:px-5 py-3 sm:py-3.5 flex items-center justify-center border-r border-white/[0.04]">
+                    <CellVal v={row.free} />
+                  </div>
+                  <div className="px-3 sm:px-5 py-3 sm:py-3.5 flex items-center justify-center border-r border-vn-fuchsia/[0.08] bg-vn-fuchsia/[0.03]">
+                    <CellVal v={row.pro} accent="fuchsia" />
+                  </div>
+                  <div className="px-3 sm:px-5 py-3 sm:py-3.5 flex items-center justify-center">
+                    <CellVal v={row.elite} accent="violet" />
+                  </div>
                 </div>
-                <div className="px-5 py-3.5 flex items-center justify-center border-r border-vn-fuchsia/[0.08] bg-vn-fuchsia/[0.03]">
-                  <CellVal v={row.pro} accent="fuchsia" />
-                </div>
-                <div className="px-5 py-3.5 flex items-center justify-center">
-                  <CellVal v={row.elite} accent="violet" />
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
+          <p className="text-[11px] text-gray-700 text-center sm:hidden mt-2">← Faire glisser pour voir tout le tableau</p>
         </section>
 
         {/* ═══════════════════════════════════════════════ */}
