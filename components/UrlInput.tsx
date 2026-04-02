@@ -101,7 +101,7 @@ export default function UrlInput({
 
       {!isLocked && (
         <p className="text-[11px] text-gray-600 px-1">
-          Format attendu: `https://www.tiktok.com/@username/video/...`
+          Ex. `https://vm.tiktok.com/...` ou `https://www.tiktok.com/@user/video/...`
         </p>
       )}
 

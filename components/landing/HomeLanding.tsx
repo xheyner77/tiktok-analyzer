@@ -381,8 +381,8 @@ export default function HomeLanding() {
         <div className={`max-w-5xl ${SI}`}>
           <div className="flex flex-wrap justify-center lg:justify-between gap-x-6 sm:gap-x-10 gap-y-4">
             {[
-              { val: '10 000+',  label: 'vidéos analysées' },
-              { val: '1 300+',   label: 'créateurs actifs' },
+              { val: '+1000',   label: 'vidéo analysé' },
+              { val: '+200',    label: 'créateur actif' },
               { val: '30s',      label: 'pour un diagnostic complet' },
               { val: 'GPT-4o',   label: 'Vision + Whisper audio' },
             ].map(({ val, label }) => (

@@ -158,7 +158,9 @@ export default function Home() {
     if (uploadTiktokUrl.trim()) {
       normalized = normalizeTikTokUrl(uploadTiktokUrl.trim());
       if (!isTikTokVideoUrl(normalized)) {
-        setError('Lien TikTok invalide. Colle l\u2019URL compl\u00e8te de la vid\u00e9o (\u2026/video/\u2026).');
+        setError(
+          'Lien TikTok invalide. Utilise un lien vm.tiktok.com, vt.tiktok.com ou une URL contenant /video/ ou /t/.'
+        );
         return;
       }
     }
@@ -300,7 +302,7 @@ export default function Home() {
                   type="url"
                   value={uploadTiktokUrl}
                   onChange={(e) => setUploadTiktokUrl(e.target.value)}
-                  placeholder="https://www.tiktok.com/@\u2026/video/\u2026"
+                  placeholder="https://vm.tiktok.com/\u2026 ou tiktok.com/\u2026/video/\u2026"
                   disabled={isLoading || isLimitReached}
                   className="w-full bg-white/[0.03] border border-white/[0.09] rounded-xl px-4 py-3.5 text-sm text-white placeholder-gray-600 outline-none hover:border-white/[0.15] focus:border-vn-violet/50 focus:ring-2 focus:ring-vn-violet/10 disabled:opacity-50 transition-colors"
                 />

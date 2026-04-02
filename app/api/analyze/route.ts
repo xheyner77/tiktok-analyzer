@@ -783,16 +783,20 @@ export async function POST(request: NextRequest) {
       return await postVisionAnalyze(body, visionFrames);
     }
 
-    const { url } = body;
+    const rawUrl = body?.url;
     const manualObservedMetrics = sanitizeMetrics(body?.observedMetrics);
 
-    if (!url || typeof url !== 'string') {
+    if (!rawUrl || typeof rawUrl !== 'string') {
       return NextResponse.json({ error: 'URL invalide' }, { status: 400 });
     }
 
+    const url = normalizeTikTokUrl(rawUrl.trim());
     if (!isTikTokVideoUrl(url)) {
       return NextResponse.json(
-        { error: 'URL invalide. Seules les URLs TikTok (tiktok.com/video/) sont acceptées.' },
+        {
+          error:
+            'URL invalide. Liens TikTok acceptés : vm.tiktok.com, vt.tiktok.com, ou URL avec /video/ ou /t/.',
+        },
         { status: 400 }
       );
     }
