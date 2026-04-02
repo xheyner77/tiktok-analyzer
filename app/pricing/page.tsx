@@ -211,11 +211,16 @@ export default function PricingPage() {
 
                   {/* Social proof */}
                   <div className="flex items-center gap-2.5">
-                    <div className="flex -space-x-1.5">
-                      {['J','S','M','L','T'].map((l, i) => (
-                        <div key={i} className="w-6 h-6 rounded-full bg-gradient-to-br from-vn-fuchsia/70 to-vn-indigo/70 border-2 border-[#0a0810] text-[8px] font-black text-white flex items-center justify-center shadow-sm">
-                          {l}
-                        </div>
+                    <div className="flex -space-x-2">
+                      {[
+                        'https://i.pravatar.cc/40?img=11',
+                        'https://i.pravatar.cc/40?img=47',
+                        'https://i.pravatar.cc/40?img=12',
+                        'https://i.pravatar.cc/40?img=44',
+                        'https://i.pravatar.cc/40?img=15',
+                      ].map((src, i) => (
+                        <img key={i} src={src} alt="" width={24} height={24}
+                          className="w-6 h-6 rounded-full border-2 border-[#0a0810] object-cover" />
                       ))}
                     </div>
                     <span className="text-[11px] text-gray-500">Choisi par <span className="text-gray-300 font-semibold">80% des créateurs</span> Viralynz</span>
