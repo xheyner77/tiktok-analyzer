@@ -220,13 +220,7 @@ export default function HomeLanding() {
       {/* ══ 2. PRODUCT PREVIEW ══════════════════════════════════════════════ */}
       <section id="produit" className="relative pt-8 sm:pt-10 pb-20 sm:pb-24 scroll-mt-20">
         <div className="landing-section">
-          <div className="text-center mb-10">
-            <p className={`${label} mb-3`}>Exemple de résultat</p>
-            <h2 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight">
-              <span className="text-white">Score, diagnostic, plan d&apos;action —</span><br />
-              <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">en quelques secondes.</span>
-            </h2>
-          </div>
+          <div className="mb-10" />
           <div className="relative -mx-4 sm:-mx-8 lg:-mx-10">
             <div
               className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-16 w-[min(94vw,1320px)] h-[260px] rounded-[999px] bg-gradient-to-r from-vn-fuchsia/28 via-vn-violet/24 to-vn-indigo/20 blur-3xl opacity-90"
