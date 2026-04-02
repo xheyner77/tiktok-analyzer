@@ -542,85 +542,98 @@ export default function DashboardClient({
           </div>
 
           {/* Sidebar — right */}
-          <div className="lg:w-[280px] xl:w-[300px] shrink-0 space-y-4">
+          <div className="lg:w-[260px] xl:w-[280px] shrink-0">
+            <div className="rounded-2xl border border-white/[0.08] bg-[#0a0a10] overflow-hidden">
 
-            {/* Quick actions */}
-            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4">
-              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500 mb-3">Actions rapides</p>
-              <div className="space-y-2">
-                <Link href="/analyzer" className={`flex items-center gap-3 p-3 rounded-xl border transition-all group ${canAnalyze ? 'border-vn-fuchsia/20 bg-vn-fuchsia/[0.05] hover:border-vn-fuchsia/35 hover:bg-vn-fuchsia/[0.08]' : 'border-white/[0.06] bg-white/[0.02] opacity-50 pointer-events-none'}`}>
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-vn-fuchsia to-vn-indigo flex items-center justify-center shrink-0">
-                    <svg viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-white"><path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" /><path fillRule="evenodd" d="M.664 10.59a1.651 1.651 0 0 1 0-1.186A10.004 10.004 0 0 1 10 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0 1 10 17c-4.257 0-7.893-2.66-9.336-6.41Z" clipRule="evenodd" /></svg>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold text-white">Analyser une vidéo</p>
-                    <p className="text-[10px] text-gray-500">{remainingDisplay}</p>
-                  </div>
-                  <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 text-gray-600 ml-auto group-hover:text-gray-400 transition-colors"><path fillRule="evenodd" d="M6.22 4.22a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06L7.28 11.78a.75.75 0 0 1-1.06-1.06L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" /></svg>
-                </Link>
-
-                {plan === 'free' ? (
-                  <Link href="/pricing" className="flex items-center gap-3 p-3 rounded-xl border border-vn-violet/20 bg-vn-violet/[0.05] hover:border-vn-violet/35 hover:bg-vn-violet/[0.08] transition-all group">
-                    <div className="w-8 h-8 rounded-lg bg-vn-violet/20 border border-vn-violet/25 flex items-center justify-center shrink-0">
-                      <svg viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-vn-glow"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" /></svg>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-white group-hover:text-vn-glow transition-colors">Passer à Pro</p>
-                      <p className="text-[10px] text-gray-500">{`${MAX_ANALYSES_PRO} analyses · ${DISPLAY_CATALOG_PRO_EUR}€/mois`}</p>
-                    </div>
-                  </Link>
-                ) : (
-                  <Link href="/hooks" className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:border-white/[0.14] hover:bg-white/[0.04] transition-all group">
-                    <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center shrink-0">
-                      <svg viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-gray-400"><path d="M7.557 2.066A.75.75 0 0 1 8 2.75v10.5a.75.75 0 0 1-1.248.56L3.59 11H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1.59l3.162-2.81a.75.75 0 0 1 .805-.124ZM12.95 3.05a.75.75 0 1 0-1.06 1.06 5.5 5.5 0 0 1 0 7.78.75.75 0 1 0 1.06 1.06 7 7 0 0 0 0-9.9Z" /></svg>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-white">Générateur de hooks</p>
-                      <p className="text-[10px] text-gray-500">{hooksLimit > 0 ? `${hooksRemaining} restant${hooksRemaining > 1 ? 's' : ''}` : 'Disponible en Pro'}</p>
-                    </div>
-                    <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 text-gray-600 ml-auto group-hover:text-gray-400 transition-colors"><path fillRule="evenodd" d="M6.22 4.22a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06L7.28 11.78a.75.75 0 0 1-1.06-1.06L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" /></svg>
-                  </Link>
-                )}
+              {/* Section label */}
+              <div className="px-5 pt-5 pb-3">
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">Actions rapides</p>
               </div>
-            </div>
 
-            {/* Quota reset info */}
-            {hooksLimit > 0 && (
-              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-vn-indigo/15 border border-vn-indigo/20 flex items-center justify-center shrink-0 mt-0.5">
-                    <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 text-vn-indigo">
-                      <path fillRule="evenodd" d="M1 8.74c0 .983.713 1.825 1.69 1.943l.764.095a.81.81 0 0 1 .718.80v.68c0 .684.663 1.158 1.31.93l.758-.27a.81.81 0 0 1 .803.161l.51.473c.51.473 1.29.473 1.8 0l.51-.473a.81.81 0 0 1 .803-.161l.758.27c.647.228 1.31-.246 1.31-.93v-.68a.81.81 0 0 1 .718-.80l.764-.095A1.96 1.96 0 0 0 15 8.74v-.48A1.96 1.96 0 0 0 13.31 6.317l-.764-.095a.81.81 0 0 1-.718-.80v-.68c0-.684-.663-1.158-1.31-.93l-.758.27a.81.81 0 0 1-.803-.161l-.51-.473a1.35 1.35 0 0 0-1.8 0l-.51.473a.81.81 0 0 1-.803.161l-.758-.27c-.647-.228-1.31.246-1.31.93v.68a.81.81 0 0 1-.718.80l-.764.095A1.96 1.96 0 0 0 1 8.26v.48ZM8 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" clipRule="evenodd" />
+              {/* Analyser */}
+              <Link
+                href="/analyzer"
+                className={`flex items-center gap-3.5 px-5 py-3.5 border-t border-white/[0.05] transition-all group ${canAnalyze ? 'hover:bg-white/[0.04]' : 'opacity-40 pointer-events-none'}`}
+              >
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-vn-fuchsia/30 to-vn-indigo/30 border border-vn-fuchsia/25 flex items-center justify-center shrink-0">
+                  <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 text-vn-fuchsia">
+                    <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
+                    <path fillRule="evenodd" d="M.664 10.59a1.651 1.651 0 0 1 0-1.186A10.004 10.004 0 0 1 10 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0 1 10 17c-4.257 0-7.893-2.66-9.336-6.41Z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold text-white leading-tight">Analyser une vidéo</p>
+                  <p className="text-[11px] text-gray-500 mt-0.5">{remainingDisplay}</p>
+                </div>
+                <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 text-gray-600 shrink-0 group-hover:text-gray-400 transition-colors">
+                  <path fillRule="evenodd" d="M6.22 4.22a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06L7.28 11.78a.75.75 0 0 1-1.06-1.06L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
+                </svg>
+              </Link>
+
+              {/* Second action: hooks or upgrade */}
+              {plan === 'free' ? (
+                <Link href="/pricing" className="flex items-center gap-3.5 px-5 py-3.5 border-t border-white/[0.05] hover:bg-white/[0.04] transition-all group">
+                  <div className="w-8 h-8 rounded-lg bg-vn-violet/15 border border-vn-violet/25 flex items-center justify-center shrink-0">
+                    <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 text-vn-glow">
+                      <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" />
                     </svg>
                   </div>
-                  <div>
-                    <p className="text-xs font-semibold text-white mb-0.5">Reset automatique</p>
-                    <p className="text-[11px] text-gray-500 leading-relaxed">
-                      {usesStripeSubscription ? "Quotas rechargés à chaque renouvellement d'abonnement." : 'Quotas rechargés le 1er du mois calendaire.'}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold text-white group-hover:text-vn-glow transition-colors leading-tight">Passer à Pro</p>
+                    <p className="text-[11px] text-gray-500 mt-0.5">{MAX_ANALYSES_PRO} analyses · {DISPLAY_CATALOG_PRO_EUR}€/mois</p>
+                  </div>
+                  <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 text-gray-600 shrink-0 group-hover:text-gray-400 transition-colors"><path fillRule="evenodd" d="M6.22 4.22a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06L7.28 11.78a.75.75 0 0 1-1.06-1.06L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" /></svg>
+                </Link>
+              ) : (
+                <Link href="/hooks" className="flex items-center gap-3.5 px-5 py-3.5 border-t border-white/[0.05] hover:bg-white/[0.04] transition-all group">
+                  <div className="w-8 h-8 rounded-lg bg-vn-violet/15 border border-vn-violet/20 flex items-center justify-center shrink-0">
+                    <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 text-vn-violet">
+                      <path d="M7.557 2.066A.75.75 0 0 1 8 2.75v10.5a.75.75 0 0 1-1.248.56L3.59 11H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1.59l3.162-2.81a.75.75 0 0 1 .805-.124ZM12.95 3.05a.75.75 0 1 0-1.06 1.06 5.5 5.5 0 0 1 0 7.78.75.75 0 1 0 1.06 1.06 7 7 0 0 0 0-9.9Z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold text-white leading-tight">Générateur de hooks</p>
+                    <p className="text-[11px] text-gray-500 mt-0.5">{hooksLimit > 0 ? `${hooksRemaining} restant${hooksRemaining > 1 ? 's' : ''}` : 'Disponible en Pro'}</p>
+                  </div>
+                  <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 text-gray-600 shrink-0 group-hover:text-gray-400 transition-colors"><path fillRule="evenodd" d="M6.22 4.22a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06L7.28 11.78a.75.75 0 0 1-1.06-1.06L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" /></svg>
+                </Link>
+              )}
+
+              {/* Reset info */}
+              {hooksLimit > 0 && (
+                <div className="flex items-center gap-3.5 px-5 py-3.5 border-t border-white/[0.05]">
+                  <div className="w-8 h-8 rounded-lg bg-vn-indigo/10 border border-vn-indigo/15 flex items-center justify-center shrink-0">
+                    <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 text-vn-indigo/70">
+                      <path fillRule="evenodd" d="M13.836 2.477a.75.75 0 0 1 .75.75V6.75a.75.75 0 0 1-.75.75H9.75a.75.75 0 0 1 0-1.5h2.63A6.499 6.499 0 0 0 3.18 5.042a.75.75 0 0 1-.912-1.194A8 8 0 0 1 13.836 2.477ZM2.164 10.5a.75.75 0 0 1 .75-.75H6.75a.75.75 0 0 1 0 1.5H4.12a6.5 6.5 0 0 0 6.199 1.458.75.75 0 0 1 .414 1.442A8 8 0 0 1 2.164 10.5Z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[12px] font-semibold text-gray-300 leading-tight">Reset automatique</p>
+                    <p className="text-[11px] text-gray-600 mt-0.5 leading-snug">
+                      {usesStripeSubscription ? "À chaque renouvellement Stripe" : "Le 1er de chaque mois"}
                     </p>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Subscription management */}
-            {billingPlan !== 'free' && (
-              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4">
-                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500 mb-3">Abonnement</p>
-                <div className="flex items-center justify-between">
+              {/* Subscription management */}
+              {billingPlan !== 'free' && (
+                <div className="flex items-center justify-between px-5 py-4 border-t border-white/[0.05]">
                   <div>
-                    <p className="text-xs font-semibold text-white">Plan {billingPlan === 'elite' ? 'Elite' : 'Pro'}</p>
-                    <p className="text-[11px] text-gray-600 mt-0.5">Facturation {usesStripeSubscription ? 'Stripe' : 'manuelle'}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-600 mb-1">Abonnement</p>
+                    <p className="text-[12px] font-semibold text-white">Plan {billingPlan === 'elite' ? 'Elite' : 'Pro'}</p>
+                    <p className="text-[10px] text-gray-600 mt-0.5">Facturation {usesStripeSubscription ? 'Stripe' : 'manuelle'}</p>
                   </div>
                   <button
                     onClick={() => { setCancelStatus('idle'); setCancelError(''); setCancelDoneMode(null); setShowCancelModal(true); }}
-                    className="text-[11px] font-medium text-gray-600 hover:text-red-400 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-red-500/[0.06] border border-transparent hover:border-red-500/15"
+                    className="text-[11px] font-medium text-gray-600 hover:text-red-400 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-red-500/[0.06] border border-transparent hover:border-red-500/15 shrink-0"
                   >
                     Annuler
                   </button>
                 </div>
-              </div>
-            )}
+              )}
+
+            </div>
           </div>
         </div>
 
