@@ -320,7 +320,7 @@ export default function HomeLanding() {
                 <span className="block">Domine&nbsp;
                   <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">TikTok.</span>
                 </span>
-                <span className="block text-white/60 text-[0.82em] tracking-[-0.03em] mt-1">Arrête de poster au hasard.</span>
+                <span className="block text-white text-[0.82em] tracking-[-0.03em] mt-1">Arrête de poster au hasard.</span>
               </h1>
 
               {/* Subtitle */}

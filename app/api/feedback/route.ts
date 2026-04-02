@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
 
     const session  = await getSession();
     const from     = session?.email ?? 'Visiteur anonyme';
+    const fromEncoded = from.replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const catLabel = CATEGORY_LABELS[category] ?? '💬 Autre';
 
     /* ── Resend email ─────────────────────────────────────────────────────── */
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
               </p>
             </div>
             <p style="font-size:13px;color:#888">
-              Envoyé par : <strong>${from}</strong><br/>
+              Envoyé par : <strong>${fromEncoded}</strong><br/>
               Date : ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}
             </p>
           </div>

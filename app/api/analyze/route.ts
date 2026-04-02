@@ -790,6 +790,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'URL invalide' }, { status: 400 });
     }
 
+    if (!isTikTokVideoUrl(url)) {
+      return NextResponse.json(
+        { error: 'URL invalide. Seules les URLs TikTok (tiktok.com/video/) sont acceptées.' },
+        { status: 400 }
+      );
+    }
+
     // ── Auth & limit check ────────────────────────────────────────────────────
     const session = await getSession();
     let dbUser = null;
