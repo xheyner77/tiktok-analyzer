@@ -228,7 +228,7 @@ export default function HookGeneratorPage() {
   }
 
   return (
-    <main className="relative min-h-screen bg-vn-bg overflow-x-hidden">
+    <main className="relative min-h-screen overflow-x-hidden">
 
       {/* Ambient glow + particles */}
       <div className="absolute top-0 inset-x-0 h-[500px] pointer-events-none overflow-hidden" aria-hidden>
@@ -245,14 +245,14 @@ export default function HookGeneratorPage() {
       <div className="relative max-w-2xl mx-auto px-5 sm:px-8 pt-16 pb-28">
 
         {/* HEADER */}
-        <div className="mb-12">
+        <div className="mb-12 text-center sm:text-left">
           <h1 className="text-[2rem] sm:text-[2.5rem] font-black tracking-tight leading-tight mb-3">
             <span className="text-white">Génère des hooks </span>
             <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">
               qui accrochent.
             </span>
           </h1>
-          <p className="text-[13px] text-gray-500 leading-relaxed">
+          <p className="text-[13px] text-gray-500 leading-relaxed max-w-md mx-auto sm:mx-0">
             Courts. Viraux. Percutants. Conçus pour l&apos;overlay TikTok.
           </p>
         </div>

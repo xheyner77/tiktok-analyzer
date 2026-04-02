@@ -1,6 +1,6 @@
 export default function Header() {
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 text-center sm:text-left">
       {/* Title */}
       <div>
         <h1 className="text-[1.9rem] sm:text-[2.3rem] font-black tracking-tight leading-tight">
@@ -9,13 +9,13 @@ export default function Header() {
             bloque ta vidéo
           </span>
         </h1>
-        <p className="mt-2 text-[13px] text-gray-500 max-w-xs leading-relaxed">
+        <p className="mt-2 text-[13px] text-gray-500 max-w-xs sm:max-w-xs mx-auto sm:mx-0 leading-relaxed">
           Hook, montage, rétention — identifie quoi corriger avant de reposter.
         </p>
       </div>
 
       {/* Feature pills */}
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap gap-1.5 justify-center sm:justify-start">
         {[
           { label: 'Hook',        color: 'border-vn-fuchsia/20 text-vn-fuchsia/75' },
           { label: 'Montage',     color: 'border-vn-violet/20 text-vn-violet/75'  },

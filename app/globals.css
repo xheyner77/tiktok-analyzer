@@ -442,39 +442,33 @@
     pointer-events: none;
   }
 
-  /* ── Stars background (hero only) ─────────────────── */
+  /* ── Stars background (global — layout + fondu doux) ─────────────────── */
   /*
-   * Technique : tiling background-image (background-size = taille d'un carreau)
-   * + translate(tileSize, tileSize) sur le div → boucle parfaite et infinie.
-   * 3 layers de vitesse différente = effet parallaxe.
-   * inset: -15% → le div déborde hors du parent pour cacher les bords en déplacement.
+   * Points en radial-gradient adouci (pas de pixel dur) + masque multi-directions.
    */
-  .stars-hero {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: -140px; /* dépasse la section → fondu dans le vide */
+  .stars-backdrop {
+    position: fixed;
+    inset: 0;
     pointer-events: none;
     overflow: hidden;
     z-index: 0;
   }
 
-  /* ── Layer A : petites étoiles (1px) – espacées, vitesse haute ─ */
+  /* Halos doux au lieu de points 1px nets */
   .stars-layer-sm {
     position: absolute;
     inset: -15%;
     background-image:
-      radial-gradient(circle, rgba(255,255,255,0.88) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.65) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.80) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.55) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.76) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.70) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.60) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.84) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.50) 1px, transparent 1px),
-      radial-gradient(circle, rgba(255,255,255,0.72) 1px, transparent 1px);
+      radial-gradient(circle, rgba(255,255,255,0.38) 0px, rgba(255,255,255,0.1) 1.2px, transparent 3px),
+      radial-gradient(circle, rgba(255,255,255,0.28) 0px, rgba(255,255,255,0.08) 1.2px, transparent 3px),
+      radial-gradient(circle, rgba(255,255,255,0.34) 0px, rgba(255,255,255,0.09) 1.2px, transparent 3px),
+      radial-gradient(circle, rgba(255,255,255,0.24) 0px, rgba(255,255,255,0.07) 1.2px, transparent 3px),
+      radial-gradient(circle, rgba(255,255,255,0.32) 0px, rgba(255,255,255,0.09) 1.2px, transparent 3px),
+      radial-gradient(circle, rgba(255,255,255,0.3) 0px, rgba(255,255,255,0.08) 1.2px, transparent 3px),
+      radial-gradient(circle, rgba(255,255,255,0.26) 0px, rgba(255,255,255,0.07) 1.2px, transparent 3px),
+      radial-gradient(circle, rgba(255,255,255,0.36) 0px, rgba(255,255,255,0.1) 1.2px, transparent 3px),
+      radial-gradient(circle, rgba(255,255,255,0.22) 0px, rgba(255,255,255,0.06) 1.2px, transparent 3px),
+      radial-gradient(circle, rgba(255,255,255,0.3) 0px, rgba(255,255,255,0.08) 1.2px, transparent 3px);
     background-size: 320px 320px;
     background-position:
       28px  42px,
@@ -488,21 +482,20 @@
       130px 292px,
       290px 248px;
     animation: starsMoveSm 55s linear infinite;
-    opacity: 0.65;
+    opacity: 0.72;
   }
 
-  /* ── Layer B : étoiles moyennes (1.5px) – vitesse intermédiaire ─ */
   .stars-layer-md {
     position: absolute;
     inset: -15%;
     background-image:
-      radial-gradient(circle, rgba(255,255,255,0.94) 1.5px, transparent 1.5px),
-      radial-gradient(circle, rgba(255,255,255,0.76) 1.5px, transparent 1.5px),
-      radial-gradient(circle, rgba(255,255,255,0.88) 1.5px, transparent 1.5px),
-      radial-gradient(circle, rgba(255,255,255,0.68) 1.5px, transparent 1.5px),
-      radial-gradient(circle, rgba(255,255,255,0.82) 1.5px, transparent 1.5px),
-      radial-gradient(circle, rgba(255,255,255,0.60) 1.5px, transparent 1.5px),
-      radial-gradient(circle, rgba(255,255,255,0.90) 1.5px, transparent 1.5px);
+      radial-gradient(circle, rgba(232,121,249,0.22) 0px, rgba(167,139,250,0.1) 1.5px, transparent 3.5px),
+      radial-gradient(circle, rgba(255,255,255,0.32) 0px, rgba(255,255,255,0.1) 1.5px, transparent 3.5px),
+      radial-gradient(circle, rgba(255,255,255,0.36) 0px, rgba(255,255,255,0.11) 1.5px, transparent 3.5px),
+      radial-gradient(circle, rgba(255,255,255,0.28) 0px, rgba(255,255,255,0.08) 1.5px, transparent 3.5px),
+      radial-gradient(circle, rgba(255,255,255,0.34) 0px, rgba(255,255,255,0.1) 1.5px, transparent 3.5px),
+      radial-gradient(circle, rgba(255,255,255,0.24) 0px, rgba(255,255,255,0.07) 1.5px, transparent 3.5px),
+      radial-gradient(circle, rgba(255,255,255,0.38) 0px, rgba(255,255,255,0.11) 1.5px, transparent 3.5px);
     background-size: 480px 480px;
     background-position:
       44px  66px,
@@ -513,19 +506,18 @@
       220px 370px,
       420px 280px;
     animation: starsMoveMd 90s linear infinite;
-    opacity: 0.50;
+    opacity: 0.55;
   }
 
-  /* ── Layer C : grosses étoiles (2px) – très rares, lentes, scintillantes ─ */
   .stars-layer-lg {
     position: absolute;
     inset: -15%;
     background-image:
-      radial-gradient(circle, rgba(255,255,255,1.00) 2px, transparent 2px),
-      radial-gradient(circle, rgba(255,255,255,0.95) 2px, transparent 2px),
-      radial-gradient(circle, rgba(255,255,255,1.00) 2px, transparent 2px),
-      radial-gradient(circle, rgba(255,255,255,0.90) 2px, transparent 2px),
-      radial-gradient(circle, rgba(255,255,255,0.96) 2px, transparent 2px);
+      radial-gradient(circle, rgba(255,255,255,0.45) 0px, rgba(255,255,255,0.14) 2px, transparent 4.5px),
+      radial-gradient(circle, rgba(255,255,255,0.4) 0px, rgba(255,255,255,0.12) 2px, transparent 4.5px),
+      radial-gradient(circle, rgba(232,121,249,0.28) 0px, rgba(232,121,249,0.08) 2px, transparent 5px),
+      radial-gradient(circle, rgba(255,255,255,0.36) 0px, rgba(255,255,255,0.11) 2px, transparent 4.5px),
+      radial-gradient(circle, rgba(255,255,255,0.42) 0px, rgba(255,255,255,0.13) 2px, transparent 4.5px);
     background-size: 680px 680px;
     background-position:
       68px  90px,
@@ -533,25 +525,29 @@
       420px 160px,
       140px 490px,
       560px 380px;
-    animation: starsMoveLg 130s linear infinite, starsTwinkle 5s ease-in-out infinite alternate;
-    opacity: 0.85;
+    animation: starsMoveLg 130s linear infinite, starsTwinkle 6s ease-in-out infinite alternate;
+    opacity: 0.62;
   }
 
-  /* Masque progressif — fondu très doux sur toute la moitié basse */
-  .stars-hero-mask {
+  /* Fondu latéral + vertical (plus de bords durs) */
+  .stars-backdrop-mask {
     position: absolute;
     inset: 0;
-    background: linear-gradient(
-      to bottom,
-      transparent 18%,
-      rgba(3,3,8,0.08) 32%,
-      rgba(3,3,8,0.28) 48%,
-      rgba(3,3,8,0.62) 64%,
-      rgba(3,3,8,0.88) 78%,
-      #030308 90%
-    );
-    pointer-events: none;
     z-index: 1;
+    pointer-events: none;
+    background:
+      linear-gradient(to right, rgba(5, 5, 8, 0.97) 0%, rgba(5, 5, 8, 0.45) 8%, transparent 14%, transparent 86%, rgba(5, 5, 8, 0.45) 92%, rgba(5, 5, 8, 0.97) 100%),
+      linear-gradient(
+        to bottom,
+        rgba(5, 5, 8, 0.65) 0%,
+        rgba(5, 5, 8, 0.12) 14%,
+        transparent 28%,
+        transparent 48%,
+        rgba(5, 5, 8, 0.15) 62%,
+        rgba(5, 5, 8, 0.55) 78%,
+        rgba(5, 5, 8, 0.92) 92%,
+        #050508 100%
+      );
   }
 
   /* translate = exactement la taille du carreau → boucle parfaite */
@@ -571,9 +567,9 @@
   }
 
   @keyframes starsTwinkle {
-    0%   { opacity: 0.50; }
-    50%  { opacity: 1.00; }
-    100% { opacity: 0.58; }
+    0%   { opacity: 0.4; }
+    50%  { opacity: 0.78; }
+    100% { opacity: 0.45; }
   }
 
   /** Mur d'icones stylise pour le CTA final */

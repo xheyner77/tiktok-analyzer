@@ -10,7 +10,7 @@ const LAST_UPDATE = '2 avril 2026';
 
 export default function MentionsLegalesPage() {
   return (
-    <main className="min-h-screen bg-vn-void">
+    <main className="min-h-screen">
       <div className="max-w-3xl mx-auto px-5 sm:px-8 py-20 sm:py-28">
 
         <div className="mb-12 pb-8 border-b border-white/[0.08]">

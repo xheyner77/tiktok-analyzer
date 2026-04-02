@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
 import CheckoutButton from '@/components/CheckoutButton';
 import {
   MAX_ANALYSES_FREE, MAX_ANALYSES_PRO, MAX_ANALYSES_ELITE,
@@ -255,28 +254,11 @@ const features = [
 
 /* ─────────────────────────────────────────────────────────────── */
 
-function useUserCount() {
-  const [count, setCount] = useState<number | null>(null);
-  useEffect(() => {
-    fetch('/api/users/count')
-      .then((r) => r.json())
-      .then((d) => setCount(d.count ?? null))
-      .catch(() => {});
-  }, []);
-  return count;
-}
-
-function formatCount(n: number): string {
-  return `+${n}`;
-}
-
 export default function HomeLanding() {
-  const userCount = useUserCount();
   return (
-    <div className="relative min-h-screen bg-vn-void overflow-x-hidden">
+    <div className="relative overflow-x-hidden">
 
-      {/* ── Background ──────────────────────────────────────────── */}
-      <div className="fixed inset-0 bg-vn-void pointer-events-none" aria-hidden />
+      {/* ── Background (fond solide retiré : étoiles globales + mesh / grille) ── */}
       <div className="fixed inset-0 landing-mesh pointer-events-none opacity-[0.88]" aria-hidden />
       <div className="fixed inset-0 landing-grid-fine pointer-events-none opacity-[0.32]" aria-hidden />
       <div className="fixed inset-0 landing-hero-aurora pointer-events-none opacity-[0.78]" aria-hidden />
@@ -287,18 +269,14 @@ export default function HomeLanding() {
       </div>
 
       {/* ══ 1. HERO ═══════════════════════════════════════════════ */}
-      <section className="relative pt-10 sm:pt-14 lg:pt-20 pb-5 sm:pb-14 lg:pb-16 overflow-visible" id="top">
-        <div className="stars-hero" aria-hidden>
-          <div className="stars-layer-sm" /><div className="stars-layer-md" /><div className="stars-layer-lg" />
-          <div className="stars-hero-mask" />
-        </div>
+      <section className="relative pt-8 sm:pt-14 lg:pt-20 pb-3 sm:pb-14 lg:pb-16 overflow-visible" id="top">
         <div className="absolute inset-x-0 top-0 h-[min(90vh,1000px)] landing-band-magenta pointer-events-none opacity-95" aria-hidden />
 
         <div className="relative max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-10">
-          <div className="flex flex-col lg:flex-row items-center gap-6 sm:gap-8 lg:gap-14 xl:gap-20">
+          <div className="flex flex-col lg:flex-row items-center gap-4 sm:gap-8 lg:gap-14 xl:gap-20">
 
             {/* ── Left: copy ────────────────────────────────────── */}
-            <div className="flex-[5] flex flex-col items-center lg:items-start text-center lg:text-left">
+            <div className="w-full shrink-0 lg:flex-[5] lg:min-w-0 flex flex-col items-center lg:items-start text-center lg:text-left">
 
               {/* Badge */}
               <Link href="/pricing"
@@ -354,7 +332,6 @@ export default function HomeLanding() {
                       <img key={i} src={img} alt="" width={36} height={36}
                         className="h-9 w-9 rounded-full border-[2.5px] border-[#030308] object-cover" aria-hidden />
                     ))}
-                    <span className="h-9 w-9 rounded-full border-[2.5px] border-[#030308] bg-vn-elevated flex items-center justify-center text-[9px] font-bold text-white tracking-tight shrink-0">+1k</span>
                   </div>
                   <div className="flex items-center gap-0.5" aria-hidden>
                     {Array.from({ length: 5 }).map((_, i) => (
@@ -366,16 +343,14 @@ export default function HomeLanding() {
                 </div>
                 <p className="text-[13.5px] text-gray-400 font-medium">
                   Rejoins{' '}
-                  <span className="text-white font-bold">
-                    {userCount !== null ? formatCount(userCount) : '+237'}
-                  </span>{' '}
+                  <span className="text-white font-bold">+200</span>{' '}
                   créateurs de contenu
                 </p>
               </div>
             </div>
 
             {/* ── Right: mockup ─────────────────────────────────── */}
-            <div className="flex-[6] w-full max-w-[520px] lg:max-w-none relative" id="produit">
+            <div className="w-full max-w-[520px] shrink-0 lg:flex-[6] lg:max-w-none lg:min-w-0 relative" id="produit">
               {/* Spotlight cone behind the mockup */}
               <div
                 className="absolute -inset-16 pointer-events-none -z-10"
@@ -421,11 +396,11 @@ export default function HomeLanding() {
       </div>
 
       {/* ══ 2. PROBLÈME ═══════════════════════════════════════════ */}
-      <section id="probleme" className="relative py-8 sm:py-16 lg:py-20 border-t border-white/[0.06]">
+      <section id="probleme" className="relative pt-5 pb-8 sm:py-16 lg:py-20 border-t border-white/[0.06]">
         <div className={`max-w-5xl ${SI}`}>
           <FadeUp>
-            <div className="text-center mb-6 sm:mb-8">
-              <h2 className="text-3xl sm:text-[2.6rem] font-black tracking-tight leading-[1.06] mb-3 sm:mb-5">
+            <div className="text-center mb-4 sm:mb-8">
+              <h2 className="text-3xl sm:text-[2.6rem] font-black tracking-tight leading-[1.06] mb-2 sm:mb-5">
                 <span className="text-white">Pourquoi tes vidéos</span><br />
                 <span className={G}>ne marchent pas.</span>
               </h2>

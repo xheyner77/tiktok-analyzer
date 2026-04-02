@@ -99,7 +99,7 @@ function CellVal({
 /* ═══════════════════════════════════════════════════════════════════════════ */
 export default function PricingPage() {
   return (
-    <main className="relative min-h-screen bg-vn-void overflow-x-hidden">
+    <main className="relative min-h-screen overflow-x-hidden">
 
       {/* Particles — top section only */}
       <div className="absolute top-0 inset-x-0 h-[520px] pointer-events-none overflow-hidden" aria-hidden>

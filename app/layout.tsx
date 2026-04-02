@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter, Plus_Jakarta_Sans, Syne } from 'next/font/google';
 import Navbar from '@/components/Navbar';
 import FooterWrapper from '@/components/FooterWrapper';
+import StarsBackdrop from '@/components/StarsBackdrop';
 import './globals.css';
 
 const jakarta = Plus_Jakarta_Sans({
@@ -56,9 +57,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" className={`${jakarta.variable} ${syne.variable} ${interHero.variable}`}>
-      <body className={`${jakarta.className} font-sans`}>
+      <body className={`${jakarta.className} font-sans bg-vn-bg text-white antialiased`}>
+        <StarsBackdrop />
         <Navbar />
-        <div className="pt-[4.25rem] min-h-[calc(100vh-0px)] overflow-x-hidden">{children}</div>
+        <div className="relative z-[1] pt-[4.25rem] min-h-[calc(100vh-0px)] overflow-x-hidden">{children}</div>
         <FooterWrapper />
       </body>
     </html>

@@ -117,7 +117,7 @@ function CallbackContent() {
 
 export default function AuthCallbackPage() {
   return (
-    <main className="min-h-screen bg-vn-bg flex items-center justify-center px-4">
+    <main className="min-h-screen flex items-center justify-center px-4">
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-vn-indigo/5 to-vn-fuchsia/5 blur-3xl" />
       </div>

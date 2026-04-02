@@ -135,7 +135,7 @@ function MobilePlanAction() {
 export default function HeroMockupPremium() {
   return (
     <div
-      className="relative pt-4 pb-4 pl-3 pr-3 sm:pt-10 sm:pb-24 sm:pl-8 sm:pr-10 lg:pt-12 lg:pb-28 lg:pl-6 lg:pr-10 xl:pl-12 xl:pr-16 select-none pointer-events-none"
+      className="relative pt-3 pb-2 pl-3 pr-3 sm:pt-10 sm:pb-24 sm:pl-8 sm:pr-10 lg:pt-12 lg:pb-28 lg:pl-6 lg:pr-10 xl:pl-12 xl:pr-16 select-none pointer-events-none"
       aria-hidden
     >
       {/* ── Deep ambient layers (softer on mobile) ─────────────── */}
@@ -167,12 +167,6 @@ export default function HeroMockupPremium() {
           style={{ background: 'rgba(8,8,16,0.92)', border: '1px solid rgba(232,121,249,0.2)' }}
         >
           <span>✨</span> Insight viral
-        </div>
-        <div
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-semibold"
-          style={{ color: '#86efac', background: 'rgba(8,8,16,0.92)', border: '1px solid rgba(74,222,128,0.2)' }}
-        >
-          🔥 Hook 71
         </div>
       </div>
 
@@ -375,17 +369,6 @@ export default function HeroMockupPremium() {
               <span className="h-2 w-2 rounded-full bg-emerald-400" />
             </span>
             <span className="text-[11px] font-semibold text-white/75">IA active</span>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* ══ FLOATING: Hook score pill — desktop ═══════════════ */}
-      <motion.div {...from(18, 0, 0.75)} className="hidden sm:block absolute top-[8rem] right-1 sm:top-[9rem] sm:-right-4 lg:-right-12 z-20">
-        <div className="mock-float-d">
-          <div className="flex items-center gap-2 px-3.5 py-2 rounded-full"
-            style={{ background: 'rgba(8,8,16,0.96)', border: '1px solid rgba(74,222,128,0.22)', backdropFilter: 'blur(12px)', boxShadow: '0 0 22px -6px rgba(74,222,128,0.25), 0 8px 28px rgba(0,0,0,0.55)' }}>
-            <span className="text-[11px]">🔥</span>
-            <span className="text-[10.5px] font-semibold" style={{ color: '#86efac' }}>Hook · 71/100</span>
           </div>
         </div>
       </motion.div>

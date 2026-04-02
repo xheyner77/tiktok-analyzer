@@ -252,7 +252,7 @@ export default function Home() {
   };
 
   return (
-    <main className="relative min-h-screen bg-vn-bg overflow-x-hidden">
+    <main className="relative min-h-screen overflow-x-hidden">
       <GuestGate show={showGuestGate} pendingUrl={uploadTiktokUrl} onClose={() => setShowGuestGate(false)} />
 
       {/* Ambient glows + particles */}
