@@ -23,7 +23,7 @@ export default function Header() {
           { label: 'Conseils IA', color: 'border-purple-400/20 text-purple-400/70' },
         ].map(({ label, color }) => (
           <span key={label}
-            className={`text-[10px] font-medium bg-white/[0.03] border px-3 py-0.5 rounded-full ${color}`}>
+            className={`text-[10px] font-medium bg-vn-surface border px-3 py-0.5 rounded-full ${color}`}>
             {label}
           </span>
         ))}

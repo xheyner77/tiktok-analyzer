@@ -163,6 +163,8 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
     { title: 'Rétention',  s: data.retention, reco: retentReco },
   ];
 
+  const pillarDetailCap = plan === 'free' ? 1 : 2;
+
   const fmt = (v?: number) =>
     v == null ? '—' : new Intl.NumberFormat('fr-FR', { notation: 'compact', maximumFractionDigits: 1 }).format(v);
 
@@ -300,28 +302,62 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
 
                 {(s?.strengths?.length ?? 0) > 0 && (
                   <div className="mt-3 space-y-1.5">
-                    {(s?.strengths ?? []).slice(0, 2).map((f, i) => (
+                    {(s?.strengths ?? []).slice(0, pillarDetailCap).map((f, i) => (
                       <p key={i} className="text-[12px] text-gray-400 leading-snug">
                         <span className="text-emerald-400 font-bold mr-1.5">✓</span>{f}
                       </p>
                     ))}
+                    {plan === 'free' && (s?.strengths?.length ?? 0) > pillarDetailCap && (
+                      <div className="relative rounded-lg overflow-hidden border border-white/[0.06] mt-1">
+                        <div className="blur-sm pointer-events-none select-none opacity-30 px-1 py-2" aria-hidden>
+                          <p className="text-[12px] text-gray-500 truncate">✓ …</p>
+                        </div>
+                        <div className="absolute inset-0 flex items-center justify-center bg-[#0d0d12]/88">
+                          <span className="text-[9px] font-bold text-vn-fuchsia/90 uppercase tracking-wider">+ Pro</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
                 {(s?.weaknesses?.length ?? 0) > 0 && (
                   <div className="mt-2 space-y-1.5">
-                    {(s?.weaknesses ?? []).slice(0, 2).map((w, i) => (
+                    {(s?.weaknesses ?? []).slice(0, pillarDetailCap).map((w, i) => (
                       <p key={i} className="text-[12px] text-gray-500 leading-snug">
                         <span className="text-red-400 font-bold mr-1.5">×</span>{w}
                       </p>
                     ))}
+                    {plan === 'free' && (s?.weaknesses?.length ?? 0) > pillarDetailCap && (
+                      <div className="relative rounded-lg overflow-hidden border border-white/[0.06] mt-1">
+                        <div className="blur-sm pointer-events-none select-none opacity-30 px-1 py-2" aria-hidden>
+                          <p className="text-[12px] text-gray-500 truncate">× …</p>
+                        </div>
+                        <div className="absolute inset-0 flex items-center justify-center bg-[#0d0d12]/88">
+                          <span className="text-[9px] font-bold text-vn-fuchsia/90 uppercase tracking-wider">+ Pro</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
                 {reco && (
-                  <p className="mt-4 pt-3 text-[12px] text-vn-violet/80 leading-snug border-t border-white/[0.05]">
-                    → {reco}
-                  </p>
+                  plan === 'free' ? (
+                    <div className="relative mt-4 pt-3 border-t border-white/[0.05] rounded-b-lg overflow-hidden min-h-[3.25rem]">
+                      <p className="text-[12px] text-vn-violet/80 leading-snug blur-sm select-none opacity-35 pointer-events-none" aria-hidden>
+                        → {reco}
+                      </p>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-gradient-to-t from-[#0d0d12]/95 via-[#0d0d12]/80 to-transparent px-2">
+                        <span className="text-[9px] font-bold text-vn-fuchsia uppercase tracking-widest">Plan Pro</span>
+                        <Link href="/pricing" className="text-[10px] font-semibold text-white hover:text-vn-fuchsia transition-colors">
+                          Voir la reco pilier →
+                        </Link>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="mt-4 pt-3 text-[12px] text-vn-violet/80 leading-snug border-t border-white/[0.05]">
+                      → {reco}
+                    </p>
+                  )
                 )}
               </div>
             );
@@ -376,9 +412,24 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
             </div>
 
             {data.comparativeInsight && (
-              <p className="mt-3 text-[12px] text-gray-500 leading-relaxed max-w-lg">
-                {data.comparativeInsight}
-              </p>
+              plan === 'free' ? (
+                <div className="relative mt-3 rounded-xl overflow-hidden border border-white/[0.07] max-w-lg">
+                  <p className="text-[12px] text-gray-500 leading-relaxed px-3 py-3 blur-md select-none opacity-40 pointer-events-none" aria-hidden>
+                    {data.comparativeInsight}
+                  </p>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-b from-[#0d0d12]/90 via-[#0d0d12]/85 to-[#0d0d12]/90 px-4 py-4">
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-vn-fuchsia">Analyse comparative · Pro</span>
+                    <p className="text-[11px] text-gray-500 text-center leading-snug">Contexte stats, benchmark et lecture algo complète.</p>
+                    <Link href="/pricing" className="text-[11px] font-semibold text-white bg-gradient-to-r from-vn-fuchsia to-vn-indigo px-3 py-1.5 rounded-lg hover:brightness-110">
+                      Débloquer →
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <p className="mt-3 text-[12px] text-gray-500 leading-relaxed max-w-lg">
+                  {data.comparativeInsight}
+                </p>
+              )
             )}
           </div>
         </>
@@ -396,9 +447,23 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
             <p className="text-[14px] text-gray-500">Voir l&apos;analyse détaillée ci-dessus.</p>
           )}
           {data.comparativePriority && (
-            <p className="mt-3 text-[12px] text-vn-violet/80 leading-snug">
-              → {data.comparativePriority}
-            </p>
+            plan === 'free' ? (
+              <div className="relative mt-3 rounded-xl overflow-hidden border border-vn-violet/15 min-h-[3rem]">
+                <p className="text-[12px] text-vn-violet/80 leading-snug px-1 blur-md select-none opacity-35 pointer-events-none" aria-hidden>
+                  → {data.comparativePriority}
+                </p>
+                <div className="absolute inset-0 flex items-center justify-center bg-[#0d0d12]/92 px-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] font-bold text-vn-violet uppercase tracking-wider">Priorité Pro</span>
+                    <Link href="/pricing" className="text-[10px] font-semibold text-white underline-offset-2 hover:underline">Débloquer</Link>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="mt-3 text-[12px] text-vn-violet/80 leading-snug">
+                → {data.comparativePriority}
+              </p>
+            )
           )}
           {data.overperformanceDetected && (
             <p className="mt-3 text-[12px] text-vn-fuchsia/80">
@@ -406,14 +471,27 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
             </p>
           )}
           {typeof data.observedPerformanceScore === 'number' && (
-            <div className="mt-4 flex items-baseline gap-2">
-              <span className="text-[2.2rem] font-black text-white leading-none">
-                {data.observedPerformanceScore}
-              </span>
-              <span className="text-[11px] text-gray-500">
-                {data.observedPerformanceLabel ?? 'Performance observée'}
-              </span>
-            </div>
+            plan === 'free' ? (
+              <div className="relative mt-4 rounded-xl overflow-hidden border border-white/[0.06] py-3 px-4 min-h-[4.5rem]">
+                <div className="blur-md select-none opacity-30 pointer-events-none flex items-baseline gap-2" aria-hidden>
+                  <span className="text-[2.2rem] font-black text-white leading-none">00</span>
+                  <span className="text-[11px] text-gray-500">Performance observée</span>
+                </div>
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0d0d12]/93 gap-1">
+                  <span className="text-[9px] font-bold text-vn-fuchsia uppercase tracking-wider">Score observé · Pro</span>
+                  <Link href="/pricing" className="text-[10px] font-semibold text-gray-300 hover:text-white">Voir les plans</Link>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-4 flex items-baseline gap-2">
+                <span className="text-[2.2rem] font-black text-white leading-none">
+                  {data.observedPerformanceScore}
+                </span>
+                <span className="text-[11px] text-gray-500">
+                  {data.observedPerformanceLabel ?? 'Performance observée'}
+                </span>
+              </div>
+            )
           )}
         </div>
 

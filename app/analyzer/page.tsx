@@ -273,7 +273,7 @@ export default function Home() {
 
         <div className="mt-10 space-y-4">
           {/* Form card */}
-          <div className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-5 sm:p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_8px_32px_rgba(0,0,0,0.4)]">
+          <div className="rounded-2xl border border-white/10 bg-vn-surface p-5 sm:p-6 shadow-[0_8px_32px_rgba(0,0,0,0.45)]">
             <div className="space-y-4">
               <div>
                 <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-[0.15em] mb-2.5 px-0.5">
@@ -284,7 +284,7 @@ export default function Home() {
                   accept="video/*"
                   disabled={isLoading || isLimitReached}
                   onChange={(e) => setVideoFile(e.target.files?.[0] ?? null)}
-                  className="block w-full text-sm text-gray-300 file:mr-4 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:text-[13px] file:font-semibold file:bg-white/[0.08] file:text-white hover:file:bg-white/[0.14] file:transition-colors border border-white/[0.09] rounded-xl bg-white/[0.03] px-3 py-2 disabled:opacity-50 transition-colors"
+                  className="block w-full text-sm text-gray-300 file:mr-4 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:text-[13px] file:font-semibold file:bg-vn-elevated file:text-white hover:file:brightness-110 file:transition-all border border-white/10 rounded-xl bg-vn-void px-3 py-2 disabled:opacity-50 transition-colors"
                 />
                 {videoFile && (
                   <p className="text-[11px] text-vn-violet/70 mt-2 px-0.5 truncate flex items-center gap-1.5" title={videoFile.name}>
@@ -323,7 +323,7 @@ export default function Home() {
                   disabled={isLoading || isLimitReached || !videoFile}
                   className={`relative w-full rounded-xl py-4 font-semibold text-white text-[15px] transition-all duration-200 active:scale-[0.99] ${
                     isLimitReached
-                      ? 'bg-white/[0.04] border border-white/[0.08] opacity-60 cursor-not-allowed'
+                      ? 'bg-vn-elevated border border-white/10 opacity-60 cursor-not-allowed'
                       : 'bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed shadow-[0_8px_32px_-8px_rgba(232,121,249,0.45)]'
                   }`}
                 >
@@ -358,7 +358,7 @@ export default function Home() {
           )}
 
           {error && (
-            <div className="rounded-xl border border-red-500/20 bg-red-500/[0.06] px-4 py-3 animate-fade-in">
+            <div className="rounded-xl border border-red-500/35 bg-[#1f0a0c] px-4 py-3 animate-fade-in">
               <p className="text-red-400 text-sm text-center">{error}</p>
             </div>
           )}

@@ -277,14 +277,19 @@ function truncateForPrompt(s: string, max: number): string {
 }
 
 function buildVisionUserContent(
-  plan: 'pro' | 'elite',
+  plan: Plan,
   frameCount: number,
   observedMetrics?: { views?: number; likes?: number; comments?: number; shares?: number },
   meta?: { durationSec?: number; tiktokUrl?: string; fileName?: string; transcript?: string }
 ): string {
-  const isPro = plan === 'pro';
-  const tipsCount = isPro ? 5 : 10;
-  const depth = isPro ? '2-3 phrases par section' : '4-5 phrases par section avec donnees chiffrees';
+  const isElite = plan === 'elite';
+  const isFree = plan === 'free';
+  const tipsCount = isElite ? 10 : 5;
+  const depth = isElite
+    ? '4-5 phrases par section avec donnees chiffrees'
+    : isFree
+      ? '1-2 phrases concises par section (apercu plan gratuit — concret et actionnable)'
+      : '2-3 phrases par section';
 
   const views    = observedMetrics?.views    ?? 0;
   const likes    = observedMetrics?.likes    ?? 0;
@@ -325,15 +330,24 @@ function buildVisionUserContent(
       ].join('\n')
     : '\nAudio : non transcrit (analyse visuelle uniquement).';
 
-  const eliteExtra = isPro ? '' : [
-    '',
-    '  "strategy": "150-200 mots — strategie de contenu ancree dans CE QUI EST DIT (transcription) ET CE QUI EST VU (frames). Frequence, creneaux, formats complementaires.",',
-    '  "viralTips": ["tip1", "tip2", "tip3", "tip4"] — 4 insights tres specifiques au contenu/niche observe',
-  ].join('\n');
+  const eliteJsonTail = isElite
+    ? ',\n  "strategy": "150-200 mots — strategie de contenu ancree dans CE QUI EST DIT (transcription) ET CE QUI EST VU (frames). Frequence, creneaux, formats complementaires.",\n  "viralTips": ["tip1", "tip2", "tip3", "tip4"] — 4 insights tres specifiques au contenu/niche observe'
+    : '';
 
-  const priorityRule = isPro
-    ? 'Exactement 5 tips : 2 haute, 2 moyenne, 1 basse'
-    : 'Exactement 10 tips : 4 haute, 4 moyenne, 2 basse';
+  const priorityRule = isElite
+    ? 'Exactement 10 tips : 4 haute, 4 moyenne, 2 basse'
+    : 'Exactement 5 tips : 2 haute, 2 moyenne, 1 basse';
+
+  const comparativeBlock = isFree
+    ? [
+        '  "comparativeInsight": "1 phrase courte : synthese avec un chiffre cle si les stats sont fournies.",',
+        '  "comparativePriority": "1 phrase : une seule action prioritaire."',
+      ].join('\n')
+    : [
+        '  "comparativeInsight": "2-3 phrases : positionnement de cette video (scores + stats si dispo). Chiffres concrets.",',
+        '  "comparativePriority": "1-2 phrases : l\'action la plus rentable en priorite, ancree dans la faiblesse principale"' +
+          eliteJsonTail,
+      ].join('\n');
 
   return [
     `${frameCount} frames (video TikTok verticale, ordre chronologique).`,
@@ -356,8 +370,7 @@ function buildVisionUserContent(
     '  "editing":   { "score": int, "rating": "...", "analysis": "...", "strengths": [...], "weaknesses": [...] },',
     '  "retention": { "score": int, "rating": "...", "analysis": "...", "strengths": [...], "weaknesses": [...] },',
     `  "improvements": [ { "priority": "haute|moyenne|basse", "tip": "Cote [hook/montage/retention] : action precise => benefice attendu" } — exactement ${tipsCount} items ],`,
-    '  "comparativeInsight": "2-3 phrases : positionnement de cette video (scores + stats si dispo). Chiffres concrets.",',
-    '  "comparativePriority": "1-2 phrases : l\'action la plus rentable en priorite, ancree dans la faiblesse principale"' + eliteExtra,
+    comparativeBlock,
     '}',
     '',
     `Regles : ${priorityRule}. Scores 0-100. Tout en francais.`,
@@ -368,7 +381,7 @@ function buildVisionUserContent(
 
 export async function analyzeWithOpenAIVision(
   framesBase64: string[],
-  plan: Extract<Plan, 'pro' | 'elite'>,
+  plan: Plan,
   observedMetrics?: { views?: number; likes?: number; comments?: number; shares?: number },
   meta?: { durationSec?: number; tiktokUrl?: string; fileName?: string; transcript?: string }
 ): Promise<AnalysisResult> {
@@ -387,7 +400,7 @@ export async function analyzeWithOpenAIVision(
   ];
 
   // More tokens for richer analysis, lower temp for consistency
-  const maxOut = plan === 'elite' ? 3200 : 2400;
+  const maxOut = plan === 'elite' ? 3200 : plan === 'free' ? 1900 : 2400;
 
   const createParams = {
     model: OPENAI_CHAT_MODEL,

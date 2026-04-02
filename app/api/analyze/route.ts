@@ -599,6 +599,20 @@ function finalizeAnalyzeResult(
   }
 }
 
+/** Réponse vision : le gratuit ne reçoit pas les champs Elite / stratégie complète (évite fuite + incite au Pro). */
+function sanitizeVisionResultForPlan(result: AnalysisResult, plan: string): AnalysisResult {
+  if (plan !== 'free') return result;
+  const next: AnalysisResult = {
+    ...result,
+    strategy: undefined,
+    viralTips: undefined,
+  };
+  if (next.improvements && next.improvements.length > 5) {
+    next.improvements = next.improvements.slice(0, 5);
+  }
+  return next;
+}
+
 async function postVisionAnalyze(
   body: Record<string, unknown>,
   frames: string[]
@@ -653,14 +667,13 @@ async function postVisionAnalyze(
   const plan = effective;
   const hasOpenAI =
     !!process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'sk-your-key-here';
-  if (plan === 'free' || !hasOpenAI) {
+  if (!hasOpenAI) {
     return NextResponse.json(
       {
-        error:
-          'L’import vidéo (analyse par vision) est disponible pour les plans Pro et Elite.',
-        code: 'VISION_REQUIRES_PRO',
+        error: 'Analyse vision indisponible (configuration serveur). Réessaie plus tard.',
+        code: 'VISION_DISABLED',
       },
-      { status: 403 }
+      { status: 503 }
     );
   }
 
@@ -739,7 +752,7 @@ async function postVisionAnalyze(
 
   let result: AnalysisResult;
   try {
-    result = await analyzeWithOpenAIVision(frames, plan as 'pro' | 'elite', detectedObserved, {
+    result = await analyzeWithOpenAIVision(frames, plan, detectedObserved, {
       durationSec,
       tiktokUrl: tiktokUrl || undefined,
       fileName,
@@ -751,6 +764,7 @@ async function postVisionAnalyze(
     return NextResponse.json({ error: message }, { status });
   }
 
+  result = sanitizeVisionResultForPlan(result, plan);
   result.analysisSource = 'vision_upload';
 
   const structureScore = result.structureScore ?? result.viralityScore;
