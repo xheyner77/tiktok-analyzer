@@ -180,7 +180,7 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
           {/* Gauge ring */}
           <div className="relative shrink-0">
             <Gauge value={vs} />
-            <div className="absolute inset-0 flex flex-col items-center justify-center rotate-90">
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-[3.2rem] font-black leading-none tabular-nums"
                 style={{ color: sc.hex, textShadow: `0 0 48px ${sc.glow}` }}>
                 {vs}
