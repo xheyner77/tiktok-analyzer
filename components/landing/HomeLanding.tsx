@@ -877,34 +877,6 @@ export default function HomeLanding() {
         </div>
       </section>
 
-      {/* ══ FOOTER ════════════════════════════════════════════════ */}
-      <footer className="relative border-t border-white/[0.08] py-12 sm:py-14">
-        <div className="landing-section">
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
-            <div>
-              <p className="font-display text-xl font-bold text-white">
-                Viral<span className="gradient-text">ynz</span>
-              </p>
-              <p className="mt-2 text-[13px] text-gray-600 max-w-sm leading-relaxed">
-                Analyse vidéo IA pour le court format. Comprends ce qui bloque. Corrige avant de reposter.
-              </p>
-            </div>
-            <nav className="flex flex-wrap gap-x-8 gap-y-3 text-[13px] text-gray-600">
-              <Link href="/analyzer"       className="hover:text-white transition-colors">Analyser</Link>
-              <Link href="/features"       className="hover:text-white transition-colors">Fonctionnalités</Link>
-              <Link href="/hook-generator" className="hover:text-white transition-colors">Hooks</Link>
-              <Link href="/pricing"        className="hover:text-white transition-colors">Tarifs</Link>
-              <Link href="/changelog"      className="hover:text-white transition-colors">Nouveautés</Link>
-              <Link href="/login"          className="hover:text-white transition-colors">Connexion</Link>
-            </nav>
-          </div>
-          <div className="mt-10 pt-8 border-t border-white/[0.06] flex flex-col sm:flex-row justify-between gap-4 text-[11px] text-gray-700">
-            <p>© {new Date().getFullYear()} Viralynz. Tous droits réservés.</p>
-            <p>TikTok aujourd&apos;hui — Reels &amp; Shorts en roadmap.</p>
-          </div>
-        </div>
-      </footer>
-
     </div>
   );
 }
