@@ -6,16 +6,17 @@ import { createPortal } from 'react-dom';
 type Status = 'idle' | 'sending' | 'success' | 'error';
 
 const CATEGORIES = [
-  { id: 'bug',   label: '🐛 Bug' },
-  { id: 'idea',  label: '💡 Idée' },
-  { id: 'other', label: '💬 Retour' },
+  { id: 'bug',         label: '🐛 Bug' },
+  { id: 'suggestion',  label: '💡 Suggestion' },
+  { id: 'question',    label: '❓ Question' },
+  { id: 'other',       label: '💬 Autre' },
 ] as const;
 
 type Category = typeof CATEGORIES[number]['id'];
 
 export default function FeedbackButton() {
   const [open,     setOpen]     = useState(false);
-  const [category, setCategory] = useState<Category>('idea');
+  const [category, setCategory] = useState<Category>('suggestion');
   const [message,  setMessage]  = useState('');
   const [status,   setStatus]   = useState<Status>('idle');
   const textareaRef             = useRef<HTMLTextAreaElement>(null);
@@ -43,7 +44,7 @@ export default function FeedbackButton() {
     if (status !== 'success') return;
     const t = setTimeout(() => {
       setOpen(false);
-      setTimeout(() => { setStatus('idle'); setMessage(''); setCategory('idea'); }, 350);
+      setTimeout(() => { setStatus('idle'); setMessage(''); setCategory('suggestion'); }, 350);
     }, 2200);
     return () => clearTimeout(t);
   }, [status]);
@@ -118,15 +119,15 @@ export default function FeedbackButton() {
                 🙏
               </div>
               <div>
-                <p className="text-base font-bold text-white mb-1">Merci pour ton retour !</p>
-                <p className="text-sm text-gray-500">On le prend en compte pour améliorer l&apos;outil.</p>
+                <p className="text-base font-bold text-white mb-1">Message envoyé !</p>
+                <p className="text-sm text-gray-500">On te répond dans les meilleurs délais.</p>
               </div>
             </div>
           ) : (
             <>
               <div className="mb-5 pr-6">
-                <h2 className="text-base font-bold text-white mb-1">Ton avis compte</h2>
-                <p className="text-xs text-gray-500">Bug, idée, suggestion — tout nous intéresse.</p>
+                <h2 className="text-base font-bold text-white mb-1">Nous contacter</h2>
+                <p className="text-xs text-gray-500">Bug, question, suggestion — on te répond rapidement.</p>
               </div>
 
               {/* Category tabs */}
@@ -150,7 +151,7 @@ export default function FeedbackButton() {
                 ref={textareaRef}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="Dis-nous ce que tu aimerais améliorer, un bug rencontré, ou une idée…"
+                placeholder="Décris ton problème, ta question ou ta suggestion…"
                 rows={4}
                 maxLength={1000}
                 className="w-full bg-[#111] border border-[#222] hover:border-[#2a2a2a] focus:border-[#ff0050]/40 focus:ring-2 focus:ring-[#ff0050]/8 text-white text-sm placeholder-gray-600 rounded-xl px-4 py-3 resize-none transition-all duration-150 mb-1"
@@ -198,7 +199,7 @@ export default function FeedbackButton() {
         <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 shrink-0">
           <path d="M1 2.75C1 1.784 1.784 1 2.75 1h10.5c.966 0 1.75.784 1.75 1.75v7.5A1.75 1.75 0 0 1 13.25 12H9.06l-2.573 2.573A1.457 1.457 0 0 1 4 13.543V12H2.75A1.75 1.75 0 0 1 1 10.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h2a.75.75 0 0 1 .75.75v2.19l2.72-2.72a.749.749 0 0 1 .53-.22h4.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z" />
         </svg>
-        <span className="hidden sm:inline">Feedback</span>
+        <span className="hidden sm:inline">Nous contacter</span>
       </button>
 
       {/* ── Modal via portal (bypasses Navbar stacking context) ───────────── */}
