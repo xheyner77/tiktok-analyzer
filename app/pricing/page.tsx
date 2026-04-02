@@ -70,11 +70,11 @@ function CellVal({ v, accent }: { v: boolean | string; accent?: 'fuchsia' | 'vio
 /* ═══════════════════════════════════════════════════════════════════════════ */
 export default function PricingPage() {
   return (
-    <main className="min-h-screen bg-vn-void overflow-x-hidden">
+    <main className="relative min-h-screen bg-vn-void overflow-x-hidden">
 
-      {/* Floating particles background */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <FloatingParticles count={55} />
+      {/* Particles — top section only */}
+      <div className="absolute top-0 inset-x-0 h-[520px] pointer-events-none overflow-hidden" aria-hidden>
+        <FloatingParticles count={40} />
       </div>
 
       <div className="relative max-w-6xl mx-auto px-5 sm:px-8 py-10 pb-16 space-y-16">

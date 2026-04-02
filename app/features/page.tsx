@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import FloatingParticles from '@/components/FloatingParticles';
 
 export const metadata: Metadata = {
   title: 'Fonctionnalités – Viralynz',
@@ -228,11 +229,12 @@ const plans = [
 
 export default function FeaturesPage() {
   return (
-    <main className="min-h-screen bg-vn-void overflow-x-hidden">
-      {/* Background */}
-      <div className="fixed inset-0 pointer-events-none" aria-hidden>
+    <main className="relative min-h-screen bg-vn-void overflow-x-hidden">
+      {/* Background glows */}
+      <div className="absolute top-0 inset-x-0 h-[500px] pointer-events-none" aria-hidden>
         <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[900px] h-[500px] rounded-full bg-gradient-to-b from-vn-fuchsia/[0.08] to-transparent blur-3xl" />
         <div className="absolute top-1/3 right-0 w-[400px] h-[400px] rounded-full bg-vn-indigo/[0.05] blur-3xl" />
+        <FloatingParticles count={35} />
       </div>
 
       {/* HERO */}

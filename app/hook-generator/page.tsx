@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import GuestGate from '@/components/GuestGate';
+import FloatingParticles from '@/components/FloatingParticles';
 import { HOOK_LIMITS, MAX_HOOKS_ELITE, MAX_HOOKS_PRO } from '@/lib/plan-limits';
 import { DISPLAY_CATALOG_PRO_EUR } from '@/lib/stripe-pricing';
 
@@ -227,11 +228,12 @@ export default function HookGeneratorPage() {
   }
 
   return (
-    <main className="min-h-screen bg-vn-bg overflow-x-hidden">
+    <main className="relative min-h-screen bg-vn-bg overflow-x-hidden">
 
-      {/* Ambient glow */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden>
+      {/* Ambient glow + particles */}
+      <div className="absolute top-0 inset-x-0 h-[500px] pointer-events-none overflow-hidden" aria-hidden>
         <div className="absolute -top-60 left-1/2 -translate-x-1/2 w-[600px] h-[500px] rounded-full bg-gradient-to-br from-vn-indigo/[0.08] to-vn-fuchsia/[0.06] blur-3xl" />
+        <FloatingParticles count={30} />
       </div>
 
       {/* Guest gate */}

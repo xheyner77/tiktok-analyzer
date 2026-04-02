@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/session';
+import FloatingParticles from '@/components/FloatingParticles';
 import { getUserById, PLAN_LIMITS, HOOK_LIMITS, getEffectivePlan } from '@/lib/auth';
 import { isSubscriptionStatusAllowingAccess } from '@/lib/stripe-billing';
 import { getAnalyses } from '@/lib/analyses';
@@ -45,10 +46,11 @@ export default async function DashboardPage({
   const stripeSessionId = searchParams.session_id ?? null;
 
   return (
-    <main className="min-h-screen bg-vn-void overflow-x-hidden">
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+    <main className="relative min-h-screen bg-vn-void overflow-x-hidden">
+      <div className="absolute top-0 inset-x-0 h-[540px] pointer-events-none overflow-hidden">
         <div className="absolute -top-60 left-1/4 w-[900px] h-[600px] rounded-full bg-gradient-to-br from-vn-fuchsia/8 to-vn-indigo/6 blur-[120px]" />
         <div className="absolute top-1/2 -right-40 w-[600px] h-[500px] rounded-full bg-vn-violet/5 blur-[100px]" />
+        <FloatingParticles count={28} />
       </div>
 
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-10 pb-24">

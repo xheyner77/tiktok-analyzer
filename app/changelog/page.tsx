@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import FloatingParticles from '@/components/FloatingParticles';
 
 export const metadata: Metadata = {
   title: 'Nouveautés — Viralynz',
@@ -82,10 +83,11 @@ function SparkIcon() {
 
 export default function ChangelogPage() {
   return (
-    <main className="min-h-screen bg-vn-void overflow-x-hidden">
-      {/* Background glow */}
-      <div className="fixed inset-0 pointer-events-none" aria-hidden>
+    <main className="relative min-h-screen bg-vn-void overflow-x-hidden">
+      {/* Background glow + particles */}
+      <div className="absolute top-0 inset-x-0 h-[480px] pointer-events-none overflow-hidden" aria-hidden>
         <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[400px] rounded-full bg-gradient-to-b from-vn-fuchsia/10 to-transparent blur-3xl" />
+        <FloatingParticles count={30} />
       </div>
 
       {/* ── HERO ─────────────────────────────────────────────────────── */}

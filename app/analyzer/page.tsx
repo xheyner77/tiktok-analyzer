@@ -11,6 +11,7 @@ import { AnalysisResult } from '@/lib/types';
 import { normalizeTikTokUrl, isTikTokVideoUrl } from '@/lib/tiktok-url';
 import { extractVideoFramesFromFile, extractAudioFromVideo } from '@/lib/extract-video-frames';
 import { PLAN_LIMITS } from '@/lib/plan-limits';
+import FloatingParticles from '@/components/FloatingParticles';
 
 const STORAGE_KEY = 'tiktok_analysis_count';
 const GUEST_LIMIT = 3;
@@ -251,16 +252,17 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-vn-bg overflow-x-hidden">
+    <main className="relative min-h-screen bg-vn-bg overflow-x-hidden">
       <GuestGate show={showGuestGate} pendingUrl={uploadTiktokUrl} onClose={() => setShowGuestGate(false)} />
 
-      {/* Ambient glows */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+      {/* Ambient glows + particles */}
+      <div className="absolute top-0 inset-x-0 h-[520px] pointer-events-none overflow-hidden">
         <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[500px] rounded-full bg-gradient-to-br from-vn-fuchsia/10 to-vn-indigo/10 blur-3xl" />
         <div className="absolute top-1/3 -left-40 w-[400px] h-[400px] rounded-full bg-vn-violet/5 blur-3xl" />
         {isLimitReached && (
           <div className="absolute -top-64 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-br from-vn-indigo/10 to-vn-fuchsia/6 blur-3xl animate-pulse" />
         )}
+        <FloatingParticles count={32} />
       </div>
 
       {/* ── Narrow header + form ── */}
