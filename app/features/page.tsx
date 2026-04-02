@@ -339,7 +339,7 @@ export default function FeaturesPage() {
 
           <div className="grid md:grid-cols-3 gap-5 sm:gap-6">
             {pillars.map((pillar) => (
-              <div key={pillar.name} className={`p-6 sm:p-7 rounded-2xl border ${pillar.bg} ${pillar.border}`}>
+              <div key={pillar.name} className={`p-6 sm:p-7 rounded-2xl border ${pillar.bg}`}>
                 <div className={`inline-block text-[11px] font-black uppercase tracking-[0.18em] px-3 py-1.5 rounded-full border ${pillar.bg} ${pillar.color} mb-5`}>
                   {pillar.name}
                 </div>
