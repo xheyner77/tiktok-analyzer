@@ -45,6 +45,79 @@ function avg(arr: number[]): number | null {
   return arr.length > 0 ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : null;
 }
 
+/* ── Daily tip system (changes at midnight Paris time) ───────────────────── */
+const DAILY_TIPS: { tip: string; category: string }[] = [
+  // HOOK
+  { category: 'Hook', tip: "La 1ère frame est une annonce silencieuse. Si ton visage n'exprime rien de fort ou si l'image est floue, 85% des viewers scrollent avant la 2e seconde. Enregistre 5 versions de ton ouverture avec des expressions différentes — garde celle qui crée le plus de tension." },
+  { category: 'Hook', tip: "Un hook puissant active une des 4 motivations primaires : curiosité, peur de rater (FOMO), désir de statut, ou résolution d'un problème urgent. Reformule ton accroche en te demandant : laquelle de ces 4 est-ce que j'active ?" },
+  { category: 'Hook', tip: "Commence en plein milieu de l'action — zéro intro, zéro 'salut c'est moi'. L'algorithme mesure si les viewers regardent encore après 3s. Chaque mot d'intro avant la valeur réelle te coûte de la rétention." },
+  { category: 'Hook', tip: "Le meilleur hook crée une tension irrésolue dès la 1ère seconde : 'Ce que personne ne te dit sur X', 'J'ai essayé pendant 30 jours', 'La vraie raison pour laquelle tu fais X mal'. La tension force le cerveau à rester pour la résolution." },
+  { category: 'Hook', tip: "Teste le 'pattern interrupt visuel' : zoom brutal au début, coupe abrupte sur un détail inattendu, ou texte énorme qui claque à l'écran dès la frame 1. Les créateurs top 10% utilisent systématiquement un élément visuel surprenant dans leurs 2 premières secondes." },
+  { category: 'Hook', tip: "La règle des 3 secondes : lis à voix haute tes 3 premières secondes. Si tu ne peux pas promettre une valeur ou créer une curiosité dans ce temps, coupe tout ce qui précède la promesse. Chaque seconde d'intro générique = -12% de rétention." },
+  { category: 'Hook', tip: "Le hook sous forme d'affirmation paradoxale bat la question. Pas 'Savais-tu que...' — mais 'Tu fais X complètement à l'envers.' Le cerveau résiste à l'affirmation et reste pour la preuve. C'est un des patterns de hook les plus performants en 2025." },
+  { category: 'Hook', tip: "Le son du hook compte autant que l'image. Un son intrigant, un effet sonore fort ou une phrase parlée percutante dans la 1ère seconde double le taux de rétention initial. TikTok analyse l'engagement audio séparément de l'image." },
+  // MONTAGE
+  { category: 'Montage', tip: "La règle des 2 secondes : aucun plan fixe ne devrait durer plus de 2s sur TikTok, sauf s'il contient une info dense ou une tension forte. Recompte tes plans — chaque plan fixe de +3s te coûte en moyenne 8% de viewers supplémentaires." },
+  { category: 'Montage', tip: "Les sous-titres animés augmentent la completion rate de +28% en moyenne. Mais ce qui compte encore plus : la synchronisation. Les sous-titres doivent apparaître 0.2s avant que tu prononces le mot — le cerveau anticipe, l'engagement monte." },
+  { category: 'Montage', tip: "La technique du 'jump cut rapproché' : coupe sur le même angle avec un léger zoom avant entre les deux plans. C'est la signature visuelle des créateurs viraux — ça crée un effet de dynamisme sans changer de décor ni de contexte." },
+  { category: 'Montage', tip: "Ajoute un layer sonore de fond discret — ambiance, musique instrumentale basse, sons de clavier. Le cerveau associe le silence à une faible valeur de production. Un fond sonore subtil signale instantanément 'qualité'." },
+  { category: 'Montage', tip: "Chaque 5-7s, intègre un 'micro-reset' visuel : changement d'angle, texte qui apparaît, zoom, B-roll court. Ce n'est pas juste pour le dynamisme — c'est un signal que ton contenu continue à livrer de la valeur. L'algorithme détecte ces micro-pics d'engagement." },
+  { category: 'Montage', tip: "La vitesse de la musique doit dicter le rythme de tes coupes. Coupe sur le beat, pas aléatoirement. Les vidéos avec des coupes synchronisées au tempo ont en moyenne +18% de watch time comparé aux mêmes vidéos avec des coupes non-synchronisées." },
+  { category: 'Montage', tip: "L'éclairage est sous-estimé : une vidéo bien éclairée génère +40% de follow rate qu'une vidéo sombre ou plate. Investis dans un panneau LED simple — c'est le meilleur ROI en termes de qualité perçue pour le moins d'effort." },
+  // RÉTENTION
+  { category: 'Rétention', tip: "La courbe de rétention TikTok a 3 moments critiques : seconde 3 (hook), seconde 15 (confirmation de valeur), seconde 30 (engagement ou drop). Identifie ce que tu livres à chacun de ces 3 points. Si un est vide, c'est là que tu perds ton audience." },
+  { category: 'Rétention', tip: "L'open loop est la technique de rétention la plus puissante : tu ouvres une question dans les premières secondes et tu ne la fermes qu'à la fin. 'Je vais te montrer les 3 étapes — la 3ème va te surprendre.' Le cerveau est câblé pour chercher la clôture." },
+  { category: 'Rétention', tip: "Ton CTA de fin compte autant que ton hook. Un CTA vague génère 3x moins de follows qu'un CTA spécifique : 'Si tu veux la suite de cette méthode, follow moi — je la poste demain.' La promesse de suite est le levier de follow le plus efficace." },
+  { category: 'Rétention', tip: "À 50% de ta vidéo, est-ce que le viewer sait encore pourquoi il regarde ? Si tu ne livres pas un micro-bénéfice à mi-vidéo, la rétention chute. Les meilleurs créateurs 'rappellent' leur promesse à mi-chemin : 'Et voilà le point crucial dont je te parlais...'" },
+  { category: 'Rétention', tip: "Le taux de replay est un signal algorithme fort. Pour déclencher un replay, laisse volontairement un détail intrigant visible mais non expliqué — texte en arrière-plan, chiffre flashé rapidement, image mystérieuse. Les viewers repassent pour le trouver." },
+  { category: 'Rétention', tip: "Les 3 dernières secondes sont critiques. Les viewers qui arrivent là sont très engagés — si tu n'as pas de CTA explicite dans ces 3 secondes finales, tu laisses des likes, follows et partages sur la table. C'est de l'argent gratuit." },
+  { category: 'Rétention', tip: "La durée optimale : tutoriel court = 15-25s (completion rate max), storytelling = 45-60s, éducatif = 60-90s. Au-delà de ces seuils, chaque seconde supplémentaire doit apporter une raison précise de rester. Pas de padding." },
+  // STRATÉGIE
+  { category: 'Stratégie', tip: "La niche n'est pas un sujet — c'est une identité. Les créateurs viraux ne font pas des vidéos sur 'la nourriture' — ils font des vidéos pour une personne précise avec un problème précis. Complète : 'Je crée du contenu pour [qui] qui veut [quoi] sans [obstacle]'." },
+  { category: 'Stratégie', tip: "Publie 3 vidéos similaires d'affilée pour valider un format. Si les 3 ont une mauvaise rétention, c'est le format. Si seulement une échoue, c'est l'exécution. Ne change jamais de stratégie sur la base d'une seule vidéo." },
+  { category: 'Stratégie', tip: "Utilise 3-5 hashtags de niche précise + 1 hashtag challenge actif. Évite les hashtags génériques (#viral, #fyp) — ils ne ciblent pas. L'algorithme comprend mieux ton contenu par ce que les viewers similaires regardent, pas par tes hashtags." },
+  { category: 'Stratégie', tip: "La fréquence compte moins que la consistance. 3 vidéos/semaine pendant 3 mois bat 7 vidéos/semaine pendant 3 semaines. Une pause de 2+ semaines réinitialise partiellement ta distribution. L'algorithme récompense la régularité, pas le sprint." },
+  { category: 'Stratégie', tip: "Analyse les 3 meilleures vidéos de tes 5 concurrents directs. Note le hook, la durée, le montage, le CTA. Tu ne cherches pas à copier — tu cherches à comprendre ce que l'algorithme récompense dans ta niche, pour le faire mieux." },
+  { category: 'Stratégie', tip: "Batche ta production : filme 5-8 vidéos en une seule session. Tu maintiens le même décor, la même énergie, le même style. Ce n'est pas juste plus efficace — ça crée une cohérence visuelle qui renforce ta marque personnelle et ton taux de follow." },
+  { category: 'Stratégie', tip: "Le 'résultat avant le processus' est le hook le plus testé : montre la fin (le résultat impressionnant) dans les 3 premières secondes, puis explique le chemin. Le cerveau est naturellement curieux du 'comment' après avoir vu le 'quoi'." },
+  // ALGORITHME
+  { category: 'Algo', tip: "L'engagement rate = (likes + commentaires + partages) / vues. En dessous de 2% = distribution faible. 2-5% = normale. 5-10% = fort. Au-dessus de 10% = viral potentiel. Si tu es sous 2%, le problème est dans la valeur perçue du contenu, pas dans le hook." },
+  { category: 'Algo', tip: "Les commentaires sont le signal le plus fort pour l'algorithme — environ 5-7x plus de valeur qu'un like. Termine tes vidéos avec une question ouverte spécifique plutôt qu'un vague 'qu'en pensez-vous ?'. Plus la question est précise, plus tu obtiens de commentaires." },
+  { category: 'Algo', tip: "Le partage est l'action la plus rare et la plus précieuse. Les vidéos partagées atteignent une nouvelle audience seed. Pour déclencher un partage : crée du contenu que le viewer veut montrer à quelqu'un de précis — une info utile, une émotion forte, une blague de niche." },
+  { category: 'Algo', tip: "Ne supprime jamais une vidéo qui performe mal — attends 48-72h. L'algorithme peut décider de la distribuer à une nouvelle seed jusqu'à 3 jours après la publication. Des vidéos 'mortes' à J+1 ont souvent décollé à J+3. La patience paye." },
+  { category: 'Algo', tip: "Les duets et stitchs sont des multiplicateurs de portée. Réagir à une vidéo populaire dans ta niche avec un angle nouveau te positionne dans la distribution de l'original. C'est le moyen le plus rapide d'atteindre une audience qualifiée qui ne te connaît pas encore." },
+  { category: 'Algo', tip: "Le timing importe moins que la vélocité initiale. Si ta vidéo génère de l'engagement dans les 30 premières minutes, l'algo la booste quel que soit l'heure. Mais pour maximiser cette fenêtre : 7h-9h, 12h-13h ou 18h-21h heure française sont tes créneaux optimaux." },
+  // PSYCHOLOGIE
+  { category: 'Psychologie', tip: "Mets la valeur la plus forte en premier. Les viewers ont appris à décider en 5 secondes si une vidéo vaut leur temps. Ne garde jamais le meilleur pour la fin — livre ta meilleure info d'abord, puis explique comment l'appliquer." },
+  { category: 'Psychologie', tip: "La preuve sociale dans les 3 premières secondes multiplie l'autorité instantanément. '200 000 personnes utilisent cette méthode', 'j'ai testé 30 produits', 'après 5 ans dans ce secteur' — positionne ton autorité avant d'entrer dans la valeur." },
+  { category: 'Psychologie', tip: "L'émotion est le carburant de la viralité. Contenu qui génère : surprise (+46% de partages), inspiration (+32%), humour (+28%), indignation (+22%). Identifie l'émotion principale que doit déclencher chaque vidéo avant de l'écrire, pas après." },
+  { category: 'Psychologie', tip: "La technique du 'contre-intuitif' génère 2x plus d'engagement. Prends une croyance commune dans ta niche et retourne-la : 'Arrête de [faire X que tout le monde conseille]'. Le cerveau est câblé pour remarquer ce qui contredit ses attentes existantes." },
+  { category: 'Psychologie', tip: "Utilise les patterns de curiosité : listes incomplètes ('voici les 3 erreurs — la 2ème est la plus grave'), révélations progressives, teasing de la suite. La curiosité est une légère douleur que le cerveau cherche à résoudre. Tu es le seul à pouvoir la soulager." },
+  { category: 'Psychologie', tip: "Le format 'before/after' est universel sur TikTok car il correspond au pattern narratif le plus basique : problème → solution → résultat. Quel que soit ton domaine, tu peux structurer : 'Avant de connaître X, je faisais Y — maintenant je fais Z'." },
+  { category: 'Psychologie', tip: "Authentique ne veut pas dire non préparé. Les créateurs qui semblent spontanés ont souvent scripté chaque mot et répété plusieurs fois. L'authenticité perçue vient de la précision des détails personnels — une anecdote spécifique, un chiffre exact, une émotion nommée précisément." },
+  { category: 'Psychologie', tip: "L'urgence et la rareté fonctionnent même sans produit à vendre. 'Cette technique sera saturée dans 3 mois', 'C'est ce que font les créateurs avant de percer', 'Peu de gens le font encore'. L'urgence perçue transforme un spectateur passif en follower actif." },
+];
+
+function getParisDateInfo(): { dayOfYear: number } {
+  const now = new Date();
+  const parisParts = new Intl.DateTimeFormat('fr-FR', {
+    timeZone: 'Europe/Paris',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(now);
+  const get = (t: string) => Number(parisParts.find(p => p.type === t)?.value ?? '0');
+  const day = get('day'); const month = get('month'); const year = get('year');
+  const start = new Date(year, 0, 0);
+  const current = new Date(year, month - 1, day);
+  const dayOfYear = Math.floor((current.getTime() - start.getTime()) / 86400000);
+  return { dayOfYear };
+}
+
+function getDailyTip(): { tip: string; category: string; index: number; total: number } {
+  const { dayOfYear } = getParisDateInfo();
+  const index = dayOfYear % DAILY_TIPS.length;
+  return { ...DAILY_TIPS[index], index: index + 1, total: DAILY_TIPS.length };
+}
+
 /* ── Pure helpers ────────────────────────────────────────────────────────── */
 function getSmartTip(weakest: { key: string; score: number } | null): string {
   if (!weakest) return "Lance ta première analyse pour obtenir des conseils personnalisés.";
@@ -838,15 +911,40 @@ export default function DashboardClient({
               </div>
 
               {/* Conseil du jour */}
-              <div className="rounded-2xl border border-amber-400/15 bg-gradient-to-br from-amber-400/[0.06] to-transparent p-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-base">💡</span>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-400/60">Conseil du jour</p>
-                </div>
-                <p className="text-[13px] text-gray-200 leading-relaxed font-medium">
-                  {getSmartTip(weakest)}
-                </p>
-              </div>
+              {(() => {
+                const daily = getDailyTip();
+                const catColors: Record<string, string> = {
+                  'Hook':        'text-vn-fuchsia bg-vn-fuchsia/10 border-vn-fuchsia/20',
+                  'Montage':     'text-blue-400 bg-blue-400/10 border-blue-400/20',
+                  'Rétention':   'text-purple-400 bg-purple-400/10 border-purple-400/20',
+                  'Stratégie':   'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
+                  'Algo':        'text-cyan-400 bg-cyan-400/10 border-cyan-400/20',
+                  'Psychologie': 'text-rose-400 bg-rose-400/10 border-rose-400/20',
+                };
+                const catColor = catColors[daily.category] ?? 'text-amber-400 bg-amber-400/10 border-amber-400/20';
+                return (
+                  <div className="rounded-2xl border border-amber-400/15 bg-gradient-to-br from-amber-400/[0.05] to-transparent p-5">
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">💡</span>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-400/60">Conseil du jour</p>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${catColor}`}>
+                          {daily.category}
+                        </span>
+                        <span className="text-[9px] text-gray-700 tabular-nums">#{daily.index}/{daily.total}</span>
+                      </div>
+                    </div>
+                    <p className="text-[13px] text-gray-200 leading-relaxed">
+                      {daily.tip}
+                    </p>
+                    <p className="text-[10px] text-gray-700 mt-3">
+                      Nouveau conseil chaque jour à minuit (heure française)
+                    </p>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* ── Erreurs critiques — conditional ── */}
