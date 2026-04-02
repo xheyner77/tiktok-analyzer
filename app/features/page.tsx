@@ -250,7 +250,7 @@ export default function FeaturesPage() {
             </span>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-[3.6rem] font-display font-black text-white tracking-tight leading-[1.05] mb-6">
+          <h1 className="text-4xl sm:text-5xl lg:text-[3.6rem] font-black text-white tracking-tight leading-[1.05] mb-6">
             Tout ce dont tu as besoin<br />
             <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">
               pour comprendre et performer.
@@ -285,7 +285,7 @@ export default function FeaturesPage() {
         <div className="max-w-6xl mx-auto px-5 sm:px-8 lg:px-10">
           <div className="text-center mb-12">
             <p className={`${label9} mb-4`}>Analyse IA</p>
-            <h2 className="text-3xl sm:text-4xl font-display font-black tracking-tight leading-tight">
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
               <span className="text-white">Trois piliers.</span><br />
               <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">Un seul diagnostic.</span>
             </h2>
@@ -331,7 +331,7 @@ export default function FeaturesPage() {
         <div className="max-w-6xl mx-auto px-5 sm:px-8 lg:px-10">
           <div className="text-center mb-12">
             <p className={`${label9} mb-4`}>Ce qui est mesuré</p>
-            <h2 className="text-3xl sm:text-4xl font-display font-black tracking-tight leading-tight">
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
               <span className="text-white">Ce que l&apos;IA analyse,</span><br />
               <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">concrètement.</span>
             </h2>
@@ -363,7 +363,7 @@ export default function FeaturesPage() {
         <div className="max-w-6xl mx-auto px-5 sm:px-8 lg:px-10">
           <div className="text-center mb-12">
             <p className={`${label9} mb-4`}>Tout l&apos;arsenal</p>
-            <h2 className="text-3xl sm:text-4xl font-display font-black tracking-tight leading-tight">
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
               <span className="text-white">Chaque outil</span><br />
               <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">à ta disposition.</span>
             </h2>
@@ -394,7 +394,7 @@ export default function FeaturesPage() {
         <div className="max-w-5xl mx-auto px-5 sm:px-8 lg:px-10">
           <div className="text-center mb-12">
             <p className={`${label9} mb-4`}>Par plan</p>
-            <h2 className="text-3xl sm:text-4xl font-display font-black tracking-tight leading-tight">
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
               <span className="text-white">Ce qui est inclus</span><br />
               <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">dans chaque plan.</span>
             </h2>
@@ -450,7 +450,7 @@ export default function FeaturesPage() {
         <div className="max-w-4xl mx-auto px-5 sm:px-8 lg:px-10">
           <div className="text-center mb-12">
             <p className={`${label9} mb-4`}>Comment ça marche</p>
-            <h2 className="text-3xl sm:text-4xl font-display font-black tracking-tight leading-tight">
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
               <span className="text-white">De la vidéo au plan d&apos;action</span><br />
               <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">en 30 secondes.</span>
             </h2>
@@ -502,7 +502,7 @@ export default function FeaturesPage() {
         <div className="max-w-4xl mx-auto px-5 sm:px-8 lg:px-10">
           <div className="text-center mb-12">
             <p className={`${label9} mb-4`}>Roadmap</p>
-            <h2 className="text-3xl sm:text-4xl font-display font-black tracking-tight leading-tight">
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
               <span className="text-white">TikTok aujourd&apos;hui.</span><br />
               <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">Le reste demain.</span>
             </h2>
@@ -539,7 +539,7 @@ export default function FeaturesPage() {
       <section className="relative py-20 sm:py-24 border-t border-white/[0.06]">
         <div className="max-w-2xl mx-auto px-5 sm:px-8 text-center">
           <p className={`${label9} mb-5`}>Prêt à analyser ?</p>
-          <h2 className="text-3xl sm:text-4xl font-display font-black tracking-tight leading-tight mb-4">
+          <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight mb-4">
             <span className="text-white">Comprends ce qui bloque.</span><br />
             <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">Corrige avant de reposter.</span>
           </h2>

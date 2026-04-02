@@ -206,7 +206,7 @@ export default function SignupPage() {
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
           <BrandLogo size="large" className="mb-6" />
-          <h1 className="text-2xl font-bold text-white font-display">Créer un compte</h1>
+          <h1 className="text-2xl font-bold text-white">Créer un compte</h1>
           <p className="text-gray-500 text-sm mt-1">3 analyses gratuites à la création</p>
         </div>
 

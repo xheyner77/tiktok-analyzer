@@ -89,7 +89,7 @@ function LoginForm() {
       {/* Logo */}
       <div className="flex flex-col items-center mb-8">
         <BrandLogo size="large" className="mb-6" />
-        <h1 className="text-2xl font-bold text-white font-display">Connexion</h1>
+        <h1 className="text-2xl font-bold text-white">Connexion</h1>
         <p className="text-gray-500 text-sm mt-1">Accède à ton espace Viralynz</p>
       </div>
 

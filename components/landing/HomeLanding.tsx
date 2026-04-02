@@ -222,7 +222,7 @@ export default function HomeLanding() {
         <div className="landing-section">
           <div className="text-center mb-10">
             <p className={`${label} mb-3`}>Exemple de résultat</p>
-            <h2 className="text-2xl sm:text-3xl font-display font-black tracking-tight leading-tight">
+            <h2 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight">
               <span className="text-white">Score, diagnostic, plan d&apos;action —</span><br />
               <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">en quelques secondes.</span>
             </h2>
@@ -247,7 +247,7 @@ export default function HomeLanding() {
         <div className={`max-w-4xl ${sectionInner}`}>
           <div className="text-center mb-14">
             <p className={`${label} mb-8`}>Le vrai problème</p>
-            <h2 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-display font-black tracking-tight leading-[1.05] mb-6">
+            <h2 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-black tracking-tight leading-[1.05] mb-6">
               <span className="text-white">Tu ne manques pas d&apos;idées.</span><br />
               <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">Tu manques de feedback.</span>
             </h2>
@@ -291,7 +291,7 @@ export default function HomeLanding() {
         <div className={`max-w-5xl ${sectionInner}`}>
           <div className="text-center mb-14 sm:mb-16">
             <p className={`${label} mb-4`}>Comment ça marche</p>
-            <h2 className="text-3xl sm:text-4xl font-display font-black tracking-tight leading-tight">
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
               <span className="text-white">3 étapes. 30 secondes.</span><br />
               <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">Un plan clair.</span>
             </h2>
@@ -334,7 +334,7 @@ export default function HomeLanding() {
           <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
             <div>
               <p className={`${label} mb-4`}>Ce que tu obtiens</p>
-              <h2 className="text-3xl sm:text-4xl font-display font-black tracking-tight mb-5 leading-tight">
+              <h2 className="text-3xl sm:text-4xl font-black tracking-tight mb-5 leading-tight">
                 <span className="text-white">Tout pour comprendre</span><br />
                 <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">et corriger.</span>
               </h2>
@@ -368,7 +368,7 @@ export default function HomeLanding() {
         <div className={`max-w-5xl ${sectionInner}`}>
           <div className="text-center mb-14">
             <p className={`${label} mb-4`}>Notre différence</p>
-            <h2 className="text-3xl sm:text-4xl lg:text-[2.8rem] font-display font-black tracking-tight leading-tight">
+            <h2 className="text-3xl sm:text-4xl lg:text-[2.8rem] font-black tracking-tight leading-tight">
               <span className="text-white">Pas un score.</span><br />
               <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">Un plan d&apos;action.</span>
             </h2>
@@ -420,7 +420,7 @@ export default function HomeLanding() {
         <div className={`max-w-5xl ${sectionInner}`}>
           <div className="text-center mb-14">
             <p className={`${label} mb-4`}>Pour qui</p>
-            <h2 className="text-3xl sm:text-4xl font-display font-black tracking-tight leading-tight">
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
               <span className="text-white">Fait pour toi si tu crées</span><br />
               <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">du contenu short-form.</span>
             </h2>
@@ -454,7 +454,7 @@ export default function HomeLanding() {
         <div className={`max-w-5xl ${sectionInner}`}>
           <div className="text-center mb-14">
             <p className={`${label} mb-4`}>Tarifs</p>
-            <h2 className="text-3xl sm:text-4xl font-display font-black tracking-tight leading-tight mb-3">
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight mb-3">
               <span className="text-white">3 analyses gratuites —</span><br />
               <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">sans carte.</span>
             </h2>
@@ -560,7 +560,7 @@ export default function HomeLanding() {
         <div className={`max-w-3xl ${sectionInner}`}>
           <div className="text-center mb-12 sm:mb-14">
             <p className={`${label} mb-4`}>FAQ</p>
-            <h2 className="text-3xl sm:text-4xl font-display font-black tracking-tight leading-tight mb-3">
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight mb-3">
               <span className="text-white">Questions</span>{' '}
               <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">fréquentes.</span>
             </h2>
@@ -597,7 +597,7 @@ export default function HomeLanding() {
               <div className="absolute inset-0 landing-mesh opacity-30 mix-blend-overlay" aria-hidden />
               <div className="relative px-8 sm:px-12 lg:px-16 py-14 sm:py-16 text-center">
                 <p className={`${label} mb-5`}>Prêt à comprendre ce qui bloque ?</p>
-                <h2 className="text-3xl sm:text-4xl lg:text-[2.6rem] font-display font-black tracking-tight leading-tight mb-5">
+                <h2 className="text-3xl sm:text-4xl lg:text-[2.6rem] font-black tracking-tight leading-tight mb-5">
                   <span className="text-white">Analyse ta première vidéo</span><br />
                   <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">maintenant.</span>
                 </h2>

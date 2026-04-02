@@ -8,7 +8,7 @@ export default function Header() {
 
       {/* Title */}
       <div>
-        <h1 className="text-[1.9rem] sm:text-[2.3rem] font-display font-black tracking-tight leading-tight">
+        <h1 className="text-[1.9rem] sm:text-[2.3rem] font-black tracking-tight leading-tight">
           <span className="text-white">Comprends ce qui </span>
           <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">
             bloque ta vidéo

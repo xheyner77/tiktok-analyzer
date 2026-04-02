@@ -97,7 +97,7 @@ export default function ChangelogPage() {
             <RocketIcon />
           </div>
 
-          <h1 className="text-4xl sm:text-5xl font-display font-black tracking-tight mb-4">
+          <h1 className="text-4xl sm:text-5xl font-black tracking-tight mb-4">
             <span className="text-white">Toutes les</span>{' '}
             <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">nouveautés.</span>
           </h1>
@@ -199,7 +199,7 @@ export default function ChangelogPage() {
       <section className="py-16 sm:py-20 border-t border-white/[0.06]">
         <div className="max-w-xl mx-auto px-5 sm:px-8 text-center">
           <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-gray-700 mb-4">Essaie maintenant</p>
-          <h2 className="text-2xl sm:text-3xl font-display font-black tracking-tight leading-tight mb-4">
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight mb-4">
             <span className="text-white">Lance ta première</span><br />
             <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">analyse.</span>
           </h2>
