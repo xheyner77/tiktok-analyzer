@@ -53,13 +53,11 @@ export default function NavbarMobileMenu({ isLoggedIn, email, plan = 'free' }: N
   const navLinks = [
     { href: '/', label: 'Accueil', icon: '⌂' },
     { href: '/#produit', label: 'Produit', icon: '◆' },
-    { href: '/#fonctions', label: 'Fonctionnalités', icon: '◇' },
-    { href: '/#gains', label: 'Bénéfices', icon: '↑' },
-    { href: '/#roadmap', label: 'Roadmap', icon: '→' },
+    { href: '/#fonctions', label: 'Comment ça marche', icon: '◇' },
     { href: '/pricing', label: 'Tarifs', icon: '€' },
+    { href: '/changelog', label: 'Nouveautés ✦', icon: '🚀' },
     { href: '/analyzer', label: 'Analyser', icon: '🎯' },
     { href: '/hook-generator', label: 'Hooks', icon: '⚡' },
-    { href: '/pricing', label: 'Plans détaillés', icon: '💎' },
     ...(isLoggedIn ? [{ href: '/dashboard', label: 'Dashboard', icon: '📊' }] : []),
   ];
 

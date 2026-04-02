@@ -32,8 +32,12 @@ export default async function Navbar() {
           <Link href="/pricing" className={linkCls}>
             Tarifs
           </Link>
-          <Link href="/#faq" className={linkCls}>
-            FAQ
+          <Link
+            href="/changelog"
+            className="relative text-[13px] font-medium text-gray-400 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-white/[0.04]"
+          >
+            Nouveautés
+            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-vn-fuchsia shadow-[0_0_6px_rgba(232,121,249,0.8)]" aria-hidden />
           </Link>
           {session && (
             <Link href="/dashboard" className={linkCls}>
