@@ -45,12 +45,13 @@ export default async function DashboardPage({
   const stripeSessionId = searchParams.session_id ?? null;
 
   return (
-    <main className="min-h-screen bg-[#080808] overflow-x-hidden">
+    <main className="min-h-screen bg-vn-void overflow-x-hidden">
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[600px] h-[500px] rounded-full bg-gradient-to-br from-[#ff0050]/5 to-[#7928ca]/5 blur-3xl" />
+        <div className="absolute -top-60 left-1/4 w-[900px] h-[600px] rounded-full bg-gradient-to-br from-vn-fuchsia/8 to-vn-indigo/6 blur-[120px]" />
+        <div className="absolute top-1/2 -right-40 w-[600px] h-[500px] rounded-full bg-vn-violet/5 blur-[100px]" />
       </div>
 
-      <div className="relative max-w-2xl mx-auto px-4 py-10 pb-24">
+      <div className="relative max-w-5xl mx-auto px-4 sm:px-6 py-10 pb-24">
         <DashboardClient
           email={session.email}
           plan={plan}
