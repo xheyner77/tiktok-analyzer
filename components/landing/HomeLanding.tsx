@@ -838,7 +838,98 @@ export default function HomeLanding() {
         </div>
       </section>
 
-      {/* ══ 10. CTA FINAL ═════════════════════════════════════════ */}
+      {/* ══ 10. ROADMAP ════════════════════════════════════════════ */}
+      <section className="relative py-24 sm:py-28 border-t border-white/[0.06]">
+        <div className={`max-w-5xl ${SI}`}>
+          <FadeUp>
+            <div className="text-center mb-12">
+              <h2 className="text-3xl sm:text-[2.6rem] font-black tracking-tight leading-tight mb-3">
+                <span className="text-white">Ce qui arrive</span>{' '}
+                <span className={G}>très bientôt.</span>
+              </h2>
+              <p className="text-gray-500 text-[14px] max-w-sm mx-auto">
+                Viralynz évolue chaque semaine. Voici ce qui est en cours.
+              </p>
+            </div>
+          </FadeUp>
+
+          <FadeUp delay={0.08}>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                {
+                  status: 'live',
+                  label: 'Live',
+                  dot: 'bg-emerald-400',
+                  glow: 'shadow-[0_0_8px_rgba(52,211,153,0.8)]',
+                  border: 'border-emerald-500/20',
+                  title: 'Analyse TikTok IA',
+                  desc: 'Vision IA + Whisper. Score, hook, montage, rétention, plan d\'action en 30s.',
+                  accent: 'from-emerald-500/[0.05]',
+                },
+                {
+                  status: 'next',
+                  label: 'Bientôt',
+                  dot: 'bg-vn-fuchsia',
+                  glow: 'shadow-[0_0_8px_rgba(232,121,249,0.8)]',
+                  border: 'border-vn-fuchsia/20',
+                  title: 'Instagram Reels',
+                  desc: 'Même analyse adaptée aux critères algorithmiques Meta et au format Reels.',
+                  accent: 'from-vn-fuchsia/[0.05]',
+                },
+                {
+                  status: 'next',
+                  label: 'Bientôt',
+                  dot: 'bg-blue-400',
+                  glow: 'shadow-[0_0_8px_rgba(96,165,250,0.8)]',
+                  border: 'border-blue-500/20',
+                  title: 'YouTube Shorts',
+                  desc: 'Hook, rétention et montage analysés selon les spécificités de l\'algo YouTube.',
+                  accent: 'from-blue-500/[0.05]',
+                },
+                {
+                  status: 'later',
+                  label: 'Roadmap',
+                  dot: 'bg-gray-600',
+                  glow: '',
+                  border: 'border-white/[0.07]',
+                  title: 'Analyse comparative',
+                  desc: 'Compare tes vidéos entre elles pour identifier les patterns qui font performer.',
+                  accent: 'from-white/[0.02]',
+                },
+              ].map(({ status, label, dot, glow, border, title, desc, accent }) => (
+                <div
+                  key={title}
+                  className={`relative p-5 sm:p-6 rounded-2xl border ${border} bg-gradient-to-b ${accent} to-transparent overflow-hidden hover:-translate-y-0.5 transition-all duration-300`}
+                >
+                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.10] to-transparent" />
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className={`w-2 h-2 rounded-full shrink-0 ${dot} ${glow}`} />
+                    <span className={`text-[10px] font-bold uppercase tracking-[0.18em] ${status === 'live' ? 'text-emerald-400' : status === 'next' ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {label}
+                    </span>
+                  </div>
+                  <h3 className="text-[14.5px] font-bold text-white mb-2 tracking-tight">{title}</h3>
+                  <p className="text-[12.5px] text-gray-600 leading-relaxed">{desc}</p>
+                </div>
+              ))}
+            </div>
+          </FadeUp>
+
+          <FadeUp delay={0.14}>
+            <div className="text-center mt-8">
+              <Link
+                href="/changelog"
+                className="inline-flex items-center gap-2 text-[13px] font-semibold text-gray-500 hover:text-white border border-white/[0.08] hover:border-white/[0.16] rounded-full px-5 py-2.5 transition-all duration-300"
+              >
+                Voir toutes les nouveautés
+                <Arrow className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </FadeUp>
+        </div>
+      </section>
+
+      {/* ══ 11. CTA FINAL ═════════════════════════════════════════ */}
       <section className="relative py-24 sm:py-32 border-t border-white/[0.05] overflow-hidden">
         <div className={`max-w-4xl ${SI}`}>
           <FadeUp>
