@@ -242,6 +242,14 @@ export default function Home() {
     setError('');
   };
 
+  const handleAnalysisReset = () => {
+    setResults(null);
+    setError('');
+    setVideoFile(null);
+    setUploadTiktokUrl('');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <main className="min-h-screen bg-vn-bg overflow-x-hidden">
       <GuestGate show={showGuestGate} pendingUrl={uploadTiktokUrl} onClose={() => setShowGuestGate(false)} />
@@ -377,7 +385,11 @@ export default function Home() {
               aria-hidden
             />
             <div className="relative">
-              <ResultsPanel data={results} plan={authUser?.plan ?? 'free'} />
+              <ResultsPanel
+                data={results}
+                plan={authUser?.plan ?? 'free'}
+                onReset={handleAnalysisReset}
+              />
             </div>
           </div>
         </div>
