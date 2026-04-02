@@ -8,63 +8,71 @@ type BrandLogoProps = {
 };
 
 /**
- * Icône V stylisée : double éclair / chevron montant — symbolise la viralité et la performance.
- * Dégradé fuchsia → violet → indigo, glow ambiant sur hover.
+ * Icône Viralynz — V solide premium.
+ * Formes pleines (pas de traits) pour lisibilité à toutes les tailles.
+ * Fond arrondi foncé + bras gauche (déclin) / droit (montée virale) légèrement asymétrique.
  */
 export function BrandIcon({ className = 'w-7 h-7' }: { className?: string }) {
   return (
     <div className={`relative flex items-center justify-center shrink-0 ${className}`} aria-hidden>
-      {/* Halo ambiant derrière l'icône */}
+      {/* Halo ambiant */}
       <span
-        className="absolute inset-0 rounded-[inherit] bg-gradient-to-br from-vn-fuchsia/50 via-vn-violet/35 to-vn-indigo/40 blur-[10px] opacity-70 transition-opacity duration-300 group-hover:opacity-100"
+        className="absolute inset-0 rounded-[inherit] bg-gradient-to-br from-vn-fuchsia/45 via-vn-violet/30 to-vn-indigo/35 blur-[12px] opacity-55 transition-opacity duration-300 group-hover:opacity-90"
         aria-hidden
       />
       <svg
-        viewBox="0 0 36 36"
+        viewBox="0 0 40 40"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="relative w-full h-full drop-shadow-[0_0_6px_rgba(232,121,249,0.55)]"
+        className="relative w-full h-full"
       >
         <defs>
-          <linearGradient id="vn-logo-grad" x1="4" y1="4" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+          <linearGradient id="vn-bg-g" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+            <stop offset="0%"   stopColor="#1e0933" />
+            <stop offset="100%" stopColor="#080612" />
+          </linearGradient>
+          <linearGradient id="vn-fill" x1="5" y1="6" x2="35" y2="34" gradientUnits="userSpaceOnUse">
             <stop offset="0%"   stopColor="#f0abfc" />
-            <stop offset="45%"  stopColor="#a78bfa" />
+            <stop offset="40%"  stopColor="#e879f9" />
+            <stop offset="75%"  stopColor="#a78bfa" />
             <stop offset="100%" stopColor="#6366f1" />
           </linearGradient>
-          <linearGradient id="vn-logo-grad2" x1="4" y1="32" x2="32" y2="4" gradientUnits="userSpaceOnUse">
-            <stop offset="0%"   stopColor="#e879f9" />
+          <linearGradient id="vn-fill-r" x1="35" y1="6" x2="5" y2="34" gradientUnits="userSpaceOnUse">
+            <stop offset="0%"   stopColor="#f0abfc" />
             <stop offset="100%" stopColor="#818cf8" />
           </linearGradient>
+          <radialGradient id="vn-spark" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stopColor="#ffffff" stopOpacity="1" />
+            <stop offset="55%"  stopColor="#f0abfc" stopOpacity="0.9" />
+            <stop offset="100%" stopColor="#e879f9" stopOpacity="0" />
+          </radialGradient>
+          <filter id="vn-gf" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="2" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
         </defs>
-        {/* Fond arrondi semi-transparent */}
-        <rect width="36" height="36" rx="10" fill="url(#vn-logo-grad)" opacity="0.15" />
-        {/*
-          Lettre V stylisée avec un éclair intégré :
-          - branche gauche : descend en diagonale puis remonte vers le centre (en V)
-          - petit éclair au creux du V : triangle pointu vers le haut
-          - épaisseur variable pour effet premium
-        */}
-        {/* Grande forme V — épaisse, gradient fill */}
-        <path
-          d="M7 8 L14.5 26 L18 20 L21.5 26 L29 8"
-          stroke="url(#vn-logo-grad)"
-          strokeWidth="3.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        />
-        {/* Accent central : petit éclair / flèche montante au creux du V */}
-        <path
-          d="M15.5 18 L18 13 L20.5 18"
-          stroke="url(#vn-logo-grad2)"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-          opacity="0.9"
-        />
-        {/* Point lumineux en bas du V */}
-        <circle cx="18" cy="26.5" r="1.5" fill="url(#vn-logo-grad2)" opacity="0.85" />
+
+        {/* Fond arrondi dark */}
+        <rect width="40" height="40" rx="10" fill="url(#vn-bg-g)" />
+        {/* Teinture intérieure subtile */}
+        <rect width="40" height="40" rx="10" fill="url(#vn-fill)" opacity="0.09" />
+        {/* Bordure fine */}
+        <rect x="0.75" y="0.75" width="38.5" height="38.5" rx="9.5"
+          stroke="url(#vn-fill)" strokeOpacity="0.28" strokeWidth="1.5" />
+
+        {/* ═══ Bras gauche du V (déclin → creux) ═════════════════ */}
+        {/* Forme solide : trapèze large en haut, pointu en bas */}
+        <path d="M7.5 10 L13.5 10 L21 27 L19 27 Z" fill="url(#vn-fill)" />
+
+        {/* ═══ Bras droit du V (remontée virale) — légèrement plus haut ═ */}
+        {/* Légèrement asymétrique : part de y=7 (plus haut) suggère croissance */}
+        <path d="M32.5 7 L26.5 7 L21 27 L23 27 Z" fill="url(#vn-fill-r)" opacity="0.92" />
+
+        {/* Éclat lumineux au creux du V */}
+        <circle cx="21" cy="27.5" r="2.6" fill="url(#vn-spark)" filter="url(#vn-gf)" />
+
+        {/* Petit point lumineux en haut du bras droit (sommet viral) */}
+        <circle cx="32.5" cy="7" r="1.8" fill="#f0abfc" opacity="0.7" />
       </svg>
     </div>
   );
