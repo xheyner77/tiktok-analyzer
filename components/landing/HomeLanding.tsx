@@ -159,12 +159,10 @@ export default function HomeLanding() {
 
               {/* H1 */}
               <h1 className="font-hero-inter font-black text-white landing-hero-title-glow tracking-[-0.05em] max-[419px]:text-[1.95rem] max-[419px]:leading-[0.92] text-[2.45rem] leading-[0.91] sm:text-[3.1rem] sm:leading-[0.89] md:text-[3.6rem] md:leading-[0.88] lg:text-[3.4rem] lg:leading-[0.88] xl:text-[4.0rem] xl:leading-[0.87] 2xl:text-[4.5rem] 2xl:leading-[0.86]">
-                <span className="block">
-                  Tu perds&nbsp;
-                  <span className="bg-gradient-to-r from-red-300 via-vn-fuchsia to-pink-400 bg-clip-text text-transparent">60%</span>
+                <span className="block">Domine&nbsp;
+                  <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">TikTok.</span>
                 </span>
-                <span className="block">de ton audience</span>
-                <span className="block text-white/60 text-[0.82em] tracking-[-0.03em] mt-1">en 3 secondes.</span>
+                <span className="block text-white/60 text-[0.82em] tracking-[-0.03em] mt-1">Arrête de poster au hasard.</span>
               </h1>
 
               {/* Subtitle */}
