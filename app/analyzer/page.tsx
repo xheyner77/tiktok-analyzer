@@ -369,8 +369,8 @@ export default function Home() {
 
       {/* ── Wide results section ── */}
       {results && !isLoading && !isLimitReached && (
-        <div className="relative px-3 sm:px-5 lg:px-8 pb-10">
-          <div className="max-w-[1280px] mx-auto relative">
+        <div className="relative px-2 sm:px-3 pb-10">
+          <div className="relative">
             {/* Outer glow */}
             <div
               className="absolute -inset-2 rounded-[1.6rem] bg-gradient-to-br from-vn-fuchsia/20 via-vn-violet/8 to-vn-indigo/18 blur-3xl opacity-60 pointer-events-none"
