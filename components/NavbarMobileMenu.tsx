@@ -51,9 +51,9 @@ export default function NavbarMobileMenu({ isLoggedIn, email, plan = 'free' }: N
   }
 
   const navLinks = [
-    { href: '/', label: 'Accueil', icon: '⌂' },
-    { href: '/features', label: 'Fonctionnalités', icon: '◇' },
-    { href: '/pricing', label: 'Tarifs', icon: '€' },
+    { href: '/', label: 'Accueil', icon: '🏠' },
+    { href: '/features', label: 'Fonctionnalités', icon: '✨' },
+    { href: '/pricing', label: 'Tarifs', icon: '💳' },
     { href: '/changelog', label: 'Nouveautés ✦', icon: '🚀' },
     { href: '/analyzer', label: 'Analyser', icon: '🎯' },
     { href: '/hook-generator', label: 'Hooks', icon: '⚡' },
