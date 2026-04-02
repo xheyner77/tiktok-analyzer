@@ -77,7 +77,7 @@ export default function PricingPage() {
         <FloatingParticles count={55} />
       </div>
 
-      <div className="relative max-w-6xl mx-auto px-5 sm:px-8 py-16 pb-28 space-y-28">
+      <div className="relative max-w-6xl mx-auto px-5 sm:px-8 py-10 pb-16 space-y-16">
 
         {/* ═══════════════════════════════════════════════ */}
         {/* HERO                                           */}

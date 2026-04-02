@@ -286,7 +286,7 @@ export default function HomeLanding() {
       </div>
 
       {/* ══ 1. HERO ═══════════════════════════════════════════════ */}
-      <section className="relative pt-10 sm:pt-14 lg:pt-20 pb-16 sm:pb-24 overflow-visible" id="top">
+      <section className="relative pt-10 sm:pt-14 lg:pt-20 pb-10 sm:pb-16 overflow-visible" id="top">
         <div className="stars-hero" aria-hidden>
           <div className="stars-layer-sm" /><div className="stars-layer-md" /><div className="stars-layer-lg" />
           <div className="stars-hero-mask" />
@@ -420,10 +420,10 @@ export default function HomeLanding() {
       </div>
 
       {/* ══ 2. PROBLÈME ═══════════════════════════════════════════ */}
-      <section id="probleme" className="relative py-24 sm:py-32 border-t border-white/[0.06]">
+      <section id="probleme" className="relative py-14 sm:py-20 border-t border-white/[0.06]">
         <div className={`max-w-5xl ${SI}`}>
           <FadeUp>
-            <div className="text-center mb-14">
+            <div className="text-center mb-8">
               <h2 className="text-3xl sm:text-[2.6rem] font-black tracking-tight leading-[1.06] mb-5">
                 <span className="text-white">Pourquoi tes vidéos</span><br />
                 <span className={G}>ne marchent pas.</span>
@@ -474,10 +474,10 @@ export default function HomeLanding() {
       </section>
 
       {/* ══ 3. SOLUTION ═══════════════════════════════════════════ */}
-      <section id="comment" className="relative py-24 sm:py-32 border-t border-white/[0.06] scroll-mt-24">
+      <section id="comment" className="relative py-14 sm:py-20 border-t border-white/[0.06] scroll-mt-24">
         <div className={`max-w-5xl ${SI}`}>
           <FadeUp>
-            <div className="text-center mb-16">
+            <div className="text-center mb-10">
               <h2 className="text-3xl sm:text-[2.6rem] font-black tracking-tight leading-[1.06]">
                 <span className="text-white">Viralynz analyse ta vidéo</span><br />
                 <span className={G}>comme l&apos;algorithme.</span>
@@ -510,10 +510,10 @@ export default function HomeLanding() {
       </section>
 
       {/* ══ 4. DEMO OUTPUT ════════════════════════════════════════ */}
-      <section id="demo" className="relative py-24 sm:py-32 border-t border-white/[0.06]">
+      <section id="demo" className="relative py-14 sm:py-20 border-t border-white/[0.06]">
         <div className={`max-w-5xl ${SI}`}>
           <FadeUp>
-            <div className="text-center mb-14">
+            <div className="text-center mb-8">
               <h2 className="text-3xl sm:text-[2.6rem] font-black tracking-tight leading-[1.06] mb-4">
                 <span className="text-white">Voilà ce que tu reçois</span><br />
                 <span className={G}>en 30 secondes.</span>
@@ -637,10 +637,10 @@ export default function HomeLanding() {
       </section>
 
       {/* ══ 5. TRANSFORMATION ══════════════════════════════════════ */}
-      <section id="diff" className="relative py-24 sm:py-32 border-t border-white/[0.06]">
+      <section id="diff" className="relative py-14 sm:py-20 border-t border-white/[0.06]">
         <div className={`max-w-5xl ${SI}`}>
           <FadeUp>
-            <div className="text-center mb-14">
+            <div className="text-center mb-8">
               <h2 className="text-3xl sm:text-[2.6rem] font-black tracking-tight leading-[1.06]">
                 <span className="text-white">Avant.</span>{' '}
                 <span className={G}>Après.</span>
@@ -693,7 +693,7 @@ export default function HomeLanding() {
       </section>
 
       {/* ══ 6. TESTIMONIALS ═══════════════════════════════════════ */}
-      <section id="avis" className="relative py-24 sm:py-32 border-t border-white/[0.06] overflow-hidden">
+      <section id="avis" className="relative py-14 sm:py-20 border-t border-white/[0.06] overflow-hidden">
 
         {/* Fade edges */}
         <div className="absolute inset-y-0 left-0 w-24 sm:w-40 bg-gradient-to-r from-vn-void to-transparent z-10 pointer-events-none" aria-hidden />
@@ -750,10 +750,10 @@ export default function HomeLanding() {
       </section>
 
       {/* ══ 7. FEATURES ═══════════════════════════════════════════ */}
-      <section id="features" className="relative py-24 sm:py-32 border-t border-white/[0.06]">
+      <section id="features" className="relative py-14 sm:py-20 border-t border-white/[0.06]">
         <div className={`max-w-5xl ${SI}`}>
           <FadeUp>
-            <div className="text-center mb-14">
+            <div className="text-center mb-8">
               <h2 className="text-3xl sm:text-[2.6rem] font-black tracking-tight leading-[1.06]">
                 <span className="text-white">Tout ce qu&apos;il te faut</span><br />
                 <span className={G}>pour performer.</span>
@@ -784,10 +784,10 @@ export default function HomeLanding() {
       </section>
 
       {/* ══ 8. PRICING ════════════════════════════════════════════ */}
-      <section id="tarifs" className="relative py-24 sm:py-32 border-t border-white/[0.06] scroll-mt-24">
+      <section id="tarifs" className="relative py-14 sm:py-20 border-t border-white/[0.06] scroll-mt-24">
         <div className={`max-w-5xl ${SI}`}>
           <FadeUp>
-            <div className="text-center mb-14">
+            <div className="text-center mb-8">
               <h2 className="text-3xl sm:text-[2.6rem] font-black tracking-tight leading-[1.06] mb-3">
                 <span className="text-white">Simple, transparent,</span><br />
                 <span className={G}>sans surprise.</span>
@@ -970,10 +970,10 @@ export default function HomeLanding() {
       </section>
 
       {/* ══ 9. FAQ ════════════════════════════════════════════════ */}
-      <section id="faq" className="relative py-24 sm:py-32 border-t border-white/[0.06] scroll-mt-24">
+      <section id="faq" className="relative py-14 sm:py-20 border-t border-white/[0.06] scroll-mt-24">
         <div className={`max-w-3xl ${SI}`}>
           <FadeUp>
-            <div className="text-center mb-12 sm:mb-14">
+            <div className="text-center mb-8 sm:mb-10">
               <h2 className="text-3xl sm:text-[2.6rem] font-black tracking-tight leading-[1.06] mb-3">
                 <span className="text-white">Questions</span>{' '}
                 <span className={G}>fréquentes.</span>
@@ -1014,7 +1014,7 @@ export default function HomeLanding() {
       </section>
 
       {/* ══ 10. ROADMAP ════════════════════════════════════════════ */}
-      <section className="relative py-28 sm:py-36 border-t border-white/[0.06] overflow-hidden">
+      <section className="relative py-20 sm:py-28 border-t border-white/[0.06] overflow-hidden">
 
         {/* Grid background */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden>
@@ -1036,7 +1036,7 @@ export default function HomeLanding() {
 
           {/* Header */}
           <FadeUp>
-            <div className="text-center mb-16 sm:mb-20">
+            <div className="text-center mb-10 sm:mb-14">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] mb-6">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.9)] animate-pulse" />
                 <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">En développement actif</span>
@@ -1053,7 +1053,7 @@ export default function HomeLanding() {
 
           {/* Progress bar v1→v2→v3 */}
           <FadeUp delay={0.06}>
-            <div className="relative mb-14 sm:mb-16 max-w-2xl mx-auto">
+            <div className="relative mb-8 sm:mb-10 max-w-2xl mx-auto">
               <div className="flex items-center justify-between mb-3">
                 {[
                   { full: 'v1 — TikTok', short: 'v1' },
@@ -1272,7 +1272,7 @@ export default function HomeLanding() {
       </section>
 
       {/* ══ 11. CTA FINAL ═════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 border-t border-white/[0.05] overflow-hidden">
+      <section className="relative py-14 sm:py-20 border-t border-white/[0.05] overflow-hidden">
         <div className={`max-w-4xl ${SI}`}>
           <FadeUp>
             <div className="relative rounded-[1.75rem] p-[1px] shadow-[0_32px_100px_-40px_rgba(232,121,249,0.35)]"

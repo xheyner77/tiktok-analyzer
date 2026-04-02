@@ -236,7 +236,7 @@ export default function FeaturesPage() {
       </div>
 
       {/* HERO */}
-      <section className="relative pt-24 sm:pt-32 pb-16 sm:pb-20 border-b border-white/[0.06]">
+      <section className="relative pt-16 sm:pt-20 pb-10 sm:pb-14 border-b border-white/[0.06]">
         <div className="max-w-4xl mx-auto px-5 sm:px-8 text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.1] bg-white/[0.03] px-4 py-2 mb-7">
             <div className="w-1.5 h-1.5 rounded-full bg-vn-fuchsia shadow-[0_0_6px_rgba(232,121,249,0.9)]" aria-hidden />
@@ -274,7 +274,7 @@ export default function FeaturesPage() {
       </section>
 
       {/* CORE FEATURES */}
-      <section className="relative py-20 sm:py-24">
+      <section className="relative py-12 sm:py-16">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 lg:px-10">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
@@ -312,7 +312,7 @@ export default function FeaturesPage() {
       </section>
 
       {/* PILIERS DÉTAILLÉS */}
-      <section className="relative py-20 sm:py-24 border-t border-white/[0.06]">
+      <section className="relative py-12 sm:py-16 border-t border-white/[0.06]">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 lg:px-10">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
@@ -343,7 +343,7 @@ export default function FeaturesPage() {
       </section>
 
       {/* SECONDARY FEATURES */}
-      <section className="relative py-20 sm:py-24 border-t border-white/[0.06]">
+      <section className="relative py-12 sm:py-16 border-t border-white/[0.06]">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 lg:px-10">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
@@ -371,7 +371,7 @@ export default function FeaturesPage() {
       </section>
 
       {/* PLANS */}
-      <section className="relative py-20 sm:py-24 border-t border-white/[0.06]">
+      <section className="relative py-12 sm:py-16 border-t border-white/[0.06]">
         <div className="max-w-5xl mx-auto px-5 sm:px-8 lg:px-10">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
@@ -422,7 +422,7 @@ export default function FeaturesPage() {
       </section>
 
       {/* HOW IT WORKS */}
-      <section className="relative py-20 sm:py-24 border-t border-white/[0.06]">
+      <section className="relative py-12 sm:py-16 border-t border-white/[0.06]">
         <div className="max-w-4xl mx-auto px-5 sm:px-8 lg:px-10">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
@@ -471,7 +471,7 @@ export default function FeaturesPage() {
       </section>
 
       {/* ROADMAP */}
-      <section className="relative py-20 sm:py-24 border-t border-white/[0.06]">
+      <section className="relative py-12 sm:py-16 border-t border-white/[0.06]">
         <div className="max-w-4xl mx-auto px-5 sm:px-8 lg:px-10">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
@@ -509,7 +509,7 @@ export default function FeaturesPage() {
       </section>
 
       {/* CTA FINAL */}
-      <section className="relative py-20 sm:py-24 border-t border-white/[0.06]">
+      <section className="relative py-12 sm:py-16 border-t border-white/[0.06]">
         <div className="max-w-2xl mx-auto px-5 sm:px-8 text-center">
           <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight mb-4">
             <span className="text-white">Comprends ce qui bloque.</span><br />
