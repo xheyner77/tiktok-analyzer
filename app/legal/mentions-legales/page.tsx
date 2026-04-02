@@ -32,12 +32,12 @@ export default function MentionsLegalesPage() {
           <Section title="Éditeur du site">
             <Row label="Nom du site" value="Viralynz" />
             <Row label="URL" value="viralynz.com" />
-            <Row label="Éditeur" value="[Votre nom / Raison sociale]" placeholder />
-            <Row label="Forme juridique" value="[Ex : Auto-entrepreneur, SAS, SARL…]" placeholder />
-            <Row label="Numéro SIRET" value="[Votre numéro SIRET]" placeholder />
-            <Row label="Adresse" value="[Votre adresse complète]" placeholder />
+            <Row label="Éditeur" value="SALACROUP Tristan" />
+            <Row label="Forme juridique" value="Auto-entrepreneur" />
+            <Row label="Numéro SIRET" value="853 828 473 00027" />
+            <Row label="Adresse" value="Rue François Ier, 75008 Paris" />
             <Row label="Email" value="contact@viralynz.com" />
-            <Row label="Directeur de la publication" value="[Votre nom]" placeholder />
+            <Row label="Directeur de la publication" value="SALACROUP Tristan" />
           </Section>
 
           <Section title="Hébergement">
@@ -73,13 +73,6 @@ export default function MentionsLegalesPage() {
             <p>Les présentes mentions légales sont régies par le droit français. En cas de litige, les tribunaux français seront seuls compétents.</p>
           </Section>
 
-        </div>
-
-        {/* Placeholder notice */}
-        <div className="mt-8 p-4 rounded-xl border border-amber-500/20 bg-amber-500/[0.05]">
-          <p className="text-[12.5px] text-amber-400/80 leading-relaxed">
-            <strong className="text-amber-400">À compléter :</strong> Les champs marqués en italique doivent être remplis avec vos informations réelles avant mise en ligne (raison sociale, SIRET, adresse). Obligatoire par la loi française pour tout site commercial.
-          </p>
         </div>
 
         <LegalNav current="/legal/mentions-legales" />
