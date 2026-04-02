@@ -137,6 +137,9 @@ export default function Home() {
     setCompareItem(null);
 
     if (authUser) {
+      // Optimistic increment so the counter updates immediately without waiting for the re-fetch
+      setAuthUser((prev) => prev ? { ...prev, analyses_count: prev.analyses_count + 1 } : prev);
+      // Then sync with the real server count (corrects any drift)
       fetch('/api/auth/me').then((r) => r.json()).then((d) => { if (d.user) setAuthUser(d.user); }).catch(() => {});
       refreshHistory();
     } else {
