@@ -10,7 +10,7 @@ interface ResultsPanelProps {
   onReset?: () => void;
 }
 
-/* ── Color helpers ─────────────────────────────────────────────────────── */
+/* â”€â”€ Color helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 function scoreColors(s: number) {
   if (s >= 80) return { hex: '#34d399', glow: 'rgba(52,211,153,0.35)',  grad1: '#34d399', grad2: '#6ee7b7' };
@@ -28,7 +28,7 @@ function viralBadge(s: number) {
   if (s >= 75) return { label: 'Fort potentiel', cls: 'bg-emerald-400/15 text-emerald-300 border border-emerald-400/20' };
   if (s >= 60) return { label: 'Potentiel',      cls: 'bg-amber-400/15  text-amber-300  border border-amber-400/20'  };
   if (s >= 40) return { label: 'En progression', cls: 'bg-orange-400/15 text-orange-300 border border-orange-400/20' };
-  return              { label: 'À améliorer',    cls: 'bg-red-500/15    text-red-300    border border-red-500/20'    };
+  return              { label: 'Ã€ amÃ©liorer',    cls: 'bg-red-500/15    text-red-300    border border-red-500/20'    };
 }
 
 function compBenchmark(s: number) {
@@ -40,7 +40,7 @@ function compBenchmark(s: number) {
   return              { pct: 78, grad: 'from-red-500 to-red-400',         hex: '#f87171' };
 }
 
-/* ── Smart text helpers ─────────────────────────────────────────────────── */
+/* â”€â”€ Smart text helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 function buildSummary(data: AnalysisResult): string {
   const v = data.viralityScore, h = data.hook?.score ?? 0,
@@ -99,7 +99,7 @@ function findReco(improvs: Improvement[], kws: string[]): string | undefined {
   return byPriority.find(i => kws.some(k => i.tip.toLowerCase().includes(k)))?.tip ?? byPriority[0]?.tip;
 }
 
-/* ── Animated components ────────────────────────────────────────────────── */
+/* â”€â”€ Animated components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 function PBar({ pct, cls }: { pct: number; cls: string }) {
   const [w, setW] = useState(0);
@@ -136,7 +136,7 @@ function Gauge({ value }: { value: number }) {
 
 function Hr() { return <div className="border-t border-white/[0.06]" />; }
 
-/* ── Main component ─────────────────────────────────────────────────────── */
+/* â”€â”€ Main component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps) {
   const vs      = typeof data.viralityScore === 'number' ? data.viralityScore : 0;
@@ -161,33 +161,32 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
   const visible = plan === 'free' ? sorted.slice(0, VISIBLE_FREE) : sorted.slice(0, 5);
   const locked  = plan === 'free' ? Math.max(0, sorted.length - VISIBLE_FREE) : 0;
 
-  const hookReco   = findReco(improvs, ['hook', 'accroche', 'début', 'intro', 'premi']);
+  const hookReco   = findReco(improvs, ['hook', 'accroche', 'dÃ©but', 'intro', 'premi']);
   const editReco   = findReco(improvs, ['montage', 'transition', 'cut', 'rythme', 'coupe']);
-  const retentReco = findReco(improvs, ['rétention', 'audience', 'attention', 'interrupt', 'rebond']);
+  const retentReco = findReco(improvs, ['rÃ©tention', 'audience', 'attention', 'interrupt', 'rebond']);
 
   const pillars = [
     { title: 'Hook',       s: data.hook,      reco: hookReco   },
     { title: 'Montage',    s: data.editing,   reco: editReco   },
-    { title: 'Rétention',  s: data.retention, reco: retentReco },
+    { title: 'RÃ©tention',  s: data.retention, reco: retentReco },
   ];
 
   const fmt = (v?: number) =>
-    v == null ? '—' : new Intl.NumberFormat('fr-FR', { notation: 'compact', maximumFractionDigits: 1 }).format(v);
+    v == null ? 'â€”' : new Intl.NumberFormat('fr-FR', { notation: 'compact', maximumFractionDigits: 1 }).format(v);
 
   const label9 = 'text-[9px] font-bold uppercase tracking-[0.24em] text-gray-600';
 
   return (
     <div className="bg-[#0d0d12] rounded-[1.25rem] ring-1 ring-white/[0.08] text-white overflow-hidden">
 
-      {/* ── Top accent line ── */}
+      {/* â”€â”€ Top accent line â”€â”€ */}
       <div className="h-px bg-gradient-to-r from-transparent via-white/12 to-transparent" />
 
-      {/* ══════════════════════════════════════════════════════════════════
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
           1. HERO
-      ══════════════════════════════════════════════════════════════════ */}
+      â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <div className="px-7 sm:px-10 pt-10 pb-8">
 
-        <p className={`${label9} mb-6`}>Résultat d&apos;analyse · Viralynz</p>
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-7 sm:gap-10">
 
@@ -203,7 +202,7 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
             </div>
           </div>
 
-          {/* Right — status + headline + pillar scores */}
+          {/* Right â€” status + headline + pillar scores */}
           <div className="flex-1 min-w-0">
 
             {/* Badges */}
@@ -216,17 +215,17 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
               )}
               {data.overperformanceDetected && (
                 <span className="text-[9px] font-bold px-2.5 py-0.5 rounded-full bg-vn-fuchsia/15 text-vn-fuchsia border border-vn-fuchsia/20">
-                  ⚡ Surperformance
+                  âš¡ Surperformance
                 </span>
               )}
             </div>
 
-            {/* Headline — 1 impactful sentence */}
+            {/* Headline â€” 1 impactful sentence */}
             <p className="text-[1.25rem] sm:text-[1.45rem] font-bold text-white leading-tight mb-6 max-w-lg">
               {summary}
             </p>
 
-            {/* Pillar scores — inline, typographic */}
+            {/* Pillar scores â€” inline, typographic */}
             <div className="flex gap-7 sm:gap-10">
               {pillars.map(({ title, s }) => {
                 const score = s?.score ?? 0;
@@ -247,14 +246,14 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
 
       <Hr />
 
-      {/* ══════════════════════════════════════════════════════════════════
-          2. PROBLÈME PRINCIPAL + PLAN D'ACTION
-      ══════════════════════════════════════════════════════════════════ */}
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+          2. PROBLÃˆME PRINCIPAL + PLAN D'ACTION
+      â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-white/[0.06]">
 
-        {/* Problème */}
+        {/* ProblÃ¨me */}
         <div className="px-7 sm:px-10 py-8">
-          <p className={`${label9} mb-5`}>Problème principal</p>
+          <p className={`${label9} mb-5`}>ProblÃ¨me principal</p>
           <div className="flex items-start gap-4">
             <div className="w-0.5 self-stretch rounded-full bg-red-500/50 shrink-0" />
             <p className="text-[15px] font-semibold text-white leading-snug">{mainProb}</p>
@@ -264,10 +263,10 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
         {/* Plan d'action */}
         <div className="px-7 sm:px-10 py-8">
           <div className="flex items-center justify-between mb-5">
-            <p className={label9}>À corriger maintenant</p>
+            <p className={label9}>Ã€ corriger maintenant</p>
             {locked > 0 && (
               <Link href="/pricing" className="text-[9px] text-vn-fuchsia hover:opacity-80 transition-opacity">
-                +{locked} avec Pro →
+                +{locked} avec Pro â†’
               </Link>
             )}
           </div>
@@ -285,11 +284,10 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
 
       <Hr />
 
-      {/* ══════════════════════════════════════════════════════════════════
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
           3. ANALYSE PAR PILIER
-      ══════════════════════════════════════════════════════════════════ */}
+      â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <div className="px-7 sm:px-10 py-9 sm:py-10">
-        <p className={`${label9} mb-9`}>Analyse par pilier</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-9 md:gap-12">
           {pillars.map(({ title, s, reco }) => {
             const score = s?.score ?? 0;
@@ -312,7 +310,7 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
                   <div className="mt-3 space-y-1.5">
                     {(s?.strengths ?? []).slice(0, 2).map((f, i) => (
                       <p key={i} className="text-[12px] text-gray-400 leading-snug">
-                        <span className="text-emerald-400 font-bold mr-1.5">✓</span>{f}
+                        <span className="text-emerald-400 font-bold mr-1.5">âœ“</span>{f}
                       </p>
                     ))}
                   </div>
@@ -323,7 +321,7 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
                   <div className="mt-2 space-y-1.5">
                     {(s?.weaknesses ?? []).slice(0, 2).map((w, i) => (
                       <p key={i} className="text-[12px] text-gray-500 leading-snug">
-                        <span className="text-red-400 font-bold mr-1.5">×</span>{w}
+                        <span className="text-red-400 font-bold mr-1.5">Ã—</span>{w}
                       </p>
                     ))}
                   </div>
@@ -332,7 +330,7 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
                 {/* Reco */}
                 {reco && (
                   <p className="mt-4 pt-3 text-[12px] text-vn-violet/80 leading-snug border-t border-white/[0.05]">
-                    → {reco}
+                    â†’ {reco}
                   </p>
                 )}
 
@@ -342,9 +340,9 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
         </div>
       </div>
 
-      {/* ══════════════════════════════════════════════════════════════════
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
           4. STATS PUBLIQUES (conditional)
-      ══════════════════════════════════════════════════════════════════ */}
+      â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       {hasStats && (
         <>
           <Hr />
@@ -359,7 +357,7 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
               </span>
             </div>
 
-            {/* Stats row — pure typography */}
+            {/* Stats row â€” pure typography */}
             <div className="flex flex-wrap gap-8 sm:gap-12 mb-6">
               {[
                 { label: 'Vues',         val: fmt(metrics.views)    },
@@ -368,7 +366,7 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
                 { label: 'Partages',     val: fmt(metrics.shares)   },
                 ...(meta?.durationSec ? [{ label: 'Dur\u00e9e', val: `${meta.durationSec}s` }] : []),
                 ...(meta?.authorUsername ? [{ label: 'Auteur', val: `@${meta.authorUsername}` }] : []),
-              ].filter(m => m.val !== '—').map(({ label, val }) => (
+              ].filter(m => m.val !== 'â€”').map(({ label, val }) => (
                 <div key={label}>
                   <p className={`${label9} mb-1.5`}>{label}</p>
                   <p className="text-[1.5rem] font-black text-white leading-none">{val}</p>
@@ -388,7 +386,7 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
                 </div>
                 <div className="flex justify-between mt-1">
                   <span className="text-[8px] text-gray-700">Moyenne</span>
-                  <span className="text-[8px] text-gray-700">Top créateurs</span>
+                  <span className="text-[8px] text-gray-700">Top crÃ©ateurs</span>
                 </div>
               </div>
             </div>
@@ -405,27 +403,26 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
 
       <Hr />
 
-      {/* ══════════════════════════════════════════════════════════════════
-          5. VERDICT + STRATÉGIE
-      ══════════════════════════════════════════════════════════════════ */}
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+          5. VERDICT + STRATÃ‰GIE
+      â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-white/[0.06]">
 
         {/* Verdict */}
         <div className="px-7 sm:px-10 py-8">
-          <p className={`${label9} mb-5`}>Verdict</p>
           {data.finalVerdict ? (
             <p className="text-[14px] text-gray-300 leading-relaxed">{data.finalVerdict}</p>
           ) : (
-            <p className="text-[14px] text-gray-500">Voir l&apos;analyse détaillée ci-dessus.</p>
+            <p className="text-[14px] text-gray-500">Voir l&apos;analyse dÃ©taillÃ©e ci-dessus.</p>
           )}
           {data.comparativePriority && (
             <p className="mt-3 text-[12px] text-vn-violet/80 leading-snug">
-              → {data.comparativePriority}
+              â†’ {data.comparativePriority}
             </p>
           )}
           {data.overperformanceDetected && (
             <p className="mt-3 text-[12px] text-vn-fuchsia/80">
-              ⚡ Surperformance — ta vidéo performe au-dessus de sa structure.
+              âš¡ Surperformance â€” ta vidÃ©o performe au-dessus de sa structure.
             </p>
           )}
           {typeof data.observedPerformanceScore === 'number' && (
@@ -434,15 +431,15 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
                 {data.observedPerformanceScore}
               </span>
               <span className="text-[11px] text-gray-500">
-                {data.observedPerformanceLabel ?? 'Performance observée'}
+                {data.observedPerformanceLabel ?? 'Performance observÃ©e'}
               </span>
             </div>
           )}
         </div>
 
-        {/* Stratégie */}
+        {/* StratÃ©gie */}
         <div className="px-7 sm:px-10 py-8">
-          <p className={`${label9} mb-5`}>Stratégie</p>
+          <p className={`${label9} mb-5`}>StratÃ©gie</p>
 
           {projection && (
             <div className="mb-5">
@@ -470,9 +467,9 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
 
       </div>
 
-      {/* ══════════════════════════════════════════════════════════════════
-          6. ELITE — Insights viraux
-      ══════════════════════════════════════════════════════════════════ */}
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+          6. ELITE â€” Insights viraux
+      â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       {(data.viralTips?.length ?? 0) > 0 && (
         <>
           <Hr />
@@ -492,14 +489,14 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
         </>
       )}
 
-      {/* ══════════════════════════════════════════════════════════════════
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
           7. CTA
-      ══════════════════════════════════════════════════════════════════ */}
+      â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <Hr />
       <div className="px-7 sm:px-10 py-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <p className="text-[14px] font-semibold text-white">Prêt à corriger&nbsp;?</p>
-          <p className="text-[11px] text-gray-600 mt-0.5">Analyse une autre vidéo ou génère des hooks optimisés.</p>
+          <p className="text-[14px] font-semibold text-white">PrÃªt Ã  corriger&nbsp;?</p>
+          <p className="text-[11px] text-gray-600 mt-0.5">Analyse une autre vidÃ©o ou gÃ©nÃ¨re des hooks optimisÃ©s.</p>
         </div>
         <div className="flex gap-2.5 shrink-0 flex-wrap">
           {onReset ? (
@@ -508,12 +505,12 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 shrink-0">
                 <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
               </svg>
-              Analyser une autre vidéo
+              Analyser une autre vidÃ©o
             </button>
           ) : (
             <Link href="/analyzer"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:brightness-110 active:scale-[0.98] transition-all">
-              Analyser une autre vidéo
+              Analyser une autre vidÃ©o
             </Link>
           )}
           <Link href="/hook-generator"
@@ -521,7 +518,7 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 shrink-0">
               <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
             </svg>
-            Générer des hooks
+            GÃ©nÃ©rer des hooks
           </Link>
         </div>
       </div>

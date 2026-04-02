@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Fonctionnalités — Viralynz',
+  title: 'FonctionnalitÃ©s â€” Viralynz',
   description:
-    'Analyse vidéo IA, diagnostic hook, montage et rétention, plan d\'action priorisé, hook generator. Tout ce dont tu as besoin pour comprendre et performer sur TikTok.',
+    'Analyse vidÃ©o IA, diagnostic hook, montage et rÃ©tention, plan d\'action priorisÃ©, hook generator. Tout ce dont tu as besoin pour comprendre et performer sur TikTok.',
 };
 
 const label9 = 'text-[9px] font-bold uppercase tracking-[0.24em] text-gray-600';
@@ -25,7 +25,7 @@ function ArrowRight() {
   );
 }
 
-/* ── Icons ─────────────────────────────────────────────────────── */
+/* â”€â”€ Icons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function IconScan() {
   return (
     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
@@ -92,14 +92,14 @@ function IconRocket() {
   );
 }
 
-/* ── Feature data ─────────────────────────────────────────────── */
+/* â”€â”€ Feature data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const coreFeatures = [
   {
     icon: <IconScan />,
     tag: 'Analyse IA',
-    title: 'Score de viralité',
-    desc: 'Un score de 0 à 100 calculé par vision IA sur ta vidéo réelle. Pas une estimation basée sur les stats — une lecture frame par frame de ce qui accroche ou décroche.',
-    points: ['Score global 0–100', 'Analyse frame par frame', 'Contexte stats TikTok'],
+    title: 'Score de viralitÃ©',
+    desc: 'Un score de 0 Ã  100 calculÃ© par vision IA sur ta vidÃ©o rÃ©elle. Pas une estimation basÃ©e sur les stats â€” une lecture frame par frame de ce qui accroche ou dÃ©croche.',
+    points: ['Score global 0â€“100', 'Analyse frame par frame', 'Contexte stats TikTok'],
     accent: 'from-vn-fuchsia/[0.08] to-transparent',
     border: 'border-vn-fuchsia/15',
     iconBg: 'bg-vn-fuchsia/10 border-vn-fuchsia/20 text-vn-fuchsia',
@@ -108,8 +108,8 @@ const coreFeatures = [
     icon: <IconEye />,
     tag: 'Diagnostic',
     title: 'Analyse du Hook',
-    desc: "Les 3 premières secondes décident tout. Viralynz détecte si ton ouverture retient l'attention, crée de la curiosité, et donne envie de continuer.",
-    points: ["Détection d'accroche", 'Curiosity gap analysé', 'Première impression scorée'],
+    desc: "Les 3 premiÃ¨res secondes dÃ©cident tout. Viralynz dÃ©tecte si ton ouverture retient l'attention, crÃ©e de la curiositÃ©, et donne envie de continuer.",
+    points: ["DÃ©tection d'accroche", 'Curiosity gap analysÃ©', 'PremiÃ¨re impression scorÃ©e'],
     accent: 'from-blue-500/[0.06] to-transparent',
     border: 'border-blue-500/15',
     iconBg: 'bg-blue-500/10 border-blue-500/20 text-blue-400',
@@ -117,9 +117,9 @@ const coreFeatures = [
   {
     icon: <IconChart />,
     tag: 'Diagnostic',
-    title: 'Rétention & Montage',
-    desc: "Courbe d'attention estimée, coupes analysées, rythme visuel mesuré. Tu sais exactement à quel moment l'audience décroche — et pourquoi.",
-    points: ["Courbe d'attention estimée", 'Analyse du rythme de coupe', 'Drops identifiés et annotés'],
+    title: 'RÃ©tention & Montage',
+    desc: "Courbe d'attention estimÃ©e, coupes analysÃ©es, rythme visuel mesurÃ©. Tu sais exactement Ã  quel moment l'audience dÃ©croche â€” et pourquoi.",
+    points: ["Courbe d'attention estimÃ©e", 'Analyse du rythme de coupe', 'Drops identifiÃ©s et annotÃ©s'],
     accent: 'from-purple-500/[0.06] to-transparent',
     border: 'border-purple-500/15',
     iconBg: 'bg-purple-500/10 border-purple-500/20 text-purple-400',
@@ -129,33 +129,33 @@ const coreFeatures = [
 const secondaryFeatures = [
   {
     icon: <IconTarget />,
-    title: 'Problème principal',
-    desc: 'Un diagnostic en une phrase. Pas 3 pages de rapport. Tu sais exactement ce qui bloque ta vidéo.',
+    title: 'ProblÃ¨me principal',
+    desc: 'Un diagnostic en une phrase. Pas 3 pages de rapport. Tu sais exactement ce qui bloque ta vidÃ©o.',
   },
   {
     icon: <IconBolt />,
     title: "Plan d'action",
-    desc: "3 à 5 actions concrètes, priorisées par impact. Pas des conseils génériques — des corrections précises pour ta vidéo.",
+    desc: "3 Ã  5 actions concrÃ¨tes, priorisÃ©es par impact. Pas des conseils gÃ©nÃ©riques â€” des corrections prÃ©cises pour ta vidÃ©o.",
   },
   {
     icon: <IconMic />,
     title: 'Transcription audio',
-    desc: "L'IA analyse aussi ce que tu dis. Accroche verbale, rythme de parole, clarté du message — tout est pris en compte.",
+    desc: "L'IA analyse aussi ce que tu dis. Accroche verbale, rythme de parole, clartÃ© du message â€” tout est pris en compte.",
   },
   {
     icon: <IconHistory />,
     title: 'Historique & progression',
-    desc: "Chaque analyse est sauvegardée. Suis ta progression vidéo après vidéo et identifie les patterns qui reviennent.",
+    desc: "Chaque analyse est sauvegardÃ©e. Suis ta progression vidÃ©o aprÃ¨s vidÃ©o et identifie les patterns qui reviennent.",
   },
   {
     icon: <IconStar />,
     title: 'Hook Generator',
-    desc: "Génère des hooks percutants adaptés à ton contenu. Courts, viraux, prêts à tester. Disponible en Pro & Elite.",
+    desc: "GÃ©nÃ¨re des hooks percutants adaptÃ©s Ã  ton contenu. Courts, viraux, prÃªts Ã  tester. Disponible en Pro & Elite.",
   },
   {
     icon: <IconRocket />,
     title: 'Dashboard coach',
-    desc: 'Vue synthétique de toutes tes performances : score moyen, points forts, points faibles, plan de progression.',
+    desc: 'Vue synthÃ©tique de toutes tes performances : score moyen, points forts, points faibles, plan de progression.',
   },
 ];
 
@@ -164,22 +164,22 @@ const pillars = [
     name: 'Hook',
     color: 'text-vn-fuchsia',
     bg: 'bg-vn-fuchsia/10 border-vn-fuchsia/20',
-    desc: "Les 3 premières secondes qui font tout. L'IA mesure si ton ouverture accroche, crée de la curiosité et donne envie de rester.",
-    metrics: ['Puissance d\'accroche', 'Curiosity gap', 'Première image analysée', 'Texte overlay détecté'],
+    desc: "Les 3 premiÃ¨res secondes qui font tout. L'IA mesure si ton ouverture accroche, crÃ©e de la curiositÃ© et donne envie de rester.",
+    metrics: ['Puissance d\'accroche', 'Curiosity gap', 'PremiÃ¨re image analysÃ©e', 'Texte overlay dÃ©tectÃ©'],
   },
   {
     name: 'Montage',
     color: 'text-blue-400',
     bg: 'bg-blue-500/10 border-blue-500/20',
-    desc: "Rythme des coupes, intensité visuelle, lisibilité — un montage fluide retient. Un montage plat fait décrocher.",
-    metrics: ['Fréquence de coupe', 'Intensité visuelle', 'Cohérence du rythme', 'Transitions analysées'],
+    desc: "Rythme des coupes, intensitÃ© visuelle, lisibilitÃ© â€” un montage fluide retient. Un montage plat fait dÃ©crocher.",
+    metrics: ['FrÃ©quence de coupe', 'IntensitÃ© visuelle', 'CohÃ©rence du rythme', 'Transitions analysÃ©es'],
   },
   {
-    name: 'Rétention',
+    name: 'RÃ©tention',
     color: 'text-purple-400',
     bg: 'bg-purple-500/10 border-purple-500/20',
-    desc: "La courbe d'attention estimée frame par frame. Tu vois où l'audience décroche — et ce qui cause la chute.",
-    metrics: ["Courbe d'attention", 'Drops identifiés', 'Moments forts repérés', 'Durée optimale estimée'],
+    desc: "La courbe d'attention estimÃ©e frame par frame. Tu vois oÃ¹ l'audience dÃ©croche â€” et ce qui cause la chute.",
+    metrics: ["Courbe d'attention", 'Drops identifiÃ©s', 'Moments forts repÃ©rÃ©s', 'DurÃ©e optimale estimÃ©e'],
   },
 ];
 
@@ -189,13 +189,13 @@ const plans = [
     color: 'text-gray-400',
     border: 'border-white/[0.07]',
     features: [
-      'Analyse vidéo IA complète',
-      'Score de viralité',
-      'Diagnostic Hook / Montage / Rétention',
-      "Plan d'action priorisé",
-      '3 analyses à vie',
+      'Analyse vidÃ©o IA complÃ¨te',
+      'Score de viralitÃ©',
+      'Diagnostic Hook / Montage / RÃ©tention',
+      "Plan d'action priorisÃ©",
+      '3 analyses Ã  vie',
     ],
-    locked: ['Hook generator', 'Historique illimité', 'Transcription audio'],
+    locked: ['Hook generator', 'Historique illimitÃ©', 'Transcription audio'],
   },
   {
     name: 'Pro',
@@ -222,7 +222,7 @@ const plans = [
       'Tout Pro, plus :',
       '200 analyses / mois',
       '500 hooks / mois',
-      'Insights viraux avancés',
+      'Insights viraux avancÃ©s',
       'Volume & profondeur max',
       'Support prioritaire',
     ],
@@ -230,7 +230,7 @@ const plans = [
   },
 ];
 
-/* ── Page ─────────────────────────────────────────────────────── */
+/* â”€â”€ Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export default function FeaturesPage() {
   return (
     <main className="min-h-screen bg-vn-void overflow-x-hidden">
@@ -240,13 +240,13 @@ export default function FeaturesPage() {
         <div className="absolute top-1/3 right-0 w-[400px] h-[400px] rounded-full bg-vn-indigo/5 blur-3xl" />
       </div>
 
-      {/* ── HERO ────────────────────────────────────────────────── */}
+      {/* â”€â”€ HERO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="relative pt-24 sm:pt-32 pb-16 sm:pb-20 border-b border-white/[0.06]">
         <div className="max-w-4xl mx-auto px-5 sm:px-8 text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.1] bg-white/[0.03] px-4 py-2 mb-7">
             <div className="w-1.5 h-1.5 rounded-full bg-vn-fuchsia shadow-[0_0_6px_rgba(232,121,249,0.9)]" aria-hidden />
             <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-400">
-              Fonctionnalités
+              FonctionnalitÃ©s
             </span>
           </div>
 
@@ -257,15 +257,15 @@ export default function FeaturesPage() {
             </span>
           </h1>
           <p className="text-gray-400 text-[15px] sm:text-[16px] max-w-2xl mx-auto leading-relaxed mb-10">
-            Analyse vidéo IA, diagnostic précis, plan d&apos;action. Un seul outil — zéro mystère algorithmique.
+            Analyse vidÃ©o IA, diagnostic prÃ©cis, plan d&apos;action. Un seul outil â€” zÃ©ro mystÃ¨re algorithmique.
           </p>
 
           {/* Stats strip */}
           <div className="inline-flex items-stretch gap-0 rounded-2xl border border-white/[0.07] bg-white/[0.02] overflow-hidden">
             {[
-              { value: '3', label: 'Piliers analysés', color: 'text-vn-fuchsia' },
+              { value: '3', label: 'Piliers analysÃ©s', color: 'text-vn-fuchsia' },
               { value: '14', label: 'Frames extraites', color: 'text-blue-400' },
-              { value: '30s', label: 'Résultats en', color: 'text-purple-400' },
+              { value: '30s', label: 'RÃ©sultats en', color: 'text-purple-400' },
               { value: '100%', label: 'IA locale', color: 'text-emerald-400' },
             ].map(({ value, label: lbl, color }, i, arr) => (
               <div
@@ -280,11 +280,10 @@ export default function FeaturesPage() {
         </div>
       </section>
 
-      {/* ── CORE FEATURES (3 big cards) ─────────────────────────── */}
+      {/* â”€â”€ CORE FEATURES (3 big cards) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="relative py-20 sm:py-24">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 lg:px-10">
           <div className="text-center mb-12">
-            <p className={`${label9} mb-4`}>Analyse IA</p>
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
               <span className="text-white">Trois piliers.</span><br />
               <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">Un seul diagnostic.</span>
@@ -326,14 +325,13 @@ export default function FeaturesPage() {
         </div>
       </section>
 
-      {/* ── PILIERS DÉTAILLÉS ────────────────────────────────────── */}
+      {/* â”€â”€ PILIERS DÃ‰TAILLÃ‰S â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="relative py-20 sm:py-24 border-t border-white/[0.06]">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 lg:px-10">
           <div className="text-center mb-12">
-            <p className={`${label9} mb-4`}>Ce qui est mesuré</p>
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
               <span className="text-white">Ce que l&apos;IA analyse,</span><br />
-              <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">concrètement.</span>
+              <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">concrÃ¨tement.</span>
             </h2>
           </div>
 
@@ -358,17 +356,16 @@ export default function FeaturesPage() {
         </div>
       </section>
 
-      {/* ── SECONDARY FEATURES GRID ─────────────────────────────── */}
+      {/* â”€â”€ SECONDARY FEATURES GRID â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="relative py-20 sm:py-24 border-t border-white/[0.06]">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 lg:px-10">
           <div className="text-center mb-12">
-            <p className={`${label9} mb-4`}>Tout l&apos;arsenal</p>
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
               <span className="text-white">Chaque outil</span><br />
-              <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">à ta disposition.</span>
+              <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">Ã  ta disposition.</span>
             </h2>
             <p className="mt-3 text-gray-500 text-[14.5px] max-w-lg mx-auto">
-              De l&apos;analyse à la correction — un workflow complet, sans jongler entre 5 outils.
+              De l&apos;analyse Ã  la correction â€” un workflow complet, sans jongler entre 5 outils.
             </p>
           </div>
 
@@ -389,11 +386,10 @@ export default function FeaturesPage() {
         </div>
       </section>
 
-      {/* ── PLANS ───────────────────────────────────────────────── */}
+      {/* â”€â”€ PLANS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="relative py-20 sm:py-24 border-t border-white/[0.06]">
         <div className="max-w-5xl mx-auto px-5 sm:px-8 lg:px-10">
           <div className="text-center mb-12">
-            <p className={`${label9} mb-4`}>Par plan</p>
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
               <span className="text-white">Ce qui est inclus</span><br />
               <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">dans chaque plan.</span>
@@ -424,7 +420,7 @@ export default function FeaturesPage() {
                   ))}
                   {plan.locked?.map((f) => (
                     <li key={f} className="flex items-start gap-2.5 text-[13px] text-gray-700 line-through">
-                      <span className="w-3.5 shrink-0 text-gray-800 mt-0.5">—</span>
+                      <span className="w-3.5 shrink-0 text-gray-800 mt-0.5">â€”</span>
                       {f}
                     </li>
                   ))}
@@ -438,20 +434,19 @@ export default function FeaturesPage() {
               href="/pricing"
               className="inline-flex items-center gap-2 text-[13.5px] font-semibold text-vn-fuchsia hover:text-white transition-colors"
             >
-              Voir les prix détaillés
+              Voir les prix dÃ©taillÃ©s
               <ArrowRight />
             </Link>
           </p>
         </div>
       </section>
 
-      {/* ── HOW IT WORKS ────────────────────────────────────────── */}
+      {/* â”€â”€ HOW IT WORKS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="relative py-20 sm:py-24 border-t border-white/[0.06]">
         <div className="max-w-4xl mx-auto px-5 sm:px-8 lg:px-10">
           <div className="text-center mb-12">
-            <p className={`${label9} mb-4`}>Comment ça marche</p>
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
-              <span className="text-white">De la vidéo au plan d&apos;action</span><br />
+              <span className="text-white">De la vidÃ©o au plan d&apos;action</span><br />
               <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">en 30 secondes.</span>
             </h2>
           </div>
@@ -460,7 +455,7 @@ export default function FeaturesPage() {
             {[
               {
                 n: '01',
-                title: 'Tu importes ta vidéo',
+                title: 'Tu importes ta vidÃ©o',
                 desc: 'Upload ton fichier MP4 directement. Ajoute optionnellement le lien TikTok pour enrichir l\'analyse avec les stats publiques.',
                 color: 'text-vn-fuchsia',
                 border: 'border-vn-fuchsia/15',
@@ -468,14 +463,14 @@ export default function FeaturesPage() {
               {
                 n: '02',
                 title: "L'IA analyse frame par frame",
-                desc: '14 frames extraites, transcription audio, scores calculés sur hook, montage et rétention. Tout en temps réel.',
+                desc: '14 frames extraites, transcription audio, scores calculÃ©s sur hook, montage et rÃ©tention. Tout en temps rÃ©el.',
                 color: 'text-blue-400',
                 border: 'border-blue-500/15',
               },
               {
                 n: '03',
-                title: 'Tu reçois un diagnostic complet',
-                desc: "Score 0–100, problème principal identifié, plan d'action en 3 à 5 points. Tu sais exactement quoi corriger.",
+                title: 'Tu reÃ§ois un diagnostic complet',
+                desc: "Score 0â€“100, problÃ¨me principal identifiÃ©, plan d'action en 3 Ã  5 points. Tu sais exactement quoi corriger.",
                 color: 'text-purple-400',
                 border: 'border-purple-500/15',
               },
@@ -497,26 +492,25 @@ export default function FeaturesPage() {
         </div>
       </section>
 
-      {/* ── ROADMAP ─────────────────────────────────────────────── */}
+      {/* â”€â”€ ROADMAP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="relative py-20 sm:py-24 border-t border-white/[0.06]">
         <div className="max-w-4xl mx-auto px-5 sm:px-8 lg:px-10">
           <div className="text-center mb-12">
-            <p className={`${label9} mb-4`}>Roadmap</p>
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
               <span className="text-white">TikTok aujourd&apos;hui.</span><br />
               <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">Le reste demain.</span>
             </h2>
             <p className="mt-3 text-gray-500 text-[14.5px] max-w-lg mx-auto">
-              Viralynz commence avec TikTok — le format le plus exigeant sur l&apos;attention. La logique s&apos;étend naturellement aux autres formats courts.
+              Viralynz commence avec TikTok â€” le format le plus exigeant sur l&apos;attention. La logique s&apos;Ã©tend naturellement aux autres formats courts.
             </p>
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4">
             {[
-              { platform: 'TikTok', status: 'live', desc: 'Analyse complète disponible — notre référence format court.', color: 'text-emerald-400', dot: 'bg-emerald-400' },
-              { platform: 'Instagram Reels', status: 'next', desc: 'Même logique d\'analyse adaptée au feed et aux critères Meta.', color: 'text-gray-500', dot: 'bg-gray-600' },
-              { platform: 'YouTube Shorts', status: 'next', desc: 'Shorts, même exigence sur l\'accroche et la rétention.', color: 'text-gray-500', dot: 'bg-gray-600' },
-              { platform: 'Autres formats', status: 'later', desc: 'Vidéos verticales, social ads, paid content — un cadre unique.', color: 'text-gray-500', dot: 'bg-gray-600' },
+              { platform: 'TikTok', status: 'live', desc: 'Analyse complÃ¨te disponible â€” notre rÃ©fÃ©rence format court.', color: 'text-emerald-400', dot: 'bg-emerald-400' },
+              { platform: 'Instagram Reels', status: 'next', desc: 'MÃªme logique d\'analyse adaptÃ©e au feed et aux critÃ¨res Meta.', color: 'text-gray-500', dot: 'bg-gray-600' },
+              { platform: 'YouTube Shorts', status: 'next', desc: 'Shorts, mÃªme exigence sur l\'accroche et la rÃ©tention.', color: 'text-gray-500', dot: 'bg-gray-600' },
+              { platform: 'Autres formats', status: 'later', desc: 'VidÃ©os verticales, social ads, paid content â€” un cadre unique.', color: 'text-gray-500', dot: 'bg-gray-600' },
             ].map(({ platform, status, desc, color, dot }) => (
               <div key={platform} className="p-5 sm:p-6 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
                 <div className="flex items-center justify-between gap-3 mb-2">
@@ -525,7 +519,7 @@ export default function FeaturesPage() {
                     <p className="text-[15px] font-bold text-white tracking-tight">{platform}</p>
                   </div>
                   <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border border-white/[0.07] ${status === 'live' ? 'text-emerald-400 border-emerald-400/20 bg-emerald-400/10' : 'text-gray-600 bg-white/[0.03]'}`}>
-                    {status === 'live' ? 'Live' : 'Bientôt'}
+                    {status === 'live' ? 'Live' : 'BientÃ´t'}
                   </span>
                 </div>
                 <p className={`text-[13px] ${color} leading-relaxed`}>{desc}</p>
@@ -535,16 +529,15 @@ export default function FeaturesPage() {
         </div>
       </section>
 
-      {/* ── CTA FINAL ───────────────────────────────────────────── */}
+      {/* â”€â”€ CTA FINAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="relative py-20 sm:py-24 border-t border-white/[0.06]">
         <div className="max-w-2xl mx-auto px-5 sm:px-8 text-center">
-          <p className={`${label9} mb-5`}>Prêt à analyser ?</p>
           <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight mb-4">
             <span className="text-white">Comprends ce qui bloque.</span><br />
             <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">Corrige avant de reposter.</span>
           </h2>
           <p className="text-gray-500 text-[14.5px] mb-10 max-w-sm mx-auto">
-            3 analyses gratuites — sans carte bancaire, sans engagement.
+            3 analyses gratuites â€” sans carte bancaire, sans engagement.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <div className="relative group">
@@ -561,7 +554,7 @@ export default function FeaturesPage() {
               href="/pricing"
               className="text-[13.5px] text-gray-500 hover:text-gray-300 transition-colors"
             >
-              Voir les plans →
+              Voir les plans â†’
             </Link>
           </div>
         </div>

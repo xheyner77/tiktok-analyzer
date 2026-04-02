@@ -10,7 +10,7 @@ import { DISPLAY_CATALOG_PRO_EUR, DISPLAY_CATALOG_ELITE_EUR } from '@/lib/stripe
 import LandingProductMockup from '@/components/landing/LandingProductMockup';
 import { faqItems } from '@/components/landing/landing-copy';
 
-/* Shared spacing — avoids repeating px / centering everywhere */
+/* Shared spacing â€” avoids repeating px / centering everywhere */
 const sectionInner = 'mx-auto px-5 sm:px-8 lg:px-10';
 const label = 'text-[9px] font-bold uppercase tracking-[0.24em] text-gray-600';
 
@@ -50,50 +50,50 @@ function ArrowRight({ className = 'w-4 h-4' }: { className?: string }) {
 const steps = [
   {
     n: '01',
-    title: 'Importe ta vidéo',
+    title: 'Importe ta vidÃ©o',
     body: 'Upload ton fichier MP4. Ajoute le lien TikTok pour enrichir le contexte avec les stats publiques.',
   },
   {
     n: '02',
     title: "L'IA analyse tout",
-    body: 'Hook, montage, rétention — décrypté frame par frame. Score structuré et problème principal identifié.',
+    body: 'Hook, montage, rÃ©tention â€” dÃ©cryptÃ© frame par frame. Score structurÃ© et problÃ¨me principal identifiÃ©.',
   },
   {
     n: '03',
     title: 'Corrige ce qui bloque',
-    body: "Un plan d'action clair, priorisé, actionnable. Tu sais exactement quoi corriger avant de reposter.",
+    body: "Un plan d'action clair, priorisÃ©, actionnable. Tu sais exactement quoi corriger avant de reposter.",
   },
 ];
 
 const valuePoints = [
-  'Score de viralité (0–100)',
-  'Problème principal identifié',
-  "Plan d'action priorisé",
-  'Analyse hook, montage, rétention',
+  'Score de viralitÃ© (0â€“100)',
+  'ProblÃ¨me principal identifiÃ©',
+  "Plan d'action priorisÃ©",
+  'Analyse hook, montage, rÃ©tention',
   'Recommandations actionnables',
-  "Courbe d'attention estimée",
+  "Courbe d'attention estimÃ©e",
   'Hook generator (Pro / Elite)',
   'Historique & progression',
 ];
 
 const useCases = [
   {
-    role: 'Créateur TikTok',
-    pain: "Tu postes régulièrement mais certaines vidéos s'effondrent sans que tu comprennes pourquoi.",
-    value: 'Tu identifies en 30 secondes ce qui a foiré — et tu corriges avant le prochain post.',
-    icon: '🎬',
+    role: 'CrÃ©ateur TikTok',
+    pain: "Tu postes rÃ©guliÃ¨rement mais certaines vidÃ©os s'effondrent sans que tu comprennes pourquoi.",
+    value: 'Tu identifies en 30 secondes ce qui a foirÃ© â€” et tu corriges avant le prochain post.',
+    icon: 'ðŸŽ¬',
   },
   {
     role: 'Clipper & Monteur',
-    pain: 'Tu livres du contenu pour des marques ou des créateurs. Tu veux des données pour justifier tes choix.',
+    pain: 'Tu livres du contenu pour des marques ou des crÃ©ateurs. Tu veux des donnÃ©es pour justifier tes choix.',
     value: "Tu arrives avec un diagnostic IA. Tu parles data, pas ressenti.",
-    icon: '✂️',
+    icon: 'âœ‚ï¸',
   },
   {
     role: 'E-com & Marques',
-    pain: "Tu paies des créateurs UGC. Tu ne sais pas si le contenu va convertir avant de le diffuser.",
-    value: 'Tu briefes avec précision. Tu valides avant de dépenser en pub.',
-    icon: '📦',
+    pain: "Tu paies des crÃ©ateurs UGC. Tu ne sais pas si le contenu va convertir avant de le diffuser.",
+    value: 'Tu briefes avec prÃ©cision. Tu valides avant de dÃ©penser en pub.',
+    icon: 'ðŸ“¦',
   },
 ];
 
@@ -111,9 +111,9 @@ export default function HomeLanding() {
         <div className="absolute -top-52 left-1/2 -translate-x-1/2 w-[min(1200px,260vw)] h-[600px] rounded-full bg-vn-radial blur-3xl opacity-[0.95]" />
       </div>
 
-      {/* ══ 1. HERO ══════════════════════════════════════════════════════════ */}
+      {/* â•â• 1. HERO â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <section className="relative pt-8 sm:pt-10 lg:pt-14 pb-16 sm:pb-20 overflow-visible" id="top">
-        {/* Animated starry sky — hero only */}
+        {/* Animated starry sky â€” hero only */}
         <div className="stars-hero" aria-hidden>
           <div className="stars-layer-sm" />
           <div className="stars-layer-md" />
@@ -145,12 +145,12 @@ export default function HomeLanding() {
 
             {/* Headline */}
             <h1 className="font-hero-inter font-black text-white landing-hero-title-glow max-[419px]:text-[2.05rem] max-[419px]:leading-[0.92] text-[2.45rem] leading-[0.93] sm:text-[3.35rem] sm:leading-[0.91] md:text-[4.1rem] md:leading-[0.90] lg:text-[4.9rem] lg:leading-[0.88] xl:text-[5.45rem] xl:leading-[0.87] 2xl:text-[5.9rem] 2xl:leading-[0.86] mx-auto px-3 sm:px-6 tracking-[-0.045em] max-w-none">
-              <span className="text-white block">Arrête de poster au{'\u00A0'}hasard.</span>
+              <span className="text-white block">ArrÃªte de poster au{'\u00A0'}hasard.</span>
             </h1>
 
             {/* Subtitle */}
             <p className="mt-4 sm:mt-5 text-[1rem] sm:text-[1.08rem] md:text-[1.15rem] text-gray-400 max-w-2xl mx-auto leading-relaxed font-normal tracking-[-0.01em] px-4">
-              Comprends pourquoi tes vidéos ne marchent pas — et corrige-les en quelques secondes.
+              Comprends pourquoi tes vidÃ©os ne marchent pas â€” et corrige-les en quelques secondes.
             </p>
 
             {/* CTAs */}
@@ -210,14 +210,14 @@ export default function HomeLanding() {
                 </div>
               </div>
               <p className="text-[13.5px] text-gray-400 font-medium">
-                Rejoins <span className="text-white font-bold">+1300</span> créateurs de contenu
+                Rejoins <span className="text-white font-bold">+1300</span> crÃ©ateurs de contenu
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ══ 2. PRODUCT PREVIEW ══════════════════════════════════════════════ */}
+      {/* â•â• 2. PRODUCT PREVIEW â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <section id="produit" className="relative pt-8 sm:pt-10 pb-20 sm:pb-24 scroll-mt-20">
         <div className="landing-section">
           <div className="mb-10" />
@@ -235,18 +235,17 @@ export default function HomeLanding() {
         </div>
       </section>
 
-      {/* ══ 3. PROBLÈME ═════════════════════════════════════════════════════ */}
+      {/* â•â• 3. PROBLÃˆME â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <section className="relative py-24 sm:py-32 border-t border-white/[0.06]">
         {/* FIX: max-w-4xl mx-auto instead of landing-section max-w-4xl (cascade bug) */}
         <div className={`max-w-4xl ${sectionInner}`}>
           <div className="text-center mb-14">
-            <p className={`${label} mb-8`}>Le vrai problème</p>
             <h2 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-black tracking-tight leading-[1.05] mb-6">
-              <span className="text-white">Tu ne manques pas d&apos;idées.</span><br />
+              <span className="text-white">Tu ne manques pas d&apos;idÃ©es.</span><br />
               <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">Tu manques de feedback.</span>
             </h2>
             <p className="text-gray-500 text-[15px] sm:text-base max-w-lg mx-auto leading-relaxed">
-              Sans données claires, tu testes à l&apos;aveugle. Tu recommences les mêmes erreurs. Tu perds du temps à chaque vidéo.
+              Sans donnÃ©es claires, tu testes Ã  l&apos;aveugle. Tu recommences les mÃªmes erreurs. Tu perds du temps Ã  chaque vidÃ©o.
             </p>
           </div>
 
@@ -254,11 +253,11 @@ export default function HomeLanding() {
             {[
               {
                 n: '1',
-                text: 'Tu postes. Tu regardes les stats. Tu ne comprends pas ce qui a foiré.',
+                text: 'Tu postes. Tu regardes les stats. Tu ne comprends pas ce qui a foirÃ©.',
               },
               {
                 n: '2',
-                text: 'Tu copies ce qui marche pour les autres. Ça ne marche pas pareil pour toi.',
+                text: 'Tu copies ce qui marche pour les autres. Ã‡a ne marche pas pareil pour toi.',
               },
               {
                 n: '3',
@@ -269,9 +268,6 @@ export default function HomeLanding() {
                 key={n}
                 className="relative p-6 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.1] transition-colors"
               >
-                <span className={`${label} block mb-3`}>
-                  Situation {n}
-                </span>
                 <p className="text-[14px] sm:text-[15px] text-gray-400 leading-relaxed">{text}</p>
               </div>
             ))}
@@ -279,14 +275,13 @@ export default function HomeLanding() {
         </div>
       </section>
 
-      {/* ══ 4. COMMENT ÇA MARCHE ════════════════════════════════════════════ */}
+      {/* â•â• 4. COMMENT Ã‡A MARCHE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <section id="fonctions" className="relative py-24 sm:py-32 border-t border-white/[0.06] scroll-mt-24">
         {/* FIX: max-w-5xl mx-auto instead of landing-section max-w-5xl */}
         <div className={`max-w-5xl ${sectionInner}`}>
           <div className="text-center mb-14 sm:mb-16">
-            <p className={`${label} mb-4`}>Comment ça marche</p>
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
-              <span className="text-white">3 étapes. 30 secondes.</span><br />
+              <span className="text-white">3 Ã©tapes. 30 secondes.</span><br />
               <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">Un plan clair.</span>
             </h2>
           </div>
@@ -314,26 +309,25 @@ export default function HomeLanding() {
               href="/analyzer"
               className="inline-flex items-center gap-2.5 rounded-full bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white text-[14px] font-semibold px-8 py-3.5 hover:brightness-110 hover:scale-[1.02] transition-all shadow-lg shadow-vn-fuchsia/20"
             >
-              Essayer maintenant — c&apos;est gratuit
+              Essayer maintenant â€” c&apos;est gratuit
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         </div>
       </section>
 
-      {/* ══ 5. CE QUE TU OBTIENS ════════════════════════════════════════════ */}
+      {/* â•â• 5. CE QUE TU OBTIENS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <section id="gains" className="relative py-24 sm:py-32 border-t border-white/[0.06] scroll-mt-24">
         {/* FIX: max-w-5xl mx-auto */}
         <div className={`max-w-5xl ${sectionInner}`}>
           <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
             <div>
-              <p className={`${label} mb-4`}>Ce que tu obtiens</p>
               <h2 className="text-3xl sm:text-4xl font-black tracking-tight mb-5 leading-tight">
                 <span className="text-white">Tout pour comprendre</span><br />
                 <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">et corriger.</span>
               </h2>
               <p className="text-gray-500 text-[14.5px] leading-relaxed mb-8">
-                Pas un rapport de 12 pages. Un diagnostic précis, une priorité claire, des actions concrètes.
+                Pas un rapport de 12 pages. Un diagnostic prÃ©cis, une prioritÃ© claire, des actions concrÃ¨tes.
               </p>
               <Link
                 href="/analyzer"
@@ -356,12 +350,11 @@ export default function HomeLanding() {
         </div>
       </section>
 
-      {/* ══ 6. DIFFÉRENCIATION ══════════════════════════════════════════════ */}
+      {/* â•â• 6. DIFFÃ‰RENCIATION â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <section className="relative py-24 sm:py-32 border-t border-white/[0.06]">
         {/* FIX: max-w-5xl mx-auto */}
         <div className={`max-w-5xl ${sectionInner}`}>
           <div className="text-center mb-14">
-            <p className={`${label} mb-4`}>Notre différence</p>
             <h2 className="text-3xl sm:text-4xl lg:text-[2.8rem] font-black tracking-tight leading-tight">
               <span className="text-white">Pas un score.</span><br />
               <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">Un plan d&apos;action.</span>
@@ -375,12 +368,12 @@ export default function HomeLanding() {
               <ul className="space-y-4">
                 {[
                   'Un score flou sans contexte',
-                  "Tu sais que c'est « pas top » mais pas pourquoi",
-                  'Tu dois interpréter toi-même les métriques',
-                  'Tu retestes au hasard en espérant que ça marche',
+                  "Tu sais que c'est Â« pas top Â» mais pas pourquoi",
+                  'Tu dois interprÃ©ter toi-mÃªme les mÃ©triques',
+                  'Tu retestes au hasard en espÃ©rant que Ã§a marche',
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-3">
-                    <span className="mt-0.5 text-gray-700 text-base leading-none shrink-0">—</span>
+                    <span className="mt-0.5 text-gray-700 text-base leading-none shrink-0">â€”</span>
                     <span className="text-[13.5px] text-gray-500 leading-relaxed">{item}</span>
                   </li>
                 ))}
@@ -392,10 +385,10 @@ export default function HomeLanding() {
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-vn-fuchsia mb-6">Avec Viralynz</p>
               <ul className="space-y-4">
                 {[
-                  'Score 0–100 avec explication précise',
-                  'Problème principal identifié en une phrase',
-                  "Plan d'action avec 3 à 5 corrections concrètes",
-                  'Tu sais exactement quoi changer pour la prochaine vidéo',
+                  'Score 0â€“100 avec explication prÃ©cise',
+                  'ProblÃ¨me principal identifiÃ© en une phrase',
+                  "Plan d'action avec 3 Ã  5 corrections concrÃ¨tes",
+                  'Tu sais exactement quoi changer pour la prochaine vidÃ©o',
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-3">
                     <CheckIcon />
@@ -408,14 +401,13 @@ export default function HomeLanding() {
         </div>
       </section>
 
-      {/* ══ 7. USE CASES ════════════════════════════════════════════════════ */}
+      {/* â•â• 7. USE CASES â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <section className="relative py-24 sm:py-32 border-t border-white/[0.06]">
         {/* FIX: max-w-5xl mx-auto */}
         <div className={`max-w-5xl ${sectionInner}`}>
           <div className="text-center mb-14">
-            <p className={`${label} mb-4`}>Pour qui</p>
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
-              <span className="text-white">Fait pour toi si tu crées</span><br />
+              <span className="text-white">Fait pour toi si tu crÃ©es</span><br />
               <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">du contenu short-form.</span>
             </h2>
           </div>
@@ -439,7 +431,7 @@ export default function HomeLanding() {
         </div>
       </section>
 
-      {/* ══ 8. PRICING TEASER ═══════════════════════════════════════════════ */}
+      {/* â•â• 8. PRICING TEASER â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <section
         id="tarifs"
         className="relative py-24 sm:py-32 border-t border-white/[0.06] scroll-mt-24"
@@ -447,9 +439,8 @@ export default function HomeLanding() {
         {/* FIX: max-w-5xl mx-auto */}
         <div className={`max-w-5xl ${sectionInner}`}>
           <div className="text-center mb-14">
-            <p className={`${label} mb-4`}>Tarifs</p>
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight mb-3">
-              <span className="text-white">3 analyses gratuites —</span><br />
+              <span className="text-white">3 analyses gratuites â€”</span><br />
               <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">sans carte.</span>
             </h2>
             <p className="text-gray-500 text-[14.5px] max-w-md mx-auto">
@@ -462,10 +453,10 @@ export default function HomeLanding() {
             {/* Starter */}
             <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6 sm:p-7 flex flex-col order-2 md:order-1 opacity-90">
               <p className={`${label} mb-3`}>Starter</p>
-              <p className="text-[2.4rem] font-black text-white leading-none mb-1">0€</p>
-              <p className="text-[13px] text-gray-600 mb-6">{MAX_ANALYSES_FREE} analyses · à vie</p>
+              <p className="text-[2.4rem] font-black text-white leading-none mb-1">0â‚¬</p>
+              <p className="text-[13px] text-gray-600 mb-6">{MAX_ANALYSES_FREE} analyses Â· Ã  vie</p>
               <ul className="space-y-2.5 flex-1 mb-7">
-                {["Analyse IA complète", "Score & diagnostic", "Plan d'action"].map((f) => (
+                {["Analyse IA complÃ¨te", "Score & diagnostic", "Plan d'action"].map((f) => (
                   <li key={f} className="flex items-center gap-2.5 text-[13px] text-gray-500">
                     <CheckIcon />
                     {f}
@@ -480,7 +471,7 @@ export default function HomeLanding() {
               </Link>
             </div>
 
-            {/* Pro — featured */}
+            {/* Pro â€” featured */}
             {/* FIX: removed md:-mt-4 which caused alignment issues with items-stretch */}
             <div className="relative rounded-2xl pro-pricing-card p-6 sm:p-8 flex flex-col order-1 md:order-2 ring-1 ring-vn-fuchsia/20">
               <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white shadow-lg whitespace-nowrap z-10">
@@ -488,14 +479,14 @@ export default function HomeLanding() {
               </span>
               <p className={`${label} text-vn-fuchsia mb-3 mt-3`}>Pro</p>
               <p className="text-[2.4rem] font-black text-white leading-none mb-1">
-                {DISPLAY_CATALOG_PRO_EUR}€
+                {DISPLAY_CATALOG_PRO_EUR}â‚¬
                 <span className="text-base font-normal text-gray-500 ml-1">/mois</span>
               </p>
               <p className="text-[13px] text-gray-500 mb-6">
-                {MAX_ANALYSES_PRO} analyses · {MAX_HOOKS_PRO} hooks / mois
+                {MAX_ANALYSES_PRO} analyses Â· {MAX_HOOKS_PRO} hooks / mois
               </p>
               <ul className="space-y-2.5 flex-1 mb-7">
-                {["Tout Starter, plus :", "Hook generator", "Dashboard IA & historique", "Recommandations avancées"].map((f, i) => (
+                {["Tout Starter, plus :", "Hook generator", "Dashboard IA & historique", "Recommandations avancÃ©es"].map((f, i) => (
                   <li key={f} className={`flex items-center gap-2.5 text-[13px] ${i === 0 ? 'text-gray-600 italic' : 'text-gray-300'}`}>
                     {i > 0 && <CheckIcon />}
                     {i === 0 && <span className="w-4 shrink-0" />}
@@ -515,14 +506,14 @@ export default function HomeLanding() {
             <div className="rounded-2xl elite-pricing-card p-6 sm:p-7 flex flex-col order-3">
               <p className={`${label} text-purple-400 mb-3`}>Elite</p>
               <p className="text-[2.4rem] font-black text-white leading-none mb-1">
-                {DISPLAY_CATALOG_ELITE_EUR}€
+                {DISPLAY_CATALOG_ELITE_EUR}â‚¬
                 <span className="text-base font-normal text-gray-500 ml-1">/mois</span>
               </p>
               <p className="text-[13px] text-gray-500 mb-6">
-                {MAX_ANALYSES_ELITE} analyses · {MAX_HOOKS_ELITE} hooks / mois
+                {MAX_ANALYSES_ELITE} analyses Â· {MAX_HOOKS_ELITE} hooks / mois
               </p>
               <ul className="space-y-2.5 flex-1 mb-7">
-                {["Tout Pro, plus :", "Volume & profondeur max", "Insights viraux débloqués", "Support prioritaire"].map((f, i) => (
+                {["Tout Pro, plus :", "Volume & profondeur max", "Insights viraux dÃ©bloquÃ©s", "Support prioritaire"].map((f, i) => (
                   <li key={f} className={`flex items-center gap-2.5 text-[13px] ${i === 0 ? 'text-gray-600 italic' : 'text-gray-300'}`}>
                     {i > 0 && <CheckIcon />}
                     {i === 0 && <span className="w-4 shrink-0" />}
@@ -541,25 +532,24 @@ export default function HomeLanding() {
 
           <p className="text-center mt-8">
             <Link href="/pricing" className="text-[13px] text-gray-600 hover:text-gray-400 transition-colors inline-flex items-center gap-1">
-              Voir le détail complet des fonctionnalités par plan
+              Voir le dÃ©tail complet des fonctionnalitÃ©s par plan
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </p>
         </div>
       </section>
 
-      {/* ══ 9. FAQ ══════════════════════════════════════════════════════════ */}
+      {/* â•â• 9. FAQ â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <section id="faq" className="relative py-24 sm:py-32 border-t border-white/[0.06] scroll-mt-24">
-        {/* FIX: max-w-3xl mx-auto — was incorrectly inheriting max-w-7xl */}
+        {/* FIX: max-w-3xl mx-auto â€” was incorrectly inheriting max-w-7xl */}
         <div className={`max-w-3xl ${sectionInner}`}>
           <div className="text-center mb-12 sm:mb-14">
-            <p className={`${label} mb-4`}>FAQ</p>
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight mb-3">
               <span className="text-white">Questions</span>{' '}
-              <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">fréquentes.</span>
+              <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">frÃ©quentes.</span>
             </h2>
             <p className="text-gray-500 text-[14px]">
-              Des réponses claires, sans bullshit.
+              Des rÃ©ponses claires, sans bullshit.
             </p>
           </div>
           <div className="space-y-3">
@@ -581,7 +571,7 @@ export default function HomeLanding() {
         </div>
       </section>
 
-      {/* ══ 10. CTA FINAL ════════════════════════════════════════════════════ */}
+      {/* â•â• 10. CTA FINAL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <section className="relative py-24 sm:py-32 border-t border-white/[0.05] overflow-hidden">
         {/* FIX: max-w-4xl mx-auto */}
         <div className={`max-w-4xl ${sectionInner}`}>
@@ -590,13 +580,13 @@ export default function HomeLanding() {
               <div className="absolute inset-0 bg-gradient-to-br from-vn-fuchsia/[0.12] via-[#0a0a12] to-vn-indigo/[0.12]" aria-hidden />
               <div className="absolute inset-0 landing-mesh opacity-30 mix-blend-overlay" aria-hidden />
               <div className="relative px-8 sm:px-12 lg:px-16 py-14 sm:py-16 text-center">
-                <p className={`${label} mb-5`}>Prêt à comprendre ce qui bloque ?</p>
+                <p className={`${label} mb-5`}>PrÃªt Ã  comprendre ce qui bloque ?</p>
                 <h2 className="text-3xl sm:text-4xl lg:text-[2.6rem] font-black tracking-tight leading-tight mb-5">
-                  <span className="text-white">Analyse ta première vidéo</span><br />
+                  <span className="text-white">Analyse ta premiÃ¨re vidÃ©o</span><br />
                   <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">maintenant.</span>
                 </h2>
                 <p className="text-gray-500 max-w-md mx-auto mb-10 text-[14.5px] leading-relaxed">
-                  {MAX_ANALYSES_FREE} analyses gratuites — sans carte bancaire, sans engagement. Résultats en quelques secondes.
+                  {MAX_ANALYSES_FREE} analyses gratuites â€” sans carte bancaire, sans engagement. RÃ©sultats en quelques secondes.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
                   <div className="relative group">
@@ -613,7 +603,7 @@ export default function HomeLanding() {
                     href="/pricing"
                     className="text-[13.5px] text-gray-500 hover:text-gray-300 transition-colors"
                   >
-                    Voir les plans →
+                    Voir les plans â†’
                   </Link>
                 </div>
               </div>
@@ -622,7 +612,7 @@ export default function HomeLanding() {
         </div>
       </section>
 
-      {/* ══ FOOTER ══════════════════════════════════════════════════════════ */}
+      {/* â•â• FOOTER â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <footer className="relative border-t border-white/[0.08] py-12 sm:py-14">
         <div className="landing-section">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
@@ -631,22 +621,22 @@ export default function HomeLanding() {
                 Viral<span className="gradient-text">ynz</span>
               </p>
               <p className="mt-2 text-[13px] text-gray-600 max-w-sm leading-relaxed">
-                Analyse vidéo IA pour le court format. Comprends ce qui bloque. Corrige avant de reposter.
+                Analyse vidÃ©o IA pour le court format. Comprends ce qui bloque. Corrige avant de reposter.
               </p>
             </div>
             {/* FIX: added Changelog link in footer nav */}
             <nav className="flex flex-wrap gap-x-8 gap-y-3 text-[13px] text-gray-600">
               <Link href="/analyzer" className="hover:text-white transition-colors">Analyser</Link>
-              <Link href="/features" className="hover:text-white transition-colors">Fonctionnalités</Link>
+              <Link href="/features" className="hover:text-white transition-colors">FonctionnalitÃ©s</Link>
               <Link href="/hook-generator" className="hover:text-white transition-colors">Hooks</Link>
               <Link href="/pricing" className="hover:text-white transition-colors">Tarifs</Link>
-              <Link href="/changelog" className="hover:text-white transition-colors">Nouveautés</Link>
+              <Link href="/changelog" className="hover:text-white transition-colors">NouveautÃ©s</Link>
               <Link href="/login" className="hover:text-white transition-colors">Connexion</Link>
             </nav>
           </div>
           <div className="mt-10 pt-8 border-t border-white/[0.06] flex flex-col sm:flex-row justify-between gap-4 text-[11px] text-gray-700">
-            <p>© {new Date().getFullYear()} Viralynz. Tous droits réservés.</p>
-            <p>TikTok aujourd&apos;hui — Reels & Shorts en roadmap.</p>
+            <p>Â© {new Date().getFullYear()} Viralynz. Tous droits rÃ©servÃ©s.</p>
+            <p>TikTok aujourd&apos;hui â€” Reels & Shorts en roadmap.</p>
           </div>
         </div>
       </footer>
