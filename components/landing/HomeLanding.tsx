@@ -1,4 +1,4 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 import {
   MAX_ANALYSES_FREE,
   MAX_ANALYSES_PRO,
@@ -7,7 +7,7 @@ import {
   MAX_HOOKS_ELITE,
 } from '@/lib/plan-limits';
 import { DISPLAY_CATALOG_PRO_EUR, DISPLAY_CATALOG_ELITE_EUR } from '@/lib/stripe-pricing';
-import LandingProductMockup from '@/components/landing/LandingProductMockup';
+import HeroVideo from '@/components/HeroVideo';
 import { faqItems } from '@/components/landing/landing-copy';
 
 /* Shared spacing â€” avoids repeating px / centering everywhere */
@@ -112,131 +112,124 @@ export default function HomeLanding() {
       </div>
 
       {/* â•â• 1. HERO â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
-      <section className="relative pt-8 sm:pt-10 lg:pt-14 pb-16 sm:pb-20 overflow-visible" id="top">
-        {/* Animated starry sky â€” hero only */}
+            {/* ══ 1. HERO — two-column (texte gauche | vidéo droite) ══════════════ */}
+      <section className="relative pt-10 sm:pt-14 lg:pt-20 pb-16 sm:pb-24 overflow-visible" id="top">
+
+        {/* Ciel étoilé animé */}
         <div className="stars-hero" aria-hidden>
           <div className="stars-layer-sm" />
           <div className="stars-layer-md" />
           <div className="stars-layer-lg" />
           <div className="stars-hero-mask" />
         </div>
-        <div className="absolute inset-x-0 top-0 h-[min(82vh,900px)] landing-band-magenta pointer-events-none opacity-95" aria-hidden />
+        <div className="absolute inset-x-0 top-0 h-[min(90vh,1000px)] landing-band-magenta pointer-events-none opacity-95" aria-hidden />
 
-        <div className="landing-section relative">
-          <div className="text-center max-w-[94rem] mx-auto px-2 sm:px-1">
+        <div className="relative max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-10">
+          <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-14 xl:gap-20">
 
-            {/* Badge */}
-            <Link
-              href="/pricing"
-              className="hero-badge-pill inline-flex items-center gap-2.5 rounded-full border border-white/[0.14] landing-hero-badge px-5 py-2.5 sm:px-6 sm:py-3 mb-6 sm:mb-7 cursor-pointer select-none group no-underline"
-            >
-              <svg className="hero-badge-star h-3.5 w-3.5 shrink-0 text-vn-fuchsia" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
-                <path d="M8 0l1.6 5.4H15l-4.4 3.2 1.6 5.4L8 11l-4.2 3L5.4 8.6 1 5.4h5.4z"/>
-              </svg>
-              <span className="hero-badge-text text-[11px] sm:text-[12px] font-semibold tracking-[0.12em] uppercase text-white/90 whitespace-nowrap">
-                L&apos;outil TikTok pour les Pros
-              </span>
-              <span className="hero-badge-arrow flex items-center overflow-hidden w-4" aria-hidden>
-                <svg className="h-3 w-3 shrink-0 text-white/50 transition-transform duration-300 group-hover:translate-x-0.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M3 8h10M9 4l4 4-4 4"/>
+            {/* ── Colonne gauche : texte ──────────────────────────────── */}
+            <div className="flex-[5] flex flex-col items-center lg:items-start text-center lg:text-left">
+
+              {/* Badge */}
+              <Link
+                href="/pricing"
+                className="hero-badge-pill inline-flex items-center gap-2.5 rounded-full border border-white/[0.14] landing-hero-badge px-5 py-2.5 sm:px-6 sm:py-3 mb-6 sm:mb-7 cursor-pointer select-none group no-underline"
+              >
+                <svg className="hero-badge-star h-3.5 w-3.5 shrink-0 text-vn-fuchsia" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+                  <path d="M8 0l1.6 5.4H15l-4.4 3.2 1.6 5.4L8 11l-4.2 3L5.4 8.6 1 5.4h5.4z"/>
                 </svg>
-              </span>
-            </Link>
+                <span className="hero-badge-text text-[11px] sm:text-[12px] font-semibold tracking-[0.12em] uppercase text-white/90 whitespace-nowrap">
+                  L&apos;outil TikTok pour les Pros
+                </span>
+                <span className="hero-badge-arrow flex items-center overflow-hidden w-4" aria-hidden>
+                  <svg className="h-3 w-3 shrink-0 text-white/50 transition-transform duration-300 group-hover:translate-x-0.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M3 8h10M9 4l4 4-4 4"/>
+                  </svg>
+                </span>
+              </Link>
 
-            {/* Headline */}
-            <h1 className="font-hero-inter font-black text-white landing-hero-title-glow max-[419px]:text-[2.05rem] max-[419px]:leading-[0.92] text-[2.45rem] leading-[0.93] sm:text-[3.35rem] sm:leading-[0.91] md:text-[4.1rem] md:leading-[0.90] lg:text-[4.9rem] lg:leading-[0.88] xl:text-[5.45rem] xl:leading-[0.87] 2xl:text-[5.9rem] 2xl:leading-[0.86] mx-auto px-3 sm:px-6 tracking-[-0.045em] max-w-none">
-              <span className="text-white block">ArrÃªte de poster au{'\u00A0'}hasard.</span>
-            </h1>
+              {/* Headline */}
+              <h1 className="font-hero-inter font-black text-white landing-hero-title-glow tracking-[-0.045em] max-[419px]:text-[2.05rem] max-[419px]:leading-[0.92] text-[2.45rem] leading-[0.93] sm:text-[3.2rem] sm:leading-[0.91] md:text-[3.7rem] md:leading-[0.90] lg:text-[3.5rem] lg:leading-[0.90] xl:text-[4.1rem] xl:leading-[0.88] 2xl:text-[4.7rem] 2xl:leading-[0.87]">
+                <span className="block">Arr&ecirc;te de poster</span>
+                <span className="block">au&nbsp;hasard.</span>
+              </h1>
 
-            {/* Subtitle */}
-            <p className="mt-4 sm:mt-5 text-[1rem] sm:text-[1.08rem] md:text-[1.15rem] text-gray-400 max-w-2xl mx-auto leading-relaxed font-normal tracking-[-0.01em] px-4">
-              Comprends pourquoi tes vidÃ©os ne marchent pas â€” et corrige-les en quelques secondes.
-            </p>
+              {/* Subtitle */}
+              <p className="mt-5 sm:mt-6 text-[0.98rem] sm:text-[1.07rem] text-gray-400 max-w-lg leading-relaxed font-normal tracking-[-0.01em]">
+                Comprends pourquoi tes vid&eacute;os ne marchent pas &mdash; et corrige-les en quelques secondes.
+              </p>
 
-            {/* CTAs */}
-            <div className="mt-7 sm:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-              <div className="relative group">
-                <div
-                  className="absolute -inset-1.5 rounded-full bg-gradient-to-r from-vn-fuchsia/55 via-vn-violet/45 to-vn-indigo/45 opacity-70 blur-lg transition-all duration-500 group-hover:opacity-100 group-hover:blur-xl group-hover:scale-[1.04]"
-                  aria-hidden
-                />
+              {/* CTAs */}
+              <div className="mt-7 sm:mt-8 flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-3 sm:gap-4 w-full">
+                <div className="relative group">
+                  <div
+                    className="absolute -inset-1.5 rounded-full bg-gradient-to-r from-vn-fuchsia/55 via-vn-violet/45 to-vn-indigo/45 opacity-70 blur-lg transition-all duration-500 group-hover:opacity-100 group-hover:blur-xl group-hover:scale-[1.04]"
+                    aria-hidden
+                  />
+                  <Link
+                    href="/analyzer"
+                    className="relative inline-flex items-center gap-2.5 min-h-[52px] rounded-full px-9 sm:px-11 text-[15px] font-semibold text-white bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:brightness-110 hover:scale-[1.025] active:scale-[0.98] transition-all duration-300 shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_12px_40px_-10px_rgba(232,121,249,0.65),0_24px_56px_-16px_rgba(99,102,241,0.35)]"
+                  >
+                    Lancer mon analyse
+                    <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+                  </Link>
+                </div>
                 <Link
-                  href="/analyzer"
-                  className="relative inline-flex items-center gap-2.5 min-h-[52px] rounded-full px-9 sm:px-11 text-[15px] font-semibold text-white bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:brightness-110 hover:scale-[1.025] active:scale-[0.98] transition-all duration-300 shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_12px_40px_-10px_rgba(232,121,249,0.65),0_24px_56px_-16px_rgba(99,102,241,0.35)]"
+                  href="#probleme"
+                  className="inline-flex items-center gap-2 min-h-[52px] rounded-full px-7 text-[15px] font-medium text-gray-300 border border-white/[0.1] bg-white/[0.03] hover:bg-white/[0.06] hover:text-white hover:border-white/[0.18] transition-all duration-300"
                 >
-                  Lancer mon analyse
-                  <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+                  Voir comment &ccedil;a marche
                 </Link>
               </div>
-              <Link
-                href="#produit"
-                className="inline-flex items-center gap-2 min-h-[52px] rounded-full px-7 text-[15px] font-medium text-gray-300 border border-white/[0.1] bg-white/[0.03] hover:bg-white/[0.06] hover:text-white hover:border-white/[0.18] transition-all duration-300"
-              >
-                Voir un exemple
-              </Link>
-            </div>
 
-            {/* Social proof */}
-            <div className="mt-7 sm:mt-8 flex flex-col items-center gap-2.5">
-              <div className="flex items-center gap-3">
-                <div className="flex -space-x-3">
-                  {[
-                    { seed: 'felix',  img: 'https://i.pravatar.cc/40?img=11' },
-                    { seed: 'sophie', img: 'https://i.pravatar.cc/40?img=47' },
-                    { seed: 'marc',   img: 'https://i.pravatar.cc/40?img=12' },
-                    { seed: 'clara',  img: 'https://i.pravatar.cc/40?img=44' },
-                    { seed: 'thomas', img: 'https://i.pravatar.cc/40?img=15' },
-                  ].map(({ seed, img }) => (
-                    <img
-                      key={seed}
-                      src={img}
-                      alt=""
-                      width={36}
-                      height={36}
-                      className="h-9 w-9 rounded-full border-[2.5px] border-[#030308] object-cover"
-                      aria-hidden
-                    />
-                  ))}
-                  <span className="h-9 w-9 rounded-full border-[2.5px] border-[#030308] bg-vn-elevated flex items-center justify-center text-[9px] font-bold text-white tracking-tight shrink-0">
-                    +1k
-                  </span>
+              {/* Social proof */}
+              <div className="mt-8 flex flex-col items-center lg:items-start gap-2.5">
+                <div className="flex items-center gap-3">
+                  <div className="flex -space-x-3">
+                    {[
+                      { seed: 'felix',  img: 'https://i.pravatar.cc/40?img=11' },
+                      { seed: 'sophie', img: 'https://i.pravatar.cc/40?img=47' },
+                      { seed: 'marc',   img: 'https://i.pravatar.cc/40?img=12' },
+                      { seed: 'clara',  img: 'https://i.pravatar.cc/40?img=44' },
+                      { seed: 'thomas', img: 'https://i.pravatar.cc/40?img=15' },
+                    ].map(({ seed, img }) => (
+                      <img
+                        key={seed}
+                        src={img}
+                        alt=""
+                        width={36}
+                        height={36}
+                        className="h-9 w-9 rounded-full border-[2.5px] border-[#030308] object-cover"
+                        aria-hidden
+                      />
+                    ))}
+                    <span className="h-9 w-9 rounded-full border-[2.5px] border-[#030308] bg-vn-elevated flex items-center justify-center text-[9px] font-bold text-white tracking-tight shrink-0">
+                      +1k
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-0.5" aria-hidden>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <svg key={i} viewBox="0 0 20 20" className="w-4 h-4 text-vn-fuchsia drop-shadow-[0_0_8px_rgba(232,121,249,0.35)]" fill="currentColor">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex items-center gap-0.5" aria-hidden>
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <svg key={i} viewBox="0 0 20 20" className="w-4 h-4 text-vn-fuchsia drop-shadow-[0_0_8px_rgba(232,121,249,0.35)]" fill="currentColor">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  ))}
-                </div>
+                <p className="text-[13.5px] text-gray-400 font-medium">
+                  Rejoins <span className="text-white font-bold">+1300</span> cr&eacute;ateurs de contenu
+                </p>
               </div>
-              <p className="text-[13.5px] text-gray-400 font-medium">
-                Rejoins <span className="text-white font-bold">+1300</span> crÃ©ateurs de contenu
-              </p>
             </div>
+
+            {/* ── Colonne droite : vidéo ──────────────────────────────── */}
+            <div className="flex-[6] w-full max-w-[640px] lg:max-w-none" id="produit">
+              <HeroVideo />
+            </div>
+
           </div>
         </div>
       </section>
-
-      {/* â•â• 2. PRODUCT PREVIEW â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
-      <section id="produit" className="relative pt-8 sm:pt-10 pb-20 sm:pb-24 scroll-mt-20">
-        <div className="landing-section">
-          <div className="mb-10" />
-          <div className="relative -mx-4 sm:-mx-8 lg:-mx-10">
-            <div
-              className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-16 w-[min(94vw,1320px)] h-[260px] rounded-[999px] bg-gradient-to-r from-vn-fuchsia/28 via-vn-violet/24 to-vn-indigo/20 blur-3xl opacity-90"
-              aria-hidden
-            />
-            <div
-              className="pointer-events-none absolute left-1/2 -translate-x-1/2 -bottom-20 w-[min(95vw,1360px)] h-[280px] rounded-[999px] bg-gradient-to-t from-vn-fuchsia/30 via-vn-indigo/15 to-transparent blur-3xl opacity-80"
-              aria-hidden
-            />
-            <LandingProductMockup variant="hero" className="hero-mockup-pulse" />
-          </div>
-        </div>
-      </section>
-
-      {/* â•â• 3. PROBLÃˆME â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
-      <section className="relative py-24 sm:py-32 border-t border-white/[0.06]">
+<section className="relative py-24 sm:py-32 border-t border-white/[0.06]" id="probleme">
         {/* FIX: max-w-4xl mx-auto instead of landing-section max-w-4xl (cascade bug) */}
         <div className={`max-w-4xl ${sectionInner}`}>
           <div className="text-center mb-14">
@@ -351,7 +344,7 @@ export default function HomeLanding() {
       </section>
 
       {/* â•â• 6. DIFFÃ‰RENCIATION â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
-      <section className="relative py-24 sm:py-32 border-t border-white/[0.06]">
+      <section className="relative py-24 sm:py-32 border-t border-white/[0.06]" id="probleme">
         {/* FIX: max-w-5xl mx-auto */}
         <div className={`max-w-5xl ${sectionInner}`}>
           <div className="text-center mb-14">
@@ -402,7 +395,7 @@ export default function HomeLanding() {
       </section>
 
       {/* â•â• 7. USE CASES â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
-      <section className="relative py-24 sm:py-32 border-t border-white/[0.06]">
+      <section className="relative py-24 sm:py-32 border-t border-white/[0.06]" id="probleme">
         {/* FIX: max-w-5xl mx-auto */}
         <div className={`max-w-5xl ${sectionInner}`}>
           <div className="text-center mb-14">
