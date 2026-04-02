@@ -143,10 +143,10 @@ export async function extractAudioFromVideo(
 
     const objectUrl = URL.createObjectURL(file);
     const video = document.createElement('video');
-    video.muted = false;   // need audio
+    video.muted = true;    // silenced for the user — captureStream() still gets the audio track
+    video.volume = 0;      // extra safety: no sound leaks to speakers
     video.playsInline = true;
     video.preload = 'auto';
-    video.volume = 1;
 
     await new Promise<void>((resolve, reject) => {
       video.onloadedmetadata = () => resolve();
