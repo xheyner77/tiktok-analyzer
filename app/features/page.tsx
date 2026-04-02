@@ -4,7 +4,7 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'Fonctionnalités – Viralynz',
   description:
-    "Analyse vidéo IA, diagnostic hook, montage et rétention, plan d'action priorisé, hook generator. Tout ce dont tu as besoin pour comprendre et performer sur TikTok.",
+    "Analyse vidéo IA, diagnostic hook, montage et rétention, plan d'action priorisé, hook generator. Tout ce dont tu as besoin pour performer sur TikTok.",
 };
 
 function CheckIcon({ className = 'w-4 h-4' }: { className?: string }) {
@@ -248,7 +248,7 @@ export default function FeaturesPage() {
           <h1 className="text-4xl sm:text-5xl lg:text-[3.6rem] font-black text-white tracking-tight leading-[1.05] mb-6">
             Tout ce dont tu as besoin<br />
             <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">
-              pour comprendre et performer.
+              pour performer.
             </span>
           </h1>
           <p className="text-gray-400 text-[15px] sm:text-[16px] max-w-2xl mx-auto leading-relaxed mb-10">
