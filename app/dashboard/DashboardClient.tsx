@@ -166,7 +166,7 @@ function AnalysisHistoryItem({ row }: { row: AnalysisRow }) {
 }
 
 /* ── Paginated history ───────────────────────────────────────────────────── */
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 5;
 
 function AnalysisHistoryPaginated({ analyses }: { analyses: AnalysisRow[] }) {
   const [page, setPage] = useState(1);
