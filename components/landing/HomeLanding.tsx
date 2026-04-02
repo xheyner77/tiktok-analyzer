@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import CheckoutButton from '@/components/CheckoutButton';
 import {
   MAX_ANALYSES_FREE, MAX_ANALYSES_PRO, MAX_ANALYSES_ELITE,
   MAX_HOOKS_PRO, MAX_HOOKS_ELITE,
@@ -621,77 +622,167 @@ export default function HomeLanding() {
             </div>
           </FadeUp>
 
-          <div className="grid md:grid-cols-3 gap-4 sm:gap-5 items-stretch">
+          {/* ── Cards — même style exact que /pricing ────────── */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-0 md:items-end">
+
             {/* Starter */}
-            <FadeUp delay={0.05}>
-              <div className="h-full rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6 sm:p-7 flex flex-col">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-600 mb-3">Starter</p>
-                <p className="text-[2.4rem] font-black text-white leading-none mb-1">0€</p>
-                <p className="text-[13px] text-gray-600 mb-6">{MAX_ANALYSES_FREE} analyses · à vie</p>
-                <ul className="space-y-2.5 flex-1 mb-7">
-                  {['Analyse IA complète', 'Score & diagnostic', 'Plan d\'action'].map(f => (
-                    <li key={f} className="flex items-center gap-2.5 text-[13px] text-gray-500"><Check />{f}</li>
-                  ))}
-                </ul>
+            <FadeUp delay={0.05} className="md:pr-3">
+              <div className="rounded-2xl border border-white/[0.07] bg-[#09090f] p-6 h-full flex flex-col">
+                <div className="mb-7">
+                  <div className="flex items-center justify-between mb-5">
+                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-widest bg-white/[0.04] text-gray-600 border border-white/[0.05]">
+                      Starter
+                    </span>
+                  </div>
+                  <div className="mb-2">
+                    <span className="text-[2.5rem] font-black text-white leading-none">Gratuit</span>
+                  </div>
+                  <p className="text-[12px] text-gray-600 mt-2 leading-relaxed">
+                    Pour découvrir Viralynz sans risque et tester tes {MAX_ANALYSES_FREE} premières analyses.
+                  </p>
+                </div>
                 <Link href="/analyzer"
-                  className="block text-center rounded-full py-3 text-[13.5px] font-semibold border border-white/[0.1] text-gray-400 hover:text-white hover:border-white/[0.2] transition-all">
+                  className="w-full text-center py-3 rounded-xl font-semibold text-sm text-gray-400 bg-white/[0.04] border border-white/[0.07] hover:bg-white/[0.07] hover:text-gray-200 transition-all mb-6 block">
                   Commencer gratuitement
                 </Link>
-              </div>
-            </FadeUp>
-
-            {/* Pro */}
-            <FadeUp delay={0.1}>
-              <div className="h-full relative rounded-2xl pro-pricing-card p-6 sm:p-8 flex flex-col ring-1 ring-vn-fuchsia/20">
-                <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white shadow-lg whitespace-nowrap z-10">
-                  Le plus populaire
-                </span>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-vn-fuchsia mb-3 mt-3">Pro</p>
-                <p className="text-[2.4rem] font-black text-white leading-none mb-1">
-                  {DISPLAY_CATALOG_PRO_EUR}€<span className="text-base font-normal text-gray-500 ml-1">/mois</span>
-                </p>
-                <p className="text-[13px] text-gray-500 mb-6">{MAX_ANALYSES_PRO} analyses · {MAX_HOOKS_PRO} hooks / mois</p>
-                <ul className="space-y-2.5 flex-1 mb-7">
-                  {['Tout Starter +', 'Hook generator', 'Dashboard IA & historique', 'Recommandations avancées'].map((f, i) => (
-                    <li key={f} className={`flex items-center gap-2.5 text-[13px] ${i === 0 ? 'text-gray-600 italic' : 'text-gray-300'}`}>
-                      {i > 0 ? <Check /> : <span className="w-4 shrink-0" />}{f}
+                <div className="h-px bg-white/[0.04] mb-5" />
+                <ul className="space-y-3 flex-1">
+                  {[
+                    { label: `${MAX_ANALYSES_FREE} analyses offertes`, ok: true },
+                    { label: 'Score de viralité', ok: true },
+                    { label: 'Analyse Hook / Montage / Rétention', ok: true },
+                    { label: 'Recommandations IA basiques', ok: true },
+                    { label: 'Dashboard coach', ok: true },
+                    { label: 'Générateur de hooks', ok: false },
+                    { label: "Plan d'action IA", ok: false },
+                  ].map((f, i) => (
+                    <li key={i} className={`flex items-center gap-2.5 ${!f.ok ? 'opacity-40' : ''}`}>
+                      {f.ok
+                        ? <svg viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 shrink-0 text-gray-600"><path fillRule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" /></svg>
+                        : <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 shrink-0 text-gray-700"><path d="M5.28 4.22a.75.75 0 0 0-1.06 1.06L6.94 8l-2.72 2.72a.75.75 0 1 0 1.06 1.06L8 9.06l2.72 2.72a.75.75 0 1 0 1.06-1.06L9.06 8l2.72-2.72a.75.75 0 0 0-1.06-1.06L8 6.94 5.28 4.22Z" /></svg>
+                      }
+                      <span className={`text-[12px] leading-snug ${f.ok ? 'text-gray-500' : 'text-gray-700'}`}>{f.label}</span>
                     </li>
                   ))}
                 </ul>
-                <Link href="/pricing"
-                  className="block text-center rounded-full py-3.5 text-[13.5px] font-semibold bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:brightness-110 transition-all shadow-lg shadow-vn-fuchsia/20">
-                  Choisir Pro
-                </Link>
               </div>
             </FadeUp>
 
-            {/* Elite — HIGHLIGHTED */}
-            <FadeUp delay={0.15}>
-              <div className="h-full relative rounded-2xl elite-pricing-card p-6 sm:p-8 flex flex-col"
-                style={{ boxShadow: '0 0 60px -20px rgba(168,85,247,0.3), 0 0 0 1px rgba(168,85,247,0.2)', border: '1px solid rgba(168,85,247,0.25)' }}>
-                <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full text-white shadow-lg whitespace-nowrap z-10"
-                  style={{ background: 'linear-gradient(135deg, #a855f7, #6366f1)' }}>
-                  ⚡ Meilleur résultat
+            {/* Pro — ELEVATED */}
+            <FadeUp delay={0.1} className="md:-mt-8 md:z-10 relative">
+              {/* Outer glow */}
+              <div className="absolute -inset-px rounded-[1.25rem] bg-gradient-to-b from-vn-fuchsia/40 via-vn-fuchsia/10 to-vn-indigo/20 blur-[1px] pointer-events-none" />
+              {/* Popular badge */}
+              <div className="flex justify-center mb-3 relative z-10">
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-4 py-1 rounded-full bg-vn-fuchsia text-white shadow-lg shadow-vn-fuchsia/40">
+                  ⭐ Le plus populaire
                 </span>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-400 mb-3 mt-3">Elite</p>
-                <p className="text-[2.4rem] font-black text-white leading-none mb-1">
-                  {DISPLAY_CATALOG_ELITE_EUR}€<span className="text-base font-normal text-gray-500 ml-1">/mois</span>
-                </p>
-                <p className="text-[13px] text-gray-500 mb-6">{MAX_ANALYSES_ELITE} analyses · {MAX_HOOKS_ELITE} hooks / mois</p>
-                <ul className="space-y-2.5 flex-1 mb-7">
-                  {['Tout Pro +', 'Volume & profondeur max', 'Insights viraux débloqués', 'Support prioritaire'].map((f, i) => (
-                    <li key={f} className={`flex items-center gap-2.5 text-[13px] ${i === 0 ? 'text-gray-600 italic' : 'text-gray-300'}`}>
-                      {i > 0 ? <Check color="text-purple-400" /> : <span className="w-4 shrink-0" />}{f}
+              </div>
+              <div className="relative flex flex-col rounded-[1.1rem] border border-vn-fuchsia/40 bg-gradient-to-b from-[#110815] to-[#0a0810] p-7 shadow-[0_0_120px_-20px_rgba(232,121,249,0.45)] z-10">
+                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-vn-fuchsia/80 to-transparent rounded-t-[1.1rem]" />
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(232,121,249,0.06),transparent_65%)] rounded-[1.1rem] pointer-events-none" />
+                <div className="relative mb-7">
+                  <div className="flex items-center justify-between mb-5">
+                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-widest bg-vn-fuchsia/20 text-vn-fuchsia border border-vn-fuchsia/30">Pro</span>
+                    <span className="text-[10px] text-vn-fuchsia/60 font-medium">Recommandé</span>
+                  </div>
+                  <div className="flex items-end gap-2 mb-2">
+                    <span className="text-[2.8rem] font-black text-white leading-none">{DISPLAY_CATALOG_PRO_EUR}€</span>
+                    <span className="text-gray-500 text-sm pb-1.5">/ mois</span>
+                  </div>
+                  <p className="text-[13px] text-gray-300 leading-relaxed mt-2">
+                    Pour les créateurs sérieux qui publient avec méthode et veulent des résultats constants.
+                  </p>
+                  <div className="mt-3 flex items-center gap-2">
+                    <div className="flex -space-x-1.5">
+                      {['C','A','M','T'].map(l => (
+                        <div key={l} className="w-5 h-5 rounded-full bg-gradient-to-br from-vn-fuchsia/60 to-vn-indigo/60 border border-vn-void text-[8px] font-black text-white flex items-center justify-center">{l}</div>
+                      ))}
+                    </div>
+                    <span className="text-[11px] text-gray-500">Choisi par la majorité des créateurs Viralynz</span>
+                  </div>
+                </div>
+                <CheckoutButton plan="pro"
+                  className="relative w-full text-center py-4 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:brightness-110 active:scale-[0.98] transition-all shadow-lg shadow-vn-fuchsia/30 mb-6 block">
+                  Commencer avec Pro
+                </CheckoutButton>
+                <div className="h-px bg-gradient-to-r from-transparent via-vn-fuchsia/30 to-transparent mb-6" />
+                <ul className="space-y-3 flex-1">
+                  {[
+                    { label: `${MAX_ANALYSES_PRO} analyses / mois`, hi: true },
+                    { label: 'Score de viralité complet', hi: false },
+                    { label: 'Analyse Hook / Montage / Rétention', hi: false },
+                    { label: 'Recommandations IA avancées', hi: true },
+                    { label: 'Dashboard coach personnalisé', hi: false },
+                    { label: `${MAX_HOOKS_PRO} hooks / mois`, hi: true },
+                    { label: "Plan d'action IA", hi: false },
+                  ].map((f, i) => (
+                    <li key={i} className="flex items-center gap-2.5">
+                      <svg viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 shrink-0 text-vn-fuchsia"><path fillRule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" /></svg>
+                      <span className={`text-[13px] leading-snug ${f.hi ? 'text-white font-semibold' : 'text-gray-300'}`}>{f.label}</span>
                     </li>
                   ))}
                 </ul>
-                <Link href="/pricing"
-                  className="block text-center rounded-full py-3.5 text-[13.5px] font-semibold text-white hover:brightness-110 transition-all"
-                  style={{ background: 'linear-gradient(135deg, #a855f7, #6366f1)', boxShadow: '0 8px 24px rgba(168,85,247,0.3)' }}>
-                  Choisir Elite
-                </Link>
               </div>
             </FadeUp>
+
+            {/* Elite */}
+            <FadeUp delay={0.15} className="md:pl-3">
+              <div className="relative flex flex-col rounded-2xl border border-violet-500/20 bg-gradient-to-b from-[#0d0a14] to-[#080810] p-6 h-full">
+                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-500/40 to-transparent rounded-t-2xl" />
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(139,92,246,0.07),transparent_60%)] rounded-2xl pointer-events-none" />
+                <div className="relative mb-7">
+                  <div className="flex items-center justify-between mb-5">
+                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-widest bg-violet-500/15 text-violet-300 border border-violet-500/25">Elite</span>
+                    <span className="inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-violet-500/20 to-vn-fuchsia/20 text-violet-300 border border-violet-500/20">🔥 Volume max</span>
+                  </div>
+                  <div className="flex items-end gap-2 mb-2">
+                    <span className="text-[2.5rem] font-black text-white leading-none">{DISPLAY_CATALOG_ELITE_EUR}€</span>
+                    <span className="text-gray-500 text-sm pb-1.5">/ mois</span>
+                  </div>
+                  <p className="text-[12px] text-gray-400 leading-relaxed mt-2">
+                    Pour scaler fort — plus de volume, stratégie avancée et insights viraux exclusifs.
+                  </p>
+                </div>
+                <CheckoutButton plan="elite"
+                  className="w-full text-center py-3.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-violet-600 to-vn-fuchsia hover:opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-violet-500/20 ring-1 ring-white/10 mb-6 block">
+                  Passer en Elite
+                </CheckoutButton>
+                <div className="h-px bg-gradient-to-r from-transparent via-violet-500/25 to-transparent mb-6" />
+                <ul className="space-y-3 flex-1">
+                  {[
+                    { label: `${MAX_ANALYSES_ELITE} analyses / mois`, e: true },
+                    { label: 'Score de viralité complet', e: false },
+                    { label: 'Analyse Hook / Montage / Rétention', e: false },
+                    { label: 'Recommandations IA complètes', e: false },
+                    { label: `${MAX_HOOKS_ELITE} hooks / mois`, e: true },
+                    { label: 'Historique illimité', e: true },
+                    { label: 'Stratégie Elite & Insights viraux', e: true },
+                  ].map((f, i) => (
+                    <li key={i} className="flex items-center gap-2.5">
+                      <svg viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 shrink-0 text-violet-400"><path fillRule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" /></svg>
+                      <span className={`text-[13px] leading-snug ${f.e ? 'text-violet-200 font-semibold' : 'text-gray-400'}`}>{f.label}</span>
+                      {f.e && <span className="ml-auto shrink-0 text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-violet-500/15 text-violet-400 border border-violet-500/20 uppercase tracking-wide">Elite</span>}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </FadeUp>
+          </div>
+
+          {/* Trust bar */}
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-7 text-[11px] text-gray-600">
+            {[
+              { icon: '🔒', label: 'Paiement sécurisé Stripe' },
+              { icon: '↩', label: 'Remboursement 7 jours' },
+              { icon: '∞', label: 'Sans engagement' },
+              { icon: '🔄', label: 'Quotas rechargés chaque mois' },
+            ].map(t => (
+              <span key={t.label} className="flex items-center gap-2">
+                <span className="text-base leading-none">{t.icon}</span>
+                {t.label}
+              </span>
+            ))}
           </div>
 
           <p className="text-center mt-8">
