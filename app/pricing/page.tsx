@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import CheckoutButton from '@/components/CheckoutButton';
 import PricingFAQ from '@/components/PricingFAQ';
+import FloatingParticles from '@/components/FloatingParticles';
 import { HISTORY_LIMITS } from '@/lib/analyses';
 import {
   MAX_ANALYSES_ELITE,
@@ -71,11 +72,9 @@ export default function PricingPage() {
   return (
     <main className="min-h-screen bg-vn-void overflow-x-hidden">
 
-      {/* Ambient glows */}
+      {/* Floating particles background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-60 left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full bg-vn-fuchsia/[0.09] blur-[140px]" />
-        <div className="absolute top-1/3 -left-40 w-[500px] h-[500px] rounded-full bg-vn-indigo/[0.07] blur-[100px]" />
-        <div className="absolute top-1/2 -right-40 w-[500px] h-[500px] rounded-full bg-vn-violet/[0.05] blur-[100px]" />
+        <FloatingParticles count={55} />
       </div>
 
       <div className="relative max-w-6xl mx-auto px-5 sm:px-8 py-16 pb-28 space-y-28">
