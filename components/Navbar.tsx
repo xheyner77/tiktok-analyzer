@@ -24,16 +24,16 @@ export default async function Navbar() {
             Produit
           </Link>
           <Link href="/#fonctions" className={linkCls}>
-            Fonctionnalités
+            Comment ça marche
           </Link>
           <Link href="/#gains" className={linkCls}>
-            Bénéfices
-          </Link>
-          <Link href="/#roadmap" className={linkCls}>
-            Roadmap
+            Fonctionnalités
           </Link>
           <Link href="/#tarifs" className={linkCls}>
             Tarifs
+          </Link>
+          <Link href="/#faq" className={linkCls}>
+            FAQ
           </Link>
           {session && (
             <Link href="/dashboard" className={linkCls}>
