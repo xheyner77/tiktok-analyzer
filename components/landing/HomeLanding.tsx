@@ -316,7 +316,7 @@ export default function HomeLanding() {
               </Link>
 
               {/* H1 */}
-              <h1 className="font-hero-inter font-black text-white landing-hero-title-glow tracking-[-0.05em] max-[419px]:text-[1.95rem] max-[419px]:leading-[0.92] text-[2.45rem] leading-[0.91] sm:text-[3.1rem] sm:leading-[0.89] md:text-[3.6rem] md:leading-[0.88] lg:text-[3.4rem] lg:leading-[0.88] xl:text-[4.0rem] xl:leading-[0.87] 2xl:text-[4.5rem] 2xl:leading-[0.86]">
+              <h1 className="font-hero-inter font-black text-white landing-hero-title-glow tracking-[-0.05em] text-center lg:text-left max-[419px]:text-[1.95rem] max-[419px]:leading-[0.92] text-[2.45rem] leading-[0.91] sm:text-[3.1rem] sm:leading-[0.89] md:text-[3.6rem] md:leading-[0.88] lg:text-[3.4rem] lg:leading-[0.88] xl:text-[4.0rem] xl:leading-[0.87] 2xl:text-[4.5rem] 2xl:leading-[0.86]">
                 <span className="block">Domine&nbsp;
                   <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">TikTok.</span>
                 </span>
