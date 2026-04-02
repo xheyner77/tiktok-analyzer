@@ -258,7 +258,7 @@ export default function FeaturesPage() {
           </p>
 
           {/* Stats strip */}
-          <div className="inline-flex items-stretch gap-0 rounded-2xl border border-white/[0.07] bg-white/[0.02] overflow-hidden">
+          <div className="w-full grid grid-cols-4 rounded-2xl border border-white/[0.07] bg-white/[0.02] overflow-hidden">
             {[
               { value: '3',    label: 'Piliers analysés',  color: 'text-vn-fuchsia' },
               { value: '14',   label: 'Frames extraites',  color: 'text-blue-400' },
@@ -266,9 +266,9 @@ export default function FeaturesPage() {
               { value: '100%', label: 'IA embarquée',      color: 'text-emerald-400' },
             ].map(({ value, label: lbl, color }, i, arr) => (
               <div key={lbl}
-                className={`px-6 sm:px-8 py-4 sm:py-5 text-center ${i < arr.length - 1 ? 'border-r border-white/[0.07]' : ''}`}>
-                <p className={`text-2xl sm:text-3xl font-black leading-none ${color} mb-1`}>{value}</p>
-                <p className="text-[11px] text-gray-600 font-medium">{lbl}</p>
+                className={`px-2 sm:px-8 py-4 sm:py-5 text-center ${i < arr.length - 1 ? 'border-r border-white/[0.07]' : ''}`}>
+                <p className={`text-xl sm:text-3xl font-black leading-none ${color} mb-1`}>{value}</p>
+                <p className="text-[10px] sm:text-[11px] text-gray-600 font-medium leading-tight">{lbl}</p>
               </div>
             ))}
           </div>
