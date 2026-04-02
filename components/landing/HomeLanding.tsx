@@ -266,10 +266,6 @@ function useUserCount() {
 }
 
 function formatCount(n: number): string {
-  if (n >= 1000) {
-    const k = Math.floor(n / 100) / 10; // floor to 1 decimal
-    return `+${k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)}k`;
-  }
   return `+${n}`;
 }
 
@@ -370,7 +366,7 @@ export default function HomeLanding() {
                 <p className="text-[13.5px] text-gray-400 font-medium">
                   Rejoins{' '}
                   <span className="text-white font-bold">
-                    {userCount !== null ? formatCount(userCount) : '+1k'}
+                    {userCount !== null ? formatCount(userCount) : '+237'}
                   </span>{' '}
                   créateurs de contenu
                 </p>
