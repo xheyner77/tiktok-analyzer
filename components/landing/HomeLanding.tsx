@@ -10,6 +10,8 @@ import { DISPLAY_CATALOG_PRO_EUR, DISPLAY_CATALOG_ELITE_EUR } from '@/lib/stripe
 import LandingProductMockup from '@/components/landing/LandingProductMockup';
 import { faqItems } from '@/components/landing/landing-copy';
 
+/* Shared spacing — avoids repeating px / centering everywhere */
+const sectionInner = 'mx-auto px-5 sm:px-8 lg:px-10';
 const label = 'text-[9px] font-bold uppercase tracking-[0.24em] text-gray-600';
 
 function FaqChevron() {
@@ -59,17 +61,17 @@ const steps = [
   {
     n: '03',
     title: 'Corrige ce qui bloque',
-    body: 'Un plan d\'action clair, priorisé, actionnable. Tu sais exactement quoi corriger avant de reposter.',
+    body: "Un plan d'action clair, priorisé, actionnable. Tu sais exactement quoi corriger avant de reposter.",
   },
 ];
 
 const valuePoints = [
   'Score de viralité (0–100)',
   'Problème principal identifié',
-  'Plan d\'action priorisé',
+  "Plan d'action priorisé",
   'Analyse hook, montage, rétention',
   'Recommandations actionnables',
-  'Courbe d\'attention estimée',
+  "Courbe d'attention estimée",
   'Hook generator (Pro / Elite)',
   'Historique & progression',
 ];
@@ -77,19 +79,19 @@ const valuePoints = [
 const useCases = [
   {
     role: 'Créateur TikTok',
-    pain: 'Tu postes régulièrement mais certaines vidéos s\'effondrent sans que tu comprennes pourquoi.',
+    pain: "Tu postes régulièrement mais certaines vidéos s'effondrent sans que tu comprennes pourquoi.",
     value: 'Tu identifies en 30 secondes ce qui a foiré — et tu corriges avant le prochain post.',
     icon: '🎬',
   },
   {
     role: 'Clipper & Monteur',
     pain: 'Tu livres du contenu pour des marques ou des créateurs. Tu veux des données pour justifier tes choix.',
-    value: 'Tu arrives avec un diagnostic IA. Tu parles data, pas ressenti.',
+    value: "Tu arrives avec un diagnostic IA. Tu parles data, pas ressenti.",
     icon: '✂️',
   },
   {
     role: 'E-com & Marques',
-    pain: 'Tu paies des créateurs UGC. Tu ne sais pas si le contenu va convertir avant de le diffuser.',
+    pain: "Tu paies des créateurs UGC. Tu ne sais pas si le contenu va convertir avant de le diffuser.",
     value: 'Tu briefes avec précision. Tu valides avant de dépenser en pub.',
     icon: '📦',
   },
@@ -196,7 +198,7 @@ export default function HomeLanding() {
                     />
                   ))}
                   <span className="h-9 w-9 rounded-full border-[2.5px] border-[#030308] bg-vn-elevated flex items-center justify-center text-[9px] font-bold text-white tracking-tight shrink-0">
-                    +1300
+                    +1k
                   </span>
                 </div>
                 <div className="flex items-center gap-0.5" aria-hidden>
@@ -216,7 +218,7 @@ export default function HomeLanding() {
       </section>
 
       {/* ══ 2. PRODUCT PREVIEW ══════════════════════════════════════════════ */}
-      <section id="produit" className="relative pb-20 sm:pb-24 scroll-mt-20">
+      <section id="produit" className="relative pt-8 sm:pt-10 pb-20 sm:pb-24 scroll-mt-20">
         <div className="landing-section">
           <div className="text-center mb-10">
             <p className={`${label} mb-3`}>Exemple de résultat</p>
@@ -240,7 +242,8 @@ export default function HomeLanding() {
 
       {/* ══ 3. PROBLÈME ═════════════════════════════════════════════════════ */}
       <section className="relative py-24 sm:py-32 border-t border-white/[0.06]">
-        <div className="landing-section max-w-4xl">
+        {/* FIX: max-w-4xl mx-auto instead of landing-section max-w-4xl (cascade bug) */}
+        <div className={`max-w-4xl ${sectionInner}`}>
           <div className="text-center mb-14">
             <p className={`${label} mb-8`}>Le vrai problème</p>
             <h2 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-display font-black text-white tracking-tight leading-[1.05] mb-6">
@@ -271,7 +274,7 @@ export default function HomeLanding() {
                 key={n}
                 className="relative p-6 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.1] transition-colors"
               >
-                <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-700 block mb-3">
+                <span className={`${label} block mb-3`}>
                   Situation {n}
                 </span>
                 <p className="text-[14px] sm:text-[15px] text-gray-400 leading-relaxed">{text}</p>
@@ -283,7 +286,8 @@ export default function HomeLanding() {
 
       {/* ══ 4. COMMENT ÇA MARCHE ════════════════════════════════════════════ */}
       <section id="fonctions" className="relative py-24 sm:py-32 border-t border-white/[0.06] scroll-mt-24">
-        <div className="landing-section max-w-5xl">
+        {/* FIX: max-w-5xl mx-auto instead of landing-section max-w-5xl */}
+        <div className={`max-w-5xl ${sectionInner}`}>
           <div className="text-center mb-14 sm:mb-16">
             <p className={`${label} mb-4`}>Comment ça marche</p>
             <h2 className="text-3xl sm:text-4xl font-display font-bold text-white tracking-tight">
@@ -292,13 +296,13 @@ export default function HomeLanding() {
           </div>
 
           <div className="grid sm:grid-cols-3 gap-6 sm:gap-8 relative">
-            {/* Connector line on desktop */}
-            <div className="hidden sm:block absolute top-[2.6rem] left-[calc(16.67%+1rem)] right-[calc(16.67%+1rem)] h-px bg-gradient-to-r from-transparent via-white/[0.1] to-transparent" aria-hidden />
+            {/* FIX: connector line now correctly at center of the 44px (h-11) circles = top 22px */}
+            <div className="hidden sm:block absolute top-[22px] left-[calc(16.67%+1.625rem)] right-[calc(16.67%+1.625rem)] h-px bg-gradient-to-r from-white/[0.15] via-white/[0.08] to-white/[0.15]" aria-hidden />
 
             {steps.map((step) => (
               <div key={step.n} className="relative">
                 <div className="flex items-center gap-4 mb-5">
-                  <div className="w-11 h-11 rounded-full bg-vn-void border border-white/[0.1] flex items-center justify-center shrink-0 relative z-10">
+                  <div className="w-11 h-11 rounded-full bg-vn-void border border-white/[0.15] flex items-center justify-center shrink-0 relative z-10 shadow-[0_0_0_4px_rgba(3,3,8,1)]">
                     <span className="text-[11px] font-black text-white tracking-tight">{step.n}</span>
                   </div>
                   <div className="h-px flex-1 bg-white/[0.06] sm:hidden" aria-hidden />
@@ -323,7 +327,8 @@ export default function HomeLanding() {
 
       {/* ══ 5. CE QUE TU OBTIENS ════════════════════════════════════════════ */}
       <section id="gains" className="relative py-24 sm:py-32 border-t border-white/[0.06] scroll-mt-24">
-        <div className="landing-section max-w-5xl">
+        {/* FIX: max-w-5xl mx-auto */}
+        <div className={`max-w-5xl ${sectionInner}`}>
           <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
             <div>
               <p className={`${label} mb-4`}>Ce que tu obtiens</p>
@@ -357,7 +362,8 @@ export default function HomeLanding() {
 
       {/* ══ 6. DIFFÉRENCIATION ══════════════════════════════════════════════ */}
       <section className="relative py-24 sm:py-32 border-t border-white/[0.06]">
-        <div className="landing-section max-w-5xl">
+        {/* FIX: max-w-5xl mx-auto */}
+        <div className={`max-w-5xl ${sectionInner}`}>
           <div className="text-center mb-14">
             <p className={`${label} mb-4`}>Notre différence</p>
             <h2 className="text-3xl sm:text-4xl lg:text-[2.8rem] font-display font-bold text-white tracking-tight leading-tight">
@@ -373,13 +379,13 @@ export default function HomeLanding() {
               <ul className="space-y-4">
                 {[
                   'Un score flou sans contexte',
-                  'Tu sais que c\'est "pas top" mais pas pourquoi',
+                  "Tu sais que c'est « pas top » mais pas pourquoi",
                   'Tu dois interpréter toi-même les métriques',
                   'Tu retestes au hasard en espérant que ça marche',
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-3">
-                    <span className="mt-0.5 text-gray-700 text-lg leading-none">—</span>
-                    <span className="text-[13.5px] text-gray-600 leading-relaxed">{item}</span>
+                    <span className="mt-0.5 text-gray-700 text-base leading-none shrink-0">—</span>
+                    <span className="text-[13.5px] text-gray-500 leading-relaxed">{item}</span>
                   </li>
                 ))}
               </ul>
@@ -392,7 +398,7 @@ export default function HomeLanding() {
                 {[
                   'Score 0–100 avec explication précise',
                   'Problème principal identifié en une phrase',
-                  'Plan d\'action avec 3 à 5 corrections concrètes',
+                  "Plan d'action avec 3 à 5 corrections concrètes",
                   'Tu sais exactement quoi changer pour la prochaine vidéo',
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-3">
@@ -408,7 +414,8 @@ export default function HomeLanding() {
 
       {/* ══ 7. USE CASES ════════════════════════════════════════════════════ */}
       <section className="relative py-24 sm:py-32 border-t border-white/[0.06]">
-        <div className="landing-section max-w-5xl">
+        {/* FIX: max-w-5xl mx-auto */}
+        <div className={`max-w-5xl ${sectionInner}`}>
           <div className="text-center mb-14">
             <p className={`${label} mb-4`}>Pour qui</p>
             <h2 className="text-3xl sm:text-4xl font-display font-bold text-white tracking-tight">
@@ -424,7 +431,8 @@ export default function HomeLanding() {
               >
                 <span className="text-2xl mb-5 block">{icon}</span>
                 <h3 className="text-[16px] font-bold text-white mb-3 tracking-tight">{role}</h3>
-                <p className="text-[13px] text-gray-600 leading-relaxed mb-4">{pain}</p>
+                {/* FIX: text-gray-500 was text-gray-600 (too dark, nearly invisible) */}
+                <p className="text-[13px] text-gray-500 leading-relaxed mb-4">{pain}</p>
                 <div className="pt-4 border-t border-white/[0.06]">
                   <p className="text-[13px] text-gray-400 leading-relaxed">{value}</p>
                 </div>
@@ -439,7 +447,8 @@ export default function HomeLanding() {
         id="tarifs"
         className="relative py-24 sm:py-32 border-t border-white/[0.06] scroll-mt-24"
       >
-        <div className="landing-section max-w-5xl">
+        {/* FIX: max-w-5xl mx-auto */}
+        <div className={`max-w-5xl ${sectionInner}`}>
           <div className="text-center mb-14">
             <p className={`${label} mb-4`}>Tarifs</p>
             <h2 className="text-3xl sm:text-4xl font-display font-bold text-white tracking-tight mb-3">
@@ -450,14 +459,15 @@ export default function HomeLanding() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-4 sm:gap-5 items-end">
+          {/* FIX: items-stretch ensures cards stretch to same height, no alignment weirdness */}
+          <div className="grid md:grid-cols-3 gap-4 sm:gap-5 items-stretch">
             {/* Starter */}
-            <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6 sm:p-7 flex flex-col order-2 md:order-1">
+            <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6 sm:p-7 flex flex-col order-2 md:order-1 opacity-90">
               <p className={`${label} mb-3`}>Starter</p>
-              <p className="text-[2.6rem] font-black text-white leading-none mb-1">0€</p>
+              <p className="text-[2.4rem] font-black text-white leading-none mb-1">0€</p>
               <p className="text-[13px] text-gray-600 mb-6">{MAX_ANALYSES_FREE} analyses · à vie</p>
               <ul className="space-y-2.5 flex-1 mb-7">
-                {['Analyse IA complète', 'Score & diagnostic', 'Plan d\'action'].map((f) => (
+                {["Analyse IA complète", "Score & diagnostic", "Plan d'action"].map((f) => (
                   <li key={f} className="flex items-center gap-2.5 text-[13px] text-gray-500">
                     <CheckIcon />
                     {f}
@@ -473,12 +483,13 @@ export default function HomeLanding() {
             </div>
 
             {/* Pro — featured */}
-            <div className="relative rounded-2xl pro-pricing-card p-6 sm:p-8 flex flex-col order-1 md:order-2 md:-mt-4 md:mb-0">
-              <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white shadow-lg whitespace-nowrap">
+            {/* FIX: removed md:-mt-4 which caused alignment issues with items-stretch */}
+            <div className="relative rounded-2xl pro-pricing-card p-6 sm:p-8 flex flex-col order-1 md:order-2 ring-1 ring-vn-fuchsia/20">
+              <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white shadow-lg whitespace-nowrap z-10">
                 Le plus populaire
               </span>
-              <p className={`${label} text-vn-fuchsia mb-3 mt-1`}>Pro</p>
-              <p className="text-[2.6rem] font-black text-white leading-none mb-1">
+              <p className={`${label} text-vn-fuchsia mb-3 mt-3`}>Pro</p>
+              <p className="text-[2.4rem] font-black text-white leading-none mb-1">
                 {DISPLAY_CATALOG_PRO_EUR}€
                 <span className="text-base font-normal text-gray-500 ml-1">/mois</span>
               </p>
@@ -486,7 +497,7 @@ export default function HomeLanding() {
                 {MAX_ANALYSES_PRO} analyses · {MAX_HOOKS_PRO} hooks / mois
               </p>
               <ul className="space-y-2.5 flex-1 mb-7">
-                {['Tout Starter, plus :', 'Hook generator', 'Dashboard IA & historique', 'Recommandations avancées'].map((f, i) => (
+                {["Tout Starter, plus :", "Hook generator", "Dashboard IA & historique", "Recommandations avancées"].map((f, i) => (
                   <li key={f} className={`flex items-center gap-2.5 text-[13px] ${i === 0 ? 'text-gray-600 italic' : 'text-gray-300'}`}>
                     {i > 0 && <CheckIcon />}
                     {i === 0 && <span className="w-4 shrink-0" />}
@@ -505,7 +516,7 @@ export default function HomeLanding() {
             {/* Elite */}
             <div className="rounded-2xl elite-pricing-card p-6 sm:p-7 flex flex-col order-3">
               <p className={`${label} text-purple-400 mb-3`}>Elite</p>
-              <p className="text-[2.6rem] font-black text-white leading-none mb-1">
+              <p className="text-[2.4rem] font-black text-white leading-none mb-1">
                 {DISPLAY_CATALOG_ELITE_EUR}€
                 <span className="text-base font-normal text-gray-500 ml-1">/mois</span>
               </p>
@@ -513,7 +524,7 @@ export default function HomeLanding() {
                 {MAX_ANALYSES_ELITE} analyses · {MAX_HOOKS_ELITE} hooks / mois
               </p>
               <ul className="space-y-2.5 flex-1 mb-7">
-                {['Tout Pro, plus :', 'Volume & profondeur max', 'Insights viraux débloqués', 'Support prioritaire'].map((f, i) => (
+                {["Tout Pro, plus :", "Volume & profondeur max", "Insights viraux débloqués", "Support prioritaire"].map((f, i) => (
                   <li key={f} className={`flex items-center gap-2.5 text-[13px] ${i === 0 ? 'text-gray-600 italic' : 'text-gray-300'}`}>
                     {i > 0 && <CheckIcon />}
                     {i === 0 && <span className="w-4 shrink-0" />}
@@ -541,13 +552,14 @@ export default function HomeLanding() {
 
       {/* ══ 9. FAQ ══════════════════════════════════════════════════════════ */}
       <section id="faq" className="relative py-24 sm:py-32 border-t border-white/[0.06] scroll-mt-24">
-        <div className="landing-section max-w-3xl">
+        {/* FIX: max-w-3xl mx-auto — was incorrectly inheriting max-w-7xl */}
+        <div className={`max-w-3xl ${sectionInner}`}>
           <div className="text-center mb-12 sm:mb-14">
             <p className={`${label} mb-4`}>FAQ</p>
             <h2 className="text-3xl sm:text-4xl font-display font-bold text-white tracking-tight mb-3">
               Questions fréquentes
             </h2>
-            <p className="text-gray-600 text-[14px]">
+            <p className="text-gray-500 text-[14px]">
               Des réponses claires, sans bullshit.
             </p>
           </div>
@@ -572,7 +584,8 @@ export default function HomeLanding() {
 
       {/* ══ 10. CTA FINAL ════════════════════════════════════════════════════ */}
       <section className="relative py-24 sm:py-32 border-t border-white/[0.05] overflow-hidden">
-        <div className="landing-section max-w-4xl">
+        {/* FIX: max-w-4xl mx-auto */}
+        <div className={`max-w-4xl ${sectionInner}`}>
           <div className="relative rounded-[1.75rem] p-[1px] bg-gradient-to-br from-white/15 via-vn-fuchsia/35 to-vn-indigo/40 shadow-[0_32px_100px_-40px_rgba(232,121,249,0.35)]">
             <div className="relative rounded-[calc(1.75rem-1px)] overflow-hidden bg-[#06060c] ring-1 ring-white/[0.06]">
               <div className="absolute inset-0 bg-gradient-to-br from-vn-fuchsia/[0.12] via-[#0a0a12] to-vn-indigo/[0.12]" aria-hidden />
@@ -621,10 +634,12 @@ export default function HomeLanding() {
                 Analyse vidéo IA pour le court format. Comprends ce qui bloque. Corrige avant de reposter.
               </p>
             </div>
+            {/* FIX: added Changelog link in footer nav */}
             <nav className="flex flex-wrap gap-x-8 gap-y-3 text-[13px] text-gray-600">
               <Link href="/analyzer" className="hover:text-white transition-colors">Analyser</Link>
               <Link href="/hook-generator" className="hover:text-white transition-colors">Hooks</Link>
               <Link href="/pricing" className="hover:text-white transition-colors">Tarifs</Link>
+              <Link href="/changelog" className="hover:text-white transition-colors">Nouveautés</Link>
               <Link href="/login" className="hover:text-white transition-colors">Connexion</Link>
             </nav>
           </div>
