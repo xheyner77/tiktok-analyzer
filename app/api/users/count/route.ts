@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
 // Base offset to display a credible starting number
-const BASE_OFFSET = 230;
+const BASE_OFFSET = 1000;
 
 export async function GET() {
   try {
