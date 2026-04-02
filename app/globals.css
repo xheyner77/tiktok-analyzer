@@ -382,6 +382,31 @@
     to   { opacity: 1; transform: translateY(0)    scale(1);    }
   }
 
+  /* ── HeroMockupPremium float helpers ────────────────── */
+  .mock-float-a { animation: heroMockupFloat 4.0s ease-in-out 1.0s infinite; }
+  .mock-float-b { animation: heroMockupFloat 3.6s ease-in-out 1.5s infinite; }
+  .mock-float-c { animation: heroMockupFloat 5.0s ease-in-out 1.8s infinite; }
+  .mock-float-d { animation: heroMockupFloat 4.4s ease-in-out 1.2s infinite; }
+
+  @keyframes mockScanLine {
+    0%   { top: 0%;   opacity: 0.7; }
+    45%  { opacity: 0.7; }
+    55%  { opacity: 0;   }
+    100% { top: 100%; opacity: 0; }
+  }
+
+  @keyframes mockBarGrow {
+    from { width: 0; }
+  }
+
+  @keyframes mockGlowPulse {
+    0%, 100% { opacity: 0.35; transform: scale(0.98); }
+    50%       { opacity: 0.65; transform: scale(1.04); }
+  }
+
+  .mock-scan   { animation: mockScanLine 2.8s linear infinite; position: absolute; left: 0; right: 0; height: 2px; }
+  .mock-glow   { animation: mockGlowPulse 3s ease-in-out infinite; }
+
   @keyframes heroHaloPulse {
     0%,
     100% {

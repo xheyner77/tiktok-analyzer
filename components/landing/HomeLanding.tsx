@@ -9,7 +9,7 @@ import {
   MAX_HOOKS_ELITE,
 } from '@/lib/plan-limits';
 import { DISPLAY_CATALOG_PRO_EUR, DISPLAY_CATALOG_ELITE_EUR } from '@/lib/stripe-pricing';
-import HeroVideo from '@/components/HeroVideo';
+import HeroMockupPremium from '@/components/landing/HeroMockupPremium';
 import { faqItems } from '@/components/landing/landing-copy';
 
 const G = 'bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent';
@@ -152,15 +152,17 @@ export default function HomeLanding() {
               </Link>
 
               {/* Headline */}
-              <h1 className="font-hero-inter font-black text-white landing-hero-title-glow tracking-[-0.045em] max-[419px]:text-[2.05rem] max-[419px]:leading-[0.92] text-[2.45rem] leading-[0.93] sm:text-[3.2rem] sm:leading-[0.91] md:text-[3.7rem] md:leading-[0.90] lg:text-[3.5rem] lg:leading-[0.90] xl:text-[4.1rem] xl:leading-[0.88] 2xl:text-[4.7rem] 2xl:leading-[0.87]">
-                <span className="block">Arrête de poster</span>
-                <span className="block">au&nbsp;hasard.</span>
+              <h1 className="font-hero-inter font-black text-white landing-hero-title-glow tracking-[-0.048em] max-[419px]:text-[2.05rem] max-[419px]:leading-[0.92] text-[2.55rem] leading-[0.92] sm:text-[3.3rem] sm:leading-[0.90] md:text-[3.8rem] md:leading-[0.89] lg:text-[3.6rem] lg:leading-[0.89] xl:text-[4.2rem] xl:leading-[0.88] 2xl:text-[4.8rem] 2xl:leading-[0.87]">
+                <span className="block">Tes vidéos floppent.</span>
+                <span className="block bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">
+                  Voilà&nbsp;pourquoi.
+                </span>
               </h1>
 
               {/* Subtitle */}
-              <p className="mt-5 sm:mt-6 text-[1rem] sm:text-[1.08rem] text-gray-400 max-w-md leading-relaxed font-normal tracking-[-0.01em]">
-                Comprends pourquoi tes vidéos ne marchent pas —{' '}
-                et corrige-les en quelques secondes grâce à l&apos;IA.
+              <p className="mt-5 sm:mt-6 text-[1rem] sm:text-[1.08rem] text-gray-400 max-w-[440px] leading-relaxed font-normal tracking-[-0.01em]">
+                L&apos;IA analyse ton hook, ton montage et ta rétention en quelques secondes.
+                Tu sais exactement quoi corriger — avant de reposter.
               </p>
 
               {/* CTAs */}
@@ -213,9 +215,9 @@ export default function HomeLanding() {
               </div>
             </div>
 
-            {/* Colonne droite — vidéo */}
-            <div className="flex-[6] w-full max-w-[640px] lg:max-w-none" id="produit">
-              <HeroVideo />
+            {/* Colonne droite — mockup premium */}
+            <div className="flex-[6] w-full max-w-[540px] lg:max-w-none" id="produit">
+              <HeroMockupPremium />
             </div>
 
           </div>

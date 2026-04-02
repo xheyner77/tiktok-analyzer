@@ -10,6 +10,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.101.0",
     "bcryptjs": "^2.4.3",
+    "framer-motion": "^12.38.0",
     "jose": "^5.10.0",
     "next": "^14.2.5",
     "openai": "^6.33.0",
