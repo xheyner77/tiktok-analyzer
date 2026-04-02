@@ -2,7 +2,7 @@ import Link from 'next/link';
 import CheckoutButton from '@/components/CheckoutButton';
 import PricingFAQ from '@/components/PricingFAQ';
 import FloatingParticles from '@/components/FloatingParticles';
-import { HISTORY_LIMITS } from '@/lib/analyses';
+import { HISTORY_LIMITS } from '@/lib/plan-limits';
 import {
   MAX_ANALYSES_ELITE,
   MAX_ANALYSES_FREE,

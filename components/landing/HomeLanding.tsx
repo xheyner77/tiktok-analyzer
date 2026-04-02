@@ -7,8 +7,8 @@ import CheckoutButton from '@/components/CheckoutButton';
 import {
   MAX_ANALYSES_FREE, MAX_ANALYSES_PRO, MAX_ANALYSES_ELITE,
   MAX_HOOKS_PRO, MAX_HOOKS_ELITE,
+  HISTORY_LIMITS,
 } from '@/lib/plan-limits';
-import { HISTORY_LIMITS } from '@/lib/analyses';
 import { DISPLAY_CATALOG_PRO_EUR, DISPLAY_CATALOG_ELITE_EUR } from '@/lib/stripe-pricing';
 import HeroMockupPremium from '@/components/landing/HeroMockupPremium';
 import FloatingParticles from '@/components/FloatingParticles';

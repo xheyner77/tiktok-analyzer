@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import { Plan } from '@/lib/supabase';
-import { AnalysisRow } from '@/lib/analyses';
+import type { AnalysisRow } from '@/lib/analyses';
 import { getScoreTextColor, getRatingColors } from '@/lib/utils';
-import { MAX_ANALYSES_ELITE, MAX_ANALYSES_PRO, MAX_HOOKS_ELITE, MAX_HOOKS_PRO } from '@/lib/plan-limits';
+import { MAX_ANALYSES_ELITE, MAX_ANALYSES_PRO, MAX_HOOKS_ELITE, MAX_HOOKS_PRO, HISTORY_LIMITS } from '@/lib/plan-limits';
 import { DISPLAY_CATALOG_ELITE_EUR, DISPLAY_CATALOG_PRO_EUR } from '@/lib/stripe-pricing';
 import { waitForBillingPlan } from '@/lib/wait-for-billing-sync';
 

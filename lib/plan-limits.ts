@@ -23,3 +23,10 @@ export const HOOK_LIMITS: Record<string, number> = {
   pro: MAX_HOOKS_PRO,
   elite: MAX_HOOKS_ELITE,
 };
+
+/** Nombre d'analyses conservées dans l'historique par plan */
+export const HISTORY_LIMITS: Record<string, number> = {
+  free: 0,
+  pro: 30,
+  elite: Infinity,
+};
