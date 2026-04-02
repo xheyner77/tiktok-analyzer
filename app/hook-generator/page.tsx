@@ -7,7 +7,7 @@ import GuestGate from '@/components/GuestGate';
 import { HOOK_LIMITS, MAX_HOOKS_ELITE, MAX_HOOKS_PRO } from '@/lib/plan-limits';
 import { DISPLAY_CATALOG_PRO_EUR } from '@/lib/stripe-pricing';
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+/* ── Types ─────────────────────────────────────────────────────────────────── */
 
 interface AuthUser {
   id: string;
@@ -26,17 +26,16 @@ interface HookHistoryItem {
   variant_of: string | null;
 }
 
-
-// ── Tone options ──────────────────────────────────────────────────────────────
+/* ── Options ────────────────────────────────────────────────────────────────── */
 
 const TONES = [
-  { id: 'dramatique', label: 'Dramatique',  emoji: '🎭' },
-  { id: 'clash',      label: 'Clash',       emoji: '🔥' },
-  { id: 'curieux',    label: 'Curieux',     emoji: '👀' },
-  { id: 'choquant',   label: 'Choquant',    emoji: '😱' },
-  { id: 'émotion',    label: 'Émotion',     emoji: '💔' },
-  { id: 'luxe',       label: 'Luxe',        emoji: '💎' },
-  { id: 'autorité',   label: 'Autorité',    emoji: '👑' },
+  { id: 'dramatique', label: 'Dramatique', emoji: '🎭' },
+  { id: 'clash',      label: 'Clash',      emoji: '🔥' },
+  { id: 'curieux',    label: 'Curieux',    emoji: '👀' },
+  { id: 'choquant',   label: 'Choquant',   emoji: '😱' },
+  { id: 'émotion',    label: 'Émotion',    emoji: '💔' },
+  { id: 'luxe',       label: 'Luxe',       emoji: '💎' },
+  { id: 'autorité',   label: 'Autorité',   emoji: '👑' },
 ] as const;
 
 const SCENES = [
@@ -51,29 +50,44 @@ const SCENES = [
 ];
 
 const COUNT_OPTIONS = [3, 5, 7, 10];
+
 const CONTEXT_TEMPLATES = [
   'Je réponds à un hater qui me critique',
   'Je révèle un secret que personne ne connaît',
-  'J’ai testé une astuce pendant 7 jours',
+  "J'ai testé une astuce pendant 7 jours",
   'Avant / Après: transformation totale',
 ];
 
-// ── Main page ─────────────────────────────────────────────────────────────────
+/* ── Helpers ─────────────────────────────────────────────────────────────────── */
+
+const label9 = 'text-[9px] font-bold uppercase tracking-[0.24em] text-gray-600';
+
+function CopyIcon({ copied }: { copied: boolean }) {
+  return copied ? (
+    <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
+      <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z" />
+    </svg>
+  ) : (
+    <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
+      <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z" />
+      <path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z" />
+    </svg>
+  );
+}
+
+/* ── Main page ───────────────────────────────────────────────────────────────── */
 
 export default function HookGeneratorPage() {
-  // Auth
   const [authUser,   setAuthUser]   = useState<AuthUser | null>(null);
   const [authLoaded, setAuthLoaded] = useState(false);
   const [domReady,   setDomReady]   = useState(false);
 
-  // Form
   const [context, setContext] = useState('');
   const [scene,   setScene]   = useState(SCENES[0]);
   const [person,  setPerson]  = useState('');
   const [tone,    setTone]    = useState<string>('dramatique');
   const [count,   setCount]   = useState(5);
 
-  // Results
   const [hooks,     setHooks]     = useState<string[]>([]);
   const [loading,   setLoading]   = useState(false);
   const [error,     setError]     = useState('');
@@ -81,16 +95,13 @@ export default function HookGeneratorPage() {
   const [limitUsed, setLimitUsed] = useState(0);
   const [copied,    setCopied]    = useState<number | null>(null);
 
-  // History
-  const [history, setHistory] = useState<HookHistoryItem[]>([]);
+  const [history,        setHistory]        = useState<HookHistoryItem[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
-  const [historyFilter, setHistoryFilter] = useState<'all' | 'favorites'>('all');
-  const [historyQuery, setHistoryQuery] = useState('');
+  const [historyFilter,  setHistoryFilter]  = useState<'all' | 'favorites'>('all');
+  const [historyQuery,   setHistoryQuery]   = useState('');
   const [copiedFavorites, setCopiedFavorites] = useState(false);
 
-  // Guest gate
   const [showGuestGate, setShowGuestGate] = useState(false);
-
   const resultsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -114,65 +125,38 @@ export default function HookGeneratorPage() {
       .finally(() => setAuthLoaded(true));
   }, []);
 
-  const plan    = authUser?.plan ?? null;
-  const limit   = plan ? HOOK_LIMITS[plan] : 0;
+  const plan           = authUser?.plan ?? null;
+  const limit          = plan ? HOOK_LIMITS[plan] : 0;
   const effectiveLimit = limitUsed || limit;
-  const remaining = Math.max(0, effectiveLimit - used);
-  const canUse  = !!plan && plan !== 'free' && used < effectiveLimit;
+  const remaining      = Math.max(0, effectiveLimit - used);
+  const canUse         = !!plan && plan !== 'free' && used < effectiveLimit;
 
   useEffect(() => {
     if (!authUser || authUser.plan === 'free') return;
-    if (count > remaining && remaining > 0) {
-      setCount(remaining);
-    }
+    if (count > remaining && remaining > 0) setCount(remaining);
   }, [authUser, remaining, count]);
 
   async function handleGenerate() {
     setError('');
-
-    if (!authLoaded) return;
-    if (loading) return; // prevent double-click while a request is in flight
-
-    if (!authUser) {
-      setShowGuestGate(true);
-      return;
-    }
-
-    if (plan === 'free') return; // handled by upsell UI
-
-    if (!context.trim()) {
-      setError('Décris le contexte de ta vidéo pour générer des hooks.');
-      return;
-    }
-
-    if (context.trim().length > 500) {
-      setError('Le contexte ne doit pas dépasser 500 caractères.');
-      return;
-    }
+    if (!authLoaded || loading) return;
+    if (!authUser) { setShowGuestGate(true); return; }
+    if (plan === 'free') return;
+    if (!context.trim()) { setError('Décris le contexte de ta vidéo.'); return; }
+    if (context.trim().length > 500) { setError('Contexte trop long (max 500 caractères).'); return; }
 
     setLoading(true);
     setHooks([]);
 
     try {
-      const res = await fetch('/api/hooks/generate', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({
-          context: context.trim(),
-          scene,
-          person: person.trim(),
-          tone,
-          count,
-        }),
+      const res  = await fetch('/api/hooks/generate', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ context: context.trim(), scene, person: person.trim(), tone, count }),
       });
-
       const data = await res.json();
 
       if (!res.ok) {
         setError(data.error ?? 'Une erreur est survenue.');
-        if (res.status === 429 || res.status === 403) {
-          setUsed(data.used ?? used);
-        }
+        if (res.status === 429 || res.status === 403) setUsed(data.used ?? used);
         if (typeof data.limit === 'number') setLimitUsed(data.limit);
         return;
       }
@@ -183,40 +167,20 @@ export default function HookGeneratorPage() {
       setLimitUsed(data.limit ?? limitUsed);
 
       if (authUser && newHooks.length > 0) {
-        // 1. Mise à jour optimiste : affichage immédiat dans l'historique (IDs temp)
         const now = new Date().toISOString();
         const optimistic: HookHistoryItem[] = newHooks.map((h, i) => ({
-          id: `temp-${Date.now()}-${i}`,
-          hook_text: h,
-          tone,
-          scene,
-          is_favorite: false,
-          created_at: now,
-          variant_of: null,
+          id: `temp-${Date.now()}-${i}`, hook_text: h, tone, scene,
+          is_favorite: false, created_at: now, variant_of: null,
         }));
         setHistory((prev) => [...optimistic, ...prev]);
 
-        // 2. L'API a déjà effectué l'INSERT avant de répondre.
-        //    On recharge l'historique réel pour remplacer les IDs temporaires
-        //    par les vrais UUIDs (nécessaires pour Favori / Supprimer).
-        //    Si historySaved === false, le log serveur indique la cause exacte.
-        if (data.historySaved === false) {
-          console.warn('[HookGenerator] hooks generated but NOT saved to DB — check server logs');
-        }
-        fetch('/api/hooks/history')
-          .then((r) => r.json())
-          .then((h) => {
-            if (Array.isArray(h.hooks) && h.hooks.length > 0) {
-              setHistory(h.hooks);
-            }
-            // Si h.hooks est vide, on garde l'optimiste pour ne pas effacer l'affichage
-          })
-          .catch((err) => console.error('[HookGenerator] history reload failed:', err));
+        if (data.historySaved === false) console.warn('[HookGenerator] hooks not saved to DB');
+        fetch('/api/hooks/history').then((r) => r.json()).then((h) => {
+          if (Array.isArray(h.hooks) && h.hooks.length > 0) setHistory(h.hooks);
+        }).catch(console.error);
       }
 
-      setTimeout(() => {
-        resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
+      setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
     } catch {
       setError('Une erreur est survenue. Réessaie dans un instant.');
     } finally {
@@ -232,44 +196,31 @@ export default function HookGeneratorPage() {
   }
 
   async function toggleFavorite(item: HookHistoryItem) {
-    // Optimistic items use temp IDs — wait for the real history reload before acting.
     if (item.id.startsWith('temp-')) return;
-
     const next = !item.is_favorite;
-    setHistory((prev) => prev.map((h) => (h.id === item.id ? { ...h, is_favorite: next } : h)));
+    setHistory((prev) => prev.map((h) => h.id === item.id ? { ...h, is_favorite: next } : h));
     const res = await fetch('/api/hooks/favorite', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ hookId: item.id, favorite: next }),
     });
-    if (!res.ok) {
-      // rollback optimistic update
-      setHistory((prev) => prev.map((h) => (h.id === item.id ? { ...h, is_favorite: item.is_favorite } : h)));
-    }
+    if (!res.ok) setHistory((prev) => prev.map((h) => h.id === item.id ? { ...h, is_favorite: item.is_favorite } : h));
   }
 
   async function deleteHistoryItem(item: HookHistoryItem) {
-    // Optimistic items use temp IDs — wait for the real history reload before acting.
     if (item.id.startsWith('temp-')) return;
-
     const previous = history;
     setHistory((prev) => prev.filter((h) => h.id !== item.id));
     const res = await fetch('/api/hooks/delete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ hookId: item.id }),
     });
-    if (!res.ok) {
-      setHistory(previous);
-    }
+    if (!res.ok) setHistory(previous);
   }
 
   function copyFavorites() {
-    const favoriteHooks = history
-      .filter((h) => h.is_favorite)
-      .map((h) => h.hook_text);
-    if (!favoriteHooks.length) return;
-    navigator.clipboard.writeText(favoriteHooks.join('\n')).then(() => {
+    const favs = history.filter((h) => h.is_favorite).map((h) => h.hook_text);
+    if (!favs.length) return;
+    navigator.clipboard.writeText(favs.join('\n')).then(() => {
       setCopiedFavorites(true);
       setTimeout(() => setCopiedFavorites(false), 1800);
     });
@@ -283,115 +234,101 @@ export default function HookGeneratorPage() {
     });
   }
 
-  // ── Render ──────────────────────────────────────────────────────────────────
+  /* ── Render ─────────────────────────────────────────────────────────────── */
 
   return (
     <main className="min-h-screen bg-vn-bg overflow-x-hidden">
+
       {/* Ambient glow */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-64 left-1/2 -translate-x-1/2 w-[700px] h-[500px] rounded-full bg-gradient-to-br from-vn-indigo/8 to-vn-fuchsia/6 blur-3xl" />
+      <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden>
+        <div className="absolute -top-60 left-1/2 -translate-x-1/2 w-[600px] h-[500px] rounded-full bg-gradient-to-br from-vn-indigo/8 to-vn-fuchsia/6 blur-3xl" />
       </div>
 
-      {/* Guest gate portal */}
+      {/* Guest gate */}
       {showGuestGate && domReady && createPortal(
         <GuestGate show={showGuestGate} pendingUrl="" onClose={() => setShowGuestGate(false)} />,
         document.body
       )}
 
-      <div className="relative max-w-2xl mx-auto px-4 pt-24 pb-24">
+      <div className="relative max-w-2xl mx-auto px-5 sm:px-8 pt-16 pb-28">
 
-        {/* ── Header ─────────────────────────────────────────────────────────── */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-vn-violet/10 border border-vn-violet/20 text-vn-glow text-xs font-semibold mb-4">
-            <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
-              <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" />
-            </svg>
-            Hooks textuels uniquement
-          </div>
-
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3 leading-tight">
-            Hook{' '}
-            <span className="bg-gradient-to-r from-vn-fuchsia to-vn-indigo bg-clip-text text-transparent">
-              Generator
-            </span>
+        {/* ══ HEADER ═══════════════════════════════════════════════════════ */}
+        <div className="mb-12">
+          <p className={`${label9} mb-5`}>Viralynz · Hook Generator</p>
+          <h1 className="text-[2rem] sm:text-[2.5rem] font-display font-bold tracking-tight leading-tight mb-3">
+            <span className="text-white">Génère des hooks </span>
+            <span style={{
+              background: 'linear-gradient(105deg, #f5c5ff 0%, #c084fc 45%, #818cf8 100%)',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+            }}>qui accrochent.</span>
           </h1>
-          <p className="text-sm text-gray-500 max-w-md mx-auto">
-            Génère des hooks textuels courts, viraux et percutants pour tes vidéos TikTok — conçus pour être affichés en overlay sur la vidéo.
+          <p className="text-[13px] text-gray-500 leading-relaxed">
+            Courts. Viraux. Percutants. Conçus pour l&apos;overlay TikTok.
           </p>
         </div>
 
-        {/* ── Free plan upsell ────────────────────────────────────────────────── */}
+        {/* ══ FREE PLAN UPSELL ═════════════════════════════════════════════ */}
         {authLoaded && authUser && plan === 'free' && (
-          <div className="mb-8 rounded-2xl bg-[#0f0a18] border border-[#2d1a4a] p-6 text-center">
-            <div className="w-12 h-12 rounded-xl bg-vn-violet/15 border border-vn-violet/25 flex items-center justify-center text-xl mx-auto mb-4">
-              🔒
-            </div>
-            <h2 className="text-base font-bold text-white mb-2">Fonctionnalité Pro & Elite</h2>
-            <p className="text-sm text-gray-500 mb-5">
-              {`Le Hook Generator est disponible à partir du plan Pro (${MAX_HOOKS_PRO} hooks/mois) et Elite (${MAX_HOOKS_ELITE} hooks/mois).`}
-            </p>
-            <Link
-              href="/pricing"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white text-sm font-semibold hover:opacity-90 transition-opacity shadow-md shadow-vn-fuchsia/20"
-            >
-              <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
-                <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" />
-              </svg>
-              {`Passer à Pro — ${DISPLAY_CATALOG_PRO_EUR}€/mois`}
-            </Link>
-          </div>
-        )}
-
-        {/* ── Guest CTA ───────────────────────────────────────────────────────── */}
-        {authLoaded && !authUser && (
-          <div className="mb-8 rounded-2xl bg-[#0d0d0d] border border-[#1e1e1e] p-6 text-center">
-            <div className="w-12 h-12 rounded-xl bg-vn-fuchsia/10 border border-vn-fuchsia/20 flex items-center justify-center text-xl mx-auto mb-4">
-              ⚡
-            </div>
-            <h2 className="text-base font-bold text-white mb-2">Connecte-toi pour générer des hooks</h2>
-            <p className="text-sm text-gray-500 mb-5">
-              Le Hook Generator est disponible à partir du plan Pro.
-            </p>
-            <div className="flex items-center justify-center gap-3">
-              <Link
-                href="/signup"
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white text-sm font-semibold hover:opacity-90 transition-opacity shadow-md shadow-vn-fuchsia/20"
-              >
-                Créer un compte
-              </Link>
-              <Link
-                href="/login"
-                className="px-5 py-2.5 rounded-xl bg-[#111] border border-[#1e1e1e] text-sm font-semibold text-gray-300 hover:bg-[#181818] hover:border-[#2a2a2a] transition-all"
-              >
-                Se connecter
-              </Link>
-            </div>
-          </div>
-        )}
-
-        {/* ── Quota bar (Pro/Elite) ────────────────────────────────────────────── */}
-        {authLoaded && authUser && plan !== 'free' && (
-          <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-[#0d0d0d] border border-[#1a1a1a]">
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs text-gray-500">Hooks ce mois</span>
-                <span className="text-xs font-semibold text-gray-300 tabular-nums">
-                  {used} / {effectiveLimit}
-                </span>
+          <div className="mb-10 p-6 rounded-2xl ring-1 ring-white/[0.07] bg-white/[0.02]">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-xl bg-vn-violet/10 border border-vn-violet/15 flex items-center justify-center text-lg shrink-0">🔒</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-bold text-white mb-1">Fonctionnalité Pro &amp; Elite</p>
+                <p className="text-[12px] text-gray-500 mb-4 leading-relaxed">
+                  {MAX_HOOKS_PRO} hooks/mois avec Pro · {MAX_HOOKS_ELITE} hooks/mois avec Elite.
+                </p>
+                <Link href="/pricing"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white text-[13px] font-semibold hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_8px_24px_-8px_rgba(232,121,249,0.4)]">
+                  Passer à Pro — {DISPLAY_CATALOG_PRO_EUR}€/mois
+                </Link>
               </div>
-              <div className="h-1.5 rounded-full bg-[#1a1a1a] overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-500"
+            </div>
+          </div>
+        )}
+
+        {/* ══ GUEST UPSELL ════════════════════════════════════════════════ */}
+        {authLoaded && !authUser && (
+          <div className="mb-10 p-6 rounded-2xl ring-1 ring-white/[0.07] bg-white/[0.02]">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-xl bg-vn-fuchsia/10 border border-vn-fuchsia/15 flex items-center justify-center text-lg shrink-0">⚡</div>
+              <div className="flex-1">
+                <p className="text-[14px] font-bold text-white mb-1">Connecte-toi pour générer des hooks</p>
+                <p className="text-[12px] text-gray-500 mb-4">Disponible à partir du plan Pro.</p>
+                <div className="flex gap-2.5">
+                  <Link href="/signup"
+                    className="inline-flex items-center px-5 py-2.5 rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white text-[13px] font-semibold hover:brightness-110 active:scale-[0.98] transition-all">
+                    Créer un compte
+                  </Link>
+                  <Link href="/login"
+                    className="inline-flex items-center px-5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.09] text-[13px] font-semibold text-gray-300 hover:bg-white/[0.07] transition-all">
+                    Se connecter
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ══ QUOTA (Pro/Elite) ════════════════════════════════════════════ */}
+        {authLoaded && authUser && plan !== 'free' && (
+          <div className="mb-8 flex items-end justify-between pb-5 border-b border-white/[0.06]">
+            <div>
+              <p className={`${label9} mb-2`}>Hooks ce mois</p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-[2rem] font-black text-white leading-none tabular-nums">{used}</span>
+                <span className="text-[13px] text-gray-600">/ {effectiveLimit}</span>
+              </div>
+              <div className="mt-2 w-32 h-[3px] rounded-full bg-white/[0.07] overflow-hidden">
+                <div className="h-full rounded-full transition-all duration-500"
                   style={{
                     width: `${Math.min(100, effectiveLimit > 0 ? (used / effectiveLimit) * 100 : 0)}%`,
                     background: used >= effectiveLimit ? '#ef4444' : 'linear-gradient(to right, #e879f9, #6366f1)',
-                  }}
-                />
+                  }} />
               </div>
             </div>
-            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+            <span className={`text-[10px] font-bold px-3 py-1 rounded-full ${
               plan === 'elite'
-                ? 'bg-vn-violet/15 text-vn-glow border border-vn-violet/25'
+                ? 'bg-vn-violet/15 text-vn-violet border border-vn-violet/25'
                 : 'bg-vn-fuchsia/10 text-vn-fuchsia border border-vn-fuchsia/20'
             }`}>
               {plan === 'elite' ? 'Elite' : 'Pro'}
@@ -399,82 +336,63 @@ export default function HookGeneratorPage() {
           </div>
         )}
 
-        {/* ── Form ─────────────────────────────────────────────────────────────── */}
-        <div className="space-y-5">
+        {/* ══ FORM ════════════════════════════════════════════════════════ */}
+        <div className="space-y-7">
 
           {/* Contexte */}
           <div>
-            <label className="block text-xs font-semibold text-gray-400 mb-2">
-              Contexte de ta vidéo <span className="text-vn-fuchsia">*</span>
-            </label>
+            <p className={`${label9} mb-3`}>Contexte de ta vidéo <span className="text-vn-fuchsia normal-case tracking-normal">*</span></p>
             <textarea
               value={context}
               onChange={(e) => setContext(e.target.value)}
               placeholder="Ex : Je remets à sa place quelqu'un qui m'a critiqué sur ma façon de m'habiller..."
               rows={3}
               maxLength={300}
-              className="w-full bg-[#0d0d0d] border border-[#1e1e1e] hover:border-[#2a2a2a] focus:border-vn-violet/40 focus:ring-1 focus:ring-vn-violet/20 text-white text-sm placeholder-gray-700 rounded-xl px-4 py-3 resize-none transition-all duration-150 outline-none"
+              className="w-full bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.14] focus:border-vn-violet/40 focus:ring-1 focus:ring-vn-violet/15 text-white text-[13px] placeholder-gray-700 rounded-xl px-4 py-3.5 resize-none transition-all outline-none"
             />
-            <p className="text-right text-[11px] text-gray-700 mt-1 tabular-nums">{context.length} / 300</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {CONTEXT_TEMPLATES.map((tpl) => (
-                <button
-                  key={tpl}
-                  type="button"
-                  onClick={() => setContext(tpl)}
-                  className="text-[11px] px-2.5 py-1 rounded-md bg-[#101010] border border-[#1f1f1f] text-gray-500 hover:text-gray-300 hover:border-[#2d2d2d] transition-colors"
-                >
-                  {tpl}
-                </button>
-              ))}
+            <div className="mt-2 flex items-center justify-between">
+              <div className="flex flex-wrap gap-2">
+                {CONTEXT_TEMPLATES.map((tpl) => (
+                  <button key={tpl} type="button" onClick={() => setContext(tpl)}
+                    className="text-[10px] px-2.5 py-1 rounded-lg bg-white/[0.03] border border-white/[0.07] text-gray-500 hover:text-gray-300 hover:border-white/[0.12] transition-colors">
+                    {tpl}
+                  </button>
+                ))}
+              </div>
+              <span className="text-[10px] text-gray-700 tabular-nums shrink-0 ml-3">{context.length}/300</span>
             </div>
           </div>
 
           {/* Type de scène + Personnage */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
-              <label className="block text-xs font-semibold text-gray-400 mb-2">Type de scène</label>
-              <select
-                value={scene}
-                onChange={(e) => setScene(e.target.value)}
-                className="w-full bg-[#0d0d0d] border border-[#1e1e1e] hover:border-[#2a2a2a] focus:border-vn-violet/40 text-white text-sm rounded-xl px-3 py-2.5 outline-none transition-all appearance-none cursor-pointer"
-              >
-                {SCENES.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
+              <p className={`${label9} mb-3`}>Type de scène</p>
+              <select value={scene} onChange={(e) => setScene(e.target.value)}
+                className="w-full bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.14] focus:border-vn-violet/40 text-white text-[13px] rounded-xl px-4 py-3 outline-none transition-all appearance-none cursor-pointer">
+                {SCENES.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-400 mb-2">
-                Personnage <span className="text-gray-600 font-normal">(optionnel)</span>
-              </label>
-              <input
-                type="text"
-                value={person}
-                onChange={(e) => setPerson(e.target.value)}
-                placeholder="Ex : mon ex, un hater..."
+              <p className={`${label9} mb-3`}>Personnage <span className="normal-case tracking-normal font-normal text-gray-600">(optionnel)</span></p>
+              <input type="text" value={person} onChange={(e) => setPerson(e.target.value)}
+                placeholder="Ex : mon ex, un hater…"
                 maxLength={50}
-                className="w-full bg-[#0d0d0d] border border-[#1e1e1e] hover:border-[#2a2a2a] focus:border-vn-violet/40 text-white text-sm placeholder-gray-700 rounded-xl px-3 py-2.5 outline-none transition-all"
-              />
+                className="w-full bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.14] focus:border-vn-violet/40 text-white text-[13px] placeholder-gray-700 rounded-xl px-4 py-3 outline-none transition-all" />
             </div>
           </div>
 
           {/* Ton */}
           <div>
-            <label className="block text-xs font-semibold text-gray-400 mb-2">Ton souhaité</label>
+            <p className={`${label9} mb-3`}>Ton souhaité</p>
             <div className="flex flex-wrap gap-2">
               {TONES.map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => setTone(t.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150
-                    ${tone === t.id
-                      ? 'bg-vn-violet/20 border border-vn-violet/50 text-vn-glow'
-                      : 'bg-[#0d0d0d] border border-[#1e1e1e] text-gray-500 hover:border-[#2a2a2a] hover:text-gray-300'
-                    }`}
-                >
-                  <span>{t.emoji}</span>
-                  {t.label}
+                <button key={t.id} onClick={() => setTone(t.id)}
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11px] font-semibold transition-all ${
+                    tone === t.id
+                      ? 'bg-vn-violet/20 border border-vn-violet/40 text-vn-violet ring-1 ring-vn-violet/15'
+                      : 'bg-white/[0.03] border border-white/[0.08] text-gray-500 hover:text-gray-300 hover:border-white/[0.14]'
+                  }`}>
+                  <span>{t.emoji}</span>{t.label}
                 </button>
               ))}
             </div>
@@ -482,125 +400,118 @@ export default function HookGeneratorPage() {
 
           {/* Nombre de hooks */}
           <div>
-            <label className="block text-xs font-semibold text-gray-400 mb-2">Nombre de hooks</label>
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center justify-between mb-3">
+              <p className={label9}>Nombre de hooks</p>
+              {authUser && plan !== 'free' && (
+                <span className="text-[10px] text-gray-600">{remaining} restants ce mois</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
               {COUNT_OPTIONS.map((n) => (
-                <button
-                  key={n}
-                  onClick={() => setCount(n)}
-                  disabled={authUser?.plan && authUser.plan !== 'free' && n > remaining}
-                  className={`w-12 h-10 rounded-lg text-sm font-bold transition-all duration-150 disabled:opacity-35 disabled:cursor-not-allowed
-                    ${count === n
-                      ? 'bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white shadow-md shadow-vn-fuchsia/20'
-                      : 'bg-[#0d0d0d] border border-[#1e1e1e] text-gray-500 hover:border-[#2a2a2a] hover:text-gray-300'
-                    }`}
-                >
+                <button key={n} onClick={() => setCount(n)}
+                  disabled={!!authUser?.plan && authUser.plan !== 'free' && n > remaining}
+                  className={`w-12 h-10 rounded-xl text-[13px] font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
+                    count === n
+                      ? 'bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white shadow-[0_4px_12px_-4px_rgba(232,121,249,0.4)]'
+                      : 'bg-white/[0.04] border border-white/[0.08] text-gray-500 hover:text-gray-300 hover:border-white/[0.14]'
+                  }`}>
                   {n}
                 </button>
               ))}
             </div>
-            {authUser && plan !== 'free' && (
-              <p className="text-[11px] text-gray-600 mt-1">
-                Restants ce mois: {remaining}
-              </p>
-            )}
           </div>
 
           {/* Error */}
           {error && (
-            <p className="text-sm text-red-400 bg-red-500/5 border border-red-500/20 rounded-xl px-4 py-3">
-              {error}
-            </p>
+            <div className="rounded-xl border border-red-500/20 bg-red-500/[0.05] px-4 py-3">
+              <p className="text-[13px] text-red-400">{error}</p>
+            </div>
           )}
 
-          {/* CTA button */}
-          <button
-            onClick={handleGenerate}
-            disabled={loading || (!!authUser && !canUse)}
-            className={`w-full py-3.5 rounded-xl font-bold text-sm transition-all duration-200 active:scale-[0.99] shadow-lg
-              ${loading || (!!authUser && !canUse)
-                ? 'bg-[#1a1a1a] border border-[#2a2a2a] text-gray-600 cursor-not-allowed'
-                : 'bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:opacity-90 shadow-vn-fuchsia/20'
-              }`}
-          >
-            {loading ? (
-              <span className="flex items-center justify-center gap-2.5">
-                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                Génération en cours...
-              </span>
-            ) : !authUser ? (
-              'Générer mes hooks →'
-            ) : plan === 'free' ? (
-              '🔒 Disponible à partir du plan Pro'
-            ) : used >= limit ? (
-              `Limite atteinte (${used}/${effectiveLimit})`
-            ) : (
-              `Générer ${count} hook${count > 1 ? 's' : ''} →`
+          {/* CTA */}
+          <div className="relative group">
+            {!loading && canUse && context.trim() && (
+              <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-vn-fuchsia/40 to-vn-indigo/30 opacity-50 blur-md group-hover:opacity-80 transition-all" aria-hidden />
             )}
-          </button>
+            <button onClick={handleGenerate}
+              disabled={loading || (!!authUser && !canUse)}
+              className={`relative w-full py-4 rounded-xl font-bold text-[14px] transition-all active:scale-[0.99] ${
+                loading || (!!authUser && !canUse)
+                  ? 'bg-white/[0.04] border border-white/[0.08] text-gray-600 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:brightness-110 shadow-[0_8px_32px_-8px_rgba(232,121,249,0.45)]'
+              }`}>
+              {loading ? (
+                <span className="flex items-center justify-center gap-2.5">
+                  <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Génération en cours…
+                </span>
+              ) : !authUser ? 'Générer mes hooks →'
+                : plan === 'free' ? '🔒 Disponible à partir du plan Pro'
+                : used >= limit ? `Limite atteinte (${used}/${effectiveLimit})`
+                : `Générer ${count} hook${count > 1 ? 's' : ''} →`}
+            </button>
+          </div>
         </div>
 
-        {/* ── Results ──────────────────────────────────────────────────────────── */}
+        {/* ══ LOADING SKELETONS ════════════════════════════════════════════ */}
+        {loading && hooks.length === 0 && (
+          <div className="mt-12 space-y-3">
+            {Array.from({ length: count }).map((_, i) => (
+              <div key={i} className="h-[72px] rounded-2xl bg-white/[0.03] border border-white/[0.05] animate-pulse" />
+            ))}
+          </div>
+        )}
+
+        {/* ══ RESULTS ══════════════════════════════════════════════════════ */}
         {hooks.length > 0 && (
-          <div ref={resultsRef} className="mt-10">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-bold text-white">
-                {hooks.length} hook{hooks.length > 1 ? 's' : ''} générés
-              </h2>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={copyAllHooks}
-                  className={`text-xs px-2.5 py-1 rounded-md border transition-colors ${
-                    copied === -1
-                      ? 'bg-green-500/15 text-green-400 border-green-500/30'
-                      : 'bg-[#111] text-gray-500 border-[#1f1f1f] hover:text-gray-300'
-                  }`}
-                >
-                  {copied === -1 ? 'Tout copié' : 'Copier tout'}
-                </button>
-                <span className="text-xs text-gray-600">Clic pour copier</span>
+          <div ref={resultsRef} className="mt-12">
+
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <p className={`${label9} mb-1`}>Résultats</p>
+                <p className="text-[14px] font-bold text-white">
+                  {hooks.length} hook{hooks.length > 1 ? 's' : ''} générés
+                </p>
               </div>
+              <button type="button" onClick={copyAllHooks}
+                className={`flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-lg border transition-all ${
+                  copied === -1
+                    ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10'
+                    : 'border-white/[0.09] text-gray-500 hover:text-gray-300 hover:border-white/[0.15]'
+                }`}>
+                <CopyIcon copied={copied === -1} />
+                {copied === -1 ? 'Tout copié' : 'Copier tout'}
+              </button>
             </div>
 
+            {/* Hook cards */}
             <div className="space-y-3">
               {hooks.map((hook, i) => (
-                <div
-                  key={i}
-                  className="group w-full text-left rounded-xl bg-[#0d0d0d] border border-[#1e1e1e] hover:border-[#2a2a2a] hover:bg-[#111] transition-all duration-150 px-5 py-4"
-                >
-                  <p className="text-base font-extrabold text-white tracking-wide leading-tight">
+                <div key={i}
+                  className="group relative p-5 sm:p-6 rounded-2xl bg-[#0d0d12] ring-1 ring-white/[0.07] hover:ring-white/[0.13] transition-all">
+
+                  {/* Index */}
+                  <span className={`${label9} block mb-3`}>#{i + 1}</span>
+
+                  {/* Hook text — dominant */}
+                  <p className="text-[17px] sm:text-[18px] font-extrabold text-white leading-snug tracking-tight">
                     {hook}
                   </p>
-                  <div className="mt-3 flex items-center justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={() => copyHook(hook, i)}
-                      className={`shrink-0 flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg transition-all
-                        ${copied === i
-                          ? 'bg-green-500/15 text-green-400 border border-green-500/30'
-                          : 'bg-[#1a1a1a] text-gray-600 border border-[#222] group-hover:text-gray-400'
-                        }`}
-                    >
-                      {copied === i ? (
-                        <>
-                          <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
-                            <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z" />
-                          </svg>
-                          Copié
-                        </>
-                      ) : (
-                        <>
-                          <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
-                            <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z" />
-                            <path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z" />
-                          </svg>
-                          Copier
-                        </>
-                      )}
+
+                  {/* Actions */}
+                  <div className="mt-4 flex items-center justify-end">
+                    <button type="button" onClick={() => copyHook(hook, i)}
+                      className={`flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-lg border transition-all ${
+                        copied === i
+                          ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10'
+                          : 'border-white/[0.08] text-gray-600 hover:text-gray-300 hover:border-white/[0.15]'
+                      }`}>
+                      <CopyIcon copied={copied === i} />
+                      {copied === i ? 'Copié' : 'Copier'}
                     </button>
                   </div>
                 </div>
@@ -608,135 +519,123 @@ export default function HookGeneratorPage() {
             </div>
 
             {/* Regenerate */}
-            <button
-              onClick={handleGenerate}
-            disabled={loading || used >= effectiveLimit}
-              className="mt-5 w-full py-2.5 rounded-xl bg-[#0d0d0d] border border-[#1e1e1e] hover:border-[#2a2a2a] text-sm font-semibold text-gray-500 hover:text-gray-300 transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Génération...' : '↺ Regénérer'}
+            <button onClick={handleGenerate}
+              disabled={loading || used >= effectiveLimit}
+              className="mt-4 w-full py-3 rounded-xl bg-white/[0.03] border border-white/[0.07] hover:border-white/[0.12] text-[13px] font-semibold text-gray-500 hover:text-gray-300 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+              {loading ? 'Génération…' : '↺ Regénérer'}
             </button>
           </div>
         )}
 
-        {/* ── History + favorites (Pro/Elite) ───────────────────────────────── */}
+        {/* ══ HISTORY (Pro/Elite) ══════════════════════════════════════════ */}
         {authUser && plan !== 'free' && (
-          <section className="mt-12">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-bold text-white">Historique des hooks</h3>
+          <section className="mt-16">
+
+            {/* Header */}
+            <div className="flex items-center justify-between mb-5 pb-4 border-b border-white/[0.06]">
+              <div>
+                <p className={`${label9} mb-1`}>Bibliothèque</p>
+                <p className="text-[14px] font-bold text-white">Historique des hooks</p>
+              </div>
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setHistoryFilter('all')}
-                  className={`text-xs px-2.5 py-1 rounded-md border ${
+                <button type="button" onClick={() => setHistoryFilter('all')}
+                  className={`text-[10px] font-semibold px-3 py-1.5 rounded-full border transition-all ${
                     historyFilter === 'all'
-                      ? 'border-[#2d1a4a] text-[#c084fc] bg-[#120d1f]'
-                      : 'border-[#1f1f1f] text-gray-500'
-                  }`}
-                >
-                  Tous
-                </button>
-                <button
-                  type="button"
-                  onClick={copyFavorites}
-                  disabled={!history.some((h) => h.is_favorite)}
-                  className={`text-xs px-2.5 py-1 rounded-md border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-                    copiedFavorites
-                      ? 'border-green-500/40 text-green-400 bg-green-500/10'
-                      : 'border-[#1f1f1f] text-gray-500 hover:text-gray-300'
-                  }`}
-                >
-                  {copiedFavorites ? 'Favoris copiés' : 'Copier favoris'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setHistoryFilter('favorites')}
-                  className={`text-xs px-2.5 py-1 rounded-md border ${
+                      ? 'border-vn-violet/35 text-vn-violet bg-vn-violet/10'
+                      : 'border-white/[0.09] text-gray-500 hover:text-gray-300'
+                  }`}>Tous</button>
+                <button type="button" onClick={() => setHistoryFilter('favorites')}
+                  className={`text-[10px] font-semibold px-3 py-1.5 rounded-full border transition-all ${
                     historyFilter === 'favorites'
-                      ? 'border-vn-fuchsia/40 text-vn-fuchsia bg-vn-fuchsia/5'
-                      : 'border-[#1f1f1f] text-gray-500'
-                  }`}
-                >
-                  Favoris
+                      ? 'border-vn-fuchsia/35 text-vn-fuchsia bg-vn-fuchsia/10'
+                      : 'border-white/[0.09] text-gray-500 hover:text-gray-300'
+                  }`}>Favoris</button>
+                <button type="button" onClick={copyFavorites}
+                  disabled={!history.some((h) => h.is_favorite)}
+                  className={`text-[10px] font-semibold px-3 py-1.5 rounded-full border transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                    copiedFavorites
+                      ? 'border-emerald-500/35 text-emerald-400 bg-emerald-500/10'
+                      : 'border-white/[0.09] text-gray-500 hover:text-gray-300'
+                  }`}>
+                  {copiedFavorites ? '✓ Copiés' : 'Copier favoris'}
                 </button>
               </div>
             </div>
 
-            <div className="mb-3">
-              <input
-                type="text"
-                value={historyQuery}
-                onChange={(e) => setHistoryQuery(e.target.value)}
-                placeholder="Rechercher dans l'historique..."
-                className="w-full bg-[#0d0d0d] border border-[#1e1e1e] hover:border-[#2a2a2a] focus:border-vn-violet/40 text-white text-sm placeholder-gray-700 rounded-lg px-3 py-2 outline-none transition-all"
-              />
+            {/* Search */}
+            <div className="mb-5">
+              <input type="text" value={historyQuery} onChange={(e) => setHistoryQuery(e.target.value)}
+                placeholder="Rechercher…"
+                className="w-full bg-white/[0.03] border border-white/[0.07] hover:border-white/[0.12] focus:border-vn-violet/35 text-white text-[13px] placeholder-gray-700 rounded-xl px-4 py-3 outline-none transition-all" />
             </div>
 
-            <div className="space-y-2">
-              {(historyFilter === 'favorites'
-                ? history.filter((h) => h.is_favorite)
-                : history
-              )
-                .filter((h) => {
+            {/* Items */}
+            <div>
+              {(historyFilter === 'favorites' ? history.filter(h => h.is_favorite) : history)
+                .filter(h => {
                   const q = historyQuery.trim().toLowerCase();
                   if (!q) return true;
-                  return (
-                    h.hook_text.toLowerCase().includes(q) ||
-                    (h.tone ?? '').toLowerCase().includes(q) ||
-                    (h.scene ?? '').toLowerCase().includes(q)
-                  );
+                  return h.hook_text.toLowerCase().includes(q) || (h.tone ?? '').toLowerCase().includes(q) || (h.scene ?? '').toLowerCase().includes(q);
                 })
                 .slice(0, 20)
                 .map((item) => (
-                <div
-                  key={item.id}
-                  className="rounded-lg border border-[#1a1a1a] bg-[#0d0d0d] px-3 py-2.5"
-                >
-                  <p className="text-sm font-semibold text-white">{item.hook_text}</p>
-                  <div className="mt-2 flex items-center justify-between">
-                    <span className="text-[11px] text-gray-600">
-                      {new Date(item.created_at).toLocaleDateString('fr-FR')} · {item.tone}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => toggleFavorite(item)}
-                        className={`text-[11px] px-2 py-1 rounded-md border ${
+                  <div key={item.id}
+                    className="group flex items-start gap-4 py-4 border-b border-white/[0.05] last:border-none hover:border-white/[0.08] transition-colors">
+
+                    {/* Text */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-semibold text-gray-300 leading-snug mb-1">{item.hook_text}</p>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <span className="text-[10px] text-gray-700">{new Date(item.created_at).toLocaleDateString('fr-FR')}</span>
+                        <span className="text-gray-700">·</span>
+                        <span className="text-[10px] text-gray-700">{item.tone}</span>
+                        {item.is_favorite && <span className="text-[10px] text-vn-fuchsia">★ Favori</span>}
+                      </div>
+                    </div>
+
+                    {/* Actions — visible on hover */}
+                    <div className="flex items-center gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity pt-0.5">
+                      <button type="button" onClick={() => copyHook(item.hook_text, -99)}
+                        className="text-[10px] font-medium px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-gray-500 hover:text-gray-200 hover:border-white/[0.15] transition-all">
+                        Copier
+                      </button>
+                      <button type="button" onClick={() => toggleFavorite(item)}
+                        className={`text-[12px] px-2.5 py-1.5 rounded-lg border transition-all ${
                           item.is_favorite
-                            ? 'border-vn-fuchsia/40 text-vn-fuchsia bg-vn-fuchsia/5'
-                            : 'border-[#1f1f1f] text-gray-500'
-                        }`}
-                      >
-                        {item.is_favorite ? 'Favori' : 'Ajouter'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => deleteHistoryItem(item)}
-                        className="text-[11px] px-2 py-1 rounded-md border border-red-500/20 text-red-400 hover:bg-red-500/10 transition-colors"
-                      >
-                        Supprimer
-                      </button>
+                            ? 'border-vn-fuchsia/30 text-vn-fuchsia bg-vn-fuchsia/10'
+                            : 'bg-white/[0.04] border-white/[0.08] text-gray-500 hover:text-vn-fuchsia hover:border-vn-fuchsia/25'
+                        }`}>★</button>
+                      <button type="button" onClick={() => deleteHistoryItem(item)}
+                        className="text-[10px] font-medium px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-gray-600 hover:text-red-400 hover:border-red-500/25 transition-all">×</button>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
 
               {!loadingHistory && history.length === 0 && (
-                <p className="text-xs text-gray-600 text-center py-4">
+                <p className="text-[12px] text-gray-600 text-center py-8">
                   Aucun hook enregistré pour le moment.
                 </p>
+              )}
+
+              {loadingHistory && (
+                <div className="space-y-3 pt-2">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="h-10 rounded-xl bg-white/[0.02] animate-pulse" />
+                  ))}
+                </div>
               )}
             </div>
           </section>
         )}
 
-        {/* ── Loading skeleton ─────────────────────────────────────────────────── */}
-        {loading && hooks.length === 0 && (
-          <div className="mt-10 space-y-3">
-            {Array.from({ length: count }).map((_, i) => (
-              <div key={i} className="h-16 rounded-xl bg-[#0d0d0d] border border-[#1e1e1e] animate-pulse" />
-            ))}
-          </div>
-        )}
+        {/* ══ BOTTOM CTA ══════════════════════════════════════════════════ */}
+        <div className="mt-16 pt-8 border-t border-white/[0.06] flex items-center justify-between gap-4">
+          <p className="text-[12px] text-gray-600">Analyse ta prochaine vidéo pour identifier ce qui bloque.</p>
+          <Link href="/analyzer"
+            className="shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-semibold text-white/70 bg-white/[0.04] border border-white/[0.09] hover:bg-white/[0.07] hover:border-white/[0.15] transition-all">
+            Analyser →
+          </Link>
+        </div>
 
       </div>
     </main>
