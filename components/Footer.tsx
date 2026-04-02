@@ -148,25 +148,7 @@ export default function Footer() {
 
         {/* Bottom bar */}
         <div className="mt-12 pt-7 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-4">
-          {/* Socials */}
-          <div className="flex items-center gap-4">
-            {[
-              { icon: <IconTiktok />, href: 'https://tiktok.com', label: 'TikTok' },
-              { icon: <IconInstagram />, href: 'https://instagram.com', label: 'Instagram' },
-              { icon: <IconTwitter />, href: 'https://x.com', label: 'X / Twitter' },
-            ].map(({ icon, href, label }) => (
-              <a
-                key={label}
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={label}
-                className="w-7 h-7 flex items-center justify-center text-gray-600 hover:text-white transition-colors"
-              >
-                {icon}
-              </a>
-            ))}
-          </div>
+          <div />
           {/* Copyright */}
           <p className="text-[11.5px] text-gray-700">
             Copyright &copy; {YEAR} Viralynz. Tous droits réservés.
