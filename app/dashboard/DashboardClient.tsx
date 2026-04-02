@@ -197,6 +197,86 @@ function AnalysisHistoryItem({ row }: { row: AnalysisRow }) {
   );
 }
 
+const PAGE_SIZE = 10;
+
+function AnalysisHistoryPaginated({ analyses }: { analyses: AnalysisRow[] }) {
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(analyses.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const slice = analyses.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  return (
+    <div className="space-y-3">
+      <div className="space-y-2">
+        {slice.map((row) => (
+          <AnalysisHistoryItem key={row.id} row={row} />
+        ))}
+      </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-1.5 pt-2">
+          {/* Prev */}
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={safePage === 1}
+            className="w-8 h-8 rounded-lg flex items-center justify-center border border-[#1a1a1a] bg-[#111] text-gray-500 hover:text-white hover:border-[#2a2a2a] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            aria-label="Page précédente"
+          >
+            <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
+              <path fillRule="evenodd" d="M9.78 4.22a.75.75 0 0 1 0 1.06L7.06 8l2.72 2.72a.75.75 0 1 1-1.06 1.06L5.47 8.53a.75.75 0 0 1 0-1.06l3.25-3.25a.75.75 0 0 1 1.06 0Z" clipRule="evenodd" />
+            </svg>
+          </button>
+
+          {/* Page numbers */}
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => {
+            const isActive = n === safePage;
+            const isNear = Math.abs(n - safePage) <= 1 || n === 1 || n === totalPages;
+            if (!isNear) {
+              // Show ellipsis only at the boundaries
+              if (n === 2 && safePage > 3) return <span key={n} className="text-[11px] text-gray-600 px-0.5">…</span>;
+              if (n === totalPages - 1 && safePage < totalPages - 2) return <span key={n} className="text-[11px] text-gray-600 px-0.5">…</span>;
+              return null;
+            }
+            return (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setPage(n)}
+                className={`w-8 h-8 rounded-lg text-[12px] font-semibold border transition-all ${
+                  isActive
+                    ? 'bg-gradient-to-br from-vn-fuchsia/30 to-vn-indigo/30 border-vn-fuchsia/40 text-white'
+                    : 'border-[#1a1a1a] bg-[#111] text-gray-500 hover:text-white hover:border-[#2a2a2a]'
+                }`}
+              >
+                {n}
+              </button>
+            );
+          })}
+
+          {/* Next */}
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={safePage === totalPages}
+            className="w-8 h-8 rounded-lg flex items-center justify-center border border-[#1a1a1a] bg-[#111] text-gray-500 hover:text-white hover:border-[#2a2a2a] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            aria-label="Page suivante"
+          >
+            <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
+              <path fillRule="evenodd" d="M6.22 4.22a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06L7.28 11.78a.75.75 0 0 1-1.06-1.06L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
+            </svg>
+          </button>
+
+          {/* Count */}
+          <span className="ml-2 text-[11px] text-gray-600">
+            {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, analyses.length)} / {analyses.length}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function DashboardClient({
   email,
   plan,
@@ -673,12 +753,8 @@ export default function DashboardClient({
             <p className="text-xs text-gray-600 mt-1">Lance ta première analyse pour la retrouver ici.</p>
           </div>
         ) : (
-          /* List of analyses */
-          <div className="space-y-2">
-            {analyses.map((row) => (
-              <AnalysisHistoryItem key={row.id} row={row} />
-            ))}
-          </div>
+          /* List of analyses with pagination */
+          <AnalysisHistoryPaginated analyses={analyses} />
         )}
       </div>
 

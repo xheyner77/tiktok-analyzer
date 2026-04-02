@@ -462,7 +462,7 @@ export default function Home() {
               <p className="text-xs text-gray-600">Aucune analyse r&eacute;cente.</p>
             ) : (
               <div className="space-y-2">
-                {sortedHistory.slice(0, 8).map((item) => (
+                {sortedHistory.slice(0, 5).map((item) => (
                   <div
                     key={item.id}
                     className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2 rounded-xl border border-white/[0.07] bg-white/[0.03] px-3.5 py-3 hover:border-white/[0.12] transition-colors"
@@ -515,6 +515,19 @@ export default function Home() {
                     </div>
                   </div>
                 ))}
+                {sortedHistory.length > 5 && (
+                  <div className="pt-1 flex items-center justify-between">
+                    <p className="text-[11px] text-gray-600">
+                      {sortedHistory.length - 5} analyse{sortedHistory.length - 5 > 1 ? 's' : ''} de plus dans ton dashboard
+                    </p>
+                    <a
+                      href="/dashboard"
+                      className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-gradient-to-r from-vn-fuchsia/20 to-vn-indigo/20 border border-vn-fuchsia/25 text-vn-fuchsia hover:from-vn-fuchsia/30 hover:to-vn-indigo/30 transition-all"
+                    >
+                      Voir tout l&apos;historique →
+                    </a>
+                  </div>
+                )}
               </div>
             )}
           </div>
