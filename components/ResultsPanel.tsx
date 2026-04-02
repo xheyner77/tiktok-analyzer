@@ -119,13 +119,8 @@ function SectionCard({ title, section }: { title: string; section: SectionData }
   const s = section.score ?? 0;
   const qb = qualityBadge(s);
 
-  useEffect(() => {
-    console.log(`[DEBUG][SectionCard "${title}"] score:${s}`);
-  }, [title, s]);
-
   return (
     <div className="rounded-xl border border-white/[0.08] bg-[#111118] p-3 sm:p-4">
-      {/* Header: title left, score + badge right — score always white like mockup */}
       <div className="flex items-center justify-between gap-2 mb-2">
         <p className="text-[11px] font-bold text-white">{title}</p>
         <div className="flex items-center gap-1.5 shrink-0">
@@ -136,14 +131,18 @@ function SectionCard({ title, section }: { title: string; section: SectionData }
 
       <PBar pct={s} colorCls={scoreBarColor(s)} />
 
+      {section.analysis && section.analysis.trim().length > 0 && (
+        <p className="mt-2 text-[10px] text-gray-400 leading-snug">{section.analysis}</p>
+      )}
+
       <div className="mt-2.5 space-y-1.5">
         {(section.strengths?.length ?? 0) > 0 && (
           <>
             <p className="text-[8px] uppercase tracking-[0.18em] text-gray-600 font-bold">Points forts</p>
-            {(section.strengths ?? []).slice(0, 2).map((f, i) => (
-              <div key={i} className="flex items-center gap-1.5">
-                <span className="text-emerald-400 text-[10px] font-bold shrink-0">✓</span>
-                <span className="text-[10px] text-gray-400">{f}</span>
+            {(section.strengths ?? []).slice(0, 3).map((f, i) => (
+              <div key={i} className="flex items-start gap-1.5">
+                <span className="text-emerald-400 text-[10px] font-bold shrink-0 mt-px">✓</span>
+                <span className="text-[10px] text-gray-400 leading-snug">{f}</span>
               </div>
             ))}
           </>
@@ -151,10 +150,10 @@ function SectionCard({ title, section }: { title: string; section: SectionData }
         {(section.weaknesses?.length ?? 0) > 0 && (
           <>
             <p className="text-[8px] uppercase tracking-[0.18em] text-gray-600 font-bold pt-1">Points faibles</p>
-            {(section.weaknesses ?? []).slice(0, 2).map((w, i) => (
-              <div key={i} className="flex items-center gap-1.5">
-                <span className="text-red-400 text-[10px] font-bold shrink-0">×</span>
-                <span className="text-[10px] text-gray-400">{w}</span>
+            {(section.weaknesses ?? []).slice(0, 3).map((w, i) => (
+              <div key={i} className="flex items-start gap-1.5">
+                <span className="text-red-400 text-[10px] font-bold shrink-0 mt-px">×</span>
+                <span className="text-[10px] text-gray-400 leading-snug">{w}</span>
               </div>
             ))}
           </>
@@ -171,9 +170,6 @@ function RecoCard({ improvements, plan }: { improvements: Improvement[]; plan: '
   const visible = plan === 'free' ? improvements.slice(0, VISIBLE_FREE) : improvements;
   const locked  = plan === 'free' ? improvements.slice(VISIBLE_FREE) : [];
 
-  useEffect(() => {
-    console.log('[DEBUG][RecoCard] received', improvements.length, 'improvements');
-  }, [improvements]);
 
   return (
     <div className="rounded-xl border border-white/[0.08] bg-[#111118] p-3 sm:p-4">
@@ -257,9 +253,6 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
   const fmt = (v?: number) =>
     v == null ? '—' : new Intl.NumberFormat('fr-FR', { notation: 'compact', maximumFractionDigits: 1 }).format(v);
 
-  useEffect(() => {
-    console.log('[DEBUG][ResultsPanel] plan:', plan, '| viralScore:', viralScore);
-  }, [data, plan]);
 
   return (
     <div className="relative overflow-hidden bg-[#0d0d12] rounded-[1.1rem] sm:rounded-[1.3rem] ring-1 ring-white/[0.10] shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_48px_120px_-30px_rgba(0,0,0,0.95)] text-white animate-fade-up">
@@ -291,7 +284,7 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
       </div>
 
       {/* ── Two-column dashboard ── */}
-      <div className="flex flex-col md:flex-row min-h-0">
+      <div className="flex flex-col md:flex-row md:items-start min-h-0">
 
         {/* ── Left column ── */}
         <div className="flex-1 min-w-0 flex flex-col gap-3 p-4 sm:p-5 md:border-r border-white/[0.05]">
@@ -427,7 +420,7 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
             </div>
             <div className="rounded-xl bg-white/[0.03] border border-white/[0.07] p-3">
               <p className="text-[8px] uppercase tracking-wide text-gray-600 font-bold mb-1">Verdict final</p>
-              <p className="text-[9px] text-gray-400 leading-snug mt-1 line-clamp-3">
+              <p className="text-[9px] text-gray-400 leading-snug mt-1">
                 {data.finalVerdict ?? 'Voir les sections ci-dessous.'}
               </p>
             </div>
@@ -445,7 +438,7 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
         </div>
 
         {/* ── Right column ── */}
-        <div className="w-full md:w-[260px] xl:w-[280px] shrink-0 flex flex-col gap-3 p-4 sm:p-5 md:pt-4">
+        <div className="w-full md:w-[300px] xl:w-[340px] shrink-0 flex flex-col gap-3 p-4 sm:p-5 md:pt-4">
 
           <SectionCard
             title="Analyse du Hook"
