@@ -10,27 +10,19 @@ interface ResultsPanelProps {
   onReset?: () => void;
 }
 
-/* ══ Color helpers ══════════════════════════════════════════════════════════ */
+/* ── Color helpers ─────────────────────────────────────────────────────── */
 
-function gc(score: number) {
-  if (score >= 80) return { grad1: '#34d399', grad2: '#6ee7b7', glow: 'rgba(52,211,153,0.5)',  text: 'text-emerald-400', heroBg: 'rgba(52,211,153,0.07)'  };
-  if (score >= 60) return { grad1: '#f59e0b', grad2: '#fbbf24', glow: 'rgba(251,191,36,0.5)',  text: 'text-amber-400',   heroBg: 'rgba(251,191,36,0.06)'  };
-  if (score >= 35) return { grad1: '#f97316', grad2: '#fb923c', glow: 'rgba(249,115,22,0.5)',  text: 'text-orange-400',  heroBg: 'rgba(249,115,22,0.06)'  };
-  return              { grad1: '#f87171', grad2: '#fca5a5', glow: 'rgba(248,113,113,0.5)', text: 'text-red-400',     heroBg: 'rgba(248,113,113,0.06)' };
+function scoreColors(s: number) {
+  if (s >= 80) return { hex: '#34d399', glow: 'rgba(52,211,153,0.35)',  grad1: '#34d399', grad2: '#6ee7b7' };
+  if (s >= 60) return { hex: '#f59e0b', glow: 'rgba(251,191,36,0.35)',  grad1: '#f59e0b', grad2: '#fbbf24' };
+  if (s >= 35) return { hex: '#f97316', glow: 'rgba(249,115,22,0.35)',  grad1: '#f97316', grad2: '#fb923c' };
+  return              { hex: '#f87171', glow: 'rgba(248,113,113,0.35)', grad1: '#f87171', grad2: '#fca5a5' };
 }
 
 function scoreBarCls(s: number) {
   return s >= 70 ? 'bg-emerald-400' : s >= 40 ? 'bg-amber-400' : 'bg-red-400';
 }
-function scoreTxtCls(s: number) {
-  return s >= 70 ? 'text-emerald-400' : s >= 40 ? 'text-amber-400' : 'text-red-400';
-}
-function qBadge(s: number) {
-  if (s >= 80) return { label: 'Excellent', cls: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/25' };
-  if (s >= 70) return { label: 'Bon',       cls: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/25' };
-  if (s >= 40) return { label: 'Moyen',     cls: 'bg-amber-400/20  text-amber-300  border border-amber-400/25'   };
-  return              { label: 'Faible',    cls: 'bg-red-500/20    text-red-300    border border-red-500/25'     };
-}
+
 function viralBadge(s: number) {
   if (s >= 85) return { label: 'Viral',          cls: 'bg-emerald-400/15 text-emerald-300 border border-emerald-400/20' };
   if (s >= 75) return { label: 'Fort potentiel', cls: 'bg-emerald-400/15 text-emerald-300 border border-emerald-400/20' };
@@ -38,522 +30,502 @@ function viralBadge(s: number) {
   if (s >= 40) return { label: 'En progression', cls: 'bg-orange-400/15 text-orange-300 border border-orange-400/20' };
   return              { label: 'À améliorer',    cls: 'bg-red-500/15    text-red-300    border border-red-500/20'    };
 }
-const PRIORITY_CLS: Record<string, string> = {
-  haute:   'bg-red-500/20   text-red-300   border border-red-500/25',
-  moyenne: 'bg-amber-400/20 text-amber-300 border border-amber-400/25',
-  basse:   'bg-blue-500/20  text-blue-300  border border-blue-500/25',
-};
-function compData(score: number) {
-  if (score >= 85) return { pct: 3,  grad: 'bg-gradient-to-r from-emerald-500 to-emerald-400', txt: 'text-emerald-400' };
-  if (score >= 70) return { pct: 10, grad: 'bg-gradient-to-r from-emerald-500 to-emerald-400', txt: 'text-emerald-400' };
-  if (score >= 55) return { pct: 22, grad: 'bg-gradient-to-r from-amber-500 to-amber-400',     txt: 'text-amber-400'  };
-  if (score >= 40) return { pct: 40, grad: 'bg-gradient-to-r from-amber-500 to-amber-400',     txt: 'text-amber-400'  };
-  if (score >= 25) return { pct: 60, grad: 'bg-gradient-to-r from-red-500 to-red-400',         txt: 'text-red-400'    };
-  return                  { pct: 78, grad: 'bg-gradient-to-r from-red-500 to-red-400',         txt: 'text-red-400'    };
+
+function compBenchmark(s: number) {
+  if (s >= 85) return { pct: 3,  grad: 'from-emerald-500 to-emerald-400', hex: '#34d399' };
+  if (s >= 70) return { pct: 10, grad: 'from-emerald-500 to-emerald-400', hex: '#34d399' };
+  if (s >= 55) return { pct: 22, grad: 'from-amber-500 to-amber-400',     hex: '#f59e0b' };
+  if (s >= 40) return { pct: 40, grad: 'from-amber-500 to-amber-400',     hex: '#f59e0b' };
+  if (s >= 25) return { pct: 60, grad: 'from-red-500 to-red-400',         hex: '#f87171' };
+  return              { pct: 78, grad: 'from-red-500 to-red-400',         hex: '#f87171' };
 }
 
-/* ══ Smart text helpers ══════════════════════════════════════════════════════ */
+/* ── Smart text helpers ─────────────────────────────────────────────────── */
 
 function buildSummary(data: AnalysisResult): string {
-  const v = data.viralityScore;
-  const h = data.hook?.score ?? 0;
-  const e = data.editing?.score ?? 0;
-  const r = data.retention?.score ?? 0;
-  if (v >= 85) return 'Excellente vid\u00e9o\u00a0\u2014 potentiel viral tr\u00e8s fort, continue dans cette direction.';
-  if (v >= 75) return 'Tr\u00e8s bonne vid\u00e9o\u00a0\u2014 quelques optimisations pour atteindre le niveau viral.';
+  const v = data.viralityScore, h = data.hook?.score ?? 0,
+        e = data.editing?.score ?? 0, r = data.retention?.score ?? 0;
+  if (v >= 85) return 'Excellente vid\u00e9o \u2014 potentiel viral tr\u00e8s fort.';
+  if (v >= 75) return 'Tr\u00e8s bonne vid\u00e9o \u2014 optimise les d\u00e9tails pour le viral.';
   const weak = [
     { label: 'hook',      score: h },
     { label: 'montage',   score: e },
     { label: 'r\u00e9tention', score: r },
   ].filter(d => d.score < 60).sort((a, b) => a.score - b.score);
-  if (weak.length >= 2) return `Ta vid\u00e9o a du potentiel mais est bloqu\u00e9e par le\u00a0${weak[0].label} et la\u00a0${weak[1].label}.`;
+  if (weak.length >= 2) return `Ta vid\u00e9o perd des vues \u00e0 cause du\u00a0${weak[0].label} et de la\u00a0${weak[1].label}.`;
   if (weak.length === 1) {
-    if (weak[0].label === 'hook')      return 'Ta vid\u00e9o perd son audience d\u00e8s les premi\u00e8res secondes\u00a0\u2014 le hook est la priorit\u00e9 absolue.';
-    if (weak[0].label === 'montage')   return 'Le contenu est int\u00e9ressant mais le montage freine l\u2019engagement.';
-    return 'Le d\u00e9but est bon mais la vid\u00e9o perd son audience trop rapidement.';
+    if (weak[0].label === 'hook')    return 'Ta vid\u00e9o d\u00e9croche en hook \u2014 l\u2019audience part avant 3\u00a0secondes.';
+    if (weak[0].label === 'montage') return 'Ta vid\u00e9o perd des vues \u00e0 cause du montage.';
+    return 'Ta vid\u00e9o perd son audience trop rapidement.';
   }
-  return data.finalVerdict?.trim() || 'Ta vid\u00e9o est correcte\u00a0\u2014 quelques optimisations peuvent la faire d\u00e9coller.';
+  const verdict = data.finalVerdict?.trim();
+  if (verdict) return verdict.split('.')[0] + '.';
+  return 'Ta vid\u00e9o est correcte \u2014 corrige les points faibles pour d\u00e9coller.';
 }
 
-function getBlockers(data: AnalysisResult) {
+function deriveMainProblem(data: AnalysisResult): string {
   const dims = [
-    { label: 'Hook',      icon: '🎣', score: data.hook?.score ?? 0,      reason: data.hook?.weaknesses?.[0] },
-    { label: 'Montage',   icon: '✂️', score: data.editing?.score ?? 0,   reason: data.editing?.weaknesses?.[0] },
-    { label: 'R\u00e9tention', icon: '📉', score: data.retention?.score ?? 0, reason: data.retention?.weaknesses?.[0] },
+    { label: 'Hook',      score: data.hook?.score ?? 0,      weakness: data.hook?.weaknesses?.[0] },
+    { label: 'Montage',   score: data.editing?.score ?? 0,   weakness: data.editing?.weaknesses?.[0] },
+    { label: 'R\u00e9tention', score: data.retention?.score ?? 0, weakness: data.retention?.weaknesses?.[0] },
   ].sort((a, b) => a.score - b.score);
-  const out: { label: string; icon: string; score: number; reason: string }[] = [];
-  for (const d of dims) {
-    if (d.score < 72 && out.length < 3) {
-      out.push({ label: d.label, icon: d.icon, score: d.score, reason: d.reason ?? `Score\u00a0${d.score}/100\u00a0\u2014 \u00e0 am\u00e9liorer` });
-    }
-  }
-  for (const imp of (data.improvements ?? []).filter(i => i.priority === 'haute')) {
-    if (out.length >= 3) break;
-    out.push({ label: 'Correction', icon: '\u26a0\ufe0f', score: 0, reason: imp.tip });
-  }
-  return out.slice(0, 3);
+  const w = dims[0];
+  if (w.weakness) return w.weakness;
+  const fallbacks: Record<string, string> = {
+    'Hook':      'Hook insuffisant \u2014 l\u2019audience d\u00e9croche avant 3\u00a0secondes.',
+    'Montage':   'Montage trop lent \u2014 perte d\u2019attention au milieu.',
+    'R\u00e9tention': 'R\u00e9tention faible \u2014 la vid\u00e9o n\u2019est pas regard\u00e9e jusqu\u2019au bout.',
+  };
+  return fallbacks[w.label] ?? 'Optimisation n\u00e9cessaire pour am\u00e9liorer les performances.';
 }
 
-function topRecoFor(improvements: Improvement[], kws: string[]): string | undefined {
-  const sorted = [...improvements].sort((a, b) => {
+function deriveProjection(data: AnalysisResult): { label: string; gain: number } | null {
+  const dims = [
+    { label: 'le hook',      score: data.hook?.score ?? 0 },
+    { label: 'le montage',   score: data.editing?.score ?? 0 },
+    { label: 'la r\u00e9tention', score: data.retention?.score ?? 0 },
+  ].filter(d => d.score < 72).sort((a, b) => a.score - b.score);
+  if (!dims.length) return null;
+  const gain = Math.round(dims.slice(0, 2).reduce((sum, d) => sum + Math.max(0, 75 - d.score) * 0.45, 0));
+  if (gain < 5) return null;
+  return { label: `En am\u00e9liorant\u00a0${dims[0].label}`, gain };
+}
+
+function findReco(improvs: Improvement[], kws: string[]): string | undefined {
+  const byPriority = [...improvs].sort((a, b) => {
     const o: Record<string, number> = { haute: 0, moyenne: 1, basse: 2 };
     return (o[a.priority] ?? 1) - (o[b.priority] ?? 1);
   });
-  return sorted.find(i => kws.some(kw => i.tip.toLowerCase().includes(kw)))?.tip ?? sorted[0]?.tip;
+  return byPriority.find(i => kws.some(k => i.tip.toLowerCase().includes(k)))?.tip ?? byPriority[0]?.tip;
 }
 
-/* ══ Sub-components ══════════════════════════════════════════════════════════ */
+/* ── Animated components ────────────────────────────────────────────────── */
 
 function PBar({ pct, cls }: { pct: number; cls: string }) {
   const [w, setW] = useState(0);
-  useEffect(() => { const t = setTimeout(() => setW(pct), 400); return () => clearTimeout(t); }, [pct]);
+  useEffect(() => { const t = setTimeout(() => setW(pct), 500); return () => clearTimeout(t); }, [pct]);
   return (
-    <div className="h-1.5 rounded-full bg-white/[0.07] overflow-hidden">
-      <div className={`h-full rounded-full ${cls}`} style={{ width: `${w}%`, transition: 'width 0.9s cubic-bezier(0.4,0,0.2,1)' }} />
+    <div className="h-[3px] rounded-full bg-white/[0.07] overflow-hidden">
+      <div className={`h-full rounded-full ${cls}`}
+        style={{ width: `${w}%`, transition: 'width 1s cubic-bezier(0.4,0,0.2,1)' }} />
     </div>
   );
 }
 
-function Gauge({ value, colors }: { value: number; colors: ReturnType<typeof gc> }) {
+function Gauge({ value }: { value: number }) {
   const [anim, setAnim] = useState(0);
-  useEffect(() => { const t = setTimeout(() => setAnim(value), 250); return () => clearTimeout(t); }, [value]);
-  const size = 124, r = (size - 16) / 2, circ = 2 * Math.PI * r;
+  useEffect(() => { const t = setTimeout(() => setAnim(value), 200); return () => clearTimeout(t); }, [value]);
+  const c = scoreColors(value);
+  const size = 136, r = (size - 16) / 2, circ = 2 * Math.PI * r;
   const dash = circ * (anim / 100), gap = circ - dash;
-  const id = `gg${value}`;
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0 -rotate-90">
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" />
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={`url(#${id})`} strokeWidth="10" strokeLinecap="round"
-        strokeDasharray={`${dash} ${gap}`}
-        style={{ filter: `drop-shadow(0 0 10px ${colors.glow})`, transition: 'stroke-dasharray 1.2s cubic-bezier(0.4,0,0.2,1)' }} />
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90 shrink-0">
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="10" />
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={`url(#g${value})`} strokeWidth="10"
+        strokeLinecap="round" strokeDasharray={`${dash} ${gap}`}
+        style={{ filter: `drop-shadow(0 0 12px ${c.glow})`, transition: 'stroke-dasharray 1.4s cubic-bezier(0.4,0,0.2,1)' }} />
       <defs>
-        <linearGradient id={id} x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%"   stopColor={colors.grad1} />
-          <stop offset="100%" stopColor={colors.grad2} />
+        <linearGradient id={`g${value}`} x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stopColor={c.grad1} />
+          <stop offset="100%" stopColor={c.grad2} />
         </linearGradient>
       </defs>
     </svg>
   );
 }
 
-/* ══ Main ResultsPanel ══════════════════════════════════════════════════════ */
+function Hr() { return <div className="border-t border-white/[0.06]" />; }
+
+/* ── Main component ─────────────────────────────────────────────────────── */
 
 export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps) {
-  const vs   = typeof data.viralityScore === 'number' ? data.viralityScore : 0;
-  const ss   = data.structureScore ?? vs;
-  const colors = gc(vs);
-  const vb   = viralBadge(vs);
-  const { pct: topPct, grad: compGrad, txt: compTxt } = compData(ss);
-  const barW = Math.max(4, 100 - topPct);
+  const vs      = typeof data.viralityScore === 'number' ? data.viralityScore : 0;
+  const ss      = data.structureScore ?? vs;
+  const sc      = scoreColors(vs);
+  const vb      = viralBadge(vs);
+  const bench   = compBenchmark(ss);
+  const metrics = data.observedMetrics ?? {};
+  const meta    = data.detectedVideoMeta;
+  const hasStats = Object.values(metrics).some(v => v != null);
 
-  const metrics    = data.observedMetrics ?? {};
-  const meta       = data.detectedVideoMeta;
-  const hasMetrics = Object.values(metrics).some(v => v != null);
+  const summary    = buildSummary(data);
+  const mainProb   = deriveMainProblem(data);
+  const projection = deriveProjection(data);
 
-  const summary  = buildSummary(data);
-  const blockers = getBlockers(data);
-  const improvs  = data.improvements ?? [];
-  const sortedImprovs = [...improvs].sort((a, b) => {
+  const improvs = data.improvements ?? [];
+  const sorted  = [...improvs].sort((a, b) => {
     const o: Record<string, number> = { haute: 0, moyenne: 1, basse: 2 };
     return (o[a.priority] ?? 1) - (o[b.priority] ?? 1);
   });
+  const VISIBLE_FREE = 3;
+  const visible = plan === 'free' ? sorted.slice(0, VISIBLE_FREE) : sorted.slice(0, 5);
+  const locked  = plan === 'free' ? Math.max(0, sorted.length - VISIBLE_FREE) : 0;
 
-  const hookReco   = topRecoFor(improvs, ['hook', 'accroche', 'début', 'intro', 'premi']);
-  const editReco   = topRecoFor(improvs, ['montage', 'transition', 'cut', 'coupe', 'rythme', 'effet']);
-  const retentReco = topRecoFor(improvs, ['rétention', 'audience', 'attention', 'interrupt', 'rebond', 'cta']);
+  const hookReco   = findReco(improvs, ['hook', 'accroche', 'début', 'intro', 'premi']);
+  const editReco   = findReco(improvs, ['montage', 'transition', 'cut', 'rythme', 'coupe']);
+  const retentReco = findReco(improvs, ['rétention', 'audience', 'attention', 'interrupt', 'rebond']);
 
-  const VISIBLE_FREE  = 3;
-  const visibleImprovs = plan === 'free' ? sortedImprovs.slice(0, VISIBLE_FREE) : sortedImprovs;
-  const lockedImprovs  = plan === 'free' ? sortedImprovs.slice(VISIBLE_FREE) : [];
+  const pillars = [
+    { title: 'Hook',       s: data.hook,      reco: hookReco   },
+    { title: 'Montage',    s: data.editing,   reco: editReco   },
+    { title: 'Rétention',  s: data.retention, reco: retentReco },
+  ];
 
   const fmt = (v?: number) =>
     v == null ? '—' : new Intl.NumberFormat('fr-FR', { notation: 'compact', maximumFractionDigits: 1 }).format(v);
-  const statsSource =
-    data.observedStatsSource === 'live_page'   ? 'Source\u00a0: page TikTok' :
-    data.observedStatsSource === 'live_oembed' ? 'Source\u00a0: oEmbed'      :
-    data.observedStatsSource === 'cache'       ? 'Source\u00a0: cache'       : 'Stats partielles';
 
-  const pillars = [
-    { title: 'Hook',      section: data.hook,      reco: hookReco,   idx: 0 },
-    { title: 'Montage',   section: data.editing,   reco: editReco,   idx: 1 },
-    { title: 'R\u00e9tention', section: data.retention, reco: retentReco, idx: 2 },
-  ];
+  const label9 = 'text-[9px] font-bold uppercase tracking-[0.24em] text-gray-600';
 
   return (
-    <div className="relative overflow-hidden bg-[#0d0d12] rounded-[1.1rem] sm:rounded-[1.3rem] ring-1 ring-white/[0.10] text-white">
-      {/* Top shimmer */}
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none z-10" aria-hidden />
+    <div className="bg-[#0d0d12] rounded-[1.25rem] ring-1 ring-white/[0.08] text-white overflow-hidden">
 
-      {/* ══ 1. HERO RÉSULTAT ══════════════════════════════════════════════ */}
-      <div
-        className="relative overflow-hidden border-b border-white/[0.07]"
-        style={{ background: `linear-gradient(135deg, ${colors.heroBg} 0%, transparent 60%)` }}
-      >
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{ background: `radial-gradient(ellipse at 8% 50%, ${colors.glow.replace('0.5','0.08')}, transparent 55%)` }}
-          aria-hidden
-        />
-        <div className="relative px-5 sm:px-8 py-7 sm:py-9 flex flex-col sm:flex-row items-start sm:items-center gap-6 sm:gap-10">
+      {/* ── Top accent line ── */}
+      <div className="h-px bg-gradient-to-r from-transparent via-white/12 to-transparent" />
 
-          {/* Gauge */}
+      {/* ══════════════════════════════════════════════════════════════════
+          1. HERO
+      ══════════════════════════════════════════════════════════════════ */}
+      <div className="px-7 sm:px-10 pt-10 pb-8">
+
+        <p className={`${label9} mb-6`}>Résultat d&apos;analyse · Viralynz</p>
+
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-7 sm:gap-10">
+
+          {/* Gauge ring */}
           <div className="relative shrink-0">
-            <Gauge value={vs} colors={colors} />
+            <Gauge value={vs} />
             <div className="absolute inset-0 flex flex-col items-center justify-center rotate-90">
-              <span className={`text-[2.4rem] font-black leading-none tabular-nums ${colors.text}`}
-                style={{ textShadow: `0 0 28px ${colors.glow}` }}>
+              <span className="text-[3.2rem] font-black leading-none tabular-nums"
+                style={{ color: sc.hex, textShadow: `0 0 48px ${sc.glow}` }}>
                 {vs}
               </span>
-              <span className="text-[10px] text-gray-500 font-medium">/100</span>
+              <span className="text-[10px] text-gray-600 mt-0.5">/100</span>
             </div>
           </div>
 
-          {/* Text zone */}
+          {/* Right — status + headline + pillar scores */}
           <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-2 mb-3">
-              <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest ${vb.cls}`}>
-                {vb.label}
-              </span>
+
+            {/* Badges */}
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <span className={`text-[10px] font-bold px-3 py-1 rounded-full ${vb.cls}`}>{vb.label}</span>
               {data.analysisSource === 'vision_upload' && (
-                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-vn-fuchsia/20 text-vn-fuchsia border border-vn-fuchsia/25 uppercase tracking-wide">
+                <span className="text-[9px] font-bold px-2.5 py-0.5 rounded-full bg-vn-fuchsia/15 text-vn-fuchsia border border-vn-fuchsia/20 uppercase tracking-wide">
                   Vision IA
                 </span>
               )}
               {data.overperformanceDetected && (
-                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-vn-fuchsia/20 text-vn-fuchsia border border-vn-fuchsia/20">
+                <span className="text-[9px] font-bold px-2.5 py-0.5 rounded-full bg-vn-fuchsia/15 text-vn-fuchsia border border-vn-fuchsia/20">
                   ⚡ Surperformance
                 </span>
               )}
             </div>
 
-            <p className="text-[1.15rem] sm:text-[1.3rem] font-bold text-white leading-snug mb-5">
+            {/* Headline — 1 impactful sentence */}
+            <p className="text-[1.25rem] sm:text-[1.45rem] font-bold text-white leading-tight mb-6 max-w-lg">
               {summary}
             </p>
 
-            {/* Pillar mini-scores */}
-            <div className="flex gap-2 sm:gap-3">
-              {pillars.map(({ title, section }) => {
-                const s = section?.score ?? 0;
+            {/* Pillar scores — inline, typographic */}
+            <div className="flex gap-7 sm:gap-10">
+              {pillars.map(({ title, s }) => {
+                const score = s?.score ?? 0;
+                const c = scoreColors(score);
                 return (
-                  <div key={title} className="flex-1 max-w-[96px] rounded-xl bg-white/[0.06] border border-white/[0.09] px-3 py-2.5 text-center">
-                    <p className="text-[9px] text-gray-500 mb-1.5 font-medium">{title}</p>
-                    <p className={`text-[18px] font-black leading-none tabular-nums ${scoreTxtCls(s)}`}>{s}</p>
+                  <div key={title}>
+                    <p className={`${label9} mb-1`}>{title}</p>
+                    <p className="text-[1.75rem] font-black leading-none tabular-nums"
+                      style={{ color: c.hex }}>{score}</p>
                   </div>
                 );
               })}
             </div>
+
           </div>
         </div>
       </div>
 
-      {/* ══ 2. CE QUI BLOQUE + PLAN D'ACTION ══════════════════════════════ */}
-      <div className="grid grid-cols-1 md:grid-cols-2 border-b border-white/[0.07]">
+      <Hr />
 
-        {/* Ce qui bloque */}
-        <div className="p-5 sm:p-6 md:border-r border-b md:border-b-0 border-white/[0.07]">
-          <div className="flex items-center gap-2.5 mb-4">
-            <span className="w-7 h-7 rounded-lg bg-red-500/10 border border-red-500/15 flex items-center justify-center text-sm shrink-0">🚧</span>
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-400">Ce qui bloque ta vidéo</p>
-          </div>
-          <div className="space-y-2.5">
-            {blockers.map((b, i) => (
-              <div key={i} className="flex items-start gap-3 p-3.5 rounded-xl bg-red-500/[0.04] border border-red-500/[0.12] hover:border-red-500/20 transition-colors">
-                <div className="w-7 h-7 rounded-lg bg-red-500/10 border border-red-500/15 flex items-center justify-center shrink-0 text-sm mt-0.5">
-                  {b.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <p className="text-[12px] font-bold text-white">{b.label}</p>
-                    {b.score > 0 && <span className="text-[10px] font-semibold text-red-400/80">{b.score}/100</span>}
-                  </div>
-                  <p className="text-[11px] text-gray-500 leading-snug">{b.reason}</p>
-                </div>
-              </div>
-            ))}
-            {blockers.length === 0 && (
-              <div className="p-3.5 rounded-xl bg-emerald-500/[0.04] border border-emerald-500/[0.12]">
-                <p className="text-[12px] text-emerald-400 font-semibold">✓ Aucun blocage majeur détecté</p>
-                <p className="text-[11px] text-gray-500 mt-0.5">Concentre-toi sur les optimisations ci-contre.</p>
-              </div>
-            )}
+      {/* ══════════════════════════════════════════════════════════════════
+          2. PROBLÈME PRINCIPAL + PLAN D'ACTION
+      ══════════════════════════════════════════════════════════════════ */}
+      <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-white/[0.06]">
+
+        {/* Problème */}
+        <div className="px-7 sm:px-10 py-8">
+          <p className={`${label9} mb-5`}>Problème principal</p>
+          <div className="flex items-start gap-4">
+            <div className="w-0.5 self-stretch rounded-full bg-red-500/50 shrink-0" />
+            <p className="text-[15px] font-semibold text-white leading-snug">{mainProb}</p>
           </div>
         </div>
 
         {/* Plan d'action */}
-        <div className="p-5 sm:p-6">
-          <div className="flex items-center gap-2.5 mb-4">
-            <span className="w-7 h-7 rounded-lg bg-vn-violet/10 border border-vn-violet/15 flex items-center justify-center text-sm shrink-0">🎯</span>
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-400">Ce que tu dois corriger maintenant</p>
-          </div>
-          <div className="space-y-2">
-            {visibleImprovs.map((imp, i) => {
-              const pc = PRIORITY_CLS[imp.priority] ?? PRIORITY_CLS.moyenne;
-              return (
-                <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-vn-violet/[0.04] border border-vn-violet/[0.10] hover:border-vn-violet/20 transition-colors">
-                  <div className="w-6 h-6 rounded-md bg-vn-violet/10 border border-vn-violet/20 flex items-center justify-center shrink-0 text-[11px] font-black text-vn-violet mt-0.5">
-                    {i + 1}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[11px] text-gray-300 leading-snug mb-1">{imp.tip}</p>
-                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide ${pc}`}>
-                      Priorité {imp.priority}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-
-            {/* Locked improvements (free plan) */}
-            {lockedImprovs.length > 0 && (
-              <div className="relative mt-1 pt-2">
-                <div className="space-y-2 blur-sm pointer-events-none select-none" aria-hidden>
-                  {lockedImprovs.slice(0, 2).map((imp, i) => (
-                    <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.07]">
-                      <div className="w-6 h-6 rounded-md bg-white/[0.05] flex items-center justify-center shrink-0 text-[11px] font-black text-gray-500">
-                        {VISIBLE_FREE + i + 1}
-                      </div>
-                      <p className="text-[11px] text-gray-400 leading-snug">{imp.tip}</p>
-                    </div>
-                  ))}
-                </div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Link href="/pricing" className="relative text-[11px] font-semibold px-4 py-2 rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:brightness-110 transition-all shadow-[0_4px_20px_-4px_rgba(232,121,249,0.5)]">
-                    Débloquer {lockedImprovs.length} conseils →
-                  </Link>
-                </div>
-              </div>
+        <div className="px-7 sm:px-10 py-8">
+          <div className="flex items-center justify-between mb-5">
+            <p className={label9}>À corriger maintenant</p>
+            {locked > 0 && (
+              <Link href="/pricing" className="text-[9px] text-vn-fuchsia hover:opacity-80 transition-opacity">
+                +{locked} avec Pro →
+              </Link>
             )}
           </div>
+          <ol className="space-y-3">
+            {visible.map((imp, i) => (
+              <li key={i} className="flex items-start gap-3.5">
+                <span className="text-[11px] font-black text-gray-700 shrink-0 w-4 mt-px">{i + 1}</span>
+                <p className="text-[13px] text-gray-300 leading-snug">{imp.tip}</p>
+              </li>
+            ))}
+          </ol>
         </div>
+
       </div>
 
-      {/* ══ 3. ANALYSE PAR PILIER ══════════════════════════════════════════ */}
-      <div className="border-b border-white/[0.07]">
-        <div className="px-5 sm:px-7 pt-5 pb-1 flex items-center gap-2">
-          <span className="w-7 h-7 rounded-lg bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-sm shrink-0">📊</span>
-          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-400">Analyse par pilier</p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-white/[0.07]">
-          {pillars.map(({ title, section, reco }) => {
-            const s = section?.score ?? 0;
-            const qb = qBadge(s);
+      <Hr />
+
+      {/* ══════════════════════════════════════════════════════════════════
+          3. ANALYSE PAR PILIER
+      ══════════════════════════════════════════════════════════════════ */}
+      <div className="px-7 sm:px-10 py-9 sm:py-10">
+        <p className={`${label9} mb-9`}>Analyse par pilier</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-9 md:gap-12">
+          {pillars.map(({ title, s, reco }) => {
+            const score = s?.score ?? 0;
+            const c     = scoreColors(score);
             return (
-              <div key={title} className="p-5 sm:p-6 flex flex-col gap-3">
-                {/* Header */}
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-[14px] font-bold text-white">{title}</p>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <span className={`text-[17px] font-black tabular-nums ${scoreTxtCls(s)}`}>{s}</span>
-                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${qb.cls}`}>{qb.label}</span>
+              <div key={title} className="flex flex-col gap-0">
+
+                {/* Score + label + bar */}
+                <div className="flex items-end gap-3 mb-3">
+                  <span className="text-[2.8rem] font-black leading-none tabular-nums"
+                    style={{ color: c.hex, textShadow: `0 0 28px ${c.glow}` }}>{score}</span>
+                  <div className="flex-1 pb-1">
+                    <p className="text-[12px] font-bold text-white mb-2">{title}</p>
+                    <PBar pct={score} cls={scoreBarCls(score)} />
                   </div>
                 </div>
-                <PBar pct={s} cls={scoreBarCls(s)} />
-
-                {/* Analysis text */}
-                {section?.analysis?.trim() && (
-                  <p className="text-[11px] text-gray-400 leading-snug">{section.analysis}</p>
-                )}
 
                 {/* Strengths */}
-                {(section?.strengths?.length ?? 0) > 0 && (
-                  <div className="space-y-1.5">
-                    <p className="text-[8px] uppercase tracking-[0.18em] text-gray-600 font-bold">Points forts</p>
-                    {(section?.strengths ?? []).slice(0, 2).map((f, i) => (
-                      <div key={i} className="flex items-start gap-1.5">
-                        <span className="text-emerald-400 text-[10px] font-black shrink-0 mt-px">✓</span>
-                        <span className="text-[11px] text-gray-400 leading-snug">{f}</span>
-                      </div>
+                {(s?.strengths?.length ?? 0) > 0 && (
+                  <div className="mt-3 space-y-1.5">
+                    {(s?.strengths ?? []).slice(0, 2).map((f, i) => (
+                      <p key={i} className="text-[12px] text-gray-400 leading-snug">
+                        <span className="text-emerald-400 font-bold mr-1.5">✓</span>{f}
+                      </p>
                     ))}
                   </div>
                 )}
 
                 {/* Weaknesses */}
-                {(section?.weaknesses?.length ?? 0) > 0 && (
-                  <div className="space-y-1.5">
-                    <p className="text-[8px] uppercase tracking-[0.18em] text-gray-600 font-bold">Points faibles</p>
-                    {(section?.weaknesses ?? []).slice(0, 2).map((w, i) => (
-                      <div key={i} className="flex items-start gap-1.5">
-                        <span className="text-red-400 text-[10px] font-black shrink-0 mt-px">×</span>
-                        <span className="text-[11px] text-gray-400 leading-snug">{w}</span>
-                      </div>
+                {(s?.weaknesses?.length ?? 0) > 0 && (
+                  <div className="mt-2 space-y-1.5">
+                    {(s?.weaknesses ?? []).slice(0, 2).map((w, i) => (
+                      <p key={i} className="text-[12px] text-gray-500 leading-snug">
+                        <span className="text-red-400 font-bold mr-1.5">×</span>{w}
+                      </p>
                     ))}
                   </div>
                 )}
 
-                {/* Key reco */}
+                {/* Reco */}
                 {reco && (
-                  <div className="mt-auto pt-3 border-t border-white/[0.06]">
-                    <p className="text-[8px] uppercase tracking-[0.18em] text-gray-600 font-bold mb-1.5">Recommandation clé</p>
-                    <p className="text-[11px] text-vn-violet/90 leading-snug">→ {reco}</p>
-                  </div>
+                  <p className="mt-4 pt-3 text-[12px] text-vn-violet/80 leading-snug border-t border-white/[0.05]">
+                    → {reco}
+                  </p>
                 )}
+
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* ══ 4. STATS + VERDICT ═════════════════════════════════════════════ */}
-      <div className={`grid grid-cols-1 ${hasMetrics ? 'md:grid-cols-2' : ''} border-b border-white/[0.07]`}>
+      {/* ══════════════════════════════════════════════════════════════════
+          4. STATS PUBLIQUES (conditional)
+      ══════════════════════════════════════════════════════════════════ */}
+      {hasStats && (
+        <>
+          <Hr />
+          <div className="px-7 sm:px-10 py-8">
 
-        {/* Stats publiques */}
-        {hasMetrics && (
-          <div className="p-5 sm:p-6 md:border-r border-b md:border-b-0 border-white/[0.07]">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <span className="w-7 h-7 rounded-lg bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-sm shrink-0">📈</span>
-                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-400">Stats publiques</p>
-              </div>
-              <span className="text-[9px] text-gray-600">{statsSource}</span>
+            <div className="flex items-center justify-between mb-6">
+              <p className={label9}>Stats publiques</p>
+              <span className="text-[9px] text-gray-700">
+                {data.observedStatsSource === 'live_page'   ? 'Source\u00a0: TikTok' :
+                 data.observedStatsSource === 'live_oembed' ? 'Source\u00a0: oEmbed'  :
+                 data.observedStatsSource === 'cache'       ? 'Source\u00a0: cache'   : 'Stats partielles'}
+              </span>
             </div>
-            <div className="grid grid-cols-2 gap-2 mb-3">
+
+            {/* Stats row — pure typography */}
+            <div className="flex flex-wrap gap-8 sm:gap-12 mb-6">
               {[
                 { label: 'Vues',         val: fmt(metrics.views)    },
                 { label: 'Likes',        val: fmt(metrics.likes)    },
                 { label: 'Commentaires', val: fmt(metrics.comments) },
                 { label: 'Partages',     val: fmt(metrics.shares)   },
-              ].map(({ label, val }) => (
-                <div key={label} className="rounded-xl bg-white/[0.04] border border-white/[0.07] px-3.5 py-3">
-                  <p className="text-[9px] text-gray-500 mb-1">{label}</p>
-                  <p className="text-[16px] font-black text-white leading-none">{val}</p>
+                ...(meta?.durationSec ? [{ label: 'Dur\u00e9e', val: `${meta.durationSec}s` }] : []),
+                ...(meta?.authorUsername ? [{ label: 'Auteur', val: `@${meta.authorUsername}` }] : []),
+              ].filter(m => m.val !== '—').map(({ label, val }) => (
+                <div key={label}>
+                  <p className={`${label9} mb-1.5`}>{label}</p>
+                  <p className="text-[1.5rem] font-black text-white leading-none">{val}</p>
                 </div>
               ))}
             </div>
-            {(meta?.durationSec || meta?.authorUsername) && (
-              <div className="flex gap-2 mt-2">
-                {meta?.durationSec && (
-                  <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] px-3 py-2">
-                    <p className="text-[9px] text-gray-500 mb-0.5">Durée</p>
-                    <p className="text-[13px] font-semibold text-white">{meta.durationSec}s</p>
-                  </div>
-                )}
-                {meta?.authorUsername && (
-                  <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] px-3 py-2 flex-1 min-w-0">
-                    <p className="text-[9px] text-gray-500 mb-0.5">Auteur</p>
-                    <p className="text-[13px] font-semibold text-white truncate">@{meta.authorUsername}</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
 
-        {/* Verdict + benchmark */}
-        <div className="p-5 sm:p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="w-7 h-7 rounded-lg bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-sm shrink-0">🏆</span>
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-400">Verdict final</p>
-          </div>
-
-          {/* Benchmark */}
-          <div className="mb-3 rounded-xl bg-white/[0.04] border border-white/[0.08] p-4">
-            <div className="flex items-center gap-3 mb-2">
-              <span className={`text-[1.7rem] font-black leading-none tabular-nums ${compTxt}`}>Top {topPct}%</span>
+            {/* Benchmark */}
+            <div className="flex items-center gap-4 max-w-sm">
+              <span className="text-[1.15rem] font-black shrink-0" style={{ color: bench.hex }}>
+                Top {bench.pct}%
+              </span>
               <div className="flex-1">
-                <div className="h-1.5 rounded-full bg-white/[0.07] overflow-hidden">
-                  <div className={`h-full rounded-full ${compGrad}`} style={{ width: `${barW}%` }} />
+                <div className="h-[3px] rounded-full bg-white/[0.07] overflow-hidden">
+                  <div className={`h-full rounded-full bg-gradient-to-r ${bench.grad}`}
+                    style={{ width: `${Math.max(4, 100 - bench.pct)}%` }} />
                 </div>
-                <div className="flex justify-between mt-0.5">
-                  <span className="text-[8px] text-gray-600">Moyenne</span>
-                  <span className="text-[8px] text-gray-600">Top créateurs</span>
+                <div className="flex justify-between mt-1">
+                  <span className="text-[8px] text-gray-700">Moyenne</span>
+                  <span className="text-[8px] text-gray-700">Top créateurs</span>
                 </div>
               </div>
             </div>
-            {data.comparativeInsight && (
-              <p className="text-[11px] text-gray-400 leading-snug">{data.comparativeInsight}</p>
-            )}
-          </div>
 
-          {data.finalVerdict && (
-            <div className="mb-3 rounded-xl bg-white/[0.03] border border-white/[0.07] p-3.5">
-              <p className="text-[12px] text-gray-300 leading-relaxed">{data.finalVerdict}</p>
-            </div>
+            {data.comparativeInsight && (
+              <p className="mt-3 text-[12px] text-gray-500 leading-relaxed max-w-lg">
+                {data.comparativeInsight}
+              </p>
+            )}
+
+          </div>
+        </>
+      )}
+
+      <Hr />
+
+      {/* ══════════════════════════════════════════════════════════════════
+          5. VERDICT + STRATÉGIE
+      ══════════════════════════════════════════════════════════════════ */}
+      <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-white/[0.06]">
+
+        {/* Verdict */}
+        <div className="px-7 sm:px-10 py-8">
+          <p className={`${label9} mb-5`}>Verdict</p>
+          {data.finalVerdict ? (
+            <p className="text-[14px] text-gray-300 leading-relaxed">{data.finalVerdict}</p>
+          ) : (
+            <p className="text-[14px] text-gray-500">Voir l&apos;analyse détaillée ci-dessus.</p>
           )}
           {data.comparativePriority && (
-            <div className="mb-3 rounded-xl bg-vn-violet/[0.05] border border-vn-violet/[0.15] p-3">
-              <p className="text-[11px] text-vn-violet/90 leading-snug">→ {data.comparativePriority}</p>
-            </div>
+            <p className="mt-3 text-[12px] text-vn-violet/80 leading-snug">
+              → {data.comparativePriority}
+            </p>
+          )}
+          {data.overperformanceDetected && (
+            <p className="mt-3 text-[12px] text-vn-fuchsia/80">
+              ⚡ Surperformance — ta vidéo performe au-dessus de sa structure.
+            </p>
           )}
           {typeof data.observedPerformanceScore === 'number' && (
-            <div className="flex items-center gap-4 rounded-xl bg-white/[0.03] border border-white/[0.07] p-3.5">
-              <div className="shrink-0">
-                <p className="text-[9px] uppercase tracking-wide text-gray-600 font-bold mb-0.5">Performance</p>
-                <p className="text-[22px] font-black text-white leading-none tabular-nums">{data.observedPerformanceScore}</p>
-              </div>
-              <p className="text-[11px] text-gray-500 leading-snug flex-1">{data.observedPerformanceLabel ?? 'Basé sur les stats'}</p>
+            <div className="mt-4 flex items-baseline gap-2">
+              <span className="text-[2.2rem] font-black text-white leading-none">
+                {data.observedPerformanceScore}
+              </span>
+              <span className="text-[11px] text-gray-500">
+                {data.observedPerformanceLabel ?? 'Performance observée'}
+              </span>
             </div>
           )}
         </div>
+
+        {/* Stratégie */}
+        <div className="px-7 sm:px-10 py-8">
+          <p className={`${label9} mb-5`}>Stratégie</p>
+
+          {projection && (
+            <div className="mb-5">
+              <p className="text-[12px] text-gray-500 mb-1">{projection.label}</p>
+              <p className="text-[3rem] font-black leading-none" style={{ color: '#34d399', textShadow: 'rgba(52,211,153,0.3)' }}>
+                +{projection.gain}
+              </p>
+              <p className="text-[11px] text-gray-600 mt-1">points de score potentiel</p>
+            </div>
+          )}
+
+          {data.strategy ? (
+            <p className="text-[13px] text-gray-400 leading-relaxed">{data.strategy}</p>
+          ) : (
+            <p className="text-[13px] text-gray-500 leading-relaxed">
+              {(() => {
+                const weak = pillars.filter(p => (p.s?.score ?? 0) < 70).slice(0, 2).map(p => p.title.toLowerCase());
+                return weak.length
+                  ? `Concentre-toi sur ${weak.join(' et ')} pour maximiser ta port\u00e9e.`
+                  : 'Continue sur cette trajectoire \u2014 optimise chaque nouvelle vid\u00e9o.';
+              })()}
+            </p>
+          )}
+        </div>
+
       </div>
 
-      {/* ══ 5. STRATÉGIE ═══════════════════════════════════════════════════ */}
-      {data.strategy && (
-        <div className="border-b border-white/[0.07] p-5 sm:p-6">
-          <div className="flex items-center gap-2.5 mb-4">
-            <span className="w-7 h-7 rounded-lg bg-vn-indigo/10 border border-vn-indigo/15 flex items-center justify-center text-sm shrink-0">🚀</span>
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-400">Stratégie recommandée</p>
-          </div>
-          <div className="rounded-xl bg-vn-violet/[0.05] border border-vn-violet/[0.15] p-4">
-            <p className="text-[12px] text-gray-300 leading-relaxed">{data.strategy}</p>
-          </div>
-        </div>
-      )}
-
-      {/* ══ 6. INSIGHTS VIRAUX (Elite) ══════════════════════════════════════ */}
+      {/* ══════════════════════════════════════════════════════════════════
+          6. ELITE — Insights viraux
+      ══════════════════════════════════════════════════════════════════ */}
       {(data.viralTips?.length ?? 0) > 0 && (
-        <div className="border-b border-white/[0.07] p-5 sm:p-6">
-          <div className="flex items-center gap-2.5 mb-4">
-            <span className="w-7 h-7 rounded-lg bg-vn-fuchsia/10 border border-vn-fuchsia/15 flex items-center justify-center text-sm shrink-0">⚡</span>
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-400">Insights viraux</p>
-            <span className="ml-auto text-[9px] font-bold px-2 py-0.5 rounded-full bg-vn-fuchsia/15 text-vn-fuchsia border border-vn-fuchsia/20 uppercase tracking-wide">Elite</span>
+        <>
+          <Hr />
+          <div className="px-7 sm:px-10 py-8">
+            <div className="flex items-center gap-3 mb-6">
+              <p className={label9}>Insights viraux</p>
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-vn-fuchsia/15 text-vn-fuchsia border border-vn-fuchsia/20 uppercase tracking-wide">Elite</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3">
+              {(data.viralTips ?? []).map((tip, i) => (
+                <p key={i} className="text-[12px] text-gray-400 leading-snug">
+                  <span className="text-vn-fuchsia font-black mr-2">{i + 1}</span>{tip}
+                </p>
+              ))}
+            </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {(data.viralTips ?? []).map((tip, i) => (
-              <div key={i} className="flex items-start gap-3 p-3.5 rounded-xl bg-vn-fuchsia/[0.04] border border-vn-fuchsia/[0.10]">
-                <span className="text-vn-fuchsia text-[11px] font-black shrink-0 w-4 pt-px">{i + 1}</span>
-                <p className="text-[11px] text-gray-400 leading-snug">{tip}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+        </>
       )}
 
-      {/* ══ 7. CTA FINAL ════════════════════════════════════════════════════ */}
-      <div className="p-5 sm:p-7">
-        <div className="rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.04] to-transparent p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <p className="text-[14px] font-bold text-white mb-1">Prêt à améliorer ta prochaine vidéo\u00a0?</p>
-            <p className="text-[11px] text-gray-500">Analyse une autre vidéo ou génère des hooks optimisés pour ton contenu.</p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-2.5 shrink-0 w-full sm:w-auto">
-            {onReset ? (
-              <button
-                type="button"
-                onClick={onReset}
-                className="relative inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-[13px] font-semibold text-white bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_8px_24px_-8px_rgba(232,121,249,0.4)]"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 shrink-0">
-                  <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
-                </svg>
-                Analyser une autre vidéo
-              </button>
-            ) : (
-              <Link href="/analyzer" className="relative inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-[13px] font-semibold text-white bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_8px_24px_-8px_rgba(232,121,249,0.4)]">
-                Analyser une autre vidéo
-              </Link>
-            )}
-            <Link
-              href="/hook-generator"
-              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-[13px] font-semibold text-white/80 bg-white/[0.05] border border-white/[0.10] hover:bg-white/[0.08] hover:border-white/[0.18] active:scale-[0.98] transition-all"
-            >
+      {/* ══════════════════════════════════════════════════════════════════
+          7. CTA
+      ══════════════════════════════════════════════════════════════════ */}
+      <Hr />
+      <div className="px-7 sm:px-10 py-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <p className="text-[14px] font-semibold text-white">Prêt à corriger&nbsp;?</p>
+          <p className="text-[11px] text-gray-600 mt-0.5">Analyse une autre vidéo ou génère des hooks optimisés.</p>
+        </div>
+        <div className="flex gap-2.5 shrink-0 flex-wrap">
+          {onReset ? (
+            <button type="button" onClick={onReset}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_8px_24px_-8px_rgba(232,121,249,0.4)]">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 shrink-0">
-                <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
               </svg>
-              Générer des hooks
+              Analyser une autre vidéo
+            </button>
+          ) : (
+            <Link href="/analyzer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:brightness-110 active:scale-[0.98] transition-all">
+              Analyser une autre vidéo
             </Link>
-          </div>
+          )}
+          <Link href="/hook-generator"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white/70 bg-white/[0.05] border border-white/[0.10] hover:bg-white/[0.08] hover:border-white/[0.16] active:scale-[0.98] transition-all">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 shrink-0">
+              <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+            </svg>
+            Générer des hooks
+          </Link>
         </div>
       </div>
+
     </div>
   );
 }
