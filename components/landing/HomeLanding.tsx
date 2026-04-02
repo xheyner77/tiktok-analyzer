@@ -837,93 +837,253 @@ export default function HomeLanding() {
       </section>
 
       {/* ══ 10. ROADMAP ════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-28 border-t border-white/[0.06]">
-        <div className={`max-w-5xl ${SI}`}>
+      <section className="relative py-28 sm:py-36 border-t border-white/[0.06] overflow-hidden">
+
+        {/* Grid background */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden>
+          <div className="absolute inset-0"
+            style={{
+              backgroundImage: 'linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)',
+              backgroundSize: '60px 60px',
+            }} />
+          <div className="absolute inset-0 bg-gradient-to-b from-vn-bg via-transparent to-vn-bg" />
+        </div>
+
+        {/* Ambient glows */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden>
+          <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-emerald-500/[0.04] blur-[120px]" />
+          <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-vn-indigo/[0.06] blur-[100px]" />
+        </div>
+
+        <div className={`relative max-w-6xl ${SI}`}>
+
+          {/* Header */}
           <FadeUp>
-            <div className="text-center mb-12">
-              <h2 className="text-3xl sm:text-[2.6rem] font-black tracking-tight leading-tight mb-3">
-                <span className="text-white">Ce qui arrive</span>{' '}
-                <span className={G}>très bientôt.</span>
+            <div className="text-center mb-16 sm:mb-20">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] mb-6">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.9)] animate-pulse" />
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">En développement actif</span>
+              </div>
+              <h2 className="text-3xl sm:text-[2.8rem] lg:text-[3.2rem] font-black tracking-tight leading-tight mb-5">
+                <span className="text-white">Viralynz devient</span><br />
+                <span className={G}>ton arme secrète.</span>
               </h2>
-              <p className="text-gray-500 text-[14px] max-w-sm mx-auto">
-                Viralynz évolue chaque semaine. Voici ce qui est en cours.
+              <p className="text-gray-500 text-[15px] max-w-[480px] mx-auto leading-relaxed">
+                On construit l&apos;outil ultime pour comprendre et dominer les algorithmes. Voici où on va.
               </p>
             </div>
           </FadeUp>
 
-          <FadeUp delay={0.08}>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                {
-                  status: 'live',
-                  label: 'Live',
-                  dot: 'bg-emerald-400',
-                  glow: 'shadow-[0_0_8px_rgba(52,211,153,0.8)]',
-                  border: 'border-emerald-500/20',
-                  title: 'Analyse TikTok IA',
-                  desc: 'Vision IA + Whisper. Score, hook, montage, rétention, plan d\'action en 30s.',
-                  accent: 'from-emerald-500/[0.05]',
-                },
-                {
-                  status: 'next',
-                  label: 'Bientôt',
-                  dot: 'bg-vn-fuchsia',
-                  glow: 'shadow-[0_0_8px_rgba(232,121,249,0.8)]',
-                  border: 'border-vn-fuchsia/20',
-                  title: 'Instagram Reels',
-                  desc: 'Même analyse adaptée aux critères algorithmiques Meta et au format Reels.',
-                  accent: 'from-vn-fuchsia/[0.05]',
-                },
-                {
-                  status: 'next',
-                  label: 'Bientôt',
-                  dot: 'bg-blue-400',
-                  glow: 'shadow-[0_0_8px_rgba(96,165,250,0.8)]',
-                  border: 'border-blue-500/20',
-                  title: 'YouTube Shorts',
-                  desc: 'Hook, rétention et montage analysés selon les spécificités de l\'algo YouTube.',
-                  accent: 'from-blue-500/[0.05]',
-                },
-                {
-                  status: 'later',
-                  label: 'Roadmap',
-                  dot: 'bg-gray-600',
-                  glow: '',
-                  border: 'border-white/[0.07]',
-                  title: 'Analyse comparative',
-                  desc: 'Compare tes vidéos entre elles pour identifier les patterns qui font performer.',
-                  accent: 'from-white/[0.02]',
-                },
-              ].map(({ status, label, dot, glow, border, title, desc, accent }) => (
-                <div
-                  key={title}
-                  className={`relative p-5 sm:p-6 rounded-2xl border ${border} bg-gradient-to-b ${accent} to-transparent overflow-hidden hover:-translate-y-0.5 transition-all duration-300`}
-                >
-                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.10] to-transparent" />
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className={`w-2 h-2 rounded-full shrink-0 ${dot} ${glow}`} />
-                    <span className={`text-[10px] font-bold uppercase tracking-[0.18em] ${status === 'live' ? 'text-emerald-400' : status === 'next' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      {label}
-                    </span>
-                  </div>
-                  <h3 className="text-[14.5px] font-bold text-white mb-2 tracking-tight">{title}</h3>
-                  <p className="text-[12.5px] text-gray-600 leading-relaxed">{desc}</p>
-                </div>
-              ))}
+          {/* Progress bar v1→v2→v3 */}
+          <FadeUp delay={0.06}>
+            <div className="relative mb-14 sm:mb-16 max-w-2xl mx-auto">
+              <div className="flex items-center justify-between mb-3">
+                {['v1 — TikTok', 'v2 — Multi-plateforme', 'v3 — IA prédictive'].map((v, i) => (
+                  <span key={v} className={`text-[11px] font-bold tracking-wide ${i === 0 ? 'text-emerald-400' : i === 1 ? 'text-vn-violet' : 'text-gray-600'}`}>{v}</span>
+                ))}
+              </div>
+              <div className="h-[3px] rounded-full bg-white/[0.07] overflow-hidden">
+                <motion.div
+                  className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-vn-fuchsia to-vn-indigo"
+                  initial={{ width: '0%' }}
+                  whileInView={{ width: '38%' }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
+                />
+              </div>
+              <p className="text-[10px] text-gray-700 mt-2 text-right">38% de la vision accomplie</p>
             </div>
           </FadeUp>
 
-          <FadeUp delay={0.14}>
-            <div className="text-center mt-8">
+          {/* Cards grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
+
+            {/* ── LIVE ── */}
+            {[
+              {
+                tier: 'live' as const,
+                badge: 'LIVE',
+                badgeCls: 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20',
+                dotCls: 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse',
+                borderCls: 'border-emerald-500/20 hover:border-emerald-500/40',
+                glowCls: 'from-emerald-500/[0.07]',
+                hoverGlow: 'hover:shadow-[0_0_40px_-8px_rgba(52,211,153,0.2)]',
+                icon: (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                  </svg>
+                ),
+                title: 'Analyse TikTok IA',
+                benefit: 'Sache en 30 secondes exactement pourquoi ta vidéo floppe — et comment la corriger.',
+                detail: 'Score viral · Hook · Montage · Rétention',
+              },
+            ].map((card) => (
+              <FadeUp key={card.title} delay={0.05}>
+                <div className={`group relative p-6 rounded-2xl border ${card.borderCls} bg-gradient-to-b ${card.glowCls} to-transparent ${card.hoverGlow} hover:-translate-y-1 transition-all duration-300 overflow-hidden`}>
+                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/30 to-transparent" />
+                  <div className="flex items-start justify-between mb-5">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-emerald-400/10 text-emerald-400`}>
+                      {card.icon}
+                    </div>
+                    <span className={`inline-flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.2em] px-2.5 py-1 rounded-full border ${card.badgeCls}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${card.dotCls}`} />
+                      {card.badge}
+                    </span>
+                  </div>
+                  <h3 className="text-[16px] font-black text-white mb-2.5 tracking-tight">{card.title}</h3>
+                  <p className="text-[13px] text-gray-400 leading-relaxed mb-4">{card.benefit}</p>
+                  <p className="text-[10px] text-gray-700 font-medium tracking-wide">{card.detail}</p>
+                </div>
+              </FadeUp>
+            ))}
+
+            {/* ── EN DÉVELOPPEMENT ── */}
+            {[
+              {
+                badge: 'EN DEV',
+                badgeCls: 'bg-vn-violet/10 text-vn-violet border-vn-violet/25',
+                dotCls: 'bg-vn-violet shadow-[0_0_6px_rgba(139,92,246,0.9)] animate-pulse',
+                borderCls: 'border-vn-violet/15 hover:border-vn-violet/35',
+                glowCls: 'from-vn-violet/[0.06]',
+                hoverGlow: 'hover:shadow-[0_0_40px_-8px_rgba(139,92,246,0.18)]',
+                icon: (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
+                    <rect x="2" y="3" width="20" height="14" rx="2" strokeLinecap="round" />
+                    <path strokeLinecap="round" d="M8 21h8M12 17v4" />
+                  </svg>
+                ),
+                title: 'Instagram Reels',
+                benefit: 'Comprends pourquoi tes Reels n\'explosent pas — et ce que l\'algo Meta récompense vraiment.',
+                detail: 'Analyse Meta · Critères Reels · Score algorithme',
+              },
+              {
+                badge: 'EN DEV',
+                badgeCls: 'bg-blue-500/10 text-blue-400 border-blue-500/25',
+                dotCls: 'bg-blue-400 shadow-[0_0_6px_rgba(96,165,250,0.9)] animate-pulse',
+                borderCls: 'border-blue-500/15 hover:border-blue-500/35',
+                glowCls: 'from-blue-500/[0.06]',
+                hoverGlow: 'hover:shadow-[0_0_40px_-8px_rgba(96,165,250,0.18)]',
+                icon: (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
+                  </svg>
+                ),
+                title: 'YouTube Shorts',
+                benefit: 'Identifie ce qui tue ta rétention sur YouTube — avant que l\'algo te pénalise définitivement.',
+                detail: 'Algo YouTube · Rétention · Hook spécifique Shorts',
+              },
+            ].map((card, i) => (
+              <FadeUp key={card.title} delay={0.1 + i * 0.06}>
+                <div className={`group relative p-6 rounded-2xl border ${card.borderCls} bg-gradient-to-b ${card.glowCls} to-transparent ${card.hoverGlow} hover:-translate-y-1 transition-all duration-300 overflow-hidden`}>
+                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
+                  <div className="flex items-start justify-between mb-5">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${i === 0 ? 'bg-vn-violet/10 text-vn-violet' : 'bg-blue-500/10 text-blue-400'}`}>
+                      {card.icon}
+                    </div>
+                    <span className={`inline-flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.2em] px-2.5 py-1 rounded-full border ${card.badgeCls}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${card.dotCls}`} />
+                      {card.badge}
+                    </span>
+                  </div>
+                  <h3 className="text-[16px] font-black text-white mb-2.5 tracking-tight">{card.title}</h3>
+                  <p className="text-[13px] text-gray-400 leading-relaxed mb-4">{card.benefit}</p>
+                  <p className="text-[10px] text-gray-700 font-medium tracking-wide">{card.detail}</p>
+                </div>
+              </FadeUp>
+            ))}
+
+            {/* ── VISION (full width bottom row) ── */}
+            {[
+              {
+                badge: 'VISION',
+                badgeCls: 'bg-white/[0.05] text-gray-500 border-white/[0.10]',
+                dotCls: 'bg-gray-600',
+                borderCls: 'border-white/[0.07] hover:border-white/[0.12]',
+                glowCls: 'from-white/[0.025]',
+                hoverGlow: 'hover:shadow-[0_0_30px_-8px_rgba(255,255,255,0.06)]',
+                icon: (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5" />
+                  </svg>
+                ),
+                title: 'Comparaison & patterns',
+                benefit: 'Comprends pourquoi certaines vidéos explosent et d\'autres meurent — automatiquement.',
+                detail: 'Patterns viraux · Analyse cross-vidéo',
+              },
+              {
+                badge: 'VISION',
+                badgeCls: 'bg-white/[0.05] text-gray-500 border-white/[0.10]',
+                dotCls: 'bg-gray-600',
+                borderCls: 'border-white/[0.07] hover:border-white/[0.12]',
+                glowCls: 'from-white/[0.025]',
+                hoverGlow: 'hover:shadow-[0_0_30px_-8px_rgba(255,255,255,0.06)]',
+                icon: (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+                  </svg>
+                ),
+                title: 'Trends en temps réel',
+                benefit: 'Sache ce qui va exploser avant tout le monde — et publie au bon moment.',
+                detail: 'Détection trends · Fenêtres d\'opportunité',
+              },
+              {
+                badge: 'VISION',
+                badgeCls: 'bg-white/[0.05] text-gray-500 border-white/[0.10]',
+                dotCls: 'bg-gray-600',
+                borderCls: 'border-white/[0.07] hover:border-white/[0.12]',
+                glowCls: 'from-white/[0.025]',
+                hoverGlow: 'hover:shadow-[0_0_30px_-8px_rgba(255,255,255,0.06)]',
+                icon: (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
+                  </svg>
+                ),
+                title: 'Suggestions IA prédictives',
+                benefit: 'Reçois des idées de contenu générées par l\'IA — basées sur ce qui performe dans ta niche.',
+                detail: 'Idées virales · Calendrier éditorial IA',
+              },
+            ].map((card, i) => (
+              <FadeUp key={card.title} delay={0.18 + i * 0.05}>
+                <div className={`group relative p-6 rounded-2xl border ${card.borderCls} bg-gradient-to-b ${card.glowCls} to-transparent ${card.hoverGlow} hover:-translate-y-0.5 transition-all duration-300 overflow-hidden opacity-60 hover:opacity-80`}>
+                  <div className="absolute inset-0 backdrop-blur-[1px]" />
+                  <div className="relative">
+                    <div className="flex items-start justify-between mb-5">
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/[0.04] text-gray-600">
+                        {card.icon}
+                      </div>
+                      <span className={`inline-flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.2em] px-2.5 py-1 rounded-full border ${card.badgeCls}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${card.dotCls}`} />
+                        {card.badge}
+                      </span>
+                    </div>
+                    <h3 className="text-[16px] font-black text-white/70 mb-2.5 tracking-tight">{card.title}</h3>
+                    <p className="text-[13px] text-gray-600 leading-relaxed mb-4">{card.benefit}</p>
+                    <p className="text-[10px] text-gray-700 font-medium tracking-wide">{card.detail}</p>
+                  </div>
+                </div>
+              </FadeUp>
+            ))}
+
+          </div>
+
+          {/* Bottom CTA */}
+          <FadeUp delay={0.28}>
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-5 mt-14 pt-10 border-t border-white/[0.06]">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.9)] animate-pulse" />
+                <p className="text-[13px] text-gray-500">Mise à jour <span className="text-white font-semibold">chaque semaine</span> — tu es aux premières loges.</p>
+              </div>
               <Link
                 href="/changelog"
-                className="inline-flex items-center gap-2 text-[13px] font-semibold text-gray-500 hover:text-white border border-white/[0.08] hover:border-white/[0.16] rounded-full px-5 py-2.5 transition-all duration-300"
+                className="shrink-0 inline-flex items-center gap-2 text-[13px] font-semibold text-white border border-white/[0.10] hover:border-white/[0.22] bg-white/[0.03] hover:bg-white/[0.06] rounded-full px-5 py-2.5 transition-all duration-300"
               >
                 Voir toutes les nouveautés
                 <Arrow className="w-3.5 h-3.5" />
               </Link>
             </div>
           </FadeUp>
+
         </div>
       </section>
 
