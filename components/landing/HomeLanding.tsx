@@ -59,29 +59,170 @@ function FadeUp({ children, delay = 0, className = '' }: { children: React.React
 }
 
 /* ── Testimonials data ──────────────────────────────────────── */
-const testimonials = [
+const WALL_ROW1 = [
   {
     avatar: 'https://i.pravatar.cc/56?img=11',
     name: 'Julien B.',
-    handle: '@julienb_content',
-    role: 'Créateur TikTok · 28k abonnés',
-    quote: 'J\'ai analysé 3 vidéos en un soir. En 5 minutes j\'avais compris pourquoi mes hooks ne convertissaient pas. +40% de rétention sur les 3 posts suivants. Aucun autre outil ne m\'a donné ça.',
+    role: 'Créateur TikTok',
+    tag: 'Créateur',
+    tagCls: 'text-vn-fuchsia bg-vn-fuchsia/10 border-vn-fuchsia/20',
+    metric: '+40% de rétention',
+    quote: 'J\'ai analysé 3 vidéos en un soir. En 5 minutes j\'avais compris pourquoi mes hooks ne convertissaient pas. <b>+40% de rétention</b> sur les 3 posts suivants. Aucun autre outil ne m\'a donné ça.',
+    sub: '28k abonnés',
   },
   {
     avatar: 'https://i.pravatar.cc/56?img=47',
     name: 'Sofia D.',
-    handle: '@sofiadumontclip',
     role: 'Clipper & Monteuse',
-    quote: 'Je livre du contenu pour 6 marques différentes. Les analyses me permettent de justifier chaque choix de montage avec des données IA. Mes clients ne contestent plus. Ils reviennent.',
+    tag: 'Agence',
+    tagCls: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
+    metric: '6 clients fidélisés',
+    quote: 'Je livre pour <b>6 marques différentes</b>. Les analyses me permettent de justifier chaque choix de montage avec des données IA. Mes clients ne contestent plus. Ils reviennent.',
+    sub: 'Freelance contenu',
   },
   {
     avatar: 'https://i.pravatar.cc/56?img=12',
     name: 'Marc T.',
-    handle: '@marc_ecom_ads',
     role: 'E-commerce · UGC Ads',
-    quote: 'J\'utilise des créateurs UGC pour mes pubs Meta. Depuis que j\'analyse les vidéos avant de les diffuser, mon ROAS a augmenté de 30%. Je valide avant de mettre du budget.',
+    tag: 'E-commerce',
+    tagCls: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
+    metric: '+30% ROAS',
+    quote: 'Depuis que j\'analyse les vidéos avant de les diffuser, <b>mon ROAS a augmenté de 30%</b>. Je valide avant de mettre du budget. Indispensable.',
+    sub: 'Boutique Shopify',
+  },
+  {
+    avatar: 'https://i.pravatar.cc/56?img=33',
+    name: 'Léa V.',
+    role: 'Créatrice lifestyle',
+    tag: 'Créateur',
+    tagCls: 'text-vn-fuchsia bg-vn-fuchsia/10 border-vn-fuchsia/20',
+    metric: '2M vues en 1 semaine',
+    quote: 'J\'ai suivi les recommandations sur mon hook et mon montage. La vidéo suivante a fait <b>2 millions de vues</b>. Je ne poste plus rien sans analyser avant.',
+    sub: '112k abonnés',
+  },
+  {
+    avatar: 'https://i.pravatar.cc/56?img=55',
+    name: 'Thomas K.',
+    role: 'Coach business',
+    tag: 'Créateur',
+    tagCls: 'text-vn-fuchsia bg-vn-fuchsia/10 border-vn-fuchsia/20',
+    metric: 'x3 sur les leads',
+    quote: 'Mes vidéos TikTok génèrent mes leads. Depuis Viralynz, <b>j\'ai triplé mes conversions</b> en comprenant exactement où je perdais mon audience. Le ROI est immédiat.',
+    sub: 'Formation en ligne',
+  },
+  {
+    avatar: 'https://i.pravatar.cc/56?img=28',
+    name: 'Amélie R.',
+    role: 'Social Media Manager',
+    tag: 'Agence',
+    tagCls: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
+    metric: '4 clients satisfaits',
+    quote: 'Je gère les comptes TikTok de <b>4 marques simultanément</b>. Viralynz me donne des recommandations concrètes que je peux livrer directement à mes clients. Gain de temps énorme.',
+    sub: 'Agence digitale',
   },
 ];
+
+const WALL_ROW2 = [
+  {
+    avatar: 'https://i.pravatar.cc/56?img=21',
+    name: 'Romain S.',
+    role: 'Créateur fitness',
+    tag: 'Créateur',
+    tagCls: 'text-vn-fuchsia bg-vn-fuchsia/10 border-vn-fuchsia/20',
+    metric: '+68% de reach',
+    quote: 'En 2 semaines d\'utilisation, mon reach organique a <b>augmenté de 68%</b>. L\'analyse du hook m\'a ouvert les yeux sur ce qui bloquait réellement l\'algo.',
+    sub: '45k abonnés',
+  },
+  {
+    avatar: 'https://i.pravatar.cc/56?img=39',
+    name: 'Clara M.',
+    role: 'Marque beauté',
+    tag: 'Marque',
+    tagCls: 'text-amber-400 bg-amber-400/10 border-amber-400/20',
+    metric: '-60% de taux de fuite',
+    quote: 'On diffusait des vidéos UGC sans les analyser. Après Viralynz, <b>notre taux de fuite a chuté de 60%</b>. On ne valide plus aucune vidéo sans l\'outil.',
+    sub: 'DTC cosmétique',
+  },
+  {
+    avatar: 'https://i.pravatar.cc/56?img=17',
+    name: 'Kevin D.',
+    role: 'Clipper professionnel',
+    tag: 'Agence',
+    tagCls: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
+    metric: '30% de revenus en plus',
+    quote: 'Je facture maintenant <b>30% plus cher</b> car je livre avec un rapport d\'analyse IA. Mes clients voient la valeur. Je me différencie de tous les autres clippers.',
+    sub: 'Freelance montage',
+  },
+  {
+    avatar: 'https://i.pravatar.cc/56?img=52',
+    name: 'Yasmine O.',
+    role: 'Créatrice mode',
+    tag: 'Créateur',
+    tagCls: 'text-vn-fuchsia bg-vn-fuchsia/10 border-vn-fuchsia/20',
+    metric: '500k vues premier mois',
+    quote: 'J\'avais du mal à dépasser les 10k vues. Après avoir suivi les plans d\'action de Viralynz, <b>j\'ai passé 500k vues en un mois</b>. Le score m\'a tout expliqué.',
+    sub: '88k abonnés',
+  },
+  {
+    avatar: 'https://i.pravatar.cc/56?img=60',
+    name: 'Antoine P.',
+    role: 'Founder SaaS',
+    tag: 'Marque',
+    tagCls: 'text-amber-400 bg-amber-400/10 border-amber-400/20',
+    metric: 'x4 sur l\'engagement',
+    quote: 'On utilisait TikTok pour notre SaaS sans vraiment comprendre l\'algo. Depuis Viralynz, <b>notre engagement a été multiplié par 4</b>. On comprend enfin ce qui fonctionne.',
+    sub: 'Startup tech',
+  },
+  {
+    avatar: 'https://i.pravatar.cc/56?img=44',
+    name: 'Inès L.',
+    role: 'Influenceuse voyage',
+    tag: 'Créateur',
+    tagCls: 'text-vn-fuchsia bg-vn-fuchsia/10 border-vn-fuchsia/20',
+    metric: '+90% de complétion',
+    quote: 'L\'analyse de rétention m\'a montré exactement où les gens décrochaient. J\'ai ajusté mon montage et <b>mon taux de complétion a grimpé de 90%</b> en une semaine.',
+    sub: '67k abonnés',
+  },
+];
+
+/* ── TestiCard ──────────────────────────────────────────────── */
+interface TestiCardProps {
+  avatar: string; name: string; role: string;
+  tag: string; tagCls: string; metric: string;
+  quote: string; sub: string;
+}
+function TestiCard({ avatar, name, role, tag, tagCls, metric, quote, sub }: TestiCardProps) {
+  return (
+    <div className="flex-shrink-0 w-[320px] sm:w-[360px] flex flex-col p-5 rounded-2xl border border-white/[0.07] bg-[#0d0d12] hover:border-white/[0.14] transition-colors">
+      {/* Top row */}
+      <div className="flex items-center justify-between mb-3.5">
+        <div className="flex gap-0.5" aria-hidden>
+          {Array.from({ length: 5 }).map((_, j) => (
+            <svg key={j} viewBox="0 0 20 20" className="w-3 h-3 text-vn-fuchsia" fill="currentColor">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </svg>
+          ))}
+        </div>
+        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${tagCls}`}>{tag}</span>
+      </div>
+      {/* Metric highlight */}
+      <p className="text-[11px] font-black text-white/40 uppercase tracking-[0.16em] mb-2">{metric}</p>
+      {/* Quote */}
+      <p className="text-[13px] text-gray-400 leading-relaxed flex-1 mb-4"
+        dangerouslySetInnerHTML={{ __html: `"${quote.replace(/<b>/g, '<strong class="text-white font-semibold">').replace(/<\/b>/g, '</strong>')}"` }}
+      />
+      {/* Author */}
+      <div className="flex items-center gap-2.5 pt-3.5 border-t border-white/[0.06]">
+        <img src={avatar} alt={name} width={36} height={36}
+          className="w-9 h-9 rounded-full object-cover border border-white/[0.08] shrink-0" />
+        <div>
+          <p className="text-[12px] font-semibold text-white leading-none">{name}</p>
+          <p className="text-[10px] text-gray-600 mt-0.5">{role} · {sub}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 /* ── Features data ──────────────────────────────────────────── */
 const features = [
@@ -553,45 +694,60 @@ export default function HomeLanding() {
       </section>
 
       {/* ══ 6. TESTIMONIALS ═══════════════════════════════════════ */}
-      <section id="avis" className="relative py-24 sm:py-32 border-t border-white/[0.06]">
-        <div className={`max-w-5xl ${SI}`}>
-          <FadeUp>
-            <div className="text-center mb-14">
-              <h2 className="text-3xl sm:text-[2.6rem] font-black tracking-tight leading-[1.06]">
-                <span className="text-white">Ce qu&apos;ils en</span>{' '}
-                <span className={G}>disent.</span>
-              </h2>
-            </div>
-          </FadeUp>
+      <section id="avis" className="relative py-24 sm:py-32 border-t border-white/[0.06] overflow-hidden">
 
-          <div className="grid sm:grid-cols-3 gap-5">
-            {testimonials.map(({ avatar, name, handle, role, quote }, i) => (
-              <FadeUp key={name} delay={i * 0.1}>
-                <div className="h-full flex flex-col p-6 rounded-2xl border border-white/[0.07] bg-white/[0.02] hover:border-white/[0.12] transition-colors">
-                  {/* Stars */}
-                  <div className="flex gap-0.5 mb-4" aria-hidden>
-                    {Array.from({ length: 5 }).map((_, j) => (
-                      <svg key={j} viewBox="0 0 20 20" className="w-3.5 h-3.5 text-vn-fuchsia" fill="currentColor">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    ))}
-                  </div>
-                  {/* Quote */}
-                  <p className="text-[13.5px] text-gray-400 leading-relaxed flex-1 mb-5">&ldquo;{quote}&rdquo;</p>
-                  {/* Author */}
-                  <div className="flex items-center gap-3 pt-4 border-t border-white/[0.06]">
-                    <img src={avatar} alt={name} width={40} height={40}
-                      className="w-10 h-10 rounded-full object-cover border border-white/[0.08]" />
-                    <div>
-                      <p className="text-[13px] font-semibold text-white">{name}</p>
-                      <p className="text-[11px] text-gray-600">{role}</p>
-                    </div>
-                  </div>
+        {/* Fade edges */}
+        <div className="absolute inset-y-0 left-0 w-24 sm:w-40 bg-gradient-to-r from-vn-void to-transparent z-10 pointer-events-none" aria-hidden />
+        <div className="absolute inset-y-0 right-0 w-24 sm:w-40 bg-gradient-to-l from-vn-void to-transparent z-10 pointer-events-none" aria-hidden />
+
+        {/* Header */}
+        <FadeUp>
+          <div className="text-center mb-4 px-5">
+            <h2 className="text-3xl sm:text-[2.6rem] font-black tracking-tight leading-[1.06] mb-4">
+              <span className="text-white">Ce qu&apos;ils en</span>{' '}
+              <span className={G}>disent.</span>
+            </h2>
+            {/* Stats bar */}
+            <div className="inline-flex flex-wrap items-center justify-center gap-6 sm:gap-10 mt-5 mb-10">
+              {[
+                { value: '4.9/5', label: 'note moyenne' },
+                { value: '230+', label: 'utilisateurs actifs' },
+                { value: '2 000+', label: 'analyses réalisées' },
+                { value: '< 60s', label: 'par analyse' },
+              ].map(({ value, label }) => (
+                <div key={label} className="text-center">
+                  <p className="text-[1.4rem] font-black text-white leading-none">{value}</p>
+                  <p className="text-[11px] text-gray-600 mt-0.5">{label}</p>
                 </div>
-              </FadeUp>
+              ))}
+            </div>
+          </div>
+        </FadeUp>
+
+        {/* Marquee row 1 — left */}
+        <div className="relative mb-4">
+          <div className="flex gap-4 w-max animate-[marquee_40s_linear_infinite]">
+            {[...WALL_ROW1, ...WALL_ROW1].map((t, i) => (
+              <TestiCard key={i} {...t} />
             ))}
           </div>
         </div>
+
+        {/* Marquee row 2 — right */}
+        <div className="relative">
+          <div className="flex gap-4 w-max animate-[marquee_40s_linear_infinite_reverse]">
+            {[...WALL_ROW2, ...WALL_ROW2].map((t, i) => (
+              <TestiCard key={i} {...t} />
+            ))}
+          </div>
+        </div>
+
+        <style>{`
+          @keyframes marquee {
+            from { transform: translateX(0); }
+            to   { transform: translateX(-50%); }
+          }
+        `}</style>
       </section>
 
       {/* ══ 7. FEATURES ═══════════════════════════════════════════ */}
