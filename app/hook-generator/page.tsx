@@ -7,8 +7,6 @@ import GuestGate from '@/components/GuestGate';
 import { HOOK_LIMITS, MAX_HOOKS_ELITE, MAX_HOOKS_PRO } from '@/lib/plan-limits';
 import { DISPLAY_CATALOG_PRO_EUR } from '@/lib/stripe-pricing';
 
-/* â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-
 interface AuthUser {
   id: string;
   email: string;
@@ -26,39 +24,35 @@ interface HookHistoryItem {
   variant_of: string | null;
 }
 
-/* â”€â”€ Options â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-
 const TONES = [
-  { id: 'dramatique', label: 'Dramatique', emoji: 'ðŸŽ­' },
-  { id: 'clash',      label: 'Clash',      emoji: 'ðŸ”¥' },
-  { id: 'curieux',    label: 'Curieux',    emoji: 'ðŸ‘€' },
-  { id: 'choquant',   label: 'Choquant',   emoji: 'ðŸ˜±' },
-  { id: 'Ã©motion',    label: 'Ã‰motion',    emoji: 'ðŸ’”' },
-  { id: 'luxe',       label: 'Luxe',       emoji: 'ðŸ’Ž' },
-  { id: 'autoritÃ©',   label: 'AutoritÃ©',   emoji: 'ðŸ‘‘' },
+  { id: 'dramatique', label: 'Dramatique', emoji: '🎭' },
+  { id: 'clash',      label: 'Clash',      emoji: '🔥' },
+  { id: 'curieux',    label: 'Curieux',    emoji: '👀' },
+  { id: 'choquant',   label: 'Choquant',   emoji: '😱' },
+  { id: 'émotion',    label: 'Émotion',    emoji: '💔' },
+  { id: 'luxe',       label: 'Luxe',       emoji: '💎' },
+  { id: 'autorité',   label: 'Autorité',   emoji: '👑' },
 ] as const;
 
 const SCENES = [
   'Clash / recadrage',
-  'RÃ©vÃ©lation choc',
+  'Révélation choc',
   'Transformation',
-  'Challenge / dÃ©fi',
+  'Challenge / défi',
   'Lifestyle / flex',
-  'Ã‰motion / story',
-  'MystÃ¨re / suspense',
+  'Émotion / story',
+  'Mystère / suspense',
   'Autre',
 ];
 
 const COUNT_OPTIONS = [3, 5, 7, 10];
 
 const CONTEXT_TEMPLATES = [
-  'Je rÃ©ponds Ã  un hater qui me critique',
-  'Je rÃ©vÃ¨le un secret que personne ne connaÃ®t',
-  "J'ai testÃ© une astuce pendant 7 jours",
-  'Avant / AprÃ¨s: transformation totale',
+  'Je réponds à un hater qui me critique',
+  'Je révèle un secret que personne ne connaît',
+  "J'ai testé une astuce pendant 7 jours",
+  'Avant / Après : transformation totale',
 ];
-
-/* â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 const label9 = 'text-[9px] font-bold uppercase tracking-[0.24em] text-gray-600';
 
@@ -74,8 +68,6 @@ function CopyIcon({ copied }: { copied: boolean }) {
     </svg>
   );
 }
-
-/* â”€â”€ Main page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 export default function HookGeneratorPage() {
   const [authUser,   setAuthUser]   = useState<AuthUser | null>(null);
@@ -141,8 +133,8 @@ export default function HookGeneratorPage() {
     if (!authLoaded || loading) return;
     if (!authUser) { setShowGuestGate(true); return; }
     if (plan === 'free') return;
-    if (!context.trim()) { setError('DÃ©cris le contexte de ta vidÃ©o.'); return; }
-    if (context.trim().length > 500) { setError('Contexte trop long (max 500 caractÃ¨res).'); return; }
+    if (!context.trim()) { setError('Décris le contexte de ta vidéo.'); return; }
+    if (context.trim().length > 500) { setError('Contexte trop long (max 500 caractères).'); return; }
 
     setLoading(true);
     setHooks([]);
@@ -182,7 +174,7 @@ export default function HookGeneratorPage() {
 
       setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
     } catch {
-      setError('Une erreur est survenue. RÃ©essaie dans un instant.');
+      setError('Une erreur est survenue. Réessaie dans un instant.');
     } finally {
       setLoading(false);
     }
@@ -234,14 +226,12 @@ export default function HookGeneratorPage() {
     });
   }
 
-  /* â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-
   return (
     <main className="min-h-screen bg-vn-bg overflow-x-hidden">
 
       {/* Ambient glow */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden>
-        <div className="absolute -top-60 left-1/2 -translate-x-1/2 w-[600px] h-[500px] rounded-full bg-gradient-to-br from-vn-indigo/8 to-vn-fuchsia/6 blur-3xl" />
+        <div className="absolute -top-60 left-1/2 -translate-x-1/2 w-[600px] h-[500px] rounded-full bg-gradient-to-br from-vn-indigo/[0.08] to-vn-fuchsia/[0.06] blur-3xl" />
       </div>
 
       {/* Guest gate */}
@@ -252,50 +242,50 @@ export default function HookGeneratorPage() {
 
       <div className="relative max-w-2xl mx-auto px-5 sm:px-8 pt-16 pb-28">
 
-        {/* â•â• HEADER â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+        {/* HEADER */}
         <div className="mb-12">
           <h1 className="text-[2rem] sm:text-[2.5rem] font-black tracking-tight leading-tight mb-3">
-            <span className="text-white">GÃ©nÃ¨re des hooks </span>
+            <span className="text-white">Génère des hooks </span>
             <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">
               qui accrochent.
             </span>
           </h1>
           <p className="text-[13px] text-gray-500 leading-relaxed">
-            Courts. Viraux. Percutants. ConÃ§us pour l&apos;overlay TikTok.
+            Courts. Viraux. Percutants. Conçus pour l&apos;overlay TikTok.
           </p>
         </div>
 
-        {/* â•â• FREE PLAN UPSELL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+        {/* FREE PLAN UPSELL */}
         {authLoaded && authUser && plan === 'free' && (
           <div className="mb-10 p-6 rounded-2xl ring-1 ring-white/[0.07] bg-white/[0.02]">
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-xl bg-vn-violet/10 border border-vn-violet/15 flex items-center justify-center text-lg shrink-0">ðŸ”’</div>
+              <div className="w-10 h-10 rounded-xl bg-vn-violet/10 border border-vn-violet/15 flex items-center justify-center text-lg shrink-0">🔒</div>
               <div className="flex-1 min-w-0">
-                <p className="text-[14px] font-bold text-white mb-1">FonctionnalitÃ© Pro &amp; Elite</p>
+                <p className="text-[14px] font-bold text-white mb-1">Fonctionnalité Pro &amp; Elite</p>
                 <p className="text-[12px] text-gray-500 mb-4 leading-relaxed">
-                  {MAX_HOOKS_PRO} hooks/mois avec Pro Â· {MAX_HOOKS_ELITE} hooks/mois avec Elite.
+                  {MAX_HOOKS_PRO} hooks/mois avec Pro · {MAX_HOOKS_ELITE} hooks/mois avec Elite.
                 </p>
                 <Link href="/pricing"
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white text-[13px] font-semibold hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_8px_24px_-8px_rgba(232,121,249,0.4)]">
-                  Passer Ã  Pro â€” {DISPLAY_CATALOG_PRO_EUR}â‚¬/mois
+                  Passer à Pro — {DISPLAY_CATALOG_PRO_EUR}€/mois
                 </Link>
               </div>
             </div>
           </div>
         )}
 
-        {/* â•â• GUEST UPSELL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+        {/* GUEST UPSELL */}
         {authLoaded && !authUser && (
           <div className="mb-10 p-6 rounded-2xl ring-1 ring-white/[0.07] bg-white/[0.02]">
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-xl bg-vn-fuchsia/10 border border-vn-fuchsia/15 flex items-center justify-center text-lg shrink-0">âš¡</div>
+              <div className="w-10 h-10 rounded-xl bg-vn-fuchsia/10 border border-vn-fuchsia/15 flex items-center justify-center text-lg shrink-0">⚡</div>
               <div className="flex-1">
-                <p className="text-[14px] font-bold text-white mb-1">Connecte-toi pour gÃ©nÃ©rer des hooks</p>
-                <p className="text-[12px] text-gray-500 mb-4">Disponible Ã  partir du plan Pro.</p>
+                <p className="text-[14px] font-bold text-white mb-1">Connecte-toi pour générer des hooks</p>
+                <p className="text-[12px] text-gray-500 mb-4">Disponible à partir du plan Pro.</p>
                 <div className="flex gap-2.5">
                   <Link href="/signup"
                     className="inline-flex items-center px-5 py-2.5 rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white text-[13px] font-semibold hover:brightness-110 active:scale-[0.98] transition-all">
-                    CrÃ©er un compte
+                    Créer un compte
                   </Link>
                   <Link href="/login"
                     className="inline-flex items-center px-5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.09] text-[13px] font-semibold text-gray-300 hover:bg-white/[0.07] transition-all">
@@ -307,7 +297,7 @@ export default function HookGeneratorPage() {
           </div>
         )}
 
-        {/* â•â• QUOTA (Pro/Elite) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+        {/* QUOTA */}
         {authLoaded && authUser && plan !== 'free' && (
           <div className="mb-8 flex items-end justify-between pb-5 border-b border-white/[0.06]">
             <div>
@@ -334,16 +324,16 @@ export default function HookGeneratorPage() {
           </div>
         )}
 
-        {/* â•â• FORM â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+        {/* FORM */}
         <div className="space-y-7">
 
           {/* Contexte */}
           <div>
-            <p className={`${label9} mb-3`}>Contexte de ta vidÃ©o <span className="text-vn-fuchsia normal-case tracking-normal">*</span></p>
+            <p className={`${label9} mb-3`}>Contexte de ta vidéo <span className="text-vn-fuchsia normal-case tracking-normal">*</span></p>
             <textarea
               value={context}
               onChange={(e) => setContext(e.target.value)}
-              placeholder="Ex : Je remets Ã  sa place quelqu'un qui m'a critiquÃ© sur ma faÃ§on de m'habiller..."
+              placeholder="Ex : Je remets à sa place quelqu'un qui m'a critiqué sur ma façon de m'habiller..."
               rows={3}
               maxLength={300}
               className="w-full bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.14] focus:border-vn-violet/40 focus:ring-1 focus:ring-vn-violet/15 text-white text-[13px] placeholder-gray-700 rounded-xl px-4 py-3.5 resize-none transition-all outline-none"
@@ -361,10 +351,10 @@ export default function HookGeneratorPage() {
             </div>
           </div>
 
-          {/* Type de scÃ¨ne + Personnage */}
+          {/* Type de scène + Personnage */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
-              <p className={`${label9} mb-3`}>Type de scÃ¨ne</p>
+              <p className={`${label9} mb-3`}>Type de scène</p>
               <select value={scene} onChange={(e) => setScene(e.target.value)}
                 className="w-full bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.14] focus:border-vn-violet/40 text-white text-[13px] rounded-xl px-4 py-3 outline-none transition-all appearance-none cursor-pointer">
                 {SCENES.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -373,7 +363,7 @@ export default function HookGeneratorPage() {
             <div>
               <p className={`${label9} mb-3`}>Personnage <span className="normal-case tracking-normal font-normal text-gray-600">(optionnel)</span></p>
               <input type="text" value={person} onChange={(e) => setPerson(e.target.value)}
-                placeholder="Ex : mon ex, un haterâ€¦"
+                placeholder="Ex : mon ex, un hater…"
                 maxLength={50}
                 className="w-full bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.14] focus:border-vn-violet/40 text-white text-[13px] placeholder-gray-700 rounded-xl px-4 py-3 outline-none transition-all" />
             </div>
@@ -381,7 +371,7 @@ export default function HookGeneratorPage() {
 
           {/* Ton */}
           <div>
-            <p className={`${label9} mb-3`}>Ton souhaitÃ©</p>
+            <p className={`${label9} mb-3`}>Ton souhaité</p>
             <div className="flex flex-wrap gap-2">
               {TONES.map((t) => (
                 <button key={t.id} onClick={() => setTone(t.id)}
@@ -444,17 +434,17 @@ export default function HookGeneratorPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  GÃ©nÃ©ration en coursâ€¦
+                  Génération en cours…
                 </span>
-              ) : !authUser ? 'GÃ©nÃ©rer mes hooks â†’'
-                : plan === 'free' ? 'ðŸ”’ Disponible Ã  partir du plan Pro'
+              ) : !authUser ? 'Générer mes hooks →'
+                : plan === 'free' ? '🔒 Disponible à partir du plan Pro'
                 : used >= limit ? `Limite atteinte (${used}/${effectiveLimit})`
-                : `GÃ©nÃ©rer ${count} hook${count > 1 ? 's' : ''} â†’`}
+                : `Générer ${count} hook${count > 1 ? 's' : ''} →`}
             </button>
           </div>
         </div>
 
-        {/* â•â• LOADING SKELETONS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+        {/* LOADING SKELETONS */}
         {loading && hooks.length === 0 && (
           <div className="mt-12 space-y-3">
             {Array.from({ length: count }).map((_, i) => (
@@ -463,16 +453,14 @@ export default function HookGeneratorPage() {
           </div>
         )}
 
-        {/* â•â• RESULTS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+        {/* RESULTS */}
         {hooks.length > 0 && (
           <div ref={resultsRef} className="mt-12">
-
-            {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <div>
-                <p className={`${label9} mb-1`}>RÃ©sultats</p>
+                <p className={`${label9} mb-1`}>Résultats</p>
                 <p className="text-[14px] font-bold text-white">
-                  {hooks.length} hook{hooks.length > 1 ? 's' : ''} gÃ©nÃ©rÃ©s
+                  {hooks.length} hook{hooks.length > 1 ? 's' : ''} générés
                 </p>
               </div>
               <button type="button" onClick={copyAllHooks}
@@ -482,24 +470,17 @@ export default function HookGeneratorPage() {
                     : 'border-white/[0.09] text-gray-500 hover:text-gray-300 hover:border-white/[0.15]'
                 }`}>
                 <CopyIcon copied={copied === -1} />
-                {copied === -1 ? 'Tout copiÃ©' : 'Copier tout'}
+                {copied === -1 ? 'Tout copié' : 'Copier tout'}
               </button>
             </div>
 
-            {/* Hook cards */}
             <div className="space-y-3">
               {hooks.map((hook, i) => (
                 <div key={i}
                   className="group relative p-5 sm:p-6 rounded-2xl bg-[#0d0d12] ring-1 ring-white/[0.07] hover:ring-white/[0.13] transition-all">
-
-                  {/* Index */}
-
-                  {/* Hook text â€” dominant */}
                   <p className="text-[17px] sm:text-[18px] font-extrabold text-white leading-snug tracking-tight">
                     {hook}
                   </p>
-
-                  {/* Actions */}
                   <div className="mt-4 flex items-center justify-end">
                     <button type="button" onClick={() => copyHook(hook, i)}
                       className={`flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-lg border transition-all ${
@@ -508,30 +489,27 @@ export default function HookGeneratorPage() {
                           : 'border-white/[0.08] text-gray-600 hover:text-gray-300 hover:border-white/[0.15]'
                       }`}>
                       <CopyIcon copied={copied === i} />
-                      {copied === i ? 'CopiÃ©' : 'Copier'}
+                      {copied === i ? 'Copié' : 'Copier'}
                     </button>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Regenerate */}
             <button onClick={handleGenerate}
               disabled={loading || used >= effectiveLimit}
               className="mt-4 w-full py-3 rounded-xl bg-white/[0.03] border border-white/[0.07] hover:border-white/[0.12] text-[13px] font-semibold text-gray-500 hover:text-gray-300 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
-              {loading ? 'GÃ©nÃ©rationâ€¦' : 'â†º RegÃ©nÃ©rer'}
+              {loading ? 'Génération…' : '↺ Regénérer'}
             </button>
           </div>
         )}
 
-        {/* â•â• HISTORY (Pro/Elite) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+        {/* HISTORY */}
         {authUser && plan !== 'free' && (
           <section className="mt-16">
-
-            {/* Header */}
             <div className="flex items-center justify-between mb-5 pb-4 border-b border-white/[0.06]">
               <div>
-                <p className={`${label9} mb-1`}>BibliothÃ¨que</p>
+                <p className={`${label9} mb-1`}>Bibliothèque</p>
                 <p className="text-[14px] font-bold text-white">Historique des hooks</p>
               </div>
               <div className="flex items-center gap-2">
@@ -554,19 +532,17 @@ export default function HookGeneratorPage() {
                       ? 'border-emerald-500/35 text-emerald-400 bg-emerald-500/10'
                       : 'border-white/[0.09] text-gray-500 hover:text-gray-300'
                   }`}>
-                  {copiedFavorites ? 'âœ“ CopiÃ©s' : 'Copier favoris'}
+                  {copiedFavorites ? '✓ Copiés' : 'Copier favoris'}
                 </button>
               </div>
             </div>
 
-            {/* Search */}
             <div className="mb-5">
               <input type="text" value={historyQuery} onChange={(e) => setHistoryQuery(e.target.value)}
-                placeholder="Rechercherâ€¦"
+                placeholder="Rechercher…"
                 className="w-full bg-white/[0.03] border border-white/[0.07] hover:border-white/[0.12] focus:border-vn-violet/35 text-white text-[13px] placeholder-gray-700 rounded-xl px-4 py-3 outline-none transition-all" />
             </div>
 
-            {/* Items */}
             <div>
               {(historyFilter === 'favorites' ? history.filter(h => h.is_favorite) : history)
                 .filter(h => {
@@ -578,19 +554,15 @@ export default function HookGeneratorPage() {
                 .map((item) => (
                   <div key={item.id}
                     className="group flex items-start gap-4 py-4 border-b border-white/[0.05] last:border-none hover:border-white/[0.08] transition-colors">
-
-                    {/* Text */}
                     <div className="flex-1 min-w-0">
                       <p className="text-[13px] font-semibold text-gray-300 leading-snug mb-1">{item.hook_text}</p>
                       <div className="flex items-center gap-2 mt-1.5">
                         <span className="text-[10px] text-gray-700">{new Date(item.created_at).toLocaleDateString('fr-FR')}</span>
-                        <span className="text-gray-700">Â·</span>
+                        <span className="text-gray-700">·</span>
                         <span className="text-[10px] text-gray-700">{item.tone}</span>
-                        {item.is_favorite && <span className="text-[10px] text-vn-fuchsia">â˜… Favori</span>}
+                        {item.is_favorite && <span className="text-[10px] text-vn-fuchsia">★ Favori</span>}
                       </div>
                     </div>
-
-                    {/* Actions â€” visible on hover */}
                     <div className="flex items-center gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity pt-0.5">
                       <button type="button" onClick={() => copyHook(item.hook_text, -99)}
                         className="text-[10px] font-medium px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-gray-500 hover:text-gray-200 hover:border-white/[0.15] transition-all">
@@ -601,16 +573,16 @@ export default function HookGeneratorPage() {
                           item.is_favorite
                             ? 'border-vn-fuchsia/30 text-vn-fuchsia bg-vn-fuchsia/10'
                             : 'bg-white/[0.04] border-white/[0.08] text-gray-500 hover:text-vn-fuchsia hover:border-vn-fuchsia/25'
-                        }`}>â˜…</button>
+                        }`}>★</button>
                       <button type="button" onClick={() => deleteHistoryItem(item)}
-                        className="text-[10px] font-medium px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-gray-600 hover:text-red-400 hover:border-red-500/25 transition-all">Ã—</button>
+                        className="text-[10px] font-medium px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-gray-600 hover:text-red-400 hover:border-red-500/25 transition-all">×</button>
                     </div>
                   </div>
                 ))}
 
               {!loadingHistory && history.length === 0 && (
                 <p className="text-[12px] text-gray-600 text-center py-8">
-                  Aucun hook enregistrÃ© pour le moment.
+                  Aucun hook enregistré pour le moment.
                 </p>
               )}
 
@@ -625,12 +597,12 @@ export default function HookGeneratorPage() {
           </section>
         )}
 
-        {/* â•â• BOTTOM CTA â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+        {/* BOTTOM CTA */}
         <div className="mt-16 pt-8 border-t border-white/[0.06] flex items-center justify-between gap-4">
-          <p className="text-[12px] text-gray-600">Analyse ta prochaine vidÃ©o pour identifier ce qui bloque.</p>
+          <p className="text-[12px] text-gray-600">Analyse ta prochaine vidéo pour identifier ce qui bloque.</p>
           <Link href="/analyzer"
             className="shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-semibold text-white/70 bg-white/[0.04] border border-white/[0.09] hover:bg-white/[0.07] hover:border-white/[0.15] transition-all">
-            Analyser â†’
+            Analyser →
           </Link>
         </div>
 
