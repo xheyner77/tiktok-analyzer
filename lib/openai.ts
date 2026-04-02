@@ -381,6 +381,7 @@ export async function analyzeWithOpenAIVision(
       type: 'image_url' as const,
       image_url: {
         url: b64.startsWith('data:') ? b64 : `data:image/jpeg;base64,${b64}`,
+        detail: 'low' as const,
       },
     })),
   ];
