@@ -280,7 +280,7 @@ function buildVisionUserContent(
   plan: 'pro' | 'elite',
   frameCount: number,
   observedMetrics?: { views?: number; likes?: number; comments?: number; shares?: number },
-  meta?: { durationSec?: number; tiktokUrl?: string; fileName?: string }
+  meta?: { durationSec?: number; tiktokUrl?: string; fileName?: string; transcript?: string }
 ): string {
   const isPro = plan === 'pro';
   const tipsCount = isPro ? 5 : 10;
@@ -310,10 +310,25 @@ function buildVisionUserContent(
     ? `Stats TikTok : vues=${views.toLocaleString('fr-FR')} likes=${likes} comments=${comments} shares=${shares} | engagement=${erPct ?? '?'}%`
     : 'Stats TikTok : non disponibles';
 
+  // Transcript block — this is the most valuable signal when available
+  const transcriptBlock = meta?.transcript?.trim()
+    ? [
+        '',
+        '=== TRANSCRIPTION AUDIO COMPLETE (Whisper) ===',
+        'CECI EST CE QUI EST DIT DANS LA VIDEO — utilise-le pour analyser :',
+        '- Le hook verbal exact (premieres phrases = plus important pour la retention)',
+        '- La qualite du copywriting et de la promesse',
+        '- La presence et la qualite du CTA final',
+        '- La structure narrative (setup → montee → revelation → CTA)',
+        `"${meta.transcript.trim().slice(0, 1200)}"`,
+        '===',
+      ].join('\n')
+    : '\nAudio : non transcrit (analyse visuelle uniquement).';
+
   const eliteExtra = isPro ? '' : [
     '',
-    '  "strategy": "150-200 mots — strategie de contenu ancree dans CE QUE TU VOIS (type de video, sujet, format, niche identifiee). Frequence, creneaux, formats complementaires.",',
-    '  "viralTips": ["tip1", "tip2", "tip3", "tip4"] — 4 insights tres specifiques au format/niche observe',
+    '  "strategy": "150-200 mots — strategie de contenu ancree dans CE QUI EST DIT (transcription) ET CE QUI EST VU (frames). Frequence, creneaux, formats complementaires.",',
+    '  "viralTips": ["tip1", "tip2", "tip3", "tip4"] — 4 insights tres specifiques au contenu/niche observe',
   ].join('\n');
 
   const priorityRule = isPro
@@ -326,9 +341,12 @@ function buildVisionUserContent(
     statsLine,
     link ? `Lien TikTok fourni : ${link}` : '',
     link ? 'Si le fichier video ne correspond pas au lien, signale-le dans comparativeInsight.' : '',
+    transcriptBlock,
     '',
     `ANALYSE DEMANDEE (${depth}) :`,
-    'Examine chaque frame precisement. Note les elements visibles (texte, visage, eclairage, sous-titres, dynamisme).',
+    meta?.transcript?.trim()
+      ? 'Tu as la TRANSCRIPTION COMPLETE + les frames visuelles. Croise les deux : analyse le hook verbal ET le hook visuel, le CTA dit ET le CTA visible.'
+      : 'Examine chaque frame precisement. Note les elements visibles (texte, visage, eclairage, sous-titres, dynamisme).',
     'Utilise les timestamps approximatifs pour contextualiser (hook = frames debut, retention = frames fin).',
     '',
     'JSON sans markdown :',
@@ -352,7 +370,7 @@ export async function analyzeWithOpenAIVision(
   framesBase64: string[],
   plan: Extract<Plan, 'pro' | 'elite'>,
   observedMetrics?: { views?: number; likes?: number; comments?: number; shares?: number },
-  meta?: { durationSec?: number; tiktokUrl?: string; fileName?: string }
+  meta?: { durationSec?: number; tiktokUrl?: string; fileName?: string; transcript?: string }
 ): Promise<AnalysisResult> {
   const frames = framesBase64.slice(0, VISION_MAX_FRAMES);
   const text = buildVisionUserContent(plan, frames.length, observedMetrics, meta);

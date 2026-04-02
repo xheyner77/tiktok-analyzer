@@ -9,7 +9,7 @@ import AnalysisCounter from '@/components/AnalysisCounter';
 import GuestGate, { PENDING_URL_KEY } from '@/components/GuestGate';
 import { AnalysisResult } from '@/lib/types';
 import { normalizeTikTokUrl, isTikTokVideoUrl } from '@/lib/tiktok-url';
-import { extractVideoFramesFromFile } from '@/lib/extract-video-frames';
+import { extractVideoFramesFromFile, extractAudioFromVideo } from '@/lib/extract-video-frames';
 import { PLAN_LIMITS } from '@/lib/plan-limits';
 
 const STORAGE_KEY = 'tiktok_analysis_count';
@@ -170,12 +170,44 @@ export default function Home() {
     setExtractStatus('Extraction des images\u2026');
 
     try {
-      const { frames, durationSec } = await extractVideoFramesFromFile(videoFile);
+      // Extract frames + audio in parallel for maximum speed
+      setExtractStatus('Extraction des images et de l\u2019audio\u2026');
+      const [{ frames, durationSec }, audioResult] = await Promise.all([
+        extractVideoFramesFromFile(videoFile),
+        extractAudioFromVideo(videoFile),
+      ]);
+
+      // If audio extracted, transcribe via Whisper (non-blocking: silently skip on error)
+      let transcript = '';
+      if (audioResult && authUser) {
+        setExtractStatus('Transcription audio (Whisper)\u2026');
+        try {
+          const tRes = await fetch('/api/transcribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ audio: audioResult.audioBase64, mimeType: audioResult.mimeType }),
+          });
+          if (tRes.ok) {
+            const tData = await tRes.json() as { transcript?: string };
+            transcript = tData.transcript?.trim() ?? '';
+            if (transcript) console.log('[analyze] whisper transcript:', transcript.slice(0, 120));
+          }
+        } catch (tErr) {
+          console.warn('[analyze] transcription failed (non-blocking):', tErr);
+        }
+      }
+
       setExtractStatus('Analyse par vision IA\u2026');
       const response = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ frames, durationSec, fileName: videoFile.name, tiktokUrl: normalized || undefined }),
+        body: JSON.stringify({
+          frames,
+          durationSec,
+          fileName: videoFile.name,
+          tiktokUrl: normalized || undefined,
+          transcript: transcript || undefined,
+        }),
       });
       await processAnalyzeResponse(response);
     } catch (err) {

@@ -670,6 +670,10 @@ async function postVisionAnalyze(
       : undefined;
   const fileName =
     typeof body.fileName === 'string' ? body.fileName.replace(/[<>]/g, '').slice(0, 120) : undefined;
+  const transcript =
+    typeof body.transcript === 'string' && body.transcript.trim().length > 10
+      ? body.transcript.trim().slice(0, 4000)   // cap to avoid exceeding context window
+      : undefined;
 
   let tiktokUrl = '';
   const rawTiktok = typeof body.tiktokUrl === 'string' ? body.tiktokUrl.trim() : '';
@@ -739,6 +743,7 @@ async function postVisionAnalyze(
       durationSec,
       tiktokUrl: tiktokUrl || undefined,
       fileName,
+      transcript,
     });
   } catch (e) {
     console.error('[analyze] vision OpenAI failed:', e);
