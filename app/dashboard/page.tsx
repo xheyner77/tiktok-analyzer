@@ -51,7 +51,7 @@ export default async function DashboardPage({
         <div className="absolute top-1/2 -right-40 w-[600px] h-[500px] rounded-full bg-vn-violet/5 blur-[100px]" />
       </div>
 
-      <div className="relative max-w-5xl mx-auto px-4 sm:px-6 py-10 pb-24">
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-10 pb-24">
         <DashboardClient
           email={session.email}
           plan={plan}

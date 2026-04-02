@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import { Plan } from '@/lib/supabase';
 import { AnalysisRow } from '@/lib/analyses';
 import { getScoreTextColor, getRatingColors } from '@/lib/utils';
-import { MAX_ANALYSES_ELITE, MAX_ANALYSES_FREE, MAX_ANALYSES_PRO, MAX_HOOKS_ELITE } from '@/lib/plan-limits';
+import { MAX_ANALYSES_ELITE, MAX_ANALYSES_PRO, MAX_HOOKS_ELITE } from '@/lib/plan-limits';
 import { DISPLAY_CATALOG_ELITE_EUR, DISPLAY_CATALOG_PRO_EUR } from '@/lib/stripe-pricing';
 import { waitForBillingPlan } from '@/lib/wait-for-billing-sync';
 
@@ -41,9 +41,65 @@ function scoreBg(s: number) {
   return s >= 70 ? 'bg-emerald-400/10 border-emerald-400/20' : s >= 40 ? 'bg-amber-400/10 border-amber-400/20' : 'bg-red-400/10 border-red-400/20';
 }
 
+function avg(arr: number[]): number | null {
+  return arr.length > 0 ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : null;
+}
+
+/* ── Pure helpers ────────────────────────────────────────────────────────── */
+function getSmartTip(weakest: { key: string; score: number } | null): string {
+  if (!weakest) return "Lance ta première analyse pour obtenir des conseils personnalisés.";
+  const { key, score } = weakest;
+  if (key === 'hook') {
+    if (score < 40) return "Tes hooks ne retiennent pas l'attention. Commence par une question, un chiffre fort ou une tension dès la 1re seconde.";
+    if (score < 60) return "Coupe les 2 premières secondes — tu perds l'attention trop vite. Va droit au but sans intro inutile.";
+    return "Ton hook est correct mais peut monter. Teste des formulations plus directes et provocatrices.";
+  }
+  if (key === 'editing') {
+    if (score < 40) return "Ton montage est trop lent. Coupe toutes les pauses et transitions longues — chaque seconde compte.";
+    if (score < 60) return "Raccourcis chaque plan à 1–2 secondes max. Un rythme rapide est la clé sur TikTok.";
+    return "Améliore tes transitions — des jump cuts synchronisés à la musique augmentent le watch time.";
+  }
+  // retention
+  if (score < 40) return "Ta rétention chute fortement. Ajoute un micro-hook toutes les 5–7 secondes pour relancer l'attention.";
+  if (score < 60) return "Place une révélation ou un rebondissement à mi-vidéo pour relancer ta courbe de rétention.";
+  return "Pour booster la rétention, ajoute des sous-titres et textes à l'écran sur les moments clés de ta vidéo.";
+}
+
+function getBenchmark(hookScore: number | null): { top: string; sub: string } {
+  if (hookScore === null) return { top: 'Pas encore de data', sub: 'Analyse une vidéo pour te positionner' };
+  if (hookScore >= 80) return { top: 'Top 10%', sub: 'sur les hooks TikTok' };
+  if (hookScore >= 70) return { top: 'Top 20%', sub: 'sur les hooks TikTok' };
+  if (hookScore >= 60) return { top: 'Top 35%', sub: 'au-dessus de la moyenne' };
+  if (hookScore >= 50) return { top: 'Moyenne', sub: 'du marché — du potentiel à exploiter' };
+  return { top: 'Sous la moyenne', sub: 'améliore ton hook en priorité' };
+}
+
+/* ── ScorePill ───────────────────────────────────────────────────────────── */
 function ScorePill({ score }: { score: number | null | undefined }) {
   if (score == null) return <span className="text-[11px] font-bold text-gray-600">—</span>;
   return <span className={`text-[11px] font-bold tabular-nums ${getScoreTextColor(score)}`}>{score}</span>;
+}
+
+/* ── Animated score bar ──────────────────────────────────────────────────── */
+function ScoreBar({ score }: { score: number }) {
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => setWidth(score), 350);
+    return () => clearTimeout(t);
+  }, [score]);
+  const grad = score >= 70
+    ? 'from-emerald-400 to-emerald-500'
+    : score >= 50
+    ? 'from-amber-400 to-amber-500'
+    : 'from-red-400 to-rose-500';
+  return (
+    <div className="h-1.5 rounded-full bg-white/[0.08] overflow-hidden">
+      <div
+        className={`h-full rounded-full bg-gradient-to-r ${grad} transition-all duration-700 ease-out`}
+        style={{ width: `${width}%` }}
+      />
+    </div>
+  );
 }
 
 /* ── Circular progress ring ──────────────────────────────────────────────── */
@@ -68,12 +124,33 @@ function RingProgress({ value, max, size = 56 }: { value: number; max: number; s
   );
 }
 
+/* ── Trend badge ─────────────────────────────────────────────────────────── */
+function TrendBadge({ delta }: { delta: number | null }) {
+  if (delta === null) return null;
+  if (delta > 2) return (
+    <span className="inline-flex items-center gap-0.5 text-[9px] font-black text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-1.5 py-0.5 rounded-full">
+      ↑ +{delta}
+    </span>
+  );
+  if (delta < -2) return (
+    <span className="inline-flex items-center gap-0.5 text-[9px] font-black text-red-400 bg-red-400/10 border border-red-400/20 px-1.5 py-0.5 rounded-full">
+      ↓ {delta}
+    </span>
+  );
+  return (
+    <span className="inline-flex items-center text-[9px] font-bold text-gray-500 bg-white/[0.04] border border-white/[0.08] px-1.5 py-0.5 rounded-full">
+      = stable
+    </span>
+  );
+}
+
 /* ── History item ────────────────────────────────────────────────────────── */
-function AnalysisHistoryItem({ row }: { row: AnalysisRow }) {
+function AnalysisHistoryItem({ row, prevScore }: { row: AnalysisRow; prevScore?: number | null }) {
   const [open, setOpen] = useState(false);
   const { result, video_url, created_at } = row;
   const score = typeof result?.viralityScore === 'number' ? result.viralityScore : null;
   const isUpload = video_url.startsWith('upload:');
+  const delta = (score !== null && prevScore != null) ? score - prevScore : null;
 
   const displayUrl = isUpload
     ? video_url.replace(/^upload:/, '').replace(/-\d+$/, '')
@@ -95,6 +172,7 @@ function AnalysisHistoryItem({ row }: { row: AnalysisRow }) {
           <div className="flex items-center gap-2 mt-0.5">
             <span className="text-[10px] text-gray-600">{date} · {time}</span>
             {isUpload && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-vn-fuchsia/15 text-vn-fuchsia border border-vn-fuchsia/20 uppercase tracking-wide">Vision</span>}
+            <TrendBadge delta={delta} />
           </div>
         </div>
 
@@ -165,19 +243,43 @@ function AnalysisHistoryItem({ row }: { row: AnalysisRow }) {
   );
 }
 
-/* ── Paginated history ───────────────────────────────────────────────────── */
+/* ── Paginated history with sort ─────────────────────────────────────────── */
 const PAGE_SIZE = 5;
 
-function AnalysisHistoryPaginated({ analyses }: { analyses: AnalysisRow[] }) {
+function AnalysisHistoryPaginated({
+  analyses,
+  sortMode,
+}: {
+  analyses: AnalysisRow[];
+  sortMode: 'recent' | 'best';
+}) {
   const [page, setPage] = useState(1);
-  const totalPages = Math.max(1, Math.ceil(analyses.length / PAGE_SIZE));
+
+  // Reset to page 1 when sort changes
+  useEffect(() => { setPage(1); }, [sortMode]);
+
+  const sorted = useMemo(() => {
+    if (sortMode === 'best') {
+      return [...analyses].sort((a, b) => (b.result?.viralityScore ?? 0) - (a.result?.viralityScore ?? 0));
+    }
+    return analyses; // already date desc from server
+  }, [analyses, sortMode]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
-  const slice = analyses.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const slice = sorted.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   return (
     <div className="space-y-3">
       <div className="space-y-2">
-        {slice.map((row) => <AnalysisHistoryItem key={row.id} row={row} />)}
+        {slice.map((row, idx) => {
+          const absoluteIdx = (safePage - 1) * PAGE_SIZE + idx;
+          // For 'recent' sort, show delta vs chronologically older item
+          const prevScore = sortMode === 'recent' && absoluteIdx < sorted.length - 1
+            ? (sorted[absoluteIdx + 1]?.result?.viralityScore ?? null)
+            : null;
+          return <AnalysisHistoryItem key={row.id} row={row} prevScore={prevScore} />;
+        })}
       </div>
 
       {totalPages > 1 && (
@@ -209,7 +311,7 @@ function AnalysisHistoryPaginated({ analyses }: { analyses: AnalysisRow[] }) {
           </button>
 
           <span className="ml-2 text-[11px] text-gray-600">
-            {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, analyses.length)} / {analyses.length}
+            {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, sorted.length)} / {sorted.length}
           </span>
         </div>
       )}
@@ -241,6 +343,7 @@ export default function DashboardClient({
   const [cancelError, setCancelError] = useState('');
   const [cancelDoneMode, setCancelDoneMode] = useState<'immediate' | 'end_of_period' | null>(null);
   const [domReady, setDomReady] = useState(false);
+  const [historySort, setHistorySort] = useState<'recent' | 'best'>('recent');
   useEffect(() => { setDomReady(true); }, []);
 
   useEffect(() => {
@@ -264,21 +367,76 @@ export default function DashboardClient({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stripeSessionId]);
 
-  // ── Computed stats ──────────────────────────────────────────────────────
+  // ── Base computed values ────────────────────────────────────────────────
   const remaining = Math.max(0, analysesLimit - analysesCount);
   const hooksRemaining = hooksLimit > 0 ? Math.max(0, hooksLimit - hooksCount) : 0;
   const canAnalyze = remaining > 0;
   const initials = email.slice(0, 2).toUpperCase();
   const hasHistory = analyses.length > 0;
   const memberDate = new Date(memberSince).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  const remainingDisplay = remaining > 0 ? `${remaining} restante${remaining > 1 ? 's' : ''}` : 'Limite atteinte';
 
   const scores = analyses.map(a => a.result?.viralityScore).filter((s): s is number => typeof s === 'number');
   const avgScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null;
   const bestScore = scores.length > 0 ? Math.max(...scores) : null;
 
-  const remainingDisplay = remaining > 0 ? `${remaining} restante${remaining > 1 ? 's' : ''}` : 'Limite atteinte';
+  // ── Coach data ──────────────────────────────────────────────────────────
+  const hookScores = analyses.map(a => a.result?.hook?.score).filter((s): s is number => typeof s === 'number');
+  const editingScores = analyses.map(a => a.result?.editing?.score).filter((s): s is number => typeof s === 'number');
+  const retentionScores = analyses.map(a => a.result?.retention?.score).filter((s): s is number => typeof s === 'number');
 
-  // ── Cancel ──────────────────────────────────────────────────────────────
+  const avgHookScore = avg(hookScores);
+  const avgEditingScore = avg(editingScores);
+  const avgRetentionScore = avg(retentionScores);
+
+  const dims = ([
+    { key: 'hook' as const, label: 'Hook', score: avgHookScore },
+    { key: 'editing' as const, label: 'Montage', score: avgEditingScore },
+    { key: 'retention' as const, label: 'Rétention', score: avgRetentionScore },
+  ] as const).filter(d => d.score !== null) as { key: 'hook' | 'editing' | 'retention'; label: string; score: number }[];
+
+  const weakest = dims.length > 0 ? dims.reduce((a, b) => a.score < b.score ? a : b) : null;
+  const strongest = dims.length > 0 ? dims.reduce((a, b) => a.score > b.score ? a : b) : null;
+
+  // Improvement potential — gap vs viral threshold of 82
+  const potential = avgScore !== null ? Math.min(42, Math.max(0, 82 - avgScore)) : null;
+
+  // Trend: recent 3 vs older 3
+  const recentAvg = avg(scores.slice(0, 3));
+  const olderAvg = avg(scores.slice(3, 6));
+  const trend = (recentAvg !== null && olderAvg !== null) ? recentAvg - olderAvg : null;
+
+  // Priority tip: most common haute improvement from last 3 analyses
+  const last3 = analyses.slice(0, 3);
+  const hauteImprovements: string[] = [];
+  last3.forEach(a => {
+    (a.result?.improvements ?? []).filter(i => i.priority === 'haute').forEach(i => hauteImprovements.push(i.tip));
+  });
+  const priorityTip = hauteImprovements.length > 0 ? hauteImprovements[0] : null;
+
+  // Critical errors: dimensions below 55 + top haute tips
+  const criticalDims = dims.filter(d => d.score < 55);
+  const criticalTips = hauteImprovements.slice(0, 3);
+  const showCritical = criticalDims.length > 0 || criticalTips.length > 0;
+
+  // Hero phrase
+  const heroPhrase = useMemo(() => {
+    if (!hasHistory) return "Lance ta première analyse pour débloquer tes insights de performance.";
+    if (trend !== null && trend > 3) return `Tu progresses — +${trend} pts sur tes 3 dernières vidéos. Garde le rythme.`;
+    if (trend !== null && trend < -3) return `Tes dernières vidéos perdent ${Math.abs(trend)} pts. Travaille ton ${weakest?.label ?? 'contenu'} en priorité.`;
+    if (weakest && weakest.score < 50) return `Tu peux gagner +${potential ?? '?'} pts en améliorant ton ${weakest.label}.`;
+    if (potential !== null && potential > 10) return `Tu as ${potential} pts de progression possible sur tes prochaines vidéos.`;
+    return `Score moyen de ${avgScore} — tu approches le seuil viral. Continue.`;
+  }, [hasHistory, trend, weakest, potential, avgScore]);
+
+  // Second weakest dimension (for potential card)
+  const secondWeakest = dims.length >= 2
+    ? dims.filter(d => d.key !== weakest?.key).sort((a, b) => a.score - b.score)[0]
+    : null;
+
+  const benchmark = getBenchmark(avgHookScore);
+
+  // ── Handlers ────────────────────────────────────────────────────────────
   async function handleEliteUpgrade() {
     setEliteUpgradeLoading(true);
     try {
@@ -332,7 +490,7 @@ export default function DashboardClient({
             </div>
             <h3 className="text-base font-bold text-white text-center mb-2">Annuler ton abonnement {billingPlan === 'elite' ? 'Elite' : 'Pro'} ?</h3>
             <p className="text-sm text-gray-400 text-center leading-relaxed mb-5">
-              {usesStripeSubscription ? (<>L'abonnement sera arrêté à la <span className="text-white font-medium">fin de la période en cours</span>.</>) : (<>Ton plan passera immédiatement en <span className="text-white font-medium">Free</span>.</>)}
+              {usesStripeSubscription ? (<>L&apos;abonnement sera arrêté à la <span className="text-white font-medium">fin de la période en cours</span>.</>) : (<>Ton plan passera immédiatement en <span className="text-white font-medium">Free</span>.</>)}
               <br /><span className="text-gray-600 text-xs">Ton historique sera conservé.</span>
             </p>
             {cancelStatus === 'error' && <div className="bg-red-500/8 border border-red-500/20 rounded-xl px-3 py-2.5 mb-3"><p className="text-xs text-red-400 text-center">{cancelError}</p></div>}
@@ -353,7 +511,7 @@ export default function DashboardClient({
     <>
       {cancelModal}
 
-      <div className="space-y-8 animate-fade-up">
+      <div className="space-y-5 animate-fade-up">
 
         {/* ── Alert banners ── */}
         {upgradeStatus === 'loading' && (
@@ -389,14 +547,15 @@ export default function DashboardClient({
             <div className="w-7 h-7 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
               <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 text-amber-400"><path fillRule="evenodd" d="M6.701 2.25c.577-1 2.02-1 2.598 0l5.196 9a1.5 1.5 0 0 1-1.299 2.25H2.804a1.5 1.5 0 0 1-1.3-2.25l5.197-9ZM8 4a.75.75 0 0 1 .75.75v3a.75.75 0 1 1-1.5 0v-3A.75.75 0 0 1 8 4Zm0 8a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" /></svg>
             </div>
-            <p className="text-sm text-amber-200">Problème de paiement — mets à jour ton moyen de paiement depuis l'e-mail Stripe.</p>
+            <p className="text-sm text-amber-200">Problème de paiement — mets à jour ton moyen de paiement depuis l&apos;e-mail Stripe.</p>
           </div>
         )}
 
-        {/* ── Hero header ── */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {/* HERO */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
         <div className="relative rounded-2xl overflow-hidden border border-white/[0.08] bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-6 sm:p-8">
-          {/* Background glow */}
-          <div className="absolute inset-0 bg-gradient-to-br from-vn-fuchsia/[0.06] via-transparent to-vn-indigo/[0.04] pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-br from-vn-fuchsia/[0.07] via-transparent to-vn-indigo/[0.05] pointer-events-none" />
           <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
 
           <div className="relative flex flex-col sm:flex-row sm:items-center gap-5">
@@ -408,9 +567,9 @@ export default function DashboardClient({
               </div>
             </div>
 
-            {/* Name + email */}
+            {/* Identity + insights */}
             <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2 mb-1">
+              <div className="flex flex-wrap items-center gap-2 mb-1.5">
                 <h1 className="text-2xl sm:text-3xl font-black text-white leading-none">
                   {email.split('@')[0]}
                 </h1>
@@ -418,11 +577,29 @@ export default function DashboardClient({
                   {planLabels[plan]}
                 </span>
               </div>
-              <p className="text-sm text-gray-500 truncate">{email}</p>
-              <p className="text-xs text-gray-600 mt-1">Membre depuis {memberDate}</p>
+
+              {/* Dynamic coach phrase */}
+              <p className="text-[13px] font-semibold text-gray-300 leading-snug">{heroPhrase}</p>
+
+              {/* Weakest / strongest summary */}
+              {hasHistory && weakest && strongest && weakest.key !== strongest.key && (
+                <div className="flex items-center gap-3 mt-2 flex-wrap">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
+                    <span className="text-[11px] text-gray-500">Point faible : <span className="font-semibold text-red-400">{weakest.label}</span></span>
+                  </div>
+                  <span className="text-gray-700 text-[11px]">·</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                    <span className="text-[11px] text-gray-500">Point fort : <span className="font-semibold text-emerald-400">{strongest.label}</span></span>
+                  </div>
+                </div>
+              )}
+
+              <p className="text-[11px] text-gray-600 mt-1.5">Membre depuis {memberDate}</p>
             </div>
 
-            {/* Quick CTA */}
+            {/* CTA */}
             <div className="shrink-0">
               <Link href="/analyzer" className={`inline-flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm text-white transition-all ${canAnalyze ? 'bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:brightness-110 shadow-lg shadow-vn-fuchsia/25' : 'bg-white/[0.06] border border-white/[0.10] opacity-60 cursor-not-allowed pointer-events-none'}`}>
                 <svg viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4"><path d="M9.196.944a.75.75 0 0 0-1.483.183l.175 1.417A8.001 8.001 0 0 0 2.25 8.5h1.5a6.5 6.5 0 0 1 4.637-6.224l.175 1.417a.75.75 0 0 0 1.374.293l1.346-3a.75.75 0 0 0-.623-1.045l-1.463.003Z" /><path d="M5.483 13.897a.75.75 0 0 1-.957-.408l-.565-1.356a6.5 6.5 0 0 1-1.711-5.633h-1.5A8 8 0 0 0 4 14.75a.75.75 0 0 0 .957.408l1.346-3a.75.75 0 0 0-.82-1.261Z" /></svg>
@@ -432,11 +609,13 @@ export default function DashboardClient({
           </div>
         </div>
 
-        {/* ── KPI strip ── */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {/* KPI STRIP */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {/* Analyses */}
-          <div className="col-span-2 sm:col-span-1 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 flex items-center gap-4">
-            <RingProgress value={analysesCount} max={analysesLimit} size={56} />
+          {/* Quota analyses */}
+          <div className="col-span-2 sm:col-span-1 rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 flex items-center gap-4">
+            <RingProgress value={analysesCount} max={analysesLimit} size={52} />
             <div className="min-w-0">
               <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500 mb-1">Analyses</p>
               <p className="text-2xl font-black text-white leading-none">{analysesCount}<span className="text-sm text-gray-600 font-medium"> / {analysesLimit}</span></p>
@@ -445,7 +624,7 @@ export default function DashboardClient({
           </div>
 
           {/* Score moyen */}
-          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5">
+          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
             <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500 mb-3">Score moyen</p>
             {avgScore !== null ? (
               <>
@@ -458,21 +637,21 @@ export default function DashboardClient({
           </div>
 
           {/* Meilleur score */}
-          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5">
+          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
             <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500 mb-3">Meilleur score</p>
             {bestScore !== null ? (
               <>
                 <p className={`text-3xl font-black leading-none ${scoreColor(bestScore)}`}>{bestScore}</p>
-                <p className="text-[11px] text-gray-600 mt-1">score viral</p>
+                <p className="text-[11px] text-gray-600 mt-1">record viral</p>
               </>
             ) : (
               <p className="text-2xl font-black text-gray-700">—</p>
             )}
           </div>
 
-          {/* Hooks ou "Passer Pro" */}
+          {/* Hooks or upgrade */}
           {hooksLimit > 0 ? (
-            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5">
+            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
               <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500 mb-3">Hooks générés</p>
               <p className="text-3xl font-black text-white leading-none">{hooksCount}<span className="text-sm text-gray-600 font-medium"> / {hooksLimit}</span></p>
               <p className="text-[11px] text-gray-600 mt-1">{hooksRemaining > 0 ? `${hooksRemaining} restant${hooksRemaining > 1 ? 's' : ''}` : 'Quota atteint'}</p>
@@ -485,6 +664,195 @@ export default function DashboardClient({
             </Link>
           )}
         </div>
+
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {/* COACH SECTIONS — only if data available */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {hasHistory ? (
+          <>
+            {/* ── Coach strip: Priority + Potential ── */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+              {/* Priorité du moment */}
+              <div className="relative overflow-hidden rounded-2xl border border-vn-fuchsia/25 bg-gradient-to-br from-vn-fuchsia/[0.08] to-vn-indigo/[0.04] p-5">
+                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-vn-fuchsia/60 to-transparent" />
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-9 h-9 rounded-xl bg-vn-fuchsia/15 border border-vn-fuchsia/25 flex items-center justify-center shrink-0 text-base">
+                    🔥
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-vn-fuchsia/70 mb-0.5">Priorité du moment</p>
+                    <p className="text-[14px] font-bold text-white leading-snug">
+                      {weakest
+                        ? `Améliore ton ${weakest.label}${potential !== null ? ` — ${Math.round(potential * 0.65)}% de ton gap` : ''}`
+                        : 'Analyse plus de vidéos pour ta priorité'}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-[12px] text-gray-400 leading-relaxed mb-4">
+                  {priorityTip
+                    ?? (weakest
+                      ? `Ton ${weakest.label} tire ton score viral vers le bas. C'est là que se joue ta prochaine progression.`
+                      : 'Continue à analyser tes vidéos pour identifier tes priorités.')}
+                </p>
+                <Link href="/analyzer" className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-vn-fuchsia hover:text-white transition-colors group">
+                  Analyser une vidéo
+                  <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3 group-hover:translate-x-0.5 transition-transform"><path fillRule="evenodd" d="M6.22 4.22a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06L7.28 11.78a.75.75 0 0 1-1.06-1.06L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" /></svg>
+                </Link>
+              </div>
+
+              {/* Potentiel d'amélioration */}
+              <div className="rounded-2xl border border-emerald-400/15 bg-gradient-to-br from-emerald-400/[0.05] to-transparent p-5">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-400/10 border border-emerald-400/20 flex items-center justify-center shrink-0 text-base">
+                    📈
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-400/60 mb-0.5">Potentiel d&apos;amélioration</p>
+                    <p className="text-3xl font-black text-emerald-400 leading-none">
+                      +{potential !== null ? potential : '—'}
+                      <span className="text-lg text-emerald-400/60 font-bold"> pts</span>
+                    </p>
+                  </div>
+                </div>
+                <p className="text-[12px] text-gray-400 leading-relaxed">
+                  {potential !== null && potential > 0
+                    ? `En corrigeant ton ${weakest?.label ?? 'contenu'}${secondWeakest ? ` et ton ${secondWeakest.label}` : ''}, tu peux atteindre le seuil viral.`
+                    : "Tu es déjà près du seuil viral. Maintiens ce niveau de qualité."}
+                </p>
+                {trend !== null && (
+                  <div className={`mt-3 inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full border ${
+                    trend > 0 ? 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20'
+                    : trend < 0 ? 'bg-red-400/10 text-red-400 border-red-400/20'
+                    : 'bg-white/[0.04] text-gray-400 border-white/[0.08]'
+                  }`}>
+                    {trend > 0 ? `↑ +${trend} pts` : trend < 0 ? `↓ ${trend} pts` : '= Stable'} sur 3 vidéos
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* ── Tracker : Ta progression ── */}
+            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">📊</span>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500">Ta progression</p>
+                </div>
+                {avgScore !== null && (
+                  <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${
+                    avgScore >= 70 ? 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20'
+                    : avgScore >= 50 ? 'bg-amber-400/10 text-amber-400 border-amber-400/20'
+                    : 'bg-red-400/10 text-red-400 border-red-400/20'
+                  }`}>
+                    Moy. {avgScore}/100
+                  </span>
+                )}
+              </div>
+              <div className="space-y-4">
+                {[
+                  { label: 'Hook', score: avgHookScore },
+                  { label: 'Montage', score: avgEditingScore },
+                  { label: 'Rétention', score: avgRetentionScore },
+                ].map(({ label, score }) => (
+                  <div key={label}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[13px] font-semibold text-gray-300">{label}</span>
+                      <div className="flex items-center gap-2">
+                        {score !== null ? (
+                          <>
+                            <span className={`text-[13px] font-black tabular-nums ${scoreColor(score)}`}>{score}</span>
+                            <span className="text-[10px] text-gray-600">/100</span>
+                          </>
+                        ) : (
+                          <span className="text-[13px] font-black text-gray-700">—</span>
+                        )}
+                      </div>
+                    </div>
+                    {score !== null ? <ScoreBar score={score} /> : <div className="h-1.5 rounded-full bg-white/[0.06]" />}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ── Benchmark + Conseil du jour ── */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+              {/* Benchmark */}
+              <div className="rounded-2xl border border-vn-indigo/20 bg-gradient-to-br from-vn-indigo/[0.07] to-transparent p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-base">🏆</span>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-vn-indigo/60">Position</p>
+                </div>
+                <p className="text-2xl font-black text-white leading-none mb-1">{benchmark.top}</p>
+                <p className="text-[12px] text-gray-500 mb-3">{benchmark.sub}</p>
+                {avgHookScore !== null && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-vn-indigo/15 text-vn-indigo border border-vn-indigo/20">Hook</span>
+                    <span className={`text-[11px] font-semibold ${scoreColor(avgHookScore)}`}>{avgHookScore}/100</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Conseil du jour */}
+              <div className="rounded-2xl border border-amber-400/15 bg-gradient-to-br from-amber-400/[0.06] to-transparent p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-base">💡</span>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-400/60">Conseil du jour</p>
+                </div>
+                <p className="text-[13px] text-gray-200 leading-relaxed font-medium">
+                  {getSmartTip(weakest)}
+                </p>
+              </div>
+            </div>
+
+            {/* ── Erreurs critiques — conditional ── */}
+            {showCritical && (
+              <div className="rounded-2xl border border-red-500/15 bg-gradient-to-br from-red-500/[0.05] to-transparent p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-base">⚠️</span>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-red-400/60">Erreurs à corriger</p>
+                </div>
+                <div className="space-y-2.5">
+                  {criticalDims.map(d => (
+                    <div key={d.key} className="flex items-center gap-2.5">
+                      <div className="w-5 h-5 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0">
+                        <span className="text-[9px] font-black text-red-400">!</span>
+                      </div>
+                      <p className="text-[12px] text-gray-400">
+                        <span className="font-semibold text-red-300">{d.label}</span>
+                        <span className="text-gray-600"> — score {d.score}/100, sous le seuil de performance</span>
+                      </p>
+                    </div>
+                  ))}
+                  {criticalTips.length > 0 && (
+                    <div className="pt-2 mt-1 border-t border-white/[0.05] space-y-2">
+                      {criticalTips.map((tip, idx) => (
+                        <div key={idx} className="flex items-start gap-2">
+                          <span className="text-vn-fuchsia text-[10px] font-black shrink-0 mt-0.5">→</span>
+                          <p className="text-[12px] text-gray-500 leading-snug">{tip}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+          </>
+        ) : plan !== 'free' && (
+          /* Empty state coach section */
+          <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-8 text-center">
+            <div className="w-12 h-12 rounded-2xl bg-vn-fuchsia/10 border border-vn-fuchsia/20 flex items-center justify-center mx-auto mb-4 text-xl">
+              🚀
+            </div>
+            <p className="text-sm font-semibold text-white mb-1">Lance ta première analyse</p>
+            <p className="text-xs text-gray-500 mb-5">Tes insights de performance, priorités et conseils personnalisés apparaîtront ici.</p>
+            <Link href="/analyzer" className="inline-flex items-center gap-2 text-xs font-semibold px-5 py-2.5 rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:opacity-90 transition-opacity shadow-lg shadow-vn-fuchsia/20">
+              Analyser une vidéo →
+            </Link>
+          </div>
+        )}
 
         {/* ── Elite upgrade banner ── */}
         {showEliteUpgrade && (
@@ -503,20 +871,36 @@ export default function DashboardClient({
           </div>
         )}
 
-        {/* ── Two-column layout: history + sidebar ── */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {/* TWO-COLUMN: HISTORY + SIDEBAR */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
         <div className="flex flex-col lg:flex-row lg:items-start gap-6">
 
-          {/* History — left, takes most space */}
+          {/* History — left */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-sm font-bold text-white">Historique des analyses</h2>
                 {hasHistory && <p className="text-[11px] text-gray-600 mt-0.5">{analyses.length} analyse{analyses.length > 1 ? 's' : ''} au total</p>}
               </div>
+
+              {/* Sort toggle — only when there's history and plan !== free */}
               {plan !== 'free' && hasHistory && (
-                <Link href="/analyzer" className="text-[11px] font-semibold text-vn-fuchsia hover:text-vn-fuchsia/80 transition-colors">
-                  + Nouvelle →
-                </Link>
+                <div className="flex items-center gap-1 bg-white/[0.04] border border-white/[0.07] rounded-lg p-0.5">
+                  {(['recent', 'best'] as const).map((mode) => (
+                    <button
+                      key={mode}
+                      onClick={() => setHistorySort(mode)}
+                      className={`px-3 py-1.5 rounded-md text-[10px] font-semibold transition-all ${
+                        historySort === mode
+                          ? 'bg-white/[0.08] text-white'
+                          : 'text-gray-500 hover:text-gray-300'
+                      }`}
+                    >
+                      {mode === 'recent' ? 'Récent' : 'Meilleur'}
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
 
@@ -537,7 +921,7 @@ export default function DashboardClient({
                 <p className="text-xs text-gray-600">Lance ta première analyse pour la retrouver ici.</p>
               </div>
             ) : (
-              <AnalysisHistoryPaginated analyses={analyses} />
+              <AnalysisHistoryPaginated analyses={analyses} sortMode={historySort} />
             )}
           </div>
 
@@ -545,12 +929,10 @@ export default function DashboardClient({
           <div className="lg:w-[260px] xl:w-[280px] shrink-0">
             <div className="rounded-2xl border border-white/[0.08] bg-[#0a0a10] overflow-hidden">
 
-              {/* Section label */}
               <div className="px-5 pt-5 pb-3">
                 <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">Actions rapides</p>
               </div>
 
-              {/* Analyser */}
               <Link
                 href="/analyzer"
                 className={`flex items-center gap-3.5 px-5 py-3.5 border-t border-white/[0.05] transition-all group ${canAnalyze ? 'hover:bg-white/[0.04]' : 'opacity-40 pointer-events-none'}`}
@@ -570,7 +952,6 @@ export default function DashboardClient({
                 </svg>
               </Link>
 
-              {/* Second action: hooks or upgrade */}
               {plan === 'free' ? (
                 <Link href="/pricing" className="flex items-center gap-3.5 px-5 py-3.5 border-t border-white/[0.05] hover:bg-white/[0.04] transition-all group">
                   <div className="w-8 h-8 rounded-lg bg-vn-violet/15 border border-vn-violet/25 flex items-center justify-center shrink-0">
@@ -599,7 +980,6 @@ export default function DashboardClient({
                 </Link>
               )}
 
-              {/* Reset info */}
               {hooksLimit > 0 && (
                 <div className="flex items-center gap-3.5 px-5 py-3.5 border-t border-white/[0.05]">
                   <div className="w-8 h-8 rounded-lg bg-vn-indigo/10 border border-vn-indigo/15 flex items-center justify-center shrink-0">
@@ -616,7 +996,6 @@ export default function DashboardClient({
                 </div>
               )}
 
-              {/* Subscription management */}
               {billingPlan !== 'free' && (
                 <div className="flex items-center justify-between px-5 py-4 border-t border-white/[0.05]">
                   <div>
@@ -632,7 +1011,6 @@ export default function DashboardClient({
                   </button>
                 </div>
               )}
-
             </div>
           </div>
         </div>
