@@ -8,14 +8,9 @@ export default function Header() {
 
       {/* Title */}
       <div>
-        <h1 className="text-[1.9rem] sm:text-[2.3rem] font-display font-bold tracking-tight leading-tight">
+        <h1 className="text-[1.9rem] sm:text-[2.3rem] font-display font-black tracking-tight leading-tight">
           <span className="text-white">Comprends ce qui </span>
-          <span style={{
-            background: 'linear-gradient(105deg, #f5c5ff 0%, #c084fc 45%, #818cf8 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-          }}>
+          <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">
             bloque ta vidéo
           </span>
         </h1>

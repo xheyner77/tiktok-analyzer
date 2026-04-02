@@ -252,14 +252,7 @@ export default function FeaturesPage() {
 
           <h1 className="text-4xl sm:text-5xl lg:text-[3.6rem] font-display font-black text-white tracking-tight leading-[1.05] mb-6">
             Tout ce dont tu as besoin<br />
-            <span
-              style={{
-                background: 'linear-gradient(102deg, #f5c5ff 0%, #d8a2ff 34%, #a8adff 68%, #8b95ff 100%)',
-                WebkitBackgroundClip: 'text',
-                backgroundClip: 'text',
-                color: 'transparent',
-              }}
-            >
+            <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">
               pour comprendre et performer.
             </span>
           </h1>
@@ -292,8 +285,9 @@ export default function FeaturesPage() {
         <div className="max-w-6xl mx-auto px-5 sm:px-8 lg:px-10">
           <div className="text-center mb-12">
             <p className={`${label9} mb-4`}>Analyse IA</p>
-            <h2 className="text-3xl sm:text-4xl font-display font-bold text-white tracking-tight">
-              Trois piliers. Un seul diagnostic.
+            <h2 className="text-3xl sm:text-4xl font-display font-black tracking-tight leading-tight">
+              <span className="text-white">Trois piliers.</span><br />
+              <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">Un seul diagnostic.</span>
             </h2>
           </div>
 
@@ -337,8 +331,9 @@ export default function FeaturesPage() {
         <div className="max-w-6xl mx-auto px-5 sm:px-8 lg:px-10">
           <div className="text-center mb-12">
             <p className={`${label9} mb-4`}>Ce qui est mesuré</p>
-            <h2 className="text-3xl sm:text-4xl font-display font-bold text-white tracking-tight">
-              Ce que l&apos;IA analyse, concrètement.
+            <h2 className="text-3xl sm:text-4xl font-display font-black tracking-tight leading-tight">
+              <span className="text-white">Ce que l&apos;IA analyse,</span><br />
+              <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">concrètement.</span>
             </h2>
           </div>
 
@@ -368,8 +363,9 @@ export default function FeaturesPage() {
         <div className="max-w-6xl mx-auto px-5 sm:px-8 lg:px-10">
           <div className="text-center mb-12">
             <p className={`${label9} mb-4`}>Tout l&apos;arsenal</p>
-            <h2 className="text-3xl sm:text-4xl font-display font-bold text-white tracking-tight">
-              Chaque outil à ta disposition.
+            <h2 className="text-3xl sm:text-4xl font-display font-black tracking-tight leading-tight">
+              <span className="text-white">Chaque outil</span><br />
+              <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">à ta disposition.</span>
             </h2>
             <p className="mt-3 text-gray-500 text-[14.5px] max-w-lg mx-auto">
               De l&apos;analyse à la correction — un workflow complet, sans jongler entre 5 outils.
@@ -398,8 +394,9 @@ export default function FeaturesPage() {
         <div className="max-w-5xl mx-auto px-5 sm:px-8 lg:px-10">
           <div className="text-center mb-12">
             <p className={`${label9} mb-4`}>Par plan</p>
-            <h2 className="text-3xl sm:text-4xl font-display font-bold text-white tracking-tight">
-              Ce qui est inclus dans chaque plan.
+            <h2 className="text-3xl sm:text-4xl font-display font-black tracking-tight leading-tight">
+              <span className="text-white">Ce qui est inclus</span><br />
+              <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">dans chaque plan.</span>
             </h2>
           </div>
 
@@ -453,8 +450,9 @@ export default function FeaturesPage() {
         <div className="max-w-4xl mx-auto px-5 sm:px-8 lg:px-10">
           <div className="text-center mb-12">
             <p className={`${label9} mb-4`}>Comment ça marche</p>
-            <h2 className="text-3xl sm:text-4xl font-display font-bold text-white tracking-tight">
-              De la vidéo au plan d&apos;action en 30 secondes.
+            <h2 className="text-3xl sm:text-4xl font-display font-black tracking-tight leading-tight">
+              <span className="text-white">De la vidéo au plan d&apos;action</span><br />
+              <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">en 30 secondes.</span>
             </h2>
           </div>
 
@@ -504,8 +502,9 @@ export default function FeaturesPage() {
         <div className="max-w-4xl mx-auto px-5 sm:px-8 lg:px-10">
           <div className="text-center mb-12">
             <p className={`${label9} mb-4`}>Roadmap</p>
-            <h2 className="text-3xl sm:text-4xl font-display font-bold text-white tracking-tight">
-              TikTok aujourd&apos;hui. Le reste demain.
+            <h2 className="text-3xl sm:text-4xl font-display font-black tracking-tight leading-tight">
+              <span className="text-white">TikTok aujourd&apos;hui.</span><br />
+              <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">Le reste demain.</span>
             </h2>
             <p className="mt-3 text-gray-500 text-[14.5px] max-w-lg mx-auto">
               Viralynz commence avec TikTok — le format le plus exigeant sur l&apos;attention. La logique s&apos;étend naturellement aux autres formats courts.
@@ -540,8 +539,9 @@ export default function FeaturesPage() {
       <section className="relative py-20 sm:py-24 border-t border-white/[0.06]">
         <div className="max-w-2xl mx-auto px-5 sm:px-8 text-center">
           <p className={`${label9} mb-5`}>Prêt à analyser ?</p>
-          <h2 className="text-3xl sm:text-4xl font-display font-bold text-white tracking-tight mb-4">
-            Comprends ce qui bloque.<br />Corrige avant de reposter.
+          <h2 className="text-3xl sm:text-4xl font-display font-black tracking-tight leading-tight mb-4">
+            <span className="text-white">Comprends ce qui bloque.</span><br />
+            <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">Corrige avant de reposter.</span>
           </h2>
           <p className="text-gray-500 text-[14.5px] mb-10 max-w-sm mx-auto">
             3 analyses gratuites — sans carte bancaire, sans engagement.

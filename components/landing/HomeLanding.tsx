@@ -222,8 +222,9 @@ export default function HomeLanding() {
         <div className="landing-section">
           <div className="text-center mb-10">
             <p className={`${label} mb-3`}>Exemple de résultat</p>
-            <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight">
-              Score, diagnostic, plan d&apos;action — en quelques secondes.
+            <h2 className="text-2xl sm:text-3xl font-display font-black tracking-tight leading-tight">
+              <span className="text-white">Score, diagnostic, plan d&apos;action —</span><br />
+              <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">en quelques secondes.</span>
             </h2>
           </div>
           <div className="relative -mx-4 sm:-mx-8 lg:-mx-10">
@@ -246,9 +247,9 @@ export default function HomeLanding() {
         <div className={`max-w-4xl ${sectionInner}`}>
           <div className="text-center mb-14">
             <p className={`${label} mb-8`}>Le vrai problème</p>
-            <h2 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-display font-black text-white tracking-tight leading-[1.05] mb-6">
-              Tu ne manques pas d&apos;idées.<br />
-              <span className="gradient-text-hero">Tu manques de feedback.</span>
+            <h2 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-display font-black tracking-tight leading-[1.05] mb-6">
+              <span className="text-white">Tu ne manques pas d&apos;idées.</span><br />
+              <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">Tu manques de feedback.</span>
             </h2>
             <p className="text-gray-500 text-[15px] sm:text-base max-w-lg mx-auto leading-relaxed">
               Sans données claires, tu testes à l&apos;aveugle. Tu recommences les mêmes erreurs. Tu perds du temps à chaque vidéo.
@@ -290,8 +291,9 @@ export default function HomeLanding() {
         <div className={`max-w-5xl ${sectionInner}`}>
           <div className="text-center mb-14 sm:mb-16">
             <p className={`${label} mb-4`}>Comment ça marche</p>
-            <h2 className="text-3xl sm:text-4xl font-display font-bold text-white tracking-tight">
-              3 étapes. 30 secondes. Un plan clair.
+            <h2 className="text-3xl sm:text-4xl font-display font-black tracking-tight leading-tight">
+              <span className="text-white">3 étapes. 30 secondes.</span><br />
+              <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">Un plan clair.</span>
             </h2>
           </div>
 
@@ -332,9 +334,9 @@ export default function HomeLanding() {
           <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
             <div>
               <p className={`${label} mb-4`}>Ce que tu obtiens</p>
-              <h2 className="text-3xl sm:text-4xl font-display font-bold text-white tracking-tight mb-5 leading-tight">
-                Tout pour comprendre<br />
-                <span className="gradient-text">et corriger.</span>
+              <h2 className="text-3xl sm:text-4xl font-display font-black tracking-tight mb-5 leading-tight">
+                <span className="text-white">Tout pour comprendre</span><br />
+                <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">et corriger.</span>
               </h2>
               <p className="text-gray-500 text-[14.5px] leading-relaxed mb-8">
                 Pas un rapport de 12 pages. Un diagnostic précis, une priorité claire, des actions concrètes.
@@ -366,9 +368,9 @@ export default function HomeLanding() {
         <div className={`max-w-5xl ${sectionInner}`}>
           <div className="text-center mb-14">
             <p className={`${label} mb-4`}>Notre différence</p>
-            <h2 className="text-3xl sm:text-4xl lg:text-[2.8rem] font-display font-bold text-white tracking-tight leading-tight">
-              Pas un score.<br />
-              <span className="gradient-text-hero">Un plan d&apos;action.</span>
+            <h2 className="text-3xl sm:text-4xl lg:text-[2.8rem] font-display font-black tracking-tight leading-tight">
+              <span className="text-white">Pas un score.</span><br />
+              <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">Un plan d&apos;action.</span>
             </h2>
           </div>
 
@@ -418,8 +420,9 @@ export default function HomeLanding() {
         <div className={`max-w-5xl ${sectionInner}`}>
           <div className="text-center mb-14">
             <p className={`${label} mb-4`}>Pour qui</p>
-            <h2 className="text-3xl sm:text-4xl font-display font-bold text-white tracking-tight">
-              Fait pour toi si tu crées du contenu short-form.
+            <h2 className="text-3xl sm:text-4xl font-display font-black tracking-tight leading-tight">
+              <span className="text-white">Fait pour toi si tu crées</span><br />
+              <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">du contenu short-form.</span>
             </h2>
           </div>
 
@@ -451,8 +454,9 @@ export default function HomeLanding() {
         <div className={`max-w-5xl ${sectionInner}`}>
           <div className="text-center mb-14">
             <p className={`${label} mb-4`}>Tarifs</p>
-            <h2 className="text-3xl sm:text-4xl font-display font-bold text-white tracking-tight mb-3">
-              3 analyses gratuites — sans carte.
+            <h2 className="text-3xl sm:text-4xl font-display font-black tracking-tight leading-tight mb-3">
+              <span className="text-white">3 analyses gratuites —</span><br />
+              <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">sans carte.</span>
             </h2>
             <p className="text-gray-500 text-[14.5px] max-w-md mx-auto">
               Commence gratuitement. Scale sur Pro ou Elite quand l&apos;analyse devient ton avantage concurrentiel.
@@ -556,8 +560,9 @@ export default function HomeLanding() {
         <div className={`max-w-3xl ${sectionInner}`}>
           <div className="text-center mb-12 sm:mb-14">
             <p className={`${label} mb-4`}>FAQ</p>
-            <h2 className="text-3xl sm:text-4xl font-display font-bold text-white tracking-tight mb-3">
-              Questions fréquentes
+            <h2 className="text-3xl sm:text-4xl font-display font-black tracking-tight leading-tight mb-3">
+              <span className="text-white">Questions</span>{' '}
+              <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">fréquentes.</span>
             </h2>
             <p className="text-gray-500 text-[14px]">
               Des réponses claires, sans bullshit.
@@ -592,8 +597,9 @@ export default function HomeLanding() {
               <div className="absolute inset-0 landing-mesh opacity-30 mix-blend-overlay" aria-hidden />
               <div className="relative px-8 sm:px-12 lg:px-16 py-14 sm:py-16 text-center">
                 <p className={`${label} mb-5`}>Prêt à comprendre ce qui bloque ?</p>
-                <h2 className="text-3xl sm:text-4xl lg:text-[2.6rem] font-display font-bold text-white tracking-tight leading-tight mb-5">
-                  Analyse ta première vidéo maintenant.
+                <h2 className="text-3xl sm:text-4xl lg:text-[2.6rem] font-display font-black tracking-tight leading-tight mb-5">
+                  <span className="text-white">Analyse ta première vidéo</span><br />
+                  <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">maintenant.</span>
                 </h2>
                 <p className="text-gray-500 max-w-md mx-auto mb-10 text-[14.5px] leading-relaxed">
                   {MAX_ANALYSES_FREE} analyses gratuites — sans carte bancaire, sans engagement. Résultats en quelques secondes.

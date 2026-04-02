@@ -255,12 +255,11 @@ export default function HookGeneratorPage() {
         {/* ══ HEADER ═══════════════════════════════════════════════════════ */}
         <div className="mb-12">
           <p className={`${label9} mb-5`}>Viralynz · Hook Generator</p>
-          <h1 className="text-[2rem] sm:text-[2.5rem] font-display font-bold tracking-tight leading-tight mb-3">
+          <h1 className="text-[2rem] sm:text-[2.5rem] font-display font-black tracking-tight leading-tight mb-3">
             <span className="text-white">Génère des hooks </span>
-            <span style={{
-              background: 'linear-gradient(105deg, #f5c5ff 0%, #c084fc 45%, #818cf8 100%)',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-            }}>qui accrochent.</span>
+            <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">
+              qui accrochent.
+            </span>
           </h1>
           <p className="text-[13px] text-gray-500 leading-relaxed">
             Courts. Viraux. Percutants. Conçus pour l&apos;overlay TikTok.

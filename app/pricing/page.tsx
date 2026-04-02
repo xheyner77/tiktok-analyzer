@@ -337,8 +337,9 @@ export default function PricingPage() {
         <section className="space-y-12">
           <div className="text-center space-y-3">
             <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-vn-fuchsia/70">La valeur</p>
-            <h2 className="text-3xl sm:text-4xl font-black text-white leading-tight">
-              Pourquoi Viralynz vaut<br className="hidden sm:block" /> l&apos;investissement
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
+              <span className="text-white">Pourquoi Viralynz vaut</span><br />
+              <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">l&apos;investissement.</span>
             </h2>
             <p className="text-[14px] text-gray-500 max-w-md mx-auto">
               Chaque analyse te donne des décisions concrètes — pas des métriques à interpréter seul.
@@ -412,7 +413,10 @@ export default function PricingPage() {
         <section className="space-y-8">
           <div className="text-center space-y-3">
             <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-gray-600">Comparaison détaillée</p>
-            <h2 className="text-2xl sm:text-3xl font-black text-white">Ce que comprend chaque plan</h2>
+            <h2 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight">
+              <span className="text-white">Ce que comprend</span>{' '}
+              <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">chaque plan.</span>
+            </h2>
           </div>
 
           <div className="rounded-2xl border border-white/[0.07] overflow-hidden">
@@ -460,7 +464,10 @@ export default function PricingPage() {
         <section className="space-y-10">
           <div className="text-center space-y-3">
             <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-gray-600">Pour qui</p>
-            <h2 className="text-2xl sm:text-3xl font-black text-white">Quel plan te correspond ?</h2>
+            <h2 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight">
+              <span className="text-white">Quel plan</span>{' '}
+              <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">te correspond ?</span>
+            </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -537,7 +544,10 @@ export default function PricingPage() {
         <section className="space-y-8 max-w-2xl mx-auto w-full">
           <div className="text-center space-y-3">
             <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-gray-600">Questions</p>
-            <h2 className="text-2xl sm:text-3xl font-black text-white">Tout ce que tu veux savoir</h2>
+            <h2 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight">
+              <span className="text-white">Tout ce que tu</span>{' '}
+              <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">veux savoir.</span>
+            </h2>
             <p className="text-[13px] text-gray-600">Des réponses claires, sans bullshit.</p>
           </div>
           <PricingFAQ />
@@ -557,9 +567,9 @@ export default function PricingPage() {
             <div className="inline-flex items-center gap-2 text-[10px] font-bold px-4 py-1.5 rounded-full bg-vn-fuchsia/10 text-vn-fuchsia border border-vn-fuchsia/20">
               Prêt à passer à la vitesse supérieure ?
             </div>
-            <h2 className="text-3xl sm:text-5xl font-black text-white leading-[1.05] tracking-tight">
-              Passe de l&apos;intuition<br />
-              <span className="bg-gradient-to-r from-vn-fuchsia to-vn-indigo bg-clip-text text-transparent">
+            <h2 className="text-3xl sm:text-5xl font-black leading-[1.05] tracking-tight">
+              <span className="text-white">Passe de l&apos;intuition</span><br />
+              <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">
                 à une vraie méthode.
               </span>
             </h2>
