@@ -29,7 +29,7 @@ export default async function Navbar() {
           <Link href="/#gains" className={linkCls}>
             Fonctionnalités
           </Link>
-          <Link href="/#tarifs" className={linkCls}>
+          <Link href="/pricing" className={linkCls}>
             Tarifs
           </Link>
           <Link href="/#faq" className={linkCls}>

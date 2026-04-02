@@ -56,7 +56,7 @@ export default function NavbarMobileMenu({ isLoggedIn, email, plan = 'free' }: N
     { href: '/#fonctions', label: 'Fonctionnalités', icon: '◇' },
     { href: '/#gains', label: 'Bénéfices', icon: '↑' },
     { href: '/#roadmap', label: 'Roadmap', icon: '→' },
-    { href: '/#tarifs', label: 'Tarifs', icon: '€' },
+    { href: '/pricing', label: 'Tarifs', icon: '€' },
     { href: '/analyzer', label: 'Analyser', icon: '🎯' },
     { href: '/hook-generator', label: 'Hooks', icon: '⚡' },
     { href: '/pricing', label: 'Plans détaillés', icon: '💎' },
