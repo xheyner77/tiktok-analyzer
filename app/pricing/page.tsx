@@ -371,7 +371,6 @@ export default function PricingPage() {
         {/* ═══════════════════════════════════════════════ */}
         <section className="space-y-12">
           <div className="text-center space-y-3">
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-vn-fuchsia/70">La valeur</p>
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
               <span className="text-white">Pourquoi Viralynz vaut</span><br />
               <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">l&apos;investissement.</span>
@@ -447,7 +446,6 @@ export default function PricingPage() {
         {/* ═══════════════════════════════════════════════ */}
         <section className="space-y-8">
           <div className="text-center space-y-3">
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-gray-600">Comparaison détaillée</p>
             <h2 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight">
               <span className="text-white">Ce que comprend</span>{' '}
               <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">chaque plan.</span>
@@ -502,7 +500,6 @@ export default function PricingPage() {
         {/* ═══════════════════════════════════════════════ */}
         <section className="space-y-10">
           <div className="text-center space-y-3">
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-gray-600">Pour qui</p>
             <h2 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight">
               <span className="text-white">Quel plan</span>{' '}
               <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">te correspond ?</span>
@@ -582,7 +579,6 @@ export default function PricingPage() {
         {/* ═══════════════════════════════════════════════ */}
         <section className="space-y-8 max-w-2xl mx-auto w-full">
           <div className="text-center space-y-3">
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-gray-600">Questions</p>
             <h2 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight">
               <span className="text-white">Tout ce que tu</span>{' '}
               <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">veux savoir.</span>
