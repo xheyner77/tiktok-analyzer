@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import CheckoutButton from '@/components/CheckoutButton';
 import {
   MAX_ANALYSES_FREE, MAX_ANALYSES_PRO, MAX_ANALYSES_ELITE,
@@ -112,7 +113,24 @@ const features = [
 
 /* ─────────────────────────────────────────────────────────────── */
 
+function useUserCount() {
+  const [count, setCount] = useState<number | null>(null);
+  useEffect(() => {
+    fetch('/api/users/count')
+      .then((r) => r.json())
+      .then((d) => setCount(d.count ?? null))
+      .catch(() => {});
+  }, []);
+  return count;
+}
+
+function formatCount(n: number): string {
+  if (n >= 1000) return `+${(Math.floor(n / 100) * 100).toLocaleString('fr-FR')}`;
+  return `+${n}`;
+}
+
 export default function HomeLanding() {
+  const userCount = useUserCount();
   return (
     <div className="relative min-h-screen bg-vn-void overflow-x-hidden">
 
@@ -206,7 +224,11 @@ export default function HomeLanding() {
                   </div>
                 </div>
                 <p className="text-[13.5px] text-gray-400 font-medium">
-                  Rejoins <span className="text-white font-bold">+1 300</span> créateurs de contenu
+                  Rejoins{' '}
+                  <span className="text-white font-bold">
+                    {userCount !== null ? formatCount(userCount) : '+230'}
+                  </span>{' '}
+                  créateurs de contenu
                 </p>
               </div>
             </div>
