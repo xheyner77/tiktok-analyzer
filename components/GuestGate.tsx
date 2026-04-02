@@ -123,15 +123,16 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
       aria-labelledby="guest-gate-title"
     >
       <div
-        className="guest-gate-dialog relative flex w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-[#1e1e1e] bg-[#0d0d0d] shadow-2xl sm:max-h-[min(92dvh,720px)]"
+        className="guest-gate-dialog guest-gate-dialog-scroll relative w-full max-w-xl overflow-x-hidden overflow-y-auto overscroll-contain rounded-2xl border border-[#1e1e1e] bg-[#0d0d0d] shadow-2xl sm:max-h-[min(92dvh,720px)]"
         style={{
           opacity: visible ? 1 : 0,
           transform: visible ? 'translateY(0) scale(1)' : 'translateY(12px) scale(0.98)',
           transition: 'opacity 0.3s ease, transform 0.35s cubic-bezier(0.16,1,0.3,1)',
+          WebkitOverflowScrolling: 'touch',
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-40 rounded-full bg-gradient-to-br from-vn-fuchsia/12 to-vn-indigo/12 blur-3xl pointer-events-none" />
+        <div className="pointer-events-none absolute -top-24 left-1/2 h-40 w-80 -translate-x-1/2 rounded-full bg-gradient-to-br from-vn-fuchsia/12 to-vn-indigo/12 blur-3xl" />
 
         <button
           type="button"
@@ -144,8 +145,7 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
           </svg>
         </button>
 
-        <div className="guest-gate-dialog-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
-          <div className="relative px-4 pb-6 pt-4 sm:px-6 sm:pb-7 sm:pt-5">
+        <div className="relative px-4 pb-6 pt-4 sm:px-6 sm:pb-7 sm:pt-5">
             <div className="pr-10 text-center sm:mb-5 sm:pr-8 mb-4">
               <div className="mb-2.5 inline-flex items-center gap-1.5 rounded-full border border-vn-fuchsia/20 bg-vn-fuchsia/10 px-2.5 py-1 text-[11px] font-semibold text-vn-fuchsia sm:mb-3 sm:px-3 sm:py-1.5 sm:text-xs">
                 <svg viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3 shrink-0">
@@ -188,7 +188,6 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
             <p className="mt-4 text-center text-[10px] leading-relaxed text-gray-700 sm:text-xs">
               Sans engagement · Annulable à tout moment · Paiement sécurisé
             </p>
-          </div>
         </div>
       </div>
     </div>
