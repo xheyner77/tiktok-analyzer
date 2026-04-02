@@ -135,7 +135,7 @@ function MobilePlanAction() {
 export default function HeroMockupPremium() {
   return (
     <div
-      className="relative pt-6 pb-8 pl-3 pr-3 sm:pt-10 sm:pb-24 sm:pl-8 sm:pr-10 lg:pt-12 lg:pb-28 lg:pl-6 lg:pr-10 xl:pl-12 xl:pr-16 select-none pointer-events-none"
+      className="relative pt-4 pb-4 pl-3 pr-3 sm:pt-10 sm:pb-24 sm:pl-8 sm:pr-10 lg:pt-12 lg:pb-28 lg:pl-6 lg:pr-10 xl:pl-12 xl:pr-16 select-none pointer-events-none"
       aria-hidden
     >
       {/* ── Deep ambient layers (softer on mobile) ─────────────── */}
@@ -151,7 +151,7 @@ export default function HeroMockupPremium() {
       </div>
 
       {/* Mobile: status chips in flow (no overlap) */}
-      <div className="flex flex-wrap items-center justify-center gap-2 mb-4 sm:hidden">
+      <div className="flex flex-wrap items-center justify-center gap-2 mb-3 sm:hidden">
         <div
           className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-semibold text-white/80"
           style={{ background: 'rgba(8,8,16,0.92)', border: '1px solid rgba(255,255,255,0.08)' }}

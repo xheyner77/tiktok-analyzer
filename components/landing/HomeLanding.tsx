@@ -287,7 +287,7 @@ export default function HomeLanding() {
       </div>
 
       {/* ══ 1. HERO ═══════════════════════════════════════════════ */}
-      <section className="relative pt-10 sm:pt-14 lg:pt-20 pb-10 sm:pb-16 overflow-visible" id="top">
+      <section className="relative pt-10 sm:pt-14 lg:pt-20 pb-5 sm:pb-14 lg:pb-16 overflow-visible" id="top">
         <div className="stars-hero" aria-hidden>
           <div className="stars-layer-sm" /><div className="stars-layer-md" /><div className="stars-layer-lg" />
           <div className="stars-hero-mask" />
@@ -295,7 +295,7 @@ export default function HomeLanding() {
         <div className="absolute inset-x-0 top-0 h-[min(90vh,1000px)] landing-band-magenta pointer-events-none opacity-95" aria-hidden />
 
         <div className="relative max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-10">
-          <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-14 xl:gap-20">
+          <div className="flex flex-col lg:flex-row items-center gap-6 sm:gap-8 lg:gap-14 xl:gap-20">
 
             {/* ── Left: copy ────────────────────────────────────── */}
             <div className="flex-[5] flex flex-col items-center lg:items-start text-center lg:text-left">
@@ -402,7 +402,7 @@ export default function HomeLanding() {
       </section>
 
       {/* ══ STATS STRIP ═══════════════════════════════════════════ */}
-      <div className="border-y border-white/[0.06] bg-white/[0.012] py-5">
+      <div className="border-y border-white/[0.06] bg-white/[0.012] py-3 sm:py-5">
         <div className={`max-w-5xl ${SI}`}>
           <div className="flex flex-wrap justify-center lg:justify-between gap-x-6 sm:gap-x-10 gap-y-4">
             {[
@@ -421,11 +421,11 @@ export default function HomeLanding() {
       </div>
 
       {/* ══ 2. PROBLÈME ═══════════════════════════════════════════ */}
-      <section id="probleme" className="relative py-14 sm:py-20 border-t border-white/[0.06]">
+      <section id="probleme" className="relative py-8 sm:py-16 lg:py-20 border-t border-white/[0.06]">
         <div className={`max-w-5xl ${SI}`}>
           <FadeUp>
-            <div className="text-center mb-8">
-              <h2 className="text-3xl sm:text-[2.6rem] font-black tracking-tight leading-[1.06] mb-5">
+            <div className="text-center mb-6 sm:mb-8">
+              <h2 className="text-3xl sm:text-[2.6rem] font-black tracking-tight leading-[1.06] mb-3 sm:mb-5">
                 <span className="text-white">Pourquoi tes vidéos</span><br />
                 <span className={G}>ne marchent pas.</span>
               </h2>
