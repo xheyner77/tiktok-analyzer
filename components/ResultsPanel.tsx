@@ -287,7 +287,7 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
       <div className="flex flex-col md:flex-row md:items-start min-h-0">
 
         {/* ── Left column ── */}
-        <div className="flex-1 min-w-0 flex flex-col gap-3 p-4 sm:p-5 md:border-r border-white/[0.05]">
+        <div className="flex-1 min-w-0 flex flex-col gap-3 p-3 sm:p-4 md:border-r border-white/[0.05]">
 
           {/* Score de viralité */}
           <div className="rounded-xl border border-white/[0.1] bg-[#111118] p-4 sm:p-5">
@@ -435,10 +435,33 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
               </p>
             </div>
           )}
+
+          {/* Elite: Viral Tips — left column to fill vertical space */}
+          {(data.viralTips?.length ?? 0) > 0 && (
+            <div className="rounded-xl border border-vn-fuchsia/20 bg-vn-fuchsia/[0.05] p-3">
+              <p className="text-[10px] font-bold text-vn-fuchsia/90 uppercase tracking-[0.15em] mb-2">Insights viraux</p>
+              <ul className="space-y-1.5">
+                {(data.viralTips ?? []).map((tip, i) => (
+                  <li key={i} className="flex items-start gap-1.5">
+                    <span className="text-vn-fuchsia text-[10px] font-black shrink-0">{i + 1}</span>
+                    <p className="text-[10px] text-gray-400 leading-snug">{tip}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Elite: Strategy — left column */}
+          {data.strategy && (
+            <div className="rounded-xl border border-vn-violet/20 bg-vn-violet/[0.06] p-3">
+              <p className="text-[10px] font-bold text-vn-violet uppercase tracking-[0.15em] mb-2">Stratégie Elite</p>
+              <p className="text-[10px] text-gray-400 leading-snug">{data.strategy}</p>
+            </div>
+          )}
         </div>
 
         {/* ── Right column ── */}
-        <div className="w-full md:w-[300px] xl:w-[340px] shrink-0 flex flex-col gap-3 p-4 sm:p-5 md:pt-4">
+        <div className="w-full md:w-[300px] xl:w-[340px] shrink-0 flex flex-col gap-3 p-3 sm:p-4 md:pt-4">
 
           <SectionCard
             title="Analyse du Hook"
@@ -454,31 +477,6 @@ export default function ResultsPanel({ data, plan }: ResultsPanelProps) {
           />
 
           <RecoCard improvements={data.improvements ?? []} plan={plan} />
-
-          {/* Elite: Viral Tips */}
-          {(data.viralTips?.length ?? 0) > 0 && (
-            <div className="rounded-xl border border-vn-fuchsia/20 bg-vn-fuchsia/[0.05] p-3">
-              <p className="text-[10px] font-bold text-vn-fuchsia/90 uppercase tracking-[0.15em] mb-2">Insights viraux</p>
-              <ul className="space-y-1.5">
-                {(data.viralTips ?? []).slice(0, 4).map((tip, i) => (
-                  <li key={i} className="flex items-start gap-1.5">
-                    <span className="text-vn-fuchsia text-[10px] font-black shrink-0">{i + 1}</span>
-                    <p className="text-[10px] text-gray-400 leading-snug">{tip}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Elite: Strategy */}
-          {data.strategy && (
-            <div className="rounded-xl border border-vn-violet/20 bg-vn-violet/[0.06] p-3">
-              <p className="text-[10px] font-bold text-vn-violet uppercase tracking-[0.15em] mb-2">Stratégie Elite</p>
-              <p className="text-[10px] text-gray-400 leading-snug">
-                {data.strategy.length > 240 ? data.strategy.slice(0, 240) + '\u2026' : data.strategy}
-              </p>
-            </div>
-          )}
         </div>
       </div>
     </div>

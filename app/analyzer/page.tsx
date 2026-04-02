@@ -369,7 +369,7 @@ export default function Home() {
 
       {/* ── Wide results section ── */}
       {results && !isLoading && !isLimitReached && (
-        <div className="relative px-2 sm:px-3 pb-10">
+        <div className="relative px-1 sm:px-2 pb-10">
           <div className="relative">
             {/* Outer glow */}
             <div
