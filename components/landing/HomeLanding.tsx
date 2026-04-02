@@ -156,15 +156,19 @@ export default function HomeLanding() {
               </Link>
 
               {/* H1 */}
-              <h1 className="font-hero-inter font-black text-white landing-hero-title-glow tracking-[-0.048em] max-[419px]:text-[2.05rem] max-[419px]:leading-[0.92] text-[2.55rem] leading-[0.92] sm:text-[3.3rem] sm:leading-[0.90] md:text-[3.8rem] md:leading-[0.89] lg:text-[3.6rem] lg:leading-[0.89] xl:text-[4.2rem] xl:leading-[0.88] 2xl:text-[4.8rem] 2xl:leading-[0.87]">
-                <span className="block">Tu perds des vues</span>
-                <span className={`block ${G}`}>sans comprendre&nbsp;pourquoi.</span>
+              <h1 className="font-hero-inter font-black text-white landing-hero-title-glow tracking-[-0.05em] max-[419px]:text-[1.95rem] max-[419px]:leading-[0.92] text-[2.45rem] leading-[0.91] sm:text-[3.1rem] sm:leading-[0.89] md:text-[3.6rem] md:leading-[0.88] lg:text-[3.4rem] lg:leading-[0.88] xl:text-[4.0rem] xl:leading-[0.87] 2xl:text-[4.5rem] 2xl:leading-[0.86]">
+                <span className="block">
+                  Tu perds&nbsp;
+                  <span className="bg-gradient-to-r from-red-300 via-vn-fuchsia to-pink-400 bg-clip-text text-transparent">60%</span>
+                </span>
+                <span className="block">de ton audience</span>
+                <span className="block text-white/60 text-[0.82em] tracking-[-0.03em] mt-1">en 3 secondes.</span>
               </h1>
 
               {/* Subtitle */}
-              <p className="mt-5 sm:mt-6 text-[1rem] sm:text-[1.07rem] text-gray-400 max-w-[440px] leading-relaxed font-normal tracking-[-0.01em]">
-                L&apos;IA analyse ton hook, ton montage et ta rétention en quelques secondes.
-                Tu sais exactement quoi corriger — avant de reposter.
+              <p className="mt-6 sm:mt-7 text-[1rem] sm:text-[1.07rem] text-gray-400 max-w-[420px] leading-relaxed font-normal tracking-[-0.01em]">
+                L&apos;IA te montre exactement pourquoi —{' '}
+                et comment corriger ça immédiatement.
               </p>
 
               {/* CTAs */}
@@ -208,7 +212,26 @@ export default function HomeLanding() {
             </div>
 
             {/* ── Right: mockup ─────────────────────────────────── */}
-            <div className="flex-[6] w-full max-w-[520px] lg:max-w-none" id="produit">
+            <div className="flex-[6] w-full max-w-[520px] lg:max-w-none relative" id="produit">
+              {/* Spotlight cone behind the mockup */}
+              <div
+                className="absolute -inset-16 pointer-events-none -z-10"
+                style={{
+                  background: 'radial-gradient(ellipse 80% 65% at 50% 38%, rgba(232,121,249,0.22) 0%, rgba(99,102,241,0.12) 42%, transparent 72%)',
+                  filter: 'blur(32px)',
+                  animation: 'heroHaloPulse 4.5s ease-in-out infinite',
+                }}
+                aria-hidden
+              />
+              <div
+                className="absolute -inset-8 pointer-events-none -z-10"
+                style={{
+                  background: 'radial-gradient(ellipse 55% 45% at 50% 30%, rgba(232,121,249,0.12) 0%, transparent 65%)',
+                  filter: 'blur(16px)',
+                  animation: 'heroHaloPulse 3s ease-in-out 1s infinite',
+                }}
+                aria-hidden
+              />
               <HeroMockupPremium />
             </div>
           </div>
