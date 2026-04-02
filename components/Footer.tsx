@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 
 const YEAR = new Date().getFullYear();
@@ -88,7 +90,6 @@ export default function Footer() {
                 { label: 'Tarifs',          href: '/pricing' },
                 { label: 'FAQ',             href: '/pricing#faq' },
                 { label: 'Nouveautés',      href: '/changelog' },
-                { label: 'Support',         href: '#contact' },
               ].map(({ label, href }) => (
                 <li key={label}>
                   <Link href={href} className="text-[13px] text-gray-500 hover:text-white transition-colors">
@@ -96,6 +97,14 @@ export default function Footer() {
                   </Link>
                 </li>
               ))}
+              <li>
+                <button
+                  onClick={() => window.dispatchEvent(new CustomEvent('open-contact'))}
+                  className="text-[13px] text-gray-500 hover:text-white transition-colors text-left"
+                >
+                  Nous contacter
+                </button>
+              </li>
             </ul>
           </div>
 
@@ -107,7 +116,6 @@ export default function Footer() {
                 { label: 'Analyser une vidéo', href: '/analyzer' },
                 { label: 'Hook Generator',     href: '/hook-generator' },
                 { label: 'Dashboard',          href: '/dashboard' },
-                { label: 'Nous contacter',     href: '#contact' },
               ].map(({ label, href }) => (
                 <li key={label}>
                   <Link href={href} className="text-[13px] text-gray-500 hover:text-white transition-colors">

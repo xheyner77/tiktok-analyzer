@@ -56,6 +56,13 @@ export default function FeedbackButton() {
     return () => document.removeEventListener('keydown', onKey);
   }, []);
 
+  /* Global open trigger — any component can dispatch 'open-contact' */
+  useEffect(() => {
+    const handler = () => setOpen(true);
+    window.addEventListener('open-contact', handler);
+    return () => window.removeEventListener('open-contact', handler);
+  }, []);
+
   async function handleSubmit() {
     if (!message.trim() || status === 'sending') return;
     setStatus('sending');
