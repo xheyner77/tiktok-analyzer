@@ -20,17 +20,19 @@ const bar = (to: string, delay = 0) => ({
 });
 
 /* ── Score SVG ───────────────────────────────────────────────── */
-function ScoreGauge({ score = 68 }: { score?: number }) {
+function ScoreGauge({ score = 68, uid }: { score?: number; uid: string }) {
   const r = 36, circ = 2 * Math.PI * r;
+  const gGrad = `${uid}-grad`;
+  const fGlow = `${uid}-glow`;
   return (
     <svg width="92" height="92" viewBox="0 0 92 92" className="overflow-visible">
       <defs>
-        <linearGradient id="sg2" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id={gGrad} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%"   stopColor="#f9a8d4" />
           <stop offset="40%"  stopColor="#e879f9" />
           <stop offset="100%" stopColor="#6366f1" />
         </linearGradient>
-        <filter id="sgGlow2" x="-40%" y="-40%" width="180%" height="180%">
+        <filter id={fGlow} x="-40%" y="-40%" width="180%" height="180%">
           <feGaussianBlur stdDeviation="4" result="b" />
           <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
@@ -41,9 +43,9 @@ function ScoreGauge({ score = 68 }: { score?: number }) {
       <circle cx="46" cy="46" r={r} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="7" />
       {/* Arc */}
       <motion.circle cx="46" cy="46" r={r} fill="none"
-        stroke="url(#sg2)" strokeWidth="7" strokeLinecap="round"
+        stroke={`url(#${gGrad})`} strokeWidth="7" strokeLinecap="round"
         strokeDasharray={circ} transform="rotate(-90 46 46)"
-        filter="url(#sgGlow2)"
+        filter={`url(#${fGlow})`}
         initial={{ strokeDashoffset: circ }}
         animate={{ strokeDashoffset: circ * (1 - score / 100), transition: { duration: 1.5, delay: 0.6, ease: E } }}
       />
@@ -292,7 +294,7 @@ export default function HeroMockupPremium() {
               style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)' }}
             >
               <div className="scale-[0.88] origin-center">
-                <ScoreGauge score={68} />
+                <ScoreGauge score={68} uid="sgm" />
               </div>
               <p className="text-[8px] text-gray-600 mt-0.5 text-center leading-tight">Potentiel</p>
             </div>
@@ -365,7 +367,7 @@ export default function HeroMockupPremium() {
         <div className="mock-float-a">
           <div className="p-3 rounded-2xl"
             style={{ background: 'linear-gradient(145deg, rgba(14,14,26,0.98), rgba(9,9,15,0.99))', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(16px)', boxShadow: '0 0 56px -12px rgba(232,121,249,0.35), 0 24px 64px rgba(0,0,0,0.75)' }}>
-            <ScoreGauge score={68} />
+            <ScoreGauge score={68} uid="sgd" />
             <p className="text-center text-[9px] text-gray-600 mt-1 tracking-wide">Potentiel viral</p>
           </div>
         </div>
