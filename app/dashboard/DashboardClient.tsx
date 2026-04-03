@@ -512,7 +512,7 @@ function LockedSection({
       </div>
 
       {/* ── Lock overlay ── */}
-      <div className={`absolute inset-0 flex flex-col items-center justify-center p-6 bg-gradient-to-t ${
+      <div className={`absolute inset-0 flex flex-col items-center justify-start overflow-y-auto px-5 py-6 sm:justify-center sm:p-6 bg-gradient-to-t ${
         isPro
           ? 'from-[#0b0810]/97 via-[#0b0810]/82 to-[#0b0810]/10'
           : 'from-[#080b14]/97 via-[#080b14]/84 to-[#080b14]/10'
@@ -534,11 +534,11 @@ function LockedSection({
               : 'bg-vn-violet/20 text-violet-300 border-vn-violet/35'
           }`}>{badge}</span>
 
-          <h3 className="text-[1.15rem] font-black text-white mb-2 leading-snug">{title}</h3>
-          <p className="text-[13px] text-gray-400 leading-relaxed mb-4">{subtitle}</p>
+          <h3 className="text-[1.05rem] sm:text-[1.15rem] font-black text-white mb-1.5 leading-snug">{title}</h3>
+          <p className="text-[12px] sm:text-[13px] text-gray-400 leading-relaxed mb-3">{subtitle}</p>
 
           {/* Feature pills */}
-          <div className="flex flex-wrap items-center justify-center gap-1.5 mb-5">
+          <div className="flex flex-wrap items-center justify-center gap-1.5 mb-4">
             {features.map((f, i) => (
               <span key={i} className={`inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full border ${
                 isPro
