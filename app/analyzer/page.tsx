@@ -68,7 +68,10 @@ export default function Home() {
       localStorage.removeItem(PENDING_URL_KEY);
     }
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) setGuestCount(parseInt(stored, 10));
+    if (stored) {
+      const n = parseInt(stored, 10);
+      setGuestCount(Number.isFinite(n) ? Math.max(0, n) : 0);
+    }
     setMounted(true);
 
     fetch('/api/auth/me')

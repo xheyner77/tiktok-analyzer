@@ -652,9 +652,12 @@ async function postVisionAnalyze(
   const effective = getEffectivePlan(dbUser);
   const limit = PLAN_LIMITS[effective] ?? PLAN_LIMITS.free;
   if (!canRunAnalysis(dbUser)) {
+    const isFreeLifetime = effective === 'free' && !dbUser.stripe_subscription_id;
     return NextResponse.json(
       {
-        error: 'Limite atteinte pour ce mois',
+        error: isFreeLifetime
+          ? `Tes ${limit} analyses gratuites sont épuisées. Passe à un plan payant pour continuer.`
+          : 'Limite d\'analyses atteinte pour cette période. Attend le renouvellement ou passe à un plan supérieur.',
         type: 'analysis',
         plan: effective,
         used: dbUser.analyses_count,
@@ -862,9 +865,12 @@ export async function POST(request: NextRequest) {
       });
 
       if (!canRunAnalysis(dbUser)) {
+        const isFreeLifetime = effectivePlan === 'free' && !dbUser.stripe_subscription_id;
         return NextResponse.json(
           {
-            error: 'Limite atteinte pour ce mois',
+            error: isFreeLifetime
+              ? `Tes ${limit} analyses gratuites sont épuisées. Passe à un plan payant pour continuer.`
+              : 'Limite d\'analyses atteinte pour cette période. Attend le renouvellement ou passe à un plan supérieur.',
             type:  'analysis',
             plan:  effectivePlan,
             used:  dbUser.analyses_count,
@@ -873,6 +879,11 @@ export async function POST(request: NextRequest) {
           { status: 429 }
         );
       }
+    }
+
+    // ── Log anonymous requests (no quota tracked — mock result only) ──────────
+    if (!session) {
+      console.log('[analyze] anonymous request — no session, mock result, no quota tracked', { url });
     }
 
     // ── Fetch real public TikTok stats (cache + live + fallback) ───────────
