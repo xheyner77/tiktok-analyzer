@@ -281,11 +281,46 @@ export default function HeroMockupPremium() {
         <div className="sm:hidden px-3.5 pt-3.5 pb-1 border-t border-white/[0.05]">
           <div className="flex gap-3 items-stretch">
             <div
-              className="flex-1 min-w-0 rounded-xl px-2 pt-2.5 pb-2"
+              className="flex-1 min-w-0 rounded-xl flex flex-col"
               style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)' }}
             >
-              <p className="text-[8px] font-bold uppercase tracking-[0.12em] text-gray-600 mb-1.5">Courbe attention</p>
-              <AttentionCurve uid="acm" />
+              <p className="text-[8px] font-bold uppercase tracking-[0.12em] text-gray-600 px-2.5 pt-2.5 pb-1 shrink-0">Courbe attention</p>
+              {/* Relative container grows to fill the card — SVG fills it via absolute positioning */}
+              <div className="relative flex-1 min-h-0 mx-1 mb-1">
+                <svg
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+                  viewBox="0 0 118 58"
+                  preserveAspectRatio="none"
+                >
+                  <defs>
+                    <linearGradient id="acm-line" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%"   stopColor="#22c55e" />
+                      <stop offset="40%"  stopColor="#eab308" />
+                      <stop offset="100%" stopColor="#ef4444" />
+                    </linearGradient>
+                    <linearGradient id="acm-fill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%"   stopColor="#e879f9" stopOpacity="0.14" />
+                      <stop offset="100%" stopColor="#e879f9" stopOpacity="0" />
+                    </linearGradient>
+                    <filter id="acm-glow" x="-50%" y="-50%" width="200%" height="200%">
+                      <feGaussianBlur stdDeviation="2" result="b" />
+                      <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+                    </filter>
+                  </defs>
+                  <path d="M0,9 C12,9 22,12 38,26 C54,38 63,42 82,44 C98,46 108,47 118,48 L118,48 L0,48 Z" fill="url(#acm-fill)" />
+                  <motion.path
+                    d="M0,9 C12,9 22,12 38,26 C54,38 63,42 82,44 C98,46 108,47 118,48"
+                    fill="none" stroke="url(#acm-line)" strokeWidth="2.5" strokeLinecap="round"
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    animate={{ pathLength: 1, opacity: 1, transition: { duration: 1.4, delay: 1, ease: E } }}
+                  />
+                  <circle cx="38" cy="26" r="3.5" fill="#ef4444" filter="url(#acm-glow)" opacity="0.9" />
+                  <line x1="38" y1="2" x2="38" y2="44" stroke="#ef4444" strokeWidth="1" strokeDasharray="2 2" opacity="0.25" />
+                  <text x="2"   y="56" fill="rgb(100,100,115)" fontSize="7" fontFamily="inherit">0s</text>
+                  <text x="31"  y="56" fill="rgb(239,68,68)"   fontSize="7" fontFamily="inherit">8s</text>
+                  <text x="104" y="56" fill="rgb(100,100,115)" fontSize="7" fontFamily="inherit">20s</text>
+                </svg>
+              </div>
             </div>
             <div
               className="shrink-0 w-[96px] rounded-xl flex flex-col items-center justify-center py-2 px-1"
