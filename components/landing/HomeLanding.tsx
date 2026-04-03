@@ -377,18 +377,18 @@ export default function HomeLanding() {
       </section>
 
       {/* ══ STATS STRIP ═══════════════════════════════════════════ */}
-      <div className="border-y border-white/[0.06] bg-white/[0.012] py-3 sm:py-5">
+      <div className="border-y border-white/[0.06] bg-white/[0.012] py-4 sm:py-5">
         <div className={`max-w-5xl ${SI}`}>
-          <div className="flex flex-wrap justify-center lg:justify-between gap-x-6 sm:gap-x-10 gap-y-4">
+          <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:justify-center lg:justify-between sm:gap-x-10 sm:gap-y-3">
             {[
-              { val: '+1000',   label: 'vidéo analysé' },
-              { val: '+200',    label: 'créateur actif' },
-              { val: '30s',      label: 'pour un diagnostic complet' },
-              { val: 'GPT-4o',   label: 'Vision + Whisper audio' },
+              { val: '+1000',   label: 'vidéos analysées' },
+              { val: '+200',    label: 'créateurs actifs' },
+              { val: '30s',     label: 'pour un diagnostic' },
+              { val: 'GPT-4o',  label: 'Vision + Whisper' },
             ].map(({ val, label }) => (
-              <div key={val} className="flex items-center gap-3">
-                <span className="text-[15px] font-black text-white tabular-nums">{val}</span>
-                <span className="text-[12px] text-gray-600">{label}</span>
+              <div key={val} className="flex flex-col sm:flex-row items-center sm:items-center gap-0.5 sm:gap-3 text-center sm:text-left">
+                <span className="text-[16px] sm:text-[15px] font-black text-white tabular-nums">{val}</span>
+                <span className="text-[11px] sm:text-[12px] text-gray-400">{label}</span>
               </div>
             ))}
           </div>
