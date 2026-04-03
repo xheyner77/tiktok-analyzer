@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import FloatingParticles from '@/components/FloatingParticles';
+import RoadmapSection from '@/components/RoadmapSection';
 
 export const metadata: Metadata = {
   title: 'Nouveautés — Viralynz',
@@ -196,6 +197,9 @@ export default function ChangelogPage() {
 
         </div>
       </section>
+
+      {/* ── ROADMAP ──────────────────────────────────────────────────── */}
+      <RoadmapSection />
 
       {/* ── CTA ──────────────────────────────────────────────────────── */}
       <section className="py-16 sm:py-20 border-t border-white/[0.06]">
