@@ -5,7 +5,7 @@
 
 export const MAX_ANALYSES_FREE = 3;
 export const MAX_ANALYSES_PRO = 50;
-export const MAX_ANALYSES_ELITE = 300;
+export const MAX_ANALYSES_ELITE = 200;
 
 export const MAX_HOOKS_PRO = 150;
 export const MAX_HOOKS_ELITE = 500;
