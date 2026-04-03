@@ -324,29 +324,6 @@ export default function HomeLanding() {
                 </Link>
               </div>
 
-              {/* Social proof */}
-              <div className="mt-8 flex flex-col items-center lg:items-start gap-2.5">
-                <div className="flex items-center gap-3">
-                  <div className="flex -space-x-3">
-                    {['https://i.pravatar.cc/40?img=11','https://i.pravatar.cc/40?img=47','https://i.pravatar.cc/40?img=12','https://i.pravatar.cc/40?img=44','https://i.pravatar.cc/40?img=15'].map((img, i) => (
-                      <img key={i} src={img} alt="" width={36} height={36}
-                        className="h-9 w-9 rounded-full border-[2.5px] border-[#030308] object-cover" aria-hidden />
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-0.5" aria-hidden>
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <svg key={i} viewBox="0 0 20 20" className="w-4 h-4 text-vn-fuchsia drop-shadow-[0_0_8px_rgba(232,121,249,0.35)]" fill="currentColor">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    ))}
-                  </div>
-                </div>
-                <p className="text-[13.5px] text-gray-400 font-medium">
-                  Rejoins{' '}
-                  <span className="text-white font-bold">+200</span>{' '}
-                  créateurs de contenu
-                </p>
-              </div>
             </div>
 
             {/* ── Right: mockup ─────────────────────────────────── */}
@@ -372,6 +349,30 @@ export default function HomeLanding() {
               />
               <HeroMockupPremium />
             </div>
+          </div>
+
+          {/* ── Social proof — pleine largeur sous les deux colonnes ── */}
+          <div className="mt-8 lg:mt-10 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-5">
+            <div className="flex items-center gap-3">
+              <div className="flex -space-x-3">
+                {['https://i.pravatar.cc/40?img=11','https://i.pravatar.cc/40?img=47','https://i.pravatar.cc/40?img=12','https://i.pravatar.cc/40?img=44','https://i.pravatar.cc/40?img=15'].map((img, i) => (
+                  <img key={i} src={img} alt="" width={36} height={36}
+                    className="h-9 w-9 rounded-full border-[2.5px] border-[#030308] object-cover" aria-hidden />
+                ))}
+              </div>
+              <div className="flex items-center gap-0.5" aria-hidden>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <svg key={i} viewBox="0 0 20 20" className="w-4 h-4 text-vn-fuchsia drop-shadow-[0_0_8px_rgba(232,121,249,0.35)]" fill="currentColor">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                ))}
+              </div>
+            </div>
+            <p className="text-[13.5px] text-gray-400 font-medium">
+              Rejoins{' '}
+              <span className="text-white font-bold">+200</span>{' '}
+              créateurs de contenu
+            </p>
           </div>
         </div>
       </section>
