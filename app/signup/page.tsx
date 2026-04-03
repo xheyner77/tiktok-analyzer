@@ -5,6 +5,7 @@ import Link from 'next/link';
 import AuthTransition from '@/components/AuthTransition';
 import { PENDING_PLAN_KEY } from '@/components/GuestGate';
 import BrandLogo from '@/components/BrandLogo';
+import StarsFullPage from '@/components/StarsFullPage';
 
 // ── Email confirmation screen ─────────────────────────────────────────────────
 
@@ -176,6 +177,7 @@ export default function SignupPage() {
 
   return (
     <main className="flex min-h-dvh items-center justify-center px-4 py-8 [padding-bottom:max(2rem,env(safe-area-inset-bottom,0px)+1rem)]">
+      <StarsFullPage />
       <AuthTransition
         show={showTransition}
         onComplete={() => {

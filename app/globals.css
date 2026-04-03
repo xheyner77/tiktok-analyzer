@@ -456,6 +456,12 @@
     pointer-events: none;
   }
 
+  /* Pages courtes (login, signup…) : étoiles sur toute la hauteur sans masque */
+  body[data-stars-full] .stars-backdrop {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
   /* ── Stars background (global) ──────────────────────────────────────── */
   .stars-backdrop {
     position: absolute;
