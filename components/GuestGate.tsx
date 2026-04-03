@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import FloatingParticles from '@/components/FloatingParticles';
 import {
   MAX_ANALYSES_ELITE,
   MAX_ANALYSES_FREE,
   MAX_ANALYSES_PRO,
   MAX_HOOKS_ELITE,
   MAX_HOOKS_PRO,
+  HISTORY_LIMITS,
 } from '@/lib/plan-limits';
 import { DISPLAY_CATALOG_ELITE_EUR, DISPLAY_CATALOG_PRO_EUR } from '@/lib/stripe-pricing';
 
@@ -16,57 +18,38 @@ export const PENDING_PLAN_KEY = 'pending_plan_after_signup';
 
 type PlanVariant = 'free' | 'pro' | 'elite';
 
-interface PlanConfig {
-  variant: PlanVariant;
-  name: string;
-  badge?: string;
-  price: string;
-  period?: string;
-  features: string[];
-  cta: string;
+/* ── Shared icon helpers ───────────────────────────────────────────────── */
+
+function CheckFuchsia() {
+  return (
+    <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 shrink-0 mt-0.5 text-vn-fuchsia">
+      <path fillRule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" />
+    </svg>
+  );
+}
+function CheckViolet() {
+  return (
+    <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 shrink-0 mt-0.5 text-violet-400">
+      <path fillRule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" />
+    </svg>
+  );
+}
+function CheckGray() {
+  return (
+    <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 shrink-0 mt-0.5 text-gray-600">
+      <path fillRule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" />
+    </svg>
+  );
+}
+function CrossIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3 shrink-0 mt-0.5 text-gray-700">
+      <path d="M5.28 4.22a.75.75 0 0 0-1.06 1.06L6.94 8l-2.72 2.72a.75.75 0 1 0 1.06 1.06L8 9.06l2.72 2.72a.75.75 0 1 0 1.06-1.06L9.06 8l2.72-2.72a.75.75 0 0 0-1.06-1.06L8 6.94 5.28 4.22Z" />
+    </svg>
+  );
 }
 
-const PLANS: PlanConfig[] = [
-  {
-    variant: 'free',
-    name: 'Free',
-    price: 'Gratuit',
-    features: [
-      '3 analyses',
-      'Score de viralité',
-      'Analyse Hook, Montage, Rétention',
-      '3 conseils d\'amélioration',
-    ],
-    cta: 'Commencer gratuitement',
-  },
-  {
-    variant: 'pro',
-    name: 'Pro',
-    badge: 'Le plus populaire',
-    price: `${DISPLAY_CATALOG_PRO_EUR}€`,
-    period: '/ mois',
-    features: [
-      `${MAX_ANALYSES_PRO} analyses / mois`,
-      'Score de viralité complet',
-      '5 conseils détaillés',
-      `${MAX_HOOKS_PRO} hooks générés / mois`,
-    ],
-    cta: 'Choisir Pro',
-  },
-  {
-    variant: 'elite',
-    name: 'Elite',
-    price: `${DISPLAY_CATALOG_ELITE_EUR}€`,
-    period: '/ mois',
-    features: [
-      `${MAX_ANALYSES_ELITE} analyses / mois`,
-      'Recommandations IA avancées',
-      `${MAX_HOOKS_ELITE} hooks générés / mois`,
-      'Support prioritaire',
-    ],
-    cta: 'Choisir Elite',
-  },
-];
+/* ── Props ─────────────────────────────────────────────────────────────── */
 
 interface GuestGateProps {
   show: boolean;
@@ -74,11 +57,12 @@ interface GuestGateProps {
   onClose: () => void;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════ */
+
 export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps) {
   const router = useRouter();
   const [visible, setVisible] = useState(false);
 
-  // Fade-in on open
   useEffect(() => {
     if (show) {
       const t = setTimeout(() => setVisible(true), 10);
@@ -113,8 +97,8 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
       style={{
         paddingTop: 'max(0.5rem, env(safe-area-inset-top, 0px))',
         paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0px))',
-        backgroundColor: `rgba(0,0,0,${visible ? 0.88 : 0})`,
-        backdropFilter: `blur(${visible ? 10 : 0}px)`,
+        backgroundColor: `rgba(0,0,0,${visible ? 0.9 : 0})`,
+        backdropFilter: `blur(${visible ? 12 : 0}px)`,
         transition: 'background-color 0.25s ease, backdrop-filter 0.25s ease',
       }}
       onClick={onClose}
@@ -123,7 +107,7 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
       aria-labelledby="guest-gate-title"
     >
       <div
-        className="guest-gate-dialog guest-gate-dialog-scroll relative w-full max-w-xl overflow-x-hidden overflow-y-auto overscroll-contain rounded-2xl border border-[#1e1e1e] bg-[#0d0d0d] shadow-2xl sm:max-h-[min(92dvh,720px)]"
+        className="guest-gate-dialog guest-gate-dialog-scroll relative w-full max-w-3xl overflow-x-hidden overflow-y-auto overscroll-contain rounded-2xl border border-[#1e1e1e] bg-[#0a0a0f] shadow-2xl"
         style={{
           opacity: visible ? 1 : 0,
           transform: visible ? 'translateY(0) scale(1)' : 'translateY(12px) scale(0.98)',
@@ -132,12 +116,14 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="pointer-events-none absolute -top-24 left-1/2 h-40 w-80 -translate-x-1/2 rounded-full bg-gradient-to-br from-vn-fuchsia/12 to-vn-indigo/12 blur-3xl" />
+        {/* Ambient top glow */}
+        <div className="pointer-events-none absolute -top-24 left-1/2 h-48 w-96 -translate-x-1/2 rounded-full bg-gradient-to-br from-vn-fuchsia/15 to-vn-indigo/10 blur-3xl" />
 
+        {/* Close button */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-2 top-2 z-10 flex h-9 w-9 items-center justify-center rounded-xl bg-[#1a1a1a] text-gray-500 hover:bg-[#222] hover:text-gray-300 sm:right-3 sm:top-3"
+          className="absolute right-3 top-3 z-20 flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.05] text-gray-500 hover:bg-white/[0.08] hover:text-gray-300 transition-colors"
           aria-label="Fermer"
         >
           <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5">
@@ -145,133 +131,273 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
           </svg>
         </button>
 
-        <div className="relative px-4 pb-6 pt-4 sm:px-6 sm:pb-7 sm:pt-5">
-            <div className="pr-10 text-center sm:mb-5 sm:pr-8 mb-4">
-              <div className="mb-2.5 inline-flex items-center gap-1.5 rounded-full border border-vn-fuchsia/20 bg-vn-fuchsia/10 px-2.5 py-1 text-[11px] font-semibold text-vn-fuchsia sm:mb-3 sm:px-3 sm:py-1.5 sm:text-xs">
-                <svg viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3 shrink-0">
-                  <path
-                    fillRule="evenodd"
-                    d="M8 1a3.5 3.5 0 0 0-3.5 3.5V7A1.5 1.5 0 0 0 3 8.5v5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 11.5 7V4.5A3.5 3.5 0 0 0 8 1Zm2 6V4.5a2 2 0 1 0-4 0V7h4Z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                Compte requis
-              </div>
-              <h2 id="guest-gate-title" className="mb-1.5 text-[17px] font-bold leading-snug text-white sm:text-xl">
-                Crée ton compte pour débloquer ton analyse
-              </h2>
-              <p className="mx-auto max-w-[280px] text-[13px] leading-snug text-gray-500 sm:max-w-none sm:text-sm">
-                Choisis ton plan et découvre pourquoi ta vidéo ne perce pas
-              </p>
+        <div className="relative px-4 pb-5 pt-5 sm:px-6 sm:pb-6 sm:pt-6">
+
+          {/* ── Header ─────────────────────────────────────────── */}
+          <div className="mb-5 pr-8 text-center sm:mb-6">
+            <div className="mb-2.5 inline-flex items-center gap-1.5 rounded-full border border-vn-fuchsia/20 bg-vn-fuchsia/10 px-3 py-1 text-[11px] font-semibold text-vn-fuchsia">
+              <svg viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3 shrink-0">
+                <path fillRule="evenodd" d="M8 1a3.5 3.5 0 0 0-3.5 3.5V7A1.5 1.5 0 0 0 3 8.5v5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 11.5 7V4.5A3.5 3.5 0 0 0 8 1Zm2 6V4.5a2 2 0 1 0-4 0V7h4Z" clipRule="evenodd" />
+              </svg>
+              Compte requis
             </div>
-
-            <div className="mb-5 grid grid-cols-1 gap-2.5 sm:mb-6 sm:grid-cols-3 sm:gap-3">
-              {PLANS.map((plan) => (
-                <PlanCard key={plan.variant} plan={plan} onSelect={() => handlePlanSelect(plan.variant)} />
-              ))}
-            </div>
-
-            <div className="mb-3 flex items-center gap-3">
-              <div className="h-px flex-1 bg-[#1a1a1a]" />
-              <span className="text-[11px] text-gray-600 sm:text-xs">ou</span>
-              <div className="h-px flex-1 bg-[#1a1a1a]" />
-            </div>
-
-            <button
-              type="button"
-              onClick={handleLogin}
-              className="w-full rounded-xl border border-[#1e1e1e] bg-[#111] py-3 text-[13px] font-semibold text-gray-300 transition-all duration-200 hover:border-[#2a2a2a] hover:bg-[#181818] hover:text-white active:scale-[0.99] sm:py-2.5 sm:text-sm"
-            >
-              Se connecter
-            </button>
-
-            <p className="mt-4 text-center text-[10px] leading-relaxed text-gray-700 sm:text-xs">
-              Sans engagement · Annulable à tout moment · Paiement sécurisé
+            <h2 id="guest-gate-title" className="mb-1.5 text-[18px] font-bold leading-snug text-white sm:text-xl">
+              Crée ton compte pour débloquer ton analyse
+            </h2>
+            <p className="text-[13px] leading-snug text-gray-500">
+              Choisis ton plan · Résultats immédiats après inscription
             </p>
+          </div>
+
+          {/* ── Plan cards ─────────────────────────────────────── */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:items-end sm:gap-0">
+
+            {/* ── STARTER ── */}
+            <div className="sm:pr-3">
+              <div className="flex flex-col rounded-2xl border border-white/[0.07] bg-[#09090f] p-5 h-full">
+                <div className="mb-4">
+                  <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-widest bg-white/[0.04] text-gray-600 border border-white/[0.05]">
+                    Starter
+                  </span>
+                  <div className="mt-4 mb-1">
+                    <span className="text-[2.2rem] font-black text-white leading-none">Gratuit</span>
+                  </div>
+                  <p className="text-[12px] text-gray-600 mt-1.5 leading-relaxed">
+                    Découvre Viralynz sans risque. Vois ce que l&apos;IA repère sur tes vidéos.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handlePlanSelect('free')}
+                  className="w-full text-center py-3 rounded-xl font-semibold text-[13px] text-gray-300 bg-white/[0.05] border border-white/[0.09] hover:bg-white/[0.09] hover:text-white transition-all mb-5"
+                >
+                  Commencer gratuitement
+                </button>
+
+                <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-gray-700 mb-2.5">Ce que tu obtiens</p>
+                <ul className="space-y-2 flex-1">
+                  {[
+                    { text: `${MAX_ANALYSES_FREE} analyses complètes`, sub: 'Score + Hook + Montage + Rétention', ok: true },
+                    { text: 'Recommandations IA', sub: 'Plan de correction basique', ok: true },
+                    { text: 'Dashboard de progression', sub: null, ok: true },
+                    { text: 'Générateur de hooks', sub: null, ok: false },
+                    { text: "Plan d'action priorisé", sub: null, ok: false },
+                    { text: 'Historique des analyses', sub: null, ok: false },
+                  ].map((f, i) => (
+                    <li key={i} className={`flex items-start gap-2 ${!f.ok ? 'opacity-35' : ''}`}>
+                      {f.ok ? <CheckGray /> : <CrossIcon />}
+                      <div>
+                        <span className={`text-[12px] leading-snug block ${f.ok ? 'text-gray-400' : 'text-gray-700'}`}>{f.text}</span>
+                        {f.sub && <span className="text-[10px] text-gray-700 leading-none">{f.sub}</span>}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* ── PRO — ELEVATED ── */}
+            <div className="sm:-mt-8 sm:z-10 relative">
+              {/* Popular badge — outside the card */}
+              <div className="flex justify-center mb-2.5">
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-4 py-1.5 rounded-full bg-vn-fuchsia text-white shadow-lg shadow-vn-fuchsia/50">
+                  ⭐ Le plus populaire
+                </span>
+              </div>
+
+              <div className="relative flex flex-col rounded-[1.1rem] border border-vn-fuchsia/35 bg-gradient-to-b from-[#130916] to-[#0a0810] p-5 shadow-[0_16px_60px_-16px_rgba(232,121,249,0.35)] z-10 overflow-hidden">
+                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-vn-fuchsia/80 to-transparent" />
+                <FloatingParticles count={20} className="opacity-40" />
+
+                <div className="relative mb-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-widest bg-vn-fuchsia/20 text-vn-fuchsia border border-vn-fuchsia/35">Pro</span>
+                    <span className="text-[10px] text-vn-fuchsia/70 font-semibold">Recommandé</span>
+                  </div>
+
+                  <div className="flex items-end gap-2 mb-1">
+                    <span className="text-[2.6rem] font-black text-white leading-none">{DISPLAY_CATALOG_PRO_EUR}€</span>
+                    <span className="text-gray-500 text-sm pb-1.5">/ mois</span>
+                  </div>
+
+                  {/* ROI anchor */}
+                  <div className="mt-2 mb-3 px-3 py-2 rounded-lg bg-vn-fuchsia/[0.08] border border-vn-fuchsia/15">
+                    <p className="text-[11px] text-vn-fuchsia/80 leading-snug">
+                      💡 <span className="font-semibold">1 vidéo mieux optimisée</span> = des dizaines de milliers de vues supplémentaires.
+                    </p>
+                  </div>
+
+                  {/* Social proof */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex -space-x-2">
+                      {[11, 47, 12, 44, 15].map((n) => (
+                        <img key={n} src={`https://i.pravatar.cc/40?img=${n}`} alt="" width={22} height={22}
+                          className="w-5.5 h-5.5 rounded-full border-2 border-[#0a0810] object-cover" />
+                      ))}
+                    </div>
+                    <span className="text-[10px] text-gray-500">Choisi par <span className="text-gray-300 font-semibold">80% des créateurs</span></span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handlePlanSelect('pro')}
+                  className="relative w-full py-3.5 rounded-xl font-bold text-[13px] text-white bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_8px_32px_-8px_rgba(232,121,249,0.55)] mb-1"
+                >
+                  Commencer avec Pro →
+                </button>
+                <p className="text-[10px] text-gray-700 text-center mb-4">Sans engagement · Annule en 1 clic</p>
+
+                <div className="h-px bg-gradient-to-r from-transparent via-vn-fuchsia/25 to-transparent mb-4" />
+
+                {/* Feature groups */}
+                <div className="space-y-4 flex-1 relative">
+                  <div>
+                    <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-vn-fuchsia/50 mb-2">Analyse IA</p>
+                    <ul className="space-y-1.5">
+                      {[
+                        { text: `${MAX_ANALYSES_PRO} analyses / mois`, bold: true },
+                        { text: 'Score + Hook / Montage / Rétention', bold: false },
+                        { text: "Plan d'action IA priorisé", bold: false },
+                        { text: 'Recommandations avancées', bold: false },
+                      ].map((f, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <CheckFuchsia />
+                          <span className={`text-[12px] leading-snug ${f.bold ? 'text-white font-bold' : 'text-gray-300'}`}>{f.text}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-vn-fuchsia/50 mb-2">Création</p>
+                    <ul className="space-y-1.5">
+                      {[
+                        { text: `${MAX_HOOKS_PRO} hooks générés / mois`, bold: true },
+                        { text: `Historique ${HISTORY_LIMITS.pro} analyses`, bold: false },
+                        { text: 'Dashboard coach personnalisé', bold: false },
+                      ].map((f, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <CheckFuchsia />
+                          <span className={`text-[12px] leading-snug ${f.bold ? 'text-white font-bold' : 'text-gray-300'}`}>{f.text}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ── ELITE ── */}
+            <div className="sm:pl-3">
+              <div className="relative flex flex-col rounded-2xl border border-violet-500/25 bg-gradient-to-b from-[#0e0b16] to-[#080810] p-5 h-full overflow-hidden">
+                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-400/50 to-transparent" />
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_40%_at_50%_0%,rgba(139,92,246,0.08),transparent)] pointer-events-none" />
+
+                <div className="relative mb-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-widest bg-violet-500/15 text-violet-300 border border-violet-500/25">Elite</span>
+                    <span className="inline-flex items-center gap-1 text-[9px] font-bold px-2 py-1 rounded-full bg-violet-500/15 text-violet-300 border border-violet-500/20">
+                      🔥 Volume max
+                    </span>
+                  </div>
+
+                  <div className="flex items-end gap-2 mb-1">
+                    <span className="text-[2.2rem] font-black text-white leading-none">{DISPLAY_CATALOG_ELITE_EUR}€</span>
+                    <span className="text-gray-500 text-sm pb-1">/ mois</span>
+                  </div>
+
+                  {/* ROI anchor */}
+                  <div className="mt-2 mb-3 px-3 py-2 rounded-lg bg-violet-500/[0.07] border border-violet-500/15">
+                    <p className="text-[11px] text-violet-300/80 leading-snug">
+                      ⚡ Pour les <span className="font-semibold">agences & créateurs 100k+</span> qui publient chaque semaine.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handlePlanSelect('elite')}
+                  className="relative w-full py-3.5 rounded-xl font-bold text-[13px] text-white bg-gradient-to-r from-violet-600 to-vn-fuchsia hover:opacity-90 active:scale-[0.98] transition-all shadow-[0_8px_32px_-8px_rgba(139,92,246,0.4)] mb-1 ring-1 ring-white/10"
+                >
+                  Passer en Elite →
+                </button>
+                <p className="text-[10px] text-gray-700 text-center mb-4">Sans engagement · Annule en 1 clic</p>
+
+                <div className="h-px bg-gradient-to-r from-transparent via-violet-500/20 to-transparent mb-4" />
+
+                <div className="space-y-4 flex-1 relative">
+                  <div>
+                    <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-violet-400/50 mb-2">Volume &amp; Analyse</p>
+                    <ul className="space-y-1.5">
+                      {[
+                        { text: `${MAX_ANALYSES_ELITE} analyses / mois`, elite: true },
+                        { text: 'Score + Hook / Montage / Rétention', elite: false },
+                        { text: 'Recommandations IA complètes', elite: false },
+                        { text: "Plan d'action IA priorisé", elite: false },
+                      ].map((f, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <CheckViolet />
+                          <span className={`text-[12px] leading-snug flex-1 ${f.elite ? 'text-violet-100 font-bold' : 'text-gray-400'}`}>{f.text}</span>
+                          {f.elite && <span className="shrink-0 text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-violet-500/15 text-violet-400 border border-violet-500/20 uppercase tracking-wide ml-1 self-center">Elite</span>}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-violet-400/50 mb-2">Exclusif Elite</p>
+                    <ul className="space-y-1.5">
+                      {[
+                        { text: `${MAX_HOOKS_ELITE} hooks / mois`, elite: true },
+                        { text: 'Historique illimité', elite: true },
+                        { text: 'Stratégie & Insights viraux', elite: true },
+                        { text: 'Support prioritaire', elite: false },
+                      ].map((f, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <CheckViolet />
+                          <span className={`text-[12px] leading-snug flex-1 ${f.elite ? 'text-violet-100 font-bold' : 'text-gray-400'}`}>{f.text}</span>
+                          {f.elite && <span className="shrink-0 text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-violet-500/15 text-violet-400 border border-violet-500/20 uppercase tracking-wide ml-1 self-center">Elite</span>}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* ── Trust bar ──────────────────────────────────────── */}
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 sm:gap-x-6">
+            {[
+              { icon: '🔒', label: 'Paiement sécurisé Stripe' },
+              { icon: '↩', label: 'Remboursement 7 jours' },
+              { icon: '∞', label: 'Sans engagement' },
+            ].map((t) => (
+              <span key={t.label} className="flex items-center gap-1.5 text-[10px] text-gray-600 sm:text-[11px]">
+                <span>{t.icon}</span>
+                {t.label}
+              </span>
+            ))}
+          </div>
+
+          {/* ── Divider + login ──────────────────────────────────── */}
+          <div className="mt-4 mb-3 flex items-center gap-3">
+            <div className="h-px flex-1 bg-white/[0.05]" />
+            <span className="text-[11px] text-gray-600">ou</span>
+            <div className="h-px flex-1 bg-white/[0.05]" />
+          </div>
+
+          <button
+            type="button"
+            onClick={handleLogin}
+            className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] py-3 text-[13px] font-semibold text-gray-300 transition-all hover:bg-white/[0.06] hover:text-white active:scale-[0.99] sm:text-sm"
+          >
+            Se connecter
+          </button>
+
         </div>
       </div>
-    </div>
-  );
-}
-
-// ── Plan card ───────────────────────────────────────────────────────────────
-
-function PlanCard({ plan, onSelect }: { plan: PlanConfig; onSelect: () => void }) {
-  const isPro  = plan.variant === 'pro';
-  const isElite = plan.variant === 'elite';
-
-  return (
-    <div
-      className={`relative flex flex-col rounded-xl p-3 transition-all sm:p-4 ${plan.badge ? 'pt-5 sm:pt-6' : ''}
-        ${isPro
-          ? 'gradient-border card-glow'
-          : isElite
-          ? 'border border-[#2d1a4a] bg-[#0f0a18]'
-          : 'border border-[#1a1a1a] bg-[#111]'
-        }`}
-    >
-      {plan.badge && (
-        <div className="absolute -top-2.5 left-1/2 z-[1] -translate-x-1/2 whitespace-nowrap sm:-top-3">
-          <span className="inline-flex items-center gap-0.5 rounded-full bg-gradient-to-r from-vn-fuchsia to-vn-indigo px-2 py-0.5 text-[9px] font-bold text-white shadow-lg shadow-vn-fuchsia/20 sm:gap-1 sm:px-2.5 sm:text-[10px]">
-            <svg viewBox="0 0 16 16" fill="currentColor" className="h-2 w-2 shrink-0 sm:h-2.5 sm:w-2.5">
-              <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" />
-            </svg>
-            {plan.badge}
-          </span>
-        </div>
-      )}
-
-      <div className={`mb-2 sm:mb-3 ${plan.badge ? 'mt-0.5' : 'mt-0'}`}>
-        <span
-          className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider sm:text-xs
-            ${isPro
-              ? 'border border-vn-fuchsia/20 bg-vn-fuchsia/10 text-vn-fuchsia'
-              : isElite
-              ? 'border border-vn-violet/25 bg-vn-violet/15 text-vn-glow'
-              : 'border border-[#222] bg-[#1a1a1a] text-gray-500'
-            }`}
-        >
-          {plan.name}
-        </span>
-      </div>
-
-      <div className="mb-2 sm:mb-3">
-        <span className={`text-lg font-bold sm:text-xl ${isElite ? 'text-vn-glow' : 'text-white'}`}>{plan.price}</span>
-        {plan.period && <span className="ml-1 text-[11px] text-gray-500 sm:text-xs">{plan.period}</span>}
-      </div>
-
-      <ul className="mb-3 flex-1 space-y-1 sm:mb-4 sm:space-y-1.5">
-        {plan.features.map((f, i) => (
-          <li key={i} className="flex items-start gap-1.5">
-            <svg
-              viewBox="0 0 16 16"
-              fill="currentColor"
-              className={`mt-0.5 h-3 w-3 shrink-0 ${isPro ? 'text-vn-fuchsia' : isElite ? 'text-vn-glow' : 'text-gray-600'}`}
-            >
-              <path
-                fillRule="evenodd"
-                d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <span className="text-[11px] leading-snug text-gray-400 sm:text-xs sm:leading-relaxed">{f}</span>
-          </li>
-        ))}
-      </ul>
-
-      <button
-        type="button"
-        onClick={onSelect}
-        className={`w-full rounded-xl py-2.5 text-[11px] font-semibold transition-all duration-200 active:scale-[0.98] sm:py-2.5 sm:text-xs
-          ${isPro
-            ? 'bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white shadow-md shadow-vn-fuchsia/20 hover:opacity-90'
-            : isElite
-            ? 'border border-vn-violet/40 bg-vn-violet/20 text-vn-glow hover:border-vn-violet/60 hover:bg-vn-violet/30'
-            : 'border border-[#2a2a2a] bg-[#1a1a1a] text-gray-300 hover:border-[#333] hover:bg-[#222]'
-          }`}
-      >
-        {plan.cta}
-      </button>
     </div>
   );
 }
