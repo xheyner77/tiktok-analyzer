@@ -58,18 +58,32 @@ export async function POST(request: NextRequest) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
+
+        // Détection PayPal : la session expose payment_method_types sur l'objet
+        const paymentTypes = (session as unknown as { payment_method_types?: string[] }).payment_method_types ?? [];
+        const isPayPal = paymentTypes.includes('paypal');
+
         console.log('[webhook] checkout.session.completed', {
           sessionId: session.id,
           mode: session.mode,
           payment_status: session.payment_status,
-          subscriptionField: typeof session.subscription === 'string' ? session.subscription : session.subscription?.id,
+          subscriptionId: typeof session.subscription === 'string' ? session.subscription : session.subscription?.id,
+          payment_method_types: paymentTypes,
+          paypal_detected: isPayPal,
+          userId: session.metadata?.userId ?? '(no metadata)',
+          plan: session.metadata?.plan ?? '(no metadata)',
         });
+
         if (session.mode === 'subscription') {
+          if (isPayPal) {
+            console.log('[webhook] PayPal subscription checkout — sync en cours (billing agreement Stripe)');
+          }
           const res = await syncUserFromPaidSubscriptionCheckout(stripe, session, {});
           if (!res.ok) {
             console.error('[webhook] checkout.session.completed sync failed:', res.reason, res.log ?? '');
             return NextResponse.json({ error: res.reason }, { status: 500 });
           }
+          console.log('[webhook] checkout.session.completed sync OK — plan accordé en DB user=', session.metadata?.userId);
         } else {
           console.warn('[webhook] Ignored checkout (not subscription) mode=', session.mode, session.id);
         }
@@ -106,9 +120,20 @@ export async function POST(request: NextRequest) {
           break;
         }
 
+        console.log('[webhook] invoice.paid', {
+          invoiceId: invoice.id,
+          subscriptionId: subId,
+          billing_reason: invoice.billing_reason,
+          // payment_intent peut être null pour PayPal (pas de pi_) — normal
+          payment_intent: (invoice as unknown as { payment_intent?: string | null }).payment_intent ?? 'null (PayPal ou mandate)',
+          amount_paid: invoice.amount_paid,
+          currency: invoice.currency,
+        });
+
         // Renouvellement de période uniquement — pas le premier cycle (déjà géré au checkout)
         if (invoice.billing_reason === 'subscription_cycle') {
           await resetMonthlyCountersForSubscription(subId);
+          console.log('[webhook] invoice.paid — compteurs mensuels réinitialisés sub=', subId);
         } else {
           console.log(
             '[webhook] invoice.paid skip counter reset — billing_reason=',
@@ -132,16 +157,25 @@ export async function POST(request: NextRequest) {
 
       case 'customer.subscription.updated': {
         const sub = event.data.object as Stripe.Subscription;
+        console.log('[webhook] customer.subscription.updated', {
+          subscriptionId: sub.id,
+          status: sub.status,
+          priceId: sub.items.data[0]?.price?.id,
+          userId: sub.metadata?.userId ?? '(no metadata)',
+          plan: sub.metadata?.plan ?? '(no metadata)',
+        });
         const res = await syncUserRowFromStripeSubscription(sub);
         if (!res.ok) {
           console.error('[webhook] subscription.updated sync failed:', res.reason, res.log ?? '');
           return NextResponse.json({ error: res.reason }, { status: 500 });
         }
+        console.log('[webhook] subscription.updated sync OK sub=', sub.id);
         break;
       }
 
       case 'customer.subscription.deleted': {
         const sub = event.data.object as Stripe.Subscription;
+        console.log('[webhook] customer.subscription.deleted — downgrade free sub=', sub.id, 'user=', sub.metadata?.userId ?? '(no metadata)');
         await downgradeToFreeBySubscriptionId(sub.id);
         break;
       }

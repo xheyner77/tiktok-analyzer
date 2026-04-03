@@ -96,9 +96,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Ne pas passer `payment_method_types` : Stripe Checkout affiche automatiquement
+    // toutes les méthodes actives dans le Dashboard (carte, PayPal, etc.)
+    // Forcer uniquement `['card']` empêcherait PayPal d'apparaître.
     const params: Stripe.Checkout.SessionCreateParams = {
       mode: 'subscription',
-      payment_method_types: ['card'],
       line_items: [{ price: priceId, quantity: 1 }],
       metadata: {
         userId: session.userId,
@@ -132,6 +134,8 @@ export async function POST(request: NextRequest) {
       plan,
       allow_promotion_codes: true,
       customer: params.customer ?? '(nouveau via customer_email)',
+      // payment_method_types absent → Stripe Checkout choisit automatiquement (carte + PayPal actifs)
+      payment_method_config: 'automatic (carte + PayPal si actif dans Dashboard)',
     });
     return NextResponse.json({ url: checkoutSession.url });
   } catch (err) {

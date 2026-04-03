@@ -67,14 +67,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Plan incohérent.' }, { status: 400 });
     }
 
-    console.log(
-      '[upgrade-plan] Checkout session verified (webhook-only DB) user=',
-      session.userId,
-      'session=',
-      checkoutSession.id,
-      'plan=',
-      plan
-    );
+    // Lecture de la méthode de paiement réellement utilisée (carte, paypal, etc.)
+    const pmTypes = (checkoutSession as unknown as { payment_method_types?: string[] }).payment_method_types ?? [];
+    const usedPayPal = pmTypes.includes('paypal');
+
+    console.log('[upgrade-plan] Checkout session verified (webhook-only DB)', {
+      userId: session.userId,
+      sessionId: checkoutSession.id,
+      plan,
+      payment_status: checkoutSession.payment_status,
+      payment_method_types: pmTypes,
+      paypal_used: usedPayPal,
+      // Le plan en base est accordé uniquement par le webhook checkout.session.completed
+      note: 'DB update via webhook only — cette route vérifie sans écrire',
+    });
 
     return NextResponse.json({
       success: true,
