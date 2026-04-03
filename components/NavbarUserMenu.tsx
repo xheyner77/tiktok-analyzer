@@ -96,7 +96,7 @@ export default function NavbarUserMenu({ email, plan }: NavbarUserMenuProps) {
               </Link>
 
               <Link
-                href="/"
+                href="/analyzer"
                 onClick={() => setIsOpen(false)}
                 className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
               >

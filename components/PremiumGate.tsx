@@ -18,16 +18,16 @@ const proFeatures = [
   `${MAX_ANALYSES_PRO} analyses / mois`,
   'Score de viralité détaillé',
   'Conseils personnalisés IA',
-  'Export PDF du rapport',
   'Historique des analyses',
+  'Hook generator (150 / mois)',
 ];
 
 const eliteFeatures = [
   `${MAX_ANALYSES_ELITE} analyses / mois`,
   'Score de viralité détaillé',
   'Conseils personnalisés IA',
-  'Export PDF du rapport',
-  'Historique des analyses',
+  'Historique illimité',
+  'Hook generator (500 / mois)',
   'Analyse comparative concurrents',
   'Support prioritaire',
 ];

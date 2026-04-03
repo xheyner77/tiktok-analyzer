@@ -565,7 +565,7 @@ export default function HookGeneratorPage() {
                         {item.is_favorite && <span className="text-[10px] text-vn-fuchsia">★ Favori</span>}
                       </div>
                     </div>
-                    <div className="flex items-center gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity pt-0.5">
+                    <div className="flex items-center gap-1.5 shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity pt-0.5">
                       <button type="button" onClick={() => copyHook(item.hook_text, item.id)}
                         className="text-[10px] font-medium px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-gray-500 hover:text-gray-200 hover:border-white/[0.15] transition-all">
                         Copier

@@ -93,7 +93,7 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
 
   return (
     <div
-      className="fixed inset-0 z-40 flex items-end justify-center sm:items-center px-3 sm:px-4"
+      className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center px-3 sm:px-4"
       style={{
         paddingTop: 'max(0.5rem, env(safe-area-inset-top, 0px))',
         paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0px))',

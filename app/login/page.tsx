@@ -12,7 +12,9 @@ import StarsFullPage from '@/components/StarsFullPage';
 // can fail to render (blank / black screen) during SSR.
 function LoginForm() {
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirect') ?? '/dashboard';
+  // Validate redirect to prevent open redirect — only allow internal relative paths
+  const rawRedirect = searchParams.get('redirect') ?? '/dashboard';
+  const redirectTo = rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') ? rawRedirect : '/dashboard';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

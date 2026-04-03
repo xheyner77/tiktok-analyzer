@@ -1,13 +1,9 @@
 import { supabase } from './supabase';
 import type { Plan } from './supabase';
 import type { AnalysisResult } from './types';
+import { HISTORY_LIMITS } from './plan-limits';
 
-// Number of history entries shown per plan (free = none)
-export const HISTORY_LIMITS: Record<string, number> = {
-  free: 0,
-  pro: 30,
-  elite: Infinity,
-};
+export { HISTORY_LIMITS };
 
 export interface AnalysisRow {
   id: string;

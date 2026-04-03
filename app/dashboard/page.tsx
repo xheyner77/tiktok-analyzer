@@ -22,7 +22,7 @@ export default async function DashboardPage({
     // Route Handlers and Server Actions, not Server Component pages.
     // The stale cookie (if any) will be overwritten on next successful login.
     console.error('[DashboardPage] No valid session — redirecting to /login.');
-    redirect('/login');
+    redirect('/login?redirect=/dashboard');
   }
 
   const user = await getUserById(session.userId);
