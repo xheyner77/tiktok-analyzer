@@ -54,49 +54,61 @@ function ScoreGauge({ score = 68 }: { score?: number }) {
 }
 
 /* ── Attention curve ─────────────────────────────────────────── */
-function AttentionCurve() {
+function AttentionCurve({ uid }: { uid: string }) {
+  const gLine = `${uid}-line`;
+  const gFill = `${uid}-fill`;
+  const fGlow = `${uid}-glow`;
+
   return (
-    <svg width="118" height="48" viewBox="0 0 118 48">
+    /* viewBox has 10px of extra height below the chart area for axis labels */
+    <svg width="118" height="58" viewBox="0 0 118 58" overflow="visible">
       <defs>
-        <linearGradient id="ac2" x1="0" y1="0" x2="1" y2="0">
+        <linearGradient id={gLine} x1="0" y1="0" x2="1" y2="0">
           <stop offset="0%"   stopColor="#22c55e" />
           <stop offset="40%"  stopColor="#eab308" />
           <stop offset="100%" stopColor="#ef4444" />
         </linearGradient>
-        <linearGradient id="acFill" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={gFill} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%"   stopColor="#e879f9" stopOpacity="0.14" />
           <stop offset="100%" stopColor="#e879f9" stopOpacity="0" />
         </linearGradient>
-        <filter id="dotGlow">
+        <filter id={fGlow} x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur stdDeviation="2" result="b" />
           <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
       </defs>
-      {/* Area */}
-      <path d="M0,9 C12,9 22,12 38,26 C54,38 63,42 82,44 C98,46 108,47 118,48 L118,48 L0,48 Z" fill="url(#acFill)" />
-      {/* Line */}
-      <motion.path d="M0,9 C12,9 22,12 38,26 C54,38 63,42 82,44 C98,46 108,47 118,48"
-        fill="none" stroke="url(#ac2)" strokeWidth="2.5" strokeLinecap="round"
+      {/* Area fill */}
+      <path
+        d="M0,9 C12,9 22,12 38,26 C54,38 63,42 82,44 C98,46 108,47 118,48 L118,48 L0,48 Z"
+        fill={`url(#${gFill})`}
+      />
+      {/* Curve line */}
+      <motion.path
+        d="M0,9 C12,9 22,12 38,26 C54,38 63,42 82,44 C98,46 108,47 118,48"
+        fill="none"
+        stroke={`url(#${gLine})`}
+        strokeWidth="2.5"
+        strokeLinecap="round"
         initial={{ pathLength: 0, opacity: 0 }}
         animate={{ pathLength: 1, opacity: 1, transition: { duration: 1.4, delay: 1, ease: E } }}
       />
-      {/* Drop marker */}
-      <circle cx="38" cy="26" r="3.5" fill="#ef4444" filter="url(#dotGlow)" opacity="0.9" />
+      {/* Drop marker (retention drop) */}
+      <circle cx="38" cy="26" r="3.5" fill="#ef4444" filter={`url(#${fGlow})`} opacity="0.9" />
       <line x1="38" y1="2" x2="38" y2="44" stroke="#ef4444" strokeWidth="1" strokeDasharray="2 2" opacity="0.25" />
-      {/* Moving dot on curve */}
-      <motion.circle r="3" fill="#e879f9" filter="url(#dotGlow)"
+      {/* Moving dot */}
+      <motion.circle r="3" fill="#e879f9" filter={`url(#${fGlow})`}
         initial={{ opacity: 0 }}
         animate={{
           cx: [0, 38, 82, 118],
           cy: [9, 26, 44, 48],
           opacity: [0, 1, 1, 0],
-          transition: { duration: 3, delay: 2.2, repeat: Infinity, repeatDelay: 3, ease: 'easeInOut' }
+          transition: { duration: 3, delay: 2.2, repeat: Infinity, repeatDelay: 3, ease: 'easeInOut' },
         }}
       />
-      {/* Axis */}
-      <text x="0"   y="48" fill="rgb(100,100,115)" fontSize="7" fontFamily="inherit">0s</text>
-      <text x="31"  y="48" fill="rgb(239,68,68)"   fontSize="7" fontFamily="inherit">8s</text>
-      <text x="106" y="48" fill="rgb(100,100,115)" fontSize="7" fontFamily="inherit">20s</text>
+      {/* Axis labels — positioned below the chart area (y=56 gives 8px breathing room) */}
+      <text x="0"   y="56" fill="rgb(100,100,115)" fontSize="7" fontFamily="inherit">0s</text>
+      <text x="31"  y="56" fill="rgb(239,68,68)"   fontSize="7" fontFamily="inherit">8s</text>
+      <text x="106" y="56" fill="rgb(100,100,115)" fontSize="7" fontFamily="inherit">20s</text>
     </svg>
   );
 }
@@ -271,8 +283,8 @@ export default function HeroMockupPremium() {
               style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)' }}
             >
               <p className="text-[8px] font-bold uppercase tracking-[0.12em] text-gray-600 mb-1.5">Courbe attention</p>
-              <div className="scale-[0.92] origin-top-left -ml-0.5">
-                <AttentionCurve />
+              <div className="scale-[0.92] origin-top-left -ml-0.5 overflow-visible">
+                <AttentionCurve uid="acm" />
               </div>
             </div>
             <div
@@ -400,7 +412,7 @@ export default function HeroMockupPremium() {
           <div className="px-4 py-3.5 rounded-2xl"
             style={{ background: 'rgba(9,9,15,0.96)', border: '1px solid rgba(255,255,255,0.07)', backdropFilter: 'blur(14px)', boxShadow: '0 10px 44px rgba(0,0,0,0.65)' }}>
             <p className="text-[9px] text-gray-600 uppercase tracking-[0.14em] mb-2.5">Courbe attention</p>
-            <AttentionCurve />
+            <AttentionCurve uid="acd" />
           </div>
         </div>
       </motion.div>
