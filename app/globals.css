@@ -466,9 +466,9 @@
     pointer-events: none;
     overflow: hidden;
     z-index: 0;
-    /* Fondu vers le bas : visible en haut, disparaît doucement */
-    -webkit-mask-image: linear-gradient(to bottom, black 0%, black 48%, transparent 82%);
-    mask-image: linear-gradient(to bottom, black 0%, black 48%, transparent 82%);
+    /* Fondu vers le bas : opaque en haut du hero, transparent avant le bandeau stats (~70vh) */
+    -webkit-mask-image: linear-gradient(to bottom, black 0%, black 38%, transparent 66%);
+    mask-image: linear-gradient(to bottom, black 0%, black 38%, transparent 66%);
   }
 
   /* Petites étoiles — tuile dense, alpha élevé */
