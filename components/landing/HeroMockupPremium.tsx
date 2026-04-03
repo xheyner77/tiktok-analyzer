@@ -97,15 +97,15 @@ function AttentionCurve({ uid }: { uid: string }) {
       {/* Drop marker (retention drop) */}
       <circle cx="38" cy="26" r="3.5" fill="#ef4444" filter={`url(#${fGlow})`} opacity="0.9" />
       <line x1="38" y1="2" x2="38" y2="44" stroke="#ef4444" strokeWidth="1" strokeDasharray="2 2" opacity="0.25" />
-      {/* Moving dot */}
+      {/* Moving dot — single pass only, no infinite loop */}
       <motion.circle r="3" fill="#e879f9" filter={`url(#${fGlow})`}
-        initial={{ opacity: 0 }}
+        initial={{ opacity: 0, cx: 0, cy: 9 }}
         animate={{
           cx: [0, 38, 82, 118],
           cy: [9, 26, 44, 48],
           opacity: [0, 1, 1, 0],
-          transition: { duration: 3, delay: 2.2, repeat: Infinity, repeatDelay: 3, ease: 'easeInOut' },
         }}
+        transition={{ duration: 3, delay: 2.2, ease: 'easeInOut' }}
       />
       {/* Axis labels — positioned below the chart area (y=56 gives 8px breathing room) */}
       <text x="0"   y="56" fill="rgb(100,100,115)" fontSize="7" fontFamily="inherit">0s</text>

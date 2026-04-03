@@ -363,7 +363,6 @@
   /** Hero motion: subtile présence premium */
   .hero-mockup-float {
     animation: heroMockupFloat 8s ease-in-out infinite;
-    will-change: transform;
   }
 
   .hero-mockup-pulse::before {

@@ -15,10 +15,10 @@ interface Particle {
 }
 
 const COLORS = [
-  [232, 121, 249],  // fuchsia
-  [167, 139, 250],  // violet
-  [99,  102, 241],  // indigo
-  [216,  90, 240],  // pink-fuchsia
+  [232, 121, 249],
+  [167, 139, 250],
+  [99,  102, 241],
+  [216,  90, 240],
 ];
 
 interface Props {
@@ -30,6 +30,9 @@ export default function FloatingParticles({ className = '', count = 40 }: Props)
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
+    // Désactiver sur mobile pour éviter les crashes iOS Safari
+    if (typeof window !== 'undefined' && window.innerWidth < 640) return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -39,6 +42,7 @@ export default function FloatingParticles({ className = '', count = 40 }: Props)
     let animId: number;
     let w = 0;
     let h = 0;
+    let paused = false;
 
     const resize = () => {
       w = canvas.offsetWidth;
@@ -50,28 +54,44 @@ export default function FloatingParticles({ className = '', count = 40 }: Props)
     const spawn = (randomY = false): Particle => {
       const maxLife = 200 + Math.random() * 200;
       return {
-        x:       Math.random() * w,
-        y:       randomY ? Math.random() * h : h + 8,
-        vx:      (Math.random() - 0.5) * 0.3,
-        vy:      -(Math.random() * 0.5 + 0.2),
-        size:    Math.random() * 1.4 + 0.4,
-        opacity: 0,
+        x:        Math.random() * w,
+        y:        randomY ? Math.random() * h : h + 8,
+        vx:       (Math.random() - 0.5) * 0.3,
+        vy:       -(Math.random() * 0.5 + 0.2),
+        size:     Math.random() * 1.4 + 0.4,
+        opacity:  0,
         colorIdx: Math.floor(Math.random() * COLORS.length),
-        life:    randomY ? Math.random() * maxLife : 0,
+        life:     randomY ? Math.random() * maxLife : 0,
         maxLife,
       };
     };
 
     resize();
-    window.addEventListener('resize', resize);
 
-    // Pre-seed
+    // Throttle resize pour éviter les recalculs intensifs au zoom
+    let resizeTimer: ReturnType<typeof setTimeout>;
+    const onResize = () => {
+      paused = true;
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        resize();
+        paused = false;
+      }, 150);
+    };
+    window.addEventListener('resize', onResize, { passive: true });
+
+    // Pause quand l'onglet est caché
+    const onVisibility = () => { paused = document.hidden; };
+    document.addEventListener('visibilitychange', onVisibility);
+
     for (let i = 0; i < count; i++) particles.push(spawn(true));
 
     const tick = () => {
+      animId = requestAnimationFrame(tick);
+      if (paused) return;
+
       ctx.clearRect(0, 0, w, h);
 
-      // Spawn
       if (particles.length < count * 1.2 && Math.random() < 0.12) {
         particles.push(spawn(false));
       }
@@ -82,7 +102,6 @@ export default function FloatingParticles({ className = '', count = 40 }: Props)
         p.y += p.vy;
 
         const t = p.life / p.maxLife;
-        // Ease-in / ease-out opacity
         const raw = t < 0.15 ? t / 0.15 : t > 0.75 ? (1 - t) / 0.25 : 1;
         p.opacity = Math.min(raw * 0.55, 0.55);
 
@@ -94,15 +113,15 @@ export default function FloatingParticles({ className = '', count = 40 }: Props)
 
         return p.life < p.maxLife && p.y > -10;
       });
-
-      animId = requestAnimationFrame(tick);
     };
 
     tick();
 
     return () => {
       cancelAnimationFrame(animId);
-      window.removeEventListener('resize', resize);
+      clearTimeout(resizeTimer);
+      window.removeEventListener('resize', onResize);
+      document.removeEventListener('visibilitychange', onVisibility);
     };
   }, [count]);
 

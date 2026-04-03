@@ -829,7 +829,7 @@ export default function HomeLanding() {
               </div>
               <div className="relative flex flex-col rounded-[1.2rem] border border-vn-fuchsia/35 bg-gradient-to-b from-[#130916] to-[#0a0810] p-7 shadow-[0_16px_60px_-16px_rgba(232,121,249,0.35)] z-10 overflow-hidden">
                 <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-vn-fuchsia/80 to-transparent" />
-                <FloatingParticles count={28} className="opacity-50" />
+                <FloatingParticles count={28} className="opacity-50 hidden sm:block" />
                 <div className="relative mb-6">
                   <div className="flex items-center justify-between mb-5">
                     <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-widest bg-vn-fuchsia/20 text-vn-fuchsia border border-vn-fuchsia/35">Pro</span>
