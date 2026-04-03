@@ -228,7 +228,7 @@ export default function HookGeneratorPage() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-x-hidden">
+    <main className="relative min-h-dvh overflow-x-hidden">
 
       {/* Ambient glow + particles */}
       <div className="absolute top-0 inset-x-0 h-[500px] pointer-events-none overflow-hidden" aria-hidden>

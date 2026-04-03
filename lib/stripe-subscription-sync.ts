@@ -257,20 +257,24 @@ export async function resetMonthlyCountersForSubscription(subscriptionId: string
 }
 
 export async function setSubscriptionPaymentFailed(subscriptionId: string): Promise<void> {
-  const { error } = await supabase
+  const { data: affected, error } = await supabase
     .from('users')
     .update({ subscription_status: 'past_due' })
-    .eq('stripe_subscription_id', subscriptionId);
+    .eq('stripe_subscription_id', subscriptionId)
+    .select('id, email, plan');
 
   if (error) {
-    console.error('[stripe-sync] payment_failed status update failed:', error.message);
+    console.error('[stripe-sync] payment_failed status update failed:', subscriptionId, error.message);
     throw new Error(error.message);
   }
-  console.warn('[stripe-sync] subscription marked past_due (invoice failed):', subscriptionId);
+  console.warn('[stripe-sync] subscription marked past_due (invoice failed):', {
+    subscriptionId,
+    affectedUser: affected?.[0] ? { id: affected[0].id, plan: affected[0].plan } : '(not found in DB)',
+  });
 }
 
 export async function downgradeToFreeBySubscriptionId(subscriptionId: string): Promise<void> {
-  const { error } = await supabase
+  const { data: affected, error } = await supabase
     .from('users')
     .update({
       plan: 'free',
@@ -279,11 +283,15 @@ export async function downgradeToFreeBySubscriptionId(subscriptionId: string): P
       subscription_current_period_end: null,
       subscription_cancel_at_period_end: false,
     })
-    .eq('stripe_subscription_id', subscriptionId);
+    .eq('stripe_subscription_id', subscriptionId)
+    .select('id, email');
 
   if (error) {
-    console.error('[stripe-sync] downgrade to free failed:', error.message);
+    console.error('[stripe-sync] downgrade to free failed:', subscriptionId, error.message);
     throw new Error(error.message);
   }
-  console.log('[stripe-sync] User downgraded to free (subscription deleted):', subscriptionId);
+  console.log('[stripe-sync] User downgraded to free (subscription deleted):', {
+    subscriptionId,
+    userId: affected?.[0]?.id ?? '(not found)',
+  });
 }

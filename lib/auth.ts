@@ -45,6 +45,8 @@ export type User = UserProfile;
  * without changing the DB. Use ONLY in .env.local for testing — never set in Vercel production.
  */
 function isForceEliteEmail(email: string): boolean {
+  // Safety: never allow dev overrides in production
+  if (process.env.NODE_ENV === 'production') return false;
   const raw = process.env.DEV_FORCE_ELITE_EMAILS ?? '';
   if (!raw.trim()) return false;
   const set = new Set(

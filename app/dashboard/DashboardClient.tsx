@@ -826,7 +826,7 @@ export default function DashboardClient({
             {/* Identity + insights */}
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                <h1 className="text-2xl sm:text-3xl font-black text-white leading-none">
+                <h1 className="text-2xl sm:text-3xl font-black text-white leading-none max-w-[180px] sm:max-w-none truncate">
                   {email.split('@')[0]}
                 </h1>
                 <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full bg-gradient-to-r border ${planGradient[plan]}`}>
@@ -873,7 +873,7 @@ export default function DashboardClient({
         {/* ═══════════════════════════════════════════════════════════════ */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {/* Quota analyses */}
-          <div className="col-span-2 sm:col-span-1 rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 flex items-center gap-4">
+          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 flex items-center gap-4">
             <RingProgress value={analysesCount} max={analysesLimit} size={52} />
             <div className="min-w-0">
               <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500 mb-1">Analyses</p>

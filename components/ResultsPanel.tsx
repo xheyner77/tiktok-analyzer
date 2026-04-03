@@ -106,7 +106,9 @@ function PBar({ pct, cls }: { pct: number; cls: string }) {
   );
 }
 
+let _gaugeUid = 0;
 function Gauge({ value }: { value: number }) {
+  const [uid] = useState(() => `rp-g${++_gaugeUid}`);
   const [anim, setAnim] = useState(0);
   useEffect(() => { const t = setTimeout(() => setAnim(value), 200); return () => clearTimeout(t); }, [value]);
   const c = scoreColors(value);
@@ -115,11 +117,11 @@ function Gauge({ value }: { value: number }) {
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90 shrink-0">
       <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="10" />
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={`url(#g${value})`} strokeWidth="10"
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={`url(#${uid})`} strokeWidth="10"
         strokeLinecap="round" strokeDasharray={`${dash} ${gap}`}
         style={{ filter: `drop-shadow(0 0 12px ${c.glow})`, transition: 'stroke-dasharray 1.4s cubic-bezier(0.4,0,0.2,1)' }} />
       <defs>
-        <linearGradient id={`g${value}`} x1="0%" y1="0%" x2="100%" y2="0%">
+        <linearGradient id={uid} x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%"   stopColor={c.grad1} />
           <stop offset="100%" stopColor={c.grad2} />
         </linearGradient>
@@ -243,14 +245,18 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
 
         <div className="px-7 sm:px-10 py-8 text-center sm:text-left">
           <p className={`${label9} mb-5`}>À corriger maintenant</p>
-          <ol className="space-y-3 text-left max-w-lg mx-auto sm:max-w-none sm:mx-0">
-            {visible.map((imp, i) => (
-              <li key={i} className="flex items-start gap-3.5">
-                <span className="text-[11px] font-black text-gray-700 shrink-0 w-4 mt-px">{i + 1}</span>
-                <p className="text-[13px] text-gray-300 leading-snug">{imp.tip}</p>
-              </li>
-            ))}
-          </ol>
+          {visible.length === 0 ? (
+            <p className="text-[13px] text-gray-600 italic">Aucune recommandation générée — relance une analyse.</p>
+          ) : (
+            <ol className="space-y-3 text-left max-w-lg mx-auto sm:max-w-none sm:mx-0">
+              {visible.map((imp, i) => (
+                <li key={i} className="flex items-start gap-3.5">
+                  <span className="text-[11px] font-black text-gray-700 shrink-0 w-4 mt-px">{i + 1}</span>
+                  <p className="text-[13px] text-gray-300 leading-snug">{imp.tip}</p>
+                </li>
+              ))}
+            </ol>
+          )}
 
           {/* Locked extra recommendations for free users */}
           {plan === 'free' && locked > 0 && (

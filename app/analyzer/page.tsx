@@ -111,8 +111,11 @@ export default function Home() {
         const used = typeof data.used === 'number' ? data.used : effectiveLimit;
         setAuthUser({ ...authUser, analyses_count: used });
       }
+      // Prefer the server's specific error message (differentiates free lifetime vs paid monthly)
       setError(
-        data?.limit
+        typeof data?.error === 'string' && data.error
+          ? data.error
+          : data?.limit
           ? `Limite atteinte (${data.used ?? data.limit}/${data.limit}). Passe \u00e0 un plan sup\u00e9rieur.`
           : 'Limite atteinte pour ton plan.'
       );

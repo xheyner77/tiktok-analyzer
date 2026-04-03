@@ -147,10 +147,17 @@ export async function POST(request: NextRequest) {
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice;
         const subId = invoiceSubscriptionId(invoice);
+        console.warn('[webhook] invoice.payment_failed', {
+          invoiceId: invoice.id,
+          subscriptionId: subId ?? '(none)',
+          customerId: typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id ?? '?',
+          amount_due: invoice.amount_due,
+          billing_reason: invoice.billing_reason,
+        });
         if (subId) {
           await setSubscriptionPaymentFailed(subId);
         } else {
-          console.warn('[webhook] invoice.payment_failed sans subscription', invoice.id);
+          console.warn('[webhook] invoice.payment_failed — pas de subscription_id, skip', invoice.id);
         }
         break;
       }
