@@ -269,11 +269,11 @@ export default function HomeLanding() {
       </div>
 
       {/* ══ 1. HERO ═══════════════════════════════════════════════ */}
-      <section className="relative pt-8 sm:pt-14 lg:pt-20 pb-3 sm:pb-14 lg:pb-16 overflow-visible" id="top">
-        <div className="absolute inset-x-0 top-0 h-[min(90vh,1000px)] landing-band-magenta pointer-events-none opacity-95" aria-hidden />
+      <section className="relative pt-8 sm:pt-14 lg:pt-20 pb-14 sm:pb-14 lg:pb-16 overflow-visible" id="top">
+        <div className="absolute inset-x-0 top-0 h-[min(130vh,1400px)] landing-band-magenta pointer-events-none opacity-95" aria-hidden />
 
         <div className="relative max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-10">
-          <div className="flex flex-col lg:flex-row items-center gap-4 sm:gap-8 lg:gap-14 xl:gap-20">
+          <div className="flex flex-col lg:flex-row items-center gap-10 sm:gap-8 lg:gap-14 xl:gap-20">
 
             {/* ── Left: copy ────────────────────────────────────── */}
             <div className="w-full shrink-0 lg:flex-[5] lg:min-w-0 flex flex-col items-center lg:items-start text-center lg:text-left">
@@ -350,7 +350,7 @@ export default function HomeLanding() {
             </div>
 
             {/* ── Right: mockup ─────────────────────────────────── */}
-            <div className="w-full max-w-[520px] shrink-0 lg:flex-[6] lg:max-w-none lg:min-w-0 relative" id="produit">
+            <div className="w-full max-w-[420px] sm:max-w-[520px] shrink-0 lg:flex-[6] lg:max-w-none lg:min-w-0 relative" id="produit">
               {/* Spotlight cone behind the mockup */}
               <div
                 className="absolute -inset-16 pointer-events-none -z-10"

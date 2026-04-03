@@ -63,7 +63,7 @@ function AttentionCurve({ uid }: { uid: string }) {
 
   return (
     /* viewBox has 10px of extra height below the chart area for axis labels */
-    <svg width="118" height="58" viewBox="0 0 118 58" overflow="visible">
+    <svg width="100%" height="58" viewBox="0 0 118 58" preserveAspectRatio="none" overflow="visible" style={{ display: 'block' }}>
       <defs>
         <linearGradient id={gLine} x1="0" y1="0" x2="1" y2="0">
           <stop offset="0%"   stopColor="#22c55e" />
@@ -285,7 +285,7 @@ export default function HeroMockupPremium() {
               style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)' }}
             >
               <p className="text-[8px] font-bold uppercase tracking-[0.12em] text-gray-600 mb-1.5">Courbe attention</p>
-              <div className="scale-[0.92] origin-top-left -ml-0.5 overflow-visible">
+              <div className="w-full">
                 <AttentionCurve uid="acm" />
               </div>
             </div>
@@ -411,7 +411,7 @@ export default function HeroMockupPremium() {
       {/* ══ FLOATING: Retention chart — desktop ═══════════════ */}
       <motion.div {...from(-20, 0, 0.6)} className="hidden sm:block absolute top-24 left-1 sm:top-auto sm:-bottom-7 sm:-left-4 lg:-left-10 z-20 scale-75 sm:scale-100 origin-top-left">
         <div className="mock-float-b">
-          <div className="px-4 py-3.5 rounded-2xl"
+          <div className="w-[160px] px-4 py-3.5 rounded-2xl"
             style={{ background: 'rgba(9,9,15,0.96)', border: '1px solid rgba(255,255,255,0.07)', backdropFilter: 'blur(14px)', boxShadow: '0 10px 44px rgba(0,0,0,0.65)' }}>
             <p className="text-[9px] text-gray-600 uppercase tracking-[0.14em] mb-2.5">Courbe attention</p>
             <AttentionCurve uid="acd" />
