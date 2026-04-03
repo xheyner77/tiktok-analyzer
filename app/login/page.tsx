@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import AuthTransition from '@/components/AuthTransition';
 import BrandLogo from '@/components/BrandLogo';
 
@@ -10,7 +10,6 @@ import BrandLogo from '@/components/BrandLogo';
 // a Suspense boundary in Next.js 14 App Router. Without it the page
 // can fail to render (blank / black screen) during SSR.
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect') ?? '/dashboard';
 

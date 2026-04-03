@@ -233,7 +233,7 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
                     <div className="flex -space-x-2">
                       {[11, 47, 12, 44, 15].map((n) => (
                         <img key={n} src={`https://i.pravatar.cc/40?img=${n}`} alt="" width={22} height={22}
-                          className="w-5.5 h-5.5 rounded-full border-2 border-[#0a0810] object-cover" />
+                          className="w-[22px] h-[22px] rounded-full border-2 border-[#0a0810] object-cover" />
                       ))}
                     </div>
                     <span className="text-[10px] text-gray-500">Choisi par <span className="text-gray-300 font-semibold">80% des créateurs</span></span>

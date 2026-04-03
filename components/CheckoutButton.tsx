@@ -72,6 +72,7 @@ export default function CheckoutButton({ plan, className, children }: CheckoutBu
   return (
     <div className="w-full">
       <button
+        type="button"
         onClick={handleCheckout}
         disabled={isLoading}
         className={`${className} disabled:opacity-60 disabled:cursor-not-allowed`}

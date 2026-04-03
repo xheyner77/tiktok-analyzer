@@ -86,7 +86,7 @@ export default function HookGeneratorPage() {
   const [error,     setError]     = useState('');
   const [used,      setUsed]      = useState(0);
   const [limitUsed, setLimitUsed] = useState(0);
-  const [copied,    setCopied]    = useState<number | null>(null);
+  const [copied,    setCopied]    = useState<number | string | null>(null);
 
   const [history,        setHistory]        = useState<HookHistoryItem[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
@@ -135,7 +135,7 @@ export default function HookGeneratorPage() {
     if (!authUser) { setShowGuestGate(true); return; }
     if (plan === 'free') return;
     if (!context.trim()) { setError('Décris le contexte de ta vidéo.'); return; }
-    if (context.trim().length > 500) { setError('Contexte trop long (max 500 caractères).'); return; }
+    if (context.trim().length > 300) { setError('Contexte trop long (max 300 caractères).'); return; }
 
     setLoading(true);
     setHooks([]);
@@ -181,7 +181,7 @@ export default function HookGeneratorPage() {
     }
   }
 
-  function copyHook(hook: string, idx: number) {
+  function copyHook(hook: string, idx: number | string) {
     navigator.clipboard.writeText(hook).then(() => {
       setCopied(idx);
       setTimeout(() => setCopied(null), 1800);
@@ -566,7 +566,7 @@ export default function HookGeneratorPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity pt-0.5">
-                      <button type="button" onClick={() => copyHook(item.hook_text, -99)}
+                      <button type="button" onClick={() => copyHook(item.hook_text, item.id)}
                         className="text-[10px] font-medium px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-gray-500 hover:text-gray-200 hover:border-white/[0.15] transition-all">
                         Copier
                       </button>

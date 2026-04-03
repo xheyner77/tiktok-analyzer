@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import AuthTransition from '@/components/AuthTransition';
 import { PENDING_PLAN_KEY } from '@/components/GuestGate';
 import BrandLogo from '@/components/BrandLogo';
@@ -102,8 +101,6 @@ function getPasswordStrength(password: string): { level: 0 | 1 | 2 | 3; label: s
 }
 
 export default function SignupPage() {
-  const router = useRouter();
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');

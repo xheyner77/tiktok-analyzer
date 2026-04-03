@@ -1323,7 +1323,7 @@ export default function DashboardClient({
                   <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 text-gray-600 shrink-0 group-hover:text-gray-400 transition-colors"><path fillRule="evenodd" d="M6.22 4.22a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06L7.28 11.78a.75.75 0 0 1-1.06-1.06L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" /></svg>
                 </Link>
               ) : (
-                <Link href="/hooks" className="flex items-center gap-3.5 px-5 py-3.5 border-t border-white/[0.05] hover:bg-white/[0.04] transition-all group">
+                <Link href="/hook-generator" className="flex items-center gap-3.5 px-5 py-3.5 border-t border-white/[0.05] hover:bg-white/[0.04] transition-all group">
                   <div className="w-8 h-8 rounded-lg bg-vn-violet/15 border border-vn-violet/20 flex items-center justify-center shrink-0">
                     <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 text-vn-violet">
                       <path d="M7.557 2.066A.75.75 0 0 1 8 2.75v10.5a.75.75 0 0 1-1.248.56L3.59 11H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1.59l3.162-2.81a.75.75 0 0 1 .805-.124ZM12.95 3.05a.75.75 0 1 0-1.06 1.06 5.5 5.5 0 0 1 0 7.78.75.75 0 1 0 1.06 1.06 7 7 0 0 0 0-9.9Z" />

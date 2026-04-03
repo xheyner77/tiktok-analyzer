@@ -110,11 +110,11 @@ export default function ChangelogPage() {
           </p>
 
           {/* Stats */}
-          <div className="inline-flex items-stretch gap-0 rounded-2xl border border-white/[0.07] bg-white/[0.02] overflow-hidden">
+          <div className="flex flex-wrap sm:flex-nowrap items-stretch rounded-2xl border border-white/[0.07] bg-white/[0.02] overflow-hidden">
             {stats.map(({ value, label, color }, i) => (
               <div
                 key={label}
-                className={`px-6 sm:px-8 py-4 sm:py-5 text-center ${i < stats.length - 1 ? 'border-r border-white/[0.07]' : ''}`}
+                className={`w-1/2 sm:w-auto px-5 sm:px-8 py-4 sm:py-5 text-center ${i % 2 === 0 ? 'border-r border-white/[0.07]' : ''} ${i < 2 ? 'border-b sm:border-b-0 border-white/[0.07]' : ''}`}
               >
                 <p className={`text-3xl sm:text-[2.2rem] font-black leading-none ${color} mb-1`}>
                   {value}
