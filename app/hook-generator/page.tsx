@@ -101,16 +101,17 @@ export default function HookGeneratorPage() {
 
   useEffect(() => {
     if (!sceneMenuOpen) return;
-    const onDoc = (e: MouseEvent) => {
+    /* pointerdown (souris + tactile + stylet) — mousedown seul rate parfois le « tap » extérieur sur mobile */
+    const onDoc = (e: PointerEvent) => {
       if (sceneMenuRef.current && !sceneMenuRef.current.contains(e.target as Node)) setSceneMenuOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setSceneMenuOpen(false);
     };
-    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('pointerdown', onDoc, true);
     document.addEventListener('keydown', onKey);
     return () => {
-      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('pointerdown', onDoc, true);
       document.removeEventListener('keydown', onKey);
     };
   }, [sceneMenuOpen]);
@@ -373,7 +374,7 @@ export default function HookGeneratorPage() {
 
           {/* Type de scène + Personnage */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div ref={sceneMenuRef} className="relative">
+            <div ref={sceneMenuRef} className={`relative ${sceneMenuOpen ? 'z-[60]' : 'z-10'}`}>
               <label htmlFor="hook-scene-trigger" id="hook-scene-label" className={`${label9} mb-3 block`}>
                 Type de scène
               </label>
@@ -387,7 +388,7 @@ export default function HookGeneratorPage() {
                 aria-haspopup="listbox"
                 aria-expanded={sceneMenuOpen}
                 onClick={() => setSceneMenuOpen((o) => !o)}
-                className="w-full flex items-center justify-between gap-3 bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.14] focus:border-vn-violet/40 focus:ring-1 focus:ring-vn-violet/20 text-white text-[13px] rounded-xl px-4 py-3 outline-none transition-all cursor-pointer text-left"
+                className="w-full min-h-[44px] flex items-center justify-between gap-3 bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.14] active:border-white/[0.18] focus:border-vn-violet/40 focus:ring-1 focus:ring-vn-violet/20 text-white text-[13px] rounded-xl px-4 py-3 outline-none transition-all cursor-pointer text-left touch-manipulation"
               >
                 <span className="truncate min-w-0">{scene}</span>
                 <svg
@@ -407,7 +408,7 @@ export default function HookGeneratorPage() {
                 <ul
                   role="listbox"
                   aria-labelledby="hook-scene-label"
-                  className="absolute z-50 mt-1.5 w-full max-h-[min(16rem,50dvh)] overflow-y-auto overscroll-contain rounded-xl border border-white/[0.12] bg-[#14141c] py-1 shadow-[0_16px_48px_rgba(0,0,0,0.55)] ring-1 ring-black/50"
+                  className="absolute z-[70] mt-1.5 w-full max-h-[min(16rem,55dvh)] overflow-y-auto overscroll-contain rounded-xl border border-white/[0.12] bg-[#14141c] py-1 shadow-[0_16px_48px_rgba(0,0,0,0.55)] ring-1 ring-black/50 [-webkit-overflow-scrolling:touch]"
                 >
                   {SCENES.map((s) => (
                     <li key={s} role="presentation">
@@ -419,10 +420,10 @@ export default function HookGeneratorPage() {
                           setScene(s);
                           setSceneMenuOpen(false);
                         }}
-                        className={`w-full text-left px-4 py-2.5 text-[13px] transition-colors ${
+                        className={`w-full min-h-[44px] sm:min-h-0 text-left px-4 py-3 sm:py-2.5 text-[13px] transition-colors touch-manipulation ${
                           scene === s
                             ? 'bg-vn-violet/25 text-white font-medium'
-                            : 'text-gray-300 hover:bg-white/[0.07] hover:text-white'
+                            : 'text-gray-300 hover:bg-white/[0.07] hover:text-white active:bg-white/[0.12]'
                         }`}
                       >
                         {s}
