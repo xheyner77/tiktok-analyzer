@@ -86,7 +86,11 @@ export async function getSession(): Promise<SessionPayload | null> {
     return null;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    if (!message.includes('expired') && !message.includes('invalid')) {
+    if (
+      !message.includes('expired') &&
+      !message.includes('invalid') &&
+      !message.includes('Dynamic server usage')
+    ) {
       console.error('[getSession] Unexpected error:', message);
     }
     return null;

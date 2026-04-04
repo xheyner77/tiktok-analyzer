@@ -22,25 +22,6 @@ export default function AnalysisCard({
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!data) {
-      console.error(`[DEBUG][AnalysisCard "${title}"] data prop is MISSING:`, data);
-      return;
-    }
-    const issues: string[] = [];
-    if (typeof data.score !== 'number')       issues.push(`score=${data.score}`);
-    if (!data.rating)                          issues.push(`rating=${data.rating}`);
-    if (!data.analysis)                        issues.push(`analysis=${data.analysis}`);
-    if (!Array.isArray(data.strengths))        issues.push(`strengths=${data.strengths}`);
-    if (!Array.isArray(data.weaknesses))       issues.push(`weaknesses=${data.weaknesses}`);
-
-    if (issues.length > 0) {
-      console.error(`[DEBUG][AnalysisCard "${title}"] unexpected props:`, issues.join(' | '), '— full data:', data);
-    } else {
-      console.log(`[DEBUG][AnalysisCard "${title}"] OK — score:${data.score} rating:${data.rating}`);
-    }
-  }, [title, data]);
-
-  useEffect(() => {
     const timeout = setTimeout(() => {
       setVisible(true);
       setTimeout(() => setAnimatedScore(data.score), 200);

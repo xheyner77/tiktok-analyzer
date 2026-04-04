@@ -33,7 +33,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://viralynz.com'),
+  metadataBase: new URL('https://www.viralynz.com'),
   title: {
     default: 'Viralynz — Analyse vidéo IA pour comprendre ce qui fait performer',
     template: '%s | Viralynz',
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     title: 'Viralynz — Analyse vidéo IA',
     description:
       'Comprends pourquoi ta vidéo performe ou non : diagnostic structuré, moins de publication au hasard. Pour créateurs, e‑com, UGC, agences.',
-    url: 'https://viralynz.com',
+    url: 'https://www.viralynz.com',
     siteName: 'Viralynz',
     locale: 'fr_FR',
     type: 'website',

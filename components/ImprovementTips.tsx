@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import Link from 'next/link';
 import { Improvement, Priority } from '@/lib/types';
 
@@ -54,28 +53,11 @@ function TipItem({ item, index }: { item: Improvement; index: number }) {
 }
 
 export default function ImprovementTips({ improvements, plan }: ImprovementTipsProps) {
-  useEffect(() => {
-    if (!Array.isArray(improvements)) {
-      console.error('[DEBUG][ImprovementTips] improvements is not an array:', improvements);
-      return;
-    }
-    console.log('[DEBUG][ImprovementTips] received', improvements.length, 'improvements — priorities:',
-      improvements.map((i, idx) => `[${idx}] ${i.priority}`)
-    );
-    const VALID = ['haute', 'moyenne', 'basse'];
-    improvements.forEach((imp, i) => {
-      if (!VALID.includes(imp.priority)) {
-        console.error(`[DEBUG][ImprovementTips] improvements[${i}].priority INVALID:`, imp.priority);
-      }
-      if (!imp.tip) {
-        console.error(`[DEBUG][ImprovementTips] improvements[${i}].tip is missing:`, imp.tip);
-      }
-    });
-  }, [improvements]);
+  const list = Array.isArray(improvements) ? improvements : [];
 
   const isFreePlan = plan === 'free';
-  const visible = isFreePlan ? improvements.slice(0, VISIBLE_FREE) : improvements;
-  const locked = isFreePlan ? improvements.slice(VISIBLE_FREE) : [];
+  const visible = isFreePlan ? list.slice(0, VISIBLE_FREE) : list;
+  const locked = isFreePlan ? list.slice(VISIBLE_FREE) : [];
 
   return (
     <div className="rounded-2xl border border-white/[0.09] bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]">
@@ -90,8 +72,8 @@ export default function ImprovementTips({ improvements, plan }: ImprovementTipsP
           <p className="font-semibold text-sm text-white">Conseils d&apos;amélioration</p>
           <p className="text-xs text-gray-500">
             {isFreePlan
-              ? `${VISIBLE_FREE} sur ${improvements.length} recommandations`
-              : `${improvements.length} recommandations personnalisées`}
+              ? `${VISIBLE_FREE} sur ${list.length} recommandations`
+              : `${list.length} recommandations personnalisées`}
           </p>
         </div>
       </div>

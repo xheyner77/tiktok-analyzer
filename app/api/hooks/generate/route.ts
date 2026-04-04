@@ -172,6 +172,15 @@ export async function POST(request: NextRequest) {
       count = remaining; // cap silencieux plutôt qu'erreur
     }
 
+    const hasOpenAI =
+      !!process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'sk-your-key-here';
+    if (!hasOpenAI) {
+      return NextResponse.json(
+        { error: 'Génération de hooks temporairement indisponible.' },
+        { status: 503 }
+      );
+    }
+
     // ── Generate ──────────────────────────────────────────────────────────────
     const hooks = await generateHooksWithAI({ context, scene, person, tone, count });
     if (hooks.length === 0) {
@@ -181,13 +190,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── Increment quota ───────────────────────────────────────────────────────
     const consumed = hooks.length;
-    await incrementHooksCount(session.userId, consumed);
-
-    // ── Save to history ───────────────────────────────────────────────────────
-    // Columns must exactly match public.hooks_history schema.
-    // user_id references public.users(id) — NOT auth.users.
     const rows = hooks.map((hook_text) => ({
       user_id:    session.userId,
       hook_text,
@@ -198,13 +201,9 @@ export async function POST(request: NextRequest) {
       variant_of: null,
     }));
 
-    const { error: insertError, data: insertedRows } = await supabase
-      .from('hooks_history')
-      .insert(rows)
-      .select('id');
+    const { error: insertError } = await supabase.from('hooks_history').insert(rows).select('id');
 
     if (insertError) {
-      // Log complet pour debug — ne bloque pas la réponse client
       console.error('[hooks/generate] INSERT hooks_history FAILED:', {
         code:    insertError.code,
         message: insertError.message,
@@ -213,24 +212,19 @@ export async function POST(request: NextRequest) {
         userId:  session.userId,
         rows,
       });
-    } else {
-      console.log(`[hooks/generate] ${insertedRows?.length ?? 0} hooks saved to history for user ${session.userId}`);
+      return NextResponse.json(
+        { error: "Impossible d'enregistrer les hooks. Réessaie dans un instant." },
+        { status: 500 }
+      );
     }
 
-    console.log('[hooks/generate] success', {
-      userId:  session.userId,
-      plan:    tier,
-      used:    user.hooks_count + consumed,
-      limit:   hookLimit,
-      tone,
-      count:   consumed,
-    });
+    await incrementHooksCount(session.userId, consumed);
 
     return NextResponse.json({
       hooks,
       used:          user.hooks_count + consumed,
       limit:         hookLimit,
-      historySaved:  !insertError,
+      historySaved:  true,
     });
 
   } catch (err) {

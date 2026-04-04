@@ -87,7 +87,7 @@ export default function FeedbackButton() {
      * that would otherwise confine `fixed` children to the 56px navbar).
      */
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))]"
       style={{
         backgroundColor: `rgba(0,0,0,${visible ? 0.82 : 0})`,
         backdropFilter:  `blur(${visible ? 8 : 0}px)`,
@@ -97,7 +97,7 @@ export default function FeedbackButton() {
     >
       {/* Card — stopPropagation keeps clicks inside from closing the modal */}
       <div
-        className="relative w-full max-w-md bg-[#0d0d0d] border border-[#1e1e1e] rounded-2xl shadow-2xl"
+        className="relative w-full max-w-md max-h-[min(90dvh,640px)] overflow-y-auto overscroll-contain bg-[#0d0d0d] border border-[#1e1e1e] rounded-2xl shadow-2xl"
         style={{
           opacity:    visible ? 1 : 0,
           transform:  `scale(${visible ? 1 : 0.97}) translateY(${visible ? 0 : 8}px)`,

@@ -199,7 +199,6 @@ export default function Home() {
           if (tRes.ok) {
             const tData = await tRes.json() as { transcript?: string };
             transcript = tData.transcript?.trim() ?? '';
-            if (transcript) console.log('[analyze] whisper transcript:', transcript.slice(0, 120));
           }
         } catch (tErr) {
           console.warn('[analyze] transcription failed (non-blocking):', tErr);

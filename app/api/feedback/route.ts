@@ -19,6 +19,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Message vide' }, { status: 400 });
     }
 
+    const trimmed = message.trim();
+    if (trimmed.length > 1000) {
+      return NextResponse.json({ error: 'Message trop long (max 1000 caractères)' }, { status: 400 });
+    }
+
     const session  = await getSession();
     const from     = session?.email ?? 'Visiteur anonyme';
     const fromEncoded = from.replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -44,7 +49,7 @@ export async function POST(request: NextRequest) {
             </div>
             <div style="background:#f9f9f9;padding:24px;border-radius:12px;margin-bottom:16px">
               <p style="white-space:pre-wrap;font-size:15px;line-height:1.6;margin:0">
-                ${message.trim().replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+                ${trimmed.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
               </p>
             </div>
             <p style="font-size:13px;color:#888">
@@ -58,7 +63,7 @@ export async function POST(request: NextRequest) {
       /* Fallback : log en console si pas de clé Resend */
       console.log('[contact]', {
         category: catLabel,
-        message:  message.trim(),
+        message:  trimmed,
         from,
         at:       new Date().toISOString(),
       });
