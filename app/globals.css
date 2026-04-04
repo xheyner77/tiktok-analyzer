@@ -3,6 +3,11 @@
 @tailwind utilities;
 
 @layer base {
+  /* Menus natifs (select, etc.) : évite fond clair + texte clair illisible sur Windows / Chrome */
+  html {
+    color-scheme: dark;
+  }
+
   body {
     @apply bg-vn-bg text-white antialiased overflow-x-hidden relative;
   }

@@ -95,7 +95,25 @@ export default function HookGeneratorPage() {
   const [copiedFavorites, setCopiedFavorites] = useState(false);
 
   const [showGuestGate, setShowGuestGate] = useState(false);
+  const [sceneMenuOpen, setSceneMenuOpen] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
+  const sceneMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!sceneMenuOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (sceneMenuRef.current && !sceneMenuRef.current.contains(e.target as Node)) setSceneMenuOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSceneMenuOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [sceneMenuOpen]);
 
   useEffect(() => {
     setDomReady(true);
@@ -355,12 +373,64 @@ export default function HookGeneratorPage() {
 
           {/* Type de scène + Personnage */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div>
-              <p className={`${label9} mb-3`}>Type de scène</p>
-              <select value={scene} onChange={(e) => setScene(e.target.value)}
-                className="w-full bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.14] focus:border-vn-violet/40 text-white text-[13px] rounded-xl px-4 py-3 outline-none transition-all appearance-none cursor-pointer">
-                {SCENES.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
+            <div ref={sceneMenuRef} className="relative">
+              <label htmlFor="hook-scene-trigger" id="hook-scene-label" className={`${label9} mb-3 block`}>
+                Type de scène
+              </label>
+              {/*
+                Pas de <select> natif : sous Windows / Chrome la liste est rendue par l’OS
+                (fond clair + texte hérité = illisible). Menu custom = thème cohérent.
+              */}
+              <button
+                type="button"
+                id="hook-scene-trigger"
+                aria-haspopup="listbox"
+                aria-expanded={sceneMenuOpen}
+                onClick={() => setSceneMenuOpen((o) => !o)}
+                className="w-full flex items-center justify-between gap-3 bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.14] focus:border-vn-violet/40 focus:ring-1 focus:ring-vn-violet/20 text-white text-[13px] rounded-xl px-4 py-3 outline-none transition-all cursor-pointer text-left"
+              >
+                <span className="truncate min-w-0">{scene}</span>
+                <svg
+                  className={`w-4 h-4 shrink-0 text-gray-500 transition-transform ${sceneMenuOpen ? 'rotate-180' : ''}`}
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+              {sceneMenuOpen && (
+                <ul
+                  role="listbox"
+                  aria-labelledby="hook-scene-label"
+                  className="absolute z-50 mt-1.5 w-full max-h-[min(16rem,50dvh)] overflow-y-auto overscroll-contain rounded-xl border border-white/[0.12] bg-[#14141c] py-1 shadow-[0_16px_48px_rgba(0,0,0,0.55)] ring-1 ring-black/50"
+                >
+                  {SCENES.map((s) => (
+                    <li key={s} role="presentation">
+                      <button
+                        type="button"
+                        role="option"
+                        aria-selected={scene === s}
+                        onClick={() => {
+                          setScene(s);
+                          setSceneMenuOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-2.5 text-[13px] transition-colors ${
+                          scene === s
+                            ? 'bg-vn-violet/25 text-white font-medium'
+                            : 'text-gray-300 hover:bg-white/[0.07] hover:text-white'
+                        }`}
+                      >
+                        {s}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
             <div>
               <p className={`${label9} mb-3`}>Personnage <span className="normal-case tracking-normal font-normal text-gray-600">(optionnel)</span></p>
