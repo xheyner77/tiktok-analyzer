@@ -15,6 +15,7 @@ function LoginForm() {
   // Validate redirect to prevent open redirect — only allow internal relative paths
   const rawRedirect = searchParams.get('redirect') ?? '/dashboard';
   const redirectTo = rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') ? rawRedirect : '/dashboard';
+  const passwordResetSuccess = searchParams.get('reset') === 'success';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -97,6 +98,13 @@ function LoginForm() {
 
       {/* Card */}
       <div className="bg-[#111] border border-[#1a1a1a] rounded-2xl p-6 card-glow">
+        {passwordResetSuccess && (
+          <div className="mb-4 rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-3.5 py-2.5">
+            <p className="text-xs text-emerald-300">
+              Mot de passe mis à jour. Tu peux te connecter avec ton nouveau mot de passe.
+            </p>
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Email */}
           <div className="space-y-1.5">
@@ -142,6 +150,14 @@ function LoginForm() {
                   </svg>
                 )}
               </button>
+            </div>
+            <div className="flex justify-end">
+              <Link
+                href="/forgot-password"
+                className="text-[11px] text-gray-500 hover:text-vn-fuchsia transition-colors"
+              >
+                Mot de passe oublié ?
+              </Link>
             </div>
           </div>
 

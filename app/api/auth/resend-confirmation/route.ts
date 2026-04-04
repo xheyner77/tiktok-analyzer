@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAuth } from '@/lib/supabase';
-import { getSiteUrl } from '@/lib/site-url';
+import { getAuthEmailCallbackUrl } from '@/lib/site-url';
 
 /**
  * Converts raw Supabase Auth error messages into user-friendly French strings.
@@ -41,9 +41,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email requis.' }, { status: 400 });
     }
 
-    const siteUrl = getSiteUrl(request.headers.get('origin'));
-    const emailRedirectTo = `${siteUrl}/auth/callback`;
-
+    const emailRedirectTo = getAuthEmailCallbackUrl(request.headers.get('origin'));
     console.log('[resend-confirmation] emailRedirectTo:', emailRedirectTo, '— email:', email);
 
     const { error } = await supabaseAuth.auth.resend({

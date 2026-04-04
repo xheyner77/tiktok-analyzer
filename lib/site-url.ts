@@ -1,34 +1,55 @@
 /**
+ * URL publique canonique en production (emails Supabase, Stripe, etc.).
+ * Utilisée si NEXT_PUBLIC_SITE_URL n’est pas défini et que le déploiement
+ * est la prod Vercel — évite d’embarquer *.vercel.app dans les liens email.
+ */
+export const CANONICAL_PRODUCTION_SITE_URL = 'https://www.viralynz.com';
+
+/**
  * Resolves the canonical public URL of this app.
  *
  * Priority order (highest → lowest):
- *  1. NEXT_PUBLIC_SITE_URL  — explicitly set in Vercel env vars for production
- *  2. VERCEL_URL            — auto-injected by Vercel for preview deployments
- *  3. origin header         — request origin sent by the browser
- *  4. localhost:3000        — local development fallback
+ *  1. NEXT_PUBLIC_SITE_URL  — explicitly set in Vercel env (recommended: https://www.viralynz.com)
+ *  2. Production on Vercel   — CANONICAL_PRODUCTION_SITE_URL (never *.vercel.app in emails)
+ *  3. VERCEL_URL            — preview / dev deployments on Vercel
+ *  4. origin header         — request origin from the browser
+ *  5. localhost:3000        — local development fallback
  *
- * IMPORTANT: The returned URL must be added to Supabase Dashboard →
- * Authentication → URL Configuration → Redirect URLs so that Supabase
- * allows email confirmation links to redirect there.
+ * Add these to Supabase → Authentication → URL Configuration → Redirect URLs:
+ *   - https://www.viralynz.com/auth/callback
+ *   - https://www.viralynz.com/reset-password
+ *   - http://localhost:3000/auth/callback
+ *   - http://localhost:3000/reset-password
  *
  * @param originHeader  The value of `request.headers.get('origin')` — optional.
  */
 export function getSiteUrl(originHeader?: string | null): string {
-  // 1. Explicit production URL (highest priority — set this in Vercel)
-  if (process.env.NEXT_PUBLIC_SITE_URL) {
-    return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, ''); // strip trailing slash
+  const explicit = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (explicit) {
+    return explicit.replace(/\/$/, '');
   }
 
-  // 2. Vercel auto-injected URL for preview deployments
+  if (process.env.VERCEL_ENV === 'production') {
+    return CANONICAL_PRODUCTION_SITE_URL;
+  }
+
   if (process.env.VERCEL_URL) {
     return `https://${process.env.VERCEL_URL}`;
   }
 
-  // 3. Request origin header (reliable for POST requests from browsers)
   if (originHeader) {
     return originHeader;
   }
 
-  // 4. Local development fallback
   return 'http://localhost:3000';
+}
+
+/** URL complète pour les emails de confirmation d’inscription (signUp, resend type signup). */
+export function getAuthEmailCallbackUrl(originHeader?: string | null): string {
+  return `${getSiteUrl(originHeader)}/auth/callback`;
+}
+
+/** URL complète pour les emails de réinitialisation de mot de passe (resetPasswordForEmail). */
+export function getPasswordResetRedirectUrl(originHeader?: string | null): string {
+  return `${getSiteUrl(originHeader)}/reset-password`;
 }

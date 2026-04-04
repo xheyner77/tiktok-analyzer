@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAuth, supabase } from '@/lib/supabase';
-import { getSiteUrl } from '@/lib/site-url';
+import { getAuthEmailCallbackUrl } from '@/lib/site-url';
 
 /**
  * Converts raw Supabase Auth error messages into user-friendly French strings.
@@ -60,14 +60,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Resolve the correct public URL for this deployment so that Supabase
-    // embeds the right domain in the confirmation email link.
-    // The URL MUST be whitelisted in Supabase Dashboard → Authentication →
-    // URL Configuration → Redirect URLs, otherwise Supabase falls back to
-    // its "Site URL" (which defaults to localhost in dev projects).
-    const siteUrl = getSiteUrl(request.headers.get('origin'));
-    const emailRedirectTo = `${siteUrl}/auth/callback`;
-
+    const emailRedirectTo = getAuthEmailCallbackUrl(request.headers.get('origin'));
     console.log('[signup] emailRedirectTo:', emailRedirectTo);
 
     const { data, error } = await supabaseAuth.auth.signUp({
