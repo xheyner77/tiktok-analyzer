@@ -82,7 +82,7 @@ export async function POST() {
     }
 
     if (!updated || updated.plan !== 'free') {
-      return NextResponse.json({ error: 'La mise à jour na pas été appliquée.', code: 'UPDATE_FAILED' }, { status: 500 });
+      return NextResponse.json({ error: "La mise à jour n'a pas été appliquée.", code: 'UPDATE_FAILED' }, { status: 500 });
     }
 
     console.log(`[cancel-plan] Legacy user → free ${session.userId}`);

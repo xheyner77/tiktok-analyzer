@@ -2,6 +2,52 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAuth, supabase } from '@/lib/supabase';
 import { getSiteUrl } from '@/lib/site-url';
 
+/**
+ * Converts raw Supabase Auth error messages into user-friendly French strings.
+ * Returns both a translated message and an optional code for frontend handling.
+ */
+function translateAuthError(message: string): { message: string; code?: string } {
+  const msg = message.toLowerCase();
+
+  if (
+    msg.includes('rate limit') ||
+    msg.includes('rate_limit') ||
+    msg.includes('over_email_send_rate_limit') ||
+    msg.includes('email rate limit exceeded') ||
+    msg.includes('too many requests')
+  ) {
+    return {
+      message: 'Trop de tentatives d\'inscription. Veuillez patienter quelques minutes avant de réessayer.',
+      code: 'RATE_LIMIT',
+    };
+  }
+
+  if (msg.includes('user already registered') || msg.includes('already registered') || msg.includes('already been registered')) {
+    return {
+      message: 'Un compte existe déjà avec cette adresse email.',
+      code: 'ALREADY_REGISTERED',
+    };
+  }
+
+  if (msg.includes('invalid email') || msg.includes('invalid_email') || msg.includes('unable to validate email')) {
+    return { message: 'Adresse email invalide. Vérifiez le format.' };
+  }
+
+  if (msg.includes('password should be') || msg.includes('password is too short') || msg.includes('weak_password')) {
+    return { message: 'Le mot de passe est trop faible. Utilisez au moins 8 caractères avec des lettres et des chiffres.' };
+  }
+
+  if (msg.includes('signup_disabled') || msg.includes('signups not allowed') || msg.includes('signup is disabled')) {
+    return { message: 'Les inscriptions sont temporairement désactivées. Réessayez plus tard.' };
+  }
+
+  if (msg.includes('network') || msg.includes('fetch failed') || msg.includes('econnrefused')) {
+    return { message: 'Erreur de connexion. Vérifiez votre connexion et réessayez.' };
+  }
+
+  return { message: 'Une erreur est survenue lors de la création du compte. Veuillez réessayer.' };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -39,7 +85,8 @@ export async function POST(request: NextRequest) {
         status: error.status,
         name: error.name,
       });
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      const { message, code } = translateAuthError(error.message);
+      return NextResponse.json({ error: message, ...(code ? { code } : {}) }, { status: 400 });
     }
 
     const userId = data.user?.id;

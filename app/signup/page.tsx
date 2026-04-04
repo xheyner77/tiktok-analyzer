@@ -107,6 +107,7 @@ export default function SignupPage() {
   const [confirm, setConfirm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [errorCode, setErrorCode] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showTransition, setShowTransition] = useState(false);
   const [pendingConfirmation, setPendingConfirmation] = useState(false);
@@ -143,6 +144,7 @@ export default function SignupPage() {
 
       if (!res.ok) {
         setError(data.error ?? 'Une erreur est survenue.');
+        setErrorCode(data.code ?? null);
         setIsLoading(false);
         return;
       }
@@ -302,11 +304,18 @@ export default function SignupPage() {
 
             {/* Error */}
             {error && (
-              <div className="flex items-center gap-2 bg-red-500/8 border border-red-500/20 rounded-xl px-3.5 py-2.5">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-red-400 shrink-0">
+              <div className="flex items-start gap-2 bg-red-500/8 border border-red-500/20 rounded-xl px-3.5 py-2.5">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-red-400 shrink-0 mt-0.5">
                   <path fillRule="evenodd" d="M6.701 2.25c.577-1 2.02-1 2.598 0l5.196 9a1.5 1.5 0 0 1-1.299 2.25H2.804a1.5 1.5 0 0 1-1.3-2.25l5.197-9ZM8 4a.75.75 0 0 1 .75.75v3a.75.75 0 1 1-1.5 0v-3A.75.75 0 0 1 8 4Zm0 8a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
                 </svg>
-                <p className="text-red-400 text-xs">{error}</p>
+                <div className="flex-1">
+                  <p className="text-red-400 text-xs">{error}</p>
+                  {errorCode === 'ALREADY_REGISTERED' && (
+                    <Link href="/login" className="text-xs text-red-300 hover:text-white underline underline-offset-2 mt-1 inline-block transition-colors">
+                      Se connecter →
+                    </Link>
+                  )}
+                </div>
               </div>
             )}
 

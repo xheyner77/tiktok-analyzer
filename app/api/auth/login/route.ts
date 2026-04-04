@@ -15,6 +15,36 @@ function isEmailNotConfirmedError(message: string): boolean {
   );
 }
 
+/**
+ * Converts raw Supabase Auth error messages into user-friendly French strings.
+ */
+function translateLoginError(message: string): string {
+  const msg = message.toLowerCase();
+
+  if (
+    msg.includes('rate limit') ||
+    msg.includes('rate_limit') ||
+    msg.includes('too many requests') ||
+    msg.includes('over_request_rate_limit')
+  ) {
+    return 'Trop de tentatives de connexion. Veuillez patienter quelques minutes avant de réessayer.';
+  }
+
+  if (msg.includes('invalid login credentials') || msg.includes('invalid credentials')) {
+    return 'Email ou mot de passe incorrect.';
+  }
+
+  if (msg.includes('user not found') || msg.includes('no user found')) {
+    return 'Aucun compte trouvé avec cette adresse email.';
+  }
+
+  if (msg.includes('network') || msg.includes('fetch failed')) {
+    return 'Erreur de connexion. Vérifiez votre connexion et réessayez.';
+  }
+
+  return 'Email ou mot de passe incorrect.';
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json();
@@ -51,7 +81,7 @@ export async function POST(request: NextRequest) {
       }
 
       return NextResponse.json(
-        { error: error?.message ?? 'Email ou mot de passe incorrect.' },
+        { error: translateLoginError(error?.message ?? '') },
         { status: 401 }
       );
     }

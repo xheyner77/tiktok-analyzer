@@ -67,7 +67,7 @@ function CallbackContent() {
             <p className="text-xs text-gray-600 mb-5 font-mono">{errorMsg}</p>
           )}
           <Link
-            href="/signup"
+            href="/login"
             className="block w-full py-3 rounded-xl font-semibold text-sm bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:opacity-90 transition-all shadow-lg shadow-vn-fuchsia/15 mb-3 text-center"
           >
             Renvoyer l&apos;email de confirmation
