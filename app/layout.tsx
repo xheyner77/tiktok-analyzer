@@ -57,8 +57,6 @@ export const metadata: Metadata = {
   },
 };
 
-const clarityProjectId = process.env.NEXT_PUBLIC_CLARITY_ID;
-
 export default function RootLayout({
   children,
 }: {
@@ -67,15 +65,13 @@ export default function RootLayout({
   return (
     <html lang="fr" className={`${jakarta.variable} ${syne.variable} ${interHero.variable}`}>
       <body className={`${jakarta.className} font-sans bg-vn-bg text-white antialiased`}>
-        {clarityProjectId ? (
-          <Script id="microsoft-clarity" strategy="afterInteractive">
-            {`(function(c,l,a,r,i,t,y){
+        <Script id="microsoft-clarity" strategy="afterInteractive">
+          {`(function(c,l,a,r,i,t,y){
     c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
     t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
     y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-})(window, document, "clarity", "script", ${JSON.stringify(clarityProjectId)});`}
-          </Script>
-        ) : null}
+})(window, document, "clarity", "script", "w84s4jmhgx");`}
+        </Script>
         <StarsBackdrop />
         <Navbar />
         <div className="relative z-[1] pt-[4.25rem] min-h-dvh overflow-x-hidden">{children}</div>
