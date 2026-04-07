@@ -32,6 +32,20 @@ const TYPE_STYLES: Record<EntryType, string> = {
 
 const entries: ChangeEntry[] = [
   {
+    version: 'v1.0.1',
+    date: '7 avril 2026',
+    title: 'Optimisations & corrections de Viralynz ⚡',
+    tags: ['UPDATE', 'IMPROVEMENTS'],
+    items: [
+      { type: 'Amélioration', text: 'Optimisation de la vitesse d\'analyse des vidéos (temps de traitement réduit)' },
+      { type: 'Amélioration', text: 'Amélioration de la précision des scores de viralité' },
+      { type: 'Correction', text: 'Correction d\'un bug d\'affichage sur mobile (problème de responsive sur certaines sections)' },
+      { type: 'Correction', text: 'Correction d\'un problème de chargement lors de l\'upload de certaines vidéos' },
+      { type: 'Amélioration', text: 'Amélioration de l\'expérience utilisateur sur le dashboard (navigation plus fluide)' },
+      { type: 'Correction', text: 'Correction de bugs mineurs et amélioration de la stabilité globale' },
+    ],
+  },
+  {
     version: 'v1.0.0',
     date: '3 avril 2026',
     title: 'Lancement de Viralynz 🎉',
@@ -53,9 +67,9 @@ const entries: ChangeEntry[] = [
 
 const stats = [
   { value: 10,   label: 'Nouveautés',   color: 'text-vn-fuchsia' },
-  { value: 0,    label: 'Améliorations', color: 'text-blue-400' },
-  { value: 0,    label: 'Corrections',   color: 'text-amber-400' },
-  { value: 1,    label: 'Versions',      color: 'text-purple-400' },
+  { value: 3,    label: 'Améliorations', color: 'text-blue-400' },
+  { value: 3,    label: 'Corrections',   color: 'text-amber-400' },
+  { value: 2,    label: 'Versions',      color: 'text-purple-400' },
 ];
 
 function RocketIcon() {
