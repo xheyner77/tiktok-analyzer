@@ -34,11 +34,13 @@ function computeChangelogStats(entries: ChangeEntry[]) {
       else if (item.type === 'Correction') corrections++;
     }
   }
+  const latestVersion =
+    entries[0]?.version.replace(/^v/i, '') ?? '—';
   return [
     { value: nouveautes, label: 'Nouveautés', color: 'text-vn-fuchsia' },
     { value: ameliorations, label: 'Améliorations', color: 'text-blue-400' },
     { value: corrections, label: 'Corrections', color: 'text-amber-400' },
-    { value: entries.length, label: 'Versions', color: 'text-purple-400' },
+    { value: latestVersion, label: 'Versions', color: 'text-purple-400' },
   ];
 }
 
