@@ -23,6 +23,25 @@ interface ChangeEntry {
   items: ChangeItem[];
 }
 
+function computeChangelogStats(entries: ChangeEntry[]) {
+  let nouveautes = 0;
+  let ameliorations = 0;
+  let corrections = 0;
+  for (const entry of entries) {
+    for (const item of entry.items) {
+      if (item.type === 'Nouveauté') nouveautes++;
+      else if (item.type === 'Amélioration') ameliorations++;
+      else if (item.type === 'Correction') corrections++;
+    }
+  }
+  return [
+    { value: nouveautes, label: 'Nouveautés', color: 'text-vn-fuchsia' },
+    { value: ameliorations, label: 'Améliorations', color: 'text-blue-400' },
+    { value: corrections, label: 'Corrections', color: 'text-amber-400' },
+    { value: entries.length, label: 'Versions', color: 'text-purple-400' },
+  ];
+}
+
 const TYPE_STYLES: Record<EntryType, string> = {
   'Nouveauté':      'bg-vn-fuchsia/15 text-vn-fuchsia border border-vn-fuchsia/20',
   'Amélioration':   'bg-blue-500/15 text-blue-400 border border-blue-500/20',
@@ -65,12 +84,7 @@ const entries: ChangeEntry[] = [
   },
 ];
 
-const stats = [
-  { value: 10,   label: 'Nouveautés',   color: 'text-vn-fuchsia' },
-  { value: 3,    label: 'Améliorations', color: 'text-blue-400' },
-  { value: 3,    label: 'Corrections',   color: 'text-amber-400' },
-  { value: 2,    label: 'Versions',      color: 'text-purple-400' },
-];
+const stats = computeChangelogStats(entries);
 
 function RocketIcon() {
   return (
@@ -123,17 +137,24 @@ export default function ChangelogPage() {
             On construit le meilleur outil d&apos;analyse vidéo IA, ensemble.
           </p>
 
-          {/* Stats */}
-          <div className="flex flex-wrap sm:flex-nowrap items-stretch rounded-2xl border border-white/[0.07] bg-white/[0.02] overflow-hidden">
+          {/* Stats — grid 2×2 mobile / 4 cols desktop : largeurs égales, séparateurs cohérents */}
+          <div className="grid w-full grid-cols-2 sm:grid-cols-4 rounded-2xl border border-white/[0.07] bg-white/[0.02] overflow-hidden">
             {stats.map(({ value, label, color }, i) => (
               <div
                 key={label}
-                className={`w-1/2 sm:w-auto px-5 sm:px-8 py-4 sm:py-5 text-center ${i % 2 === 0 ? 'border-r border-white/[0.07]' : ''} ${i < 2 ? 'border-b sm:border-b-0 border-white/[0.07]' : ''}`}
+                className={[
+                  'min-w-0 px-5 sm:px-8 py-4 sm:py-5 text-center border-white/[0.07]',
+                  i % 2 === 0 ? 'border-r' : '',
+                  i < 2 ? 'border-b sm:border-b-0' : '',
+                  i < 3 ? 'sm:border-r' : '',
+                ].filter(Boolean).join(' ')}
               >
                 <p className={`text-3xl sm:text-[2.2rem] font-black leading-none ${color} mb-1`}>
                   {value}
                 </p>
-                <p className="text-[11px] sm:text-[12px] text-gray-600 font-medium">{label}</p>
+                <p className="text-[11px] sm:text-[12px] text-gray-600 font-medium">
+                  {label.replace(/\*+/g, '')}
+                </p>
               </div>
             ))}
           </div>
@@ -161,7 +182,7 @@ export default function ChangelogPage() {
                 <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-[11px] font-black px-2.5 py-1 rounded-full bg-vn-fuchsia/15 text-vn-fuchsia border border-vn-fuchsia/25 uppercase tracking-wider">
-                      {entry.version}
+                      {entry.version.replace(/^v/i, 'V')}
                     </span>
                     {entry.tags.map((tag) => (
                       <span
