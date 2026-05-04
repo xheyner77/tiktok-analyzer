@@ -11,7 +11,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE TABLE IF NOT EXISTS public.users (
   id             UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   email          TEXT        UNIQUE NOT NULL,
-  password_hash  TEXT        NOT NULL,
+  password_hash  TEXT,
   plan           TEXT        NOT NULL DEFAULT 'free'
                              CHECK (plan IN ('free', 'pro', 'elite')),
   analyses_count INTEGER     NOT NULL DEFAULT 0,
