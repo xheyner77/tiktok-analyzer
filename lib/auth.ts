@@ -36,6 +36,11 @@ export interface UserProfile {
   subscription_status: string | null;
   subscription_current_period_end: string | null;
   subscription_cancel_at_period_end: boolean;
+  /** TikTok Login Kit — identifiant stable côté TikTok (null si non lié). */
+  tiktok_open_id: string | null;
+  tiktok_display_name: string | null;
+  tiktok_avatar_url: string | null;
+  tiktok_connected_at: string | null;
 }
 
 export type User = UserProfile;
@@ -62,7 +67,7 @@ export async function getUserById(id: string): Promise<UserProfile | null> {
   const { data, error } = await supabase
     .from('users')
     .select(
-      'id, email, plan, analyses_count, hooks_count, last_reset_at, created_at, stripe_customer_id, stripe_subscription_id, subscription_status, subscription_current_period_end, subscription_cancel_at_period_end'
+      'id, email, plan, analyses_count, hooks_count, last_reset_at, created_at, stripe_customer_id, stripe_subscription_id, subscription_status, subscription_current_period_end, subscription_cancel_at_period_end, tiktok_open_id, tiktok_display_name, tiktok_avatar_url, tiktok_connected_at'
     )
     .eq('id', id)
     .single();
@@ -82,6 +87,10 @@ export async function getUserById(id: string): Promise<UserProfile | null> {
     subscription_status:              (data.subscription_status as string | null) ?? null,
     subscription_current_period_end:  (data.subscription_current_period_end as string | null) ?? null,
     subscription_cancel_at_period_end: Boolean(data.subscription_cancel_at_period_end),
+    tiktok_open_id:                    (data as { tiktok_open_id?: string | null }).tiktok_open_id ?? null,
+    tiktok_display_name:               (data as { tiktok_display_name?: string | null }).tiktok_display_name ?? null,
+    tiktok_avatar_url:                 (data as { tiktok_avatar_url?: string | null }).tiktok_avatar_url ?? null,
+    tiktok_connected_at:               (data as { tiktok_connected_at?: string | null }).tiktok_connected_at ?? null,
   };
 
   // Local dev only — overrides the plan to Elite for testing (never resets counts)

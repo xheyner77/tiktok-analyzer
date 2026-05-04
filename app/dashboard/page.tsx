@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: { success?: string; [key: string]: string | undefined };
+  searchParams: { success?: string; tiktok?: string; session_id?: string; [key: string]: string | undefined };
 }) {
   const session = await getSession();
 
@@ -44,6 +44,7 @@ export default async function DashboardPage({
     isSubscriptionStatusAllowingAccess(user.subscription_status);
   // Stripe appends the real session ID — use it to verify the payment server-side
   const stripeSessionId = searchParams.session_id ?? null;
+  const tiktokFlash = searchParams.tiktok ?? null;
 
   return (
     <main className="relative min-h-screen overflow-x-hidden">
@@ -67,6 +68,12 @@ export default async function DashboardPage({
           memberSince={memberSince}
           analyses={analyses}
           stripeSessionId={stripeSessionId}
+          tiktokFlash={tiktokFlash}
+          tiktok={{
+            connected: !!user?.tiktok_open_id,
+            displayName: user?.tiktok_display_name ?? null,
+            avatarUrl: user?.tiktok_avatar_url ?? null,
+          }}
         />
       </div>
     </main>

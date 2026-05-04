@@ -10,6 +10,7 @@ import { getScoreTextColor, getRatingColors } from '@/lib/utils';
 import { MAX_ANALYSES_ELITE, MAX_ANALYSES_PRO, MAX_HOOKS_ELITE, MAX_HOOKS_PRO, HISTORY_LIMITS } from '@/lib/plan-limits';
 import { DISPLAY_CATALOG_ELITE_EUR, DISPLAY_CATALOG_PRO_EUR } from '@/lib/stripe-pricing';
 import { waitForBillingPlan } from '@/lib/wait-for-billing-sync';
+import TikTokConnectCard from '@/components/TikTokConnectCard';
 
 interface DashboardClientProps {
   email: string;
@@ -24,6 +25,71 @@ interface DashboardClientProps {
   memberSince: string;
   analyses: AnalysisRow[];
   stripeSessionId?: string | null;
+  /** Retour OAuth TikTok (?tiktok=…) — affiché une fois puis dismissible. */
+  tiktokFlash?: string | null;
+  tiktok: {
+    connected: boolean;
+    displayName: string | null;
+    avatarUrl: string | null;
+  };
+}
+
+function tiktokOAuthFlashMessage(
+  flash: string | undefined
+): { tone: 'ok' | 'err' | 'warn'; title: string; body: string } | null {
+  if (!flash) return null;
+  const map: Record<string, { tone: 'ok' | 'err' | 'warn'; title: string; body: string }> = {
+    connected: {
+      tone: 'ok',
+      title: 'TikTok connecté',
+      body: 'Ton compte TikTok est bien lié à Viralynz.',
+    },
+    denied: {
+      tone: 'warn',
+      title: 'Connexion annulée',
+      body: "Tu as refusé l'accès ou TikTok a fermé la fenêtre. Réessaie quand tu veux.",
+    },
+    session: {
+      tone: 'warn',
+      title: 'Session requise',
+      body: "Reconnecte-toi à Viralynz puis réessaie de lier TikTok.",
+    },
+    state: {
+      tone: 'warn',
+      title: 'Sécurité OAuth',
+      body: 'Le jeton de session a expiré. Clique à nouveau sur « Connecter avec TikTok ».',
+    },
+    token: {
+      tone: 'err',
+      title: 'Échange de jeton',
+      body: 'TikTok n’a pas validé la connexion. Vérifie que l’URL de callback est bien enregistrée sur developers.tiktok.com.',
+    },
+    profile: {
+      tone: 'err',
+      title: 'Profil TikTok',
+      body: 'Le compte est lié côté TikTok mais la récupération du profil a échoué. Réessaie dans quelques minutes.',
+    },
+    db: {
+      tone: 'err',
+      title: 'Enregistrement',
+      body: "Impossible d'enregistrer en base. Vérifie que la migration SQL TikTok a été appliquée sur Supabase.",
+    },
+    config: {
+      tone: 'warn',
+      title: 'Configuration serveur',
+      body: 'Ajoute TIKTOK_CLIENT_KEY et TIKTOK_CLIENT_SECRET dans .env.local (voir .env.local.example).',
+    },
+    in_use: {
+      tone: 'err',
+      title: 'Compte déjà lié',
+      body: 'Ce compte TikTok est déjà associé à un autre compte Viralynz.',
+    },
+  };
+  return map[flash] ?? {
+    tone: 'err',
+    title: 'Connexion TikTok',
+    body: 'Une erreur est survenue. Réessaie ou contacte le support.',
+  };
 }
 
 const planLabels: Record<Plan, string> = { free: 'Free', pro: 'Pro', elite: 'Elite' };
@@ -585,6 +651,8 @@ export default function DashboardClient({
   memberSince,
   analyses,
   stripeSessionId,
+  tiktokFlash,
+  tiktok,
 }: DashboardClientProps) {
   const router = useRouter();
   const [upgradeStatus, setUpgradeStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -596,6 +664,8 @@ export default function DashboardClient({
   const [cancelDoneMode, setCancelDoneMode] = useState<'immediate' | 'end_of_period' | null>(null);
   const [domReady, setDomReady] = useState(false);
   const [historySort, setHistorySort] = useState<'recent' | 'best'>('recent');
+  const [dismissTikTokFlash, setDismissTikTokFlash] = useState(false);
+  const tiktokMsg = !dismissTikTokFlash ? tiktokOAuthFlashMessage(tiktokFlash ?? undefined) : null;
   useEffect(() => { setDomReady(true); }, []);
 
   useEffect(() => {
@@ -807,6 +877,43 @@ export default function DashboardClient({
           </div>
         )}
 
+        {tiktokMsg && (
+          <div
+            className={`flex items-start gap-3 rounded-2xl px-5 py-4 border ${
+              tiktokMsg.tone === 'ok'
+                ? 'bg-emerald-500/[0.07] border-emerald-500/25'
+                : tiktokMsg.tone === 'warn'
+                  ? 'bg-amber-500/[0.07] border-amber-500/25'
+                  : 'bg-red-500/[0.07] border-red-500/25'
+            }`}
+          >
+            <div className="flex-1 min-w-0">
+              <p
+                className={`text-sm font-semibold ${
+                  tiktokMsg.tone === 'ok'
+                    ? 'text-emerald-400'
+                    : tiktokMsg.tone === 'warn'
+                      ? 'text-amber-200'
+                      : 'text-red-400'
+                }`}
+              >
+                {tiktokMsg.title}
+              </p>
+              <p className="text-xs text-gray-500 mt-1 leading-relaxed">{tiktokMsg.body}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setDismissTikTokFlash(true);
+                router.replace('/dashboard');
+              }}
+              className="shrink-0 text-gray-500 hover:text-white text-xs font-semibold px-2 py-1 rounded-lg hover:bg-white/[0.06]"
+            >
+              OK
+            </button>
+          </div>
+        )}
+
         {/* ═══════════════════════════════════════════════════════════════ */}
         {/* HERO */}
         {/* ═══════════════════════════════════════════════════════════════ */}
@@ -923,6 +1030,12 @@ export default function DashboardClient({
             </Link>
           )}
         </div>
+
+        <TikTokConnectCard
+          connected={tiktok.connected}
+          displayName={tiktok.displayName}
+          avatarUrl={tiktok.avatarUrl}
+        />
 
         {/* ═══════════════════════════════════════════════════════════════ */}
         {/* LOCKED PRO (free users only) */}

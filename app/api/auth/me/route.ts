@@ -24,6 +24,7 @@ export async function GET() {
         subscriptionStatus: null,
         subscriptionCancelAtPeriodEnd: false,
         currentPeriodEnd: null,
+        tiktok: { connected: false, displayName: null, avatarUrl: null },
       },
     });
   }
@@ -42,6 +43,11 @@ export async function GET() {
       subscriptionStatus: user.subscription_status,
       subscriptionCancelAtPeriodEnd: user.subscription_cancel_at_period_end,
       currentPeriodEnd: user.subscription_current_period_end,
+      tiktok: {
+        connected: !!user.tiktok_open_id,
+        displayName: user.tiktok_display_name,
+        avatarUrl: user.tiktok_avatar_url,
+      },
     },
   });
 }

@@ -646,6 +646,10 @@ async function postVisionAnalyze(
       subscription_status: null,
       subscription_current_period_end: null,
       subscription_cancel_at_period_end: false,
+      tiktok_open_id: null,
+      tiktok_display_name: null,
+      tiktok_avatar_url: null,
+      tiktok_connected_at: null,
     };
   }
   dbUser = await checkAndResetMonthly(dbUser);
@@ -846,6 +850,10 @@ export async function POST(request: NextRequest) {
           subscription_status: null,
           subscription_current_period_end: null,
           subscription_cancel_at_period_end: false,
+          tiktok_open_id: null,
+          tiktok_display_name: null,
+          tiktok_avatar_url: null,
+          tiktok_connected_at: null,
         };
         console.log('[analyze] profile row created on-the-fly for:', session.userId);
       }

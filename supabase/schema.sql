@@ -76,3 +76,7 @@ CREATE POLICY "Service role full access"
   TO service_role
   USING (true)
   WITH CHECK (true);
+
+-- TikTok OAuth (Login Kit) — voir migrations/add_tiktok_oauth.sql pour ALTER TABLE
+-- colonnes : tiktok_open_id, tiktok_union_id, tiktok_display_name, tiktok_avatar_url,
+--            tiktok_access_token, tiktok_refresh_token, tiktok_token_expires_at, tiktok_connected_at
