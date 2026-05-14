@@ -2,7 +2,7 @@
  * Côté client uniquement — attend que `/api/auth/me` reflète le plan après webhook Stripe.
  */
 export async function waitForBillingPlan(
-  expected: 'pro' | 'elite',
+  expected: 'pro' | 'scale',
   maxMs = 25000,
   intervalMs = 500
 ): Promise<boolean> {
