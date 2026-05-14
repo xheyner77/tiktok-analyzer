@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { createPortal } from 'react-dom';
+import type { AppPlan } from '@/lib/plans';
 
-type Plan = 'free' | 'pro' | 'elite';
+type Plan = AppPlan;
 
 interface NavbarMobileMenuProps {
   isLoggedIn: boolean;
@@ -15,14 +16,16 @@ interface NavbarMobileMenuProps {
 
 const PLAN_COLORS: Record<Plan, string> = {
   free: 'bg-[#1a1a1a] text-gray-400',
-  pro: 'bg-vn-fuchsia/10 text-vn-fuchsia',
-  elite: 'bg-vn-violet/15 text-vn-glow',
+  creator: 'bg-vn-fuchsia/10 text-vn-fuchsia',
+  pro: 'bg-cyan-300/10 text-cyan-200',
+  scale: 'bg-vn-violet/15 text-vn-glow',
 };
 
 const PLAN_LABELS: Record<Plan, string> = {
   free: 'Plan Free',
+  creator: 'Plan Creator',
   pro: 'Plan Pro',
-  elite: 'Plan Elite',
+  scale: 'Plan Scale',
 };
 
 export default function NavbarMobileMenu({ isLoggedIn, email, plan = 'free' }: NavbarMobileMenuProps) {
@@ -99,13 +102,13 @@ export default function NavbarMobileMenu({ isLoggedIn, email, plan = 'free' }: N
                 </div>
               </div>
 
-              {plan !== 'elite' && (
+              {plan !== 'scale' && (
                 <Link
                   href="/pricing"
                   className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-vn-glow hover:bg-vn-violet/10 transition-colors"
                 >
                   <span className="text-base w-5 text-center">⭐</span>
-                  {plan === 'pro' ? 'Passer à Elite' : 'Passer à Pro'}
+                  {plan === 'free' ? 'Passer à Creator' : plan === 'creator' ? 'Passer à Pro' : 'Passer à Scale'}
                 </Link>
               )}
 

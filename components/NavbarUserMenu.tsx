@@ -3,19 +3,22 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import type { AppPlan } from '@/lib/plans';
 
-type Plan = 'free' | 'pro' | 'elite';
+type Plan = AppPlan;
 
 const PLAN_LABELS: Record<Plan, string> = {
-  free:  'Plan Free',
-  pro:   'Plan Pro',
-  elite: 'Plan Elite',
+  free: 'Plan Free',
+  creator: 'Plan Creator',
+  pro: 'Plan Pro',
+  scale: 'Plan Scale',
 };
 
 const PLAN_COLORS: Record<Plan, string> = {
-  free:  'bg-[#1a1a1a] text-gray-500',
-  pro:   'bg-vn-fuchsia/10 text-vn-fuchsia border border-vn-fuchsia/20',
-  elite: 'bg-vn-violet/15 text-vn-glow border border-vn-violet/25',
+  free: 'bg-[#1a1a1a] text-gray-500',
+  creator: 'bg-vn-fuchsia/10 text-vn-fuchsia border border-vn-fuchsia/20',
+  pro: 'bg-cyan-300/10 text-cyan-200 border border-cyan-300/20',
+  scale: 'bg-vn-violet/15 text-vn-glow border border-vn-violet/25',
 };
 
 interface NavbarUserMenuProps {
@@ -107,7 +110,7 @@ export default function NavbarUserMenu({ email, plan }: NavbarUserMenuProps) {
                 Analyser
               </Link>
 
-              {plan !== 'elite' && (
+              {plan !== 'scale' && (
                 <Link
                   href="/pricing"
                   onClick={() => setIsOpen(false)}
@@ -116,7 +119,7 @@ export default function NavbarUserMenu({ email, plan }: NavbarUserMenuProps) {
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-vn-violet">
                     <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" />
                   </svg>
-                  {plan === 'pro' ? 'Passer à Elite' : 'Passer à Pro'}
+                  {plan === 'free' ? 'Passer à Creator' : plan === 'creator' ? 'Passer à Pro' : 'Passer à Scale'}
                 </Link>
               )}
             </div>
