@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: { success?: string; tiktok?: string; session_id?: string; [key: string]: string | undefined };
+  searchParams: Promise<{ success?: string; tiktok?: string; session_id?: string; [key: string]: string | undefined }>;
 }) {
   const session = await getSession();
 
@@ -31,20 +31,22 @@ export default async function DashboardPage({
   const plan          = user ? getEffectivePlan(user) : 'free';
   const analysesCount = user?.analyses_count   ?? 0;
   const hooksCount    = user?.hooks_count      ?? 0;
+  const reconstructionsCount = user?.reconstructions_count ?? 0;
   const analysesLimit = PLAN_LIMITS[plan]      ?? 3;
   const hooksLimit    = HOOK_LIMITS[plan]      ?? 0;
 
   const analyses = await getAnalyses(session.userId, plan);
 
   const usesStripeSubscription = !!user?.stripe_subscription_id;
-  const showEliteUpgrade =
+  const showScaleUpgrade =
     !!user &&
     user.plan === 'pro' &&
     !!user.stripe_subscription_id &&
     isSubscriptionStatusAllowingAccess(user.subscription_status);
   // Stripe appends the real session ID — use it to verify the payment server-side
-  const stripeSessionId = searchParams.session_id ?? null;
-  const tiktokFlash = searchParams.tiktok ?? null;
+  const resolvedSearchParams = await searchParams;
+  const stripeSessionId = resolvedSearchParams.session_id ?? null;
+  const tiktokFlash = resolvedSearchParams.tiktok ?? null;
 
   return (
     <main className="relative min-h-screen overflow-x-hidden">
@@ -60,11 +62,12 @@ export default async function DashboardPage({
           plan={plan}
           billingPlan={billingPlan}
           usesStripeSubscription={usesStripeSubscription}
-          showEliteUpgrade={showEliteUpgrade}
+          showScaleUpgrade={showScaleUpgrade}
           analysesCount={analysesCount}
           analysesLimit={analysesLimit}
           hooksCount={hooksCount}
           hooksLimit={hooksLimit}
+          reconstructionsCount={reconstructionsCount}
           memberSince={memberSince}
           analyses={analyses}
           stripeSessionId={stripeSessionId}
