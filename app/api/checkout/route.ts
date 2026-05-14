@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
           interval,
         },
       },
-      success_url: `${baseUrl}/dashboard-v2?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${baseUrl}/dashboard?success=1&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/pricing`,
       // Stripe Checkout : lien « Ajouter un code promotionnel » (codes actifs dans Dashboard → Produits → Codes promo)
       allow_promotion_codes: true,
