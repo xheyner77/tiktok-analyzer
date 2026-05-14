@@ -2,15 +2,16 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { waitForBillingPlan } from '@/lib/wait-for-billing-sync';
+import type { PaidStripePlan, BillingInterval } from '@/lib/stripe-billing';
 
 interface CheckoutButtonProps {
-  plan: 'pro' | 'elite';
+  plan: PaidStripePlan;
+  interval?: BillingInterval;
   className: string;
   children: React.ReactNode;
 }
 
-export default function CheckoutButton({ plan, className, children }: CheckoutButtonProps) {
+export default function CheckoutButton({ plan, interval = 'month', className, children }: CheckoutButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const router = useRouter();
@@ -23,7 +24,7 @@ export default function CheckoutButton({ plan, className, children }: CheckoutBu
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({ plan, interval }),
       });
 
       if (res.status === 401) {
@@ -40,24 +41,11 @@ export default function CheckoutButton({ plan, className, children }: CheckoutBu
         return;
       }
 
-      if (data.code === 'PRO_TO_ELITE_USE_UPGRADE') {
-        const r2 = await fetch('/api/upgrade-subscription', { method: 'POST' });
-        const d2 = await r2.json().catch(() => ({}));
-        if (r2.ok) {
-          const synced = await waitForBillingPlan('elite');
-          if (!synced) console.warn('[CheckoutButton] Webhook Elite lent — redirection.');
-          window.location.href = '/dashboard?t=' + Date.now();
-          return;
-        }
-        setErrorMsg(d2.error ?? 'Mise à niveau Elite impossible pour le moment.');
-        return;
-      }
-
       // Handle specific error codes
       if (data.code === 'ALREADY_ON_PLAN') {
         setErrorMsg(`Tu es déjà sur ce plan.`);
       } else if (data.code === 'PLAN_DOWNGRADE_BLOCKED') {
-        setErrorMsg(`Tu es déjà sur le plan Elite. Pour gérer ton abonnement, contacte le support.`);
+        setErrorMsg(`Tu es déjà sur un plan supérieur. Pour gérer ton abonnement, contacte le support.`);
       } else {
         setErrorMsg(data.error ?? 'Une erreur est survenue.');
       }
