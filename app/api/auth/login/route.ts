@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     // Create a custom JWT (signed with JWT_SECRET, valid 7 days) instead of
     // storing the Supabase access token (which expires after only 1 hour).
     const sessionToken = await createSessionToken(data.user.id, data.user.email ?? email);
-    cookies().set(COOKIE_NAME, sessionToken, COOKIE_OPTIONS);
+    (await cookies()).set(COOKIE_NAME, sessionToken, COOKIE_OPTIONS);
 
     console.log('[login] Success — user id:', data.user.id);
     return NextResponse.json({ success: true });

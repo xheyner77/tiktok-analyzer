@@ -5,13 +5,13 @@ import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import GuestGate from '@/components/GuestGate';
 import FloatingParticles from '@/components/FloatingParticles';
-import { HOOK_LIMITS, MAX_HOOKS_ELITE, MAX_HOOKS_PRO } from '@/lib/plan-limits';
+import { HOOK_LIMITS, MAX_HOOKS_PRO } from '@/lib/plan-limits';
 import { DISPLAY_CATALOG_PRO_EUR } from '@/lib/stripe-pricing';
 
 interface AuthUser {
   id: string;
   email: string;
-  plan: 'free' | 'pro' | 'elite';
+  plan: 'free' | 'creator' | 'pro' | 'scale';
   hooks_count: number;
 }
 
@@ -282,9 +282,9 @@ export default function HookGeneratorPage() {
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 rounded-xl bg-vn-violet/10 border border-vn-violet/15 flex items-center justify-center text-lg shrink-0">🔒</div>
               <div className="flex-1 min-w-0">
-                <p className="text-[14px] font-bold text-white mb-1">Fonctionnalité Pro &amp; Elite</p>
+                <p className="text-[14px] font-bold text-white mb-1">Fonctionnalité Pro &amp; Scale</p>
                 <p className="text-[12px] text-gray-500 mb-4 leading-relaxed">
-                  {MAX_HOOKS_PRO} hooks/mois avec Pro · {MAX_HOOKS_ELITE} hooks/mois avec Elite.
+                  {MAX_HOOKS_PRO} hooks/mois avec Pro · hooks illimités avec Scale.
                 </p>
                 <Link href="/pricing"
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white text-[13px] font-semibold hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_8px_24px_-8px_rgba(232,121,249,0.4)]">
@@ -336,11 +336,11 @@ export default function HookGeneratorPage() {
               </div>
             </div>
             <span className={`text-[10px] font-bold px-3 py-1 rounded-full ${
-              plan === 'elite'
+              plan === 'scale'
                 ? 'bg-vn-violet/15 text-vn-violet border border-vn-violet/25'
                 : 'bg-vn-fuchsia/10 text-vn-fuchsia border border-vn-fuchsia/20'
             }`}>
-              {plan === 'elite' ? 'Elite' : 'Pro'}
+              {plan === 'scale' ? 'Scale' : plan === 'creator' ? 'Creator' : 'Pro'}
             </span>
           </div>
         )}
