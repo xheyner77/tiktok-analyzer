@@ -218,6 +218,19 @@ export async function syncUserRowFromStripeSubscription(sub: Stripe.Subscription
   if (planFromPrice && statusAllowsTierFromPrice) {
     const curR = PLAN_RANK[nextPlan] ?? 0;
     const newR = PLAN_RANK[planFromPrice] ?? 0;
+    if (newR < curR && currentUser?.stripe_subscription_id !== sub.id) {
+      console.warn(
+        '[stripe-sync] Skip stale lower-tier subscription (would overwrite higher plan):',
+        userId,
+        'current',
+        currentUser?.plan,
+        currentUser?.stripe_subscription_id,
+        'incoming',
+        planFromPrice,
+        sub.id
+      );
+      return { ok: true };
+    }
     if (newR >= curR || currentUser?.stripe_subscription_id === sub.id) {
       nextPlan = planFromPrice;
     }
