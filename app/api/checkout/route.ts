@@ -5,8 +5,10 @@ import { getUserById } from '@/lib/auth';
 import { getSiteUrl } from '@/lib/site-url';
 import {
   assertStripePriceIsMonthlySubscription,
+  type BillingInterval,
   getStripePriceId,
   isSubscriptionStatusAllowingAccess,
+  type PaidStripePlan,
   PLAN_RANK,
 } from '@/lib/stripe-billing';
 import {
@@ -35,10 +37,16 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { plan } = body as { plan?: string };
+    const { plan, interval = 'month' } = body as { plan?: string; interval?: BillingInterval };
 
-    if (plan !== 'pro' && plan !== 'elite') {
-      return NextResponse.json({ error: 'Plan invalide. Valeurs acceptées : pro, elite.' }, { status: 400 });
+    if (plan !== 'creator' && plan !== 'pro' && plan !== 'scale') {
+      return NextResponse.json({ error: 'Plan invalide. Valeurs acceptées : creator, pro, scale.' }, { status: 400 });
+    }
+    if (interval !== 'month' && interval !== 'year') {
+      return NextResponse.json({ error: 'Intervalle invalide. Valeurs acceptées : month, year.' }, { status: 400 });
+    }
+    if (plan === 'creator' && interval === 'year') {
+      return NextResponse.json({ error: 'Le plan Creator est disponible uniquement en mensuel.' }, { status: 400 });
     }
 
     const userProfile = await getUserById(session.userId);
@@ -51,8 +59,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: isSamePlan
-            ? `Tu es déjà sur le plan ${plan === 'pro' ? 'Pro' : 'Elite'}.`
-            : `Tu es déjà sur le plan Elite, qui est supérieur au plan Pro.`,
+            ? `Tu es déjà sur le plan ${plan === 'creator' ? 'Creator' : plan === 'pro' ? 'Pro' : 'Scale'}.`
+            : `Tu es déjà sur un plan supérieur.`,
           code: isSamePlan ? 'ALREADY_ON_PLAN' : 'PLAN_DOWNGRADE_BLOCKED',
         },
         { status: 400 }
@@ -64,16 +72,6 @@ export async function POST(request: NextRequest) {
       isSubscriptionStatusAllowingAccess(userProfile.subscription_status);
 
     if (hasActiveStripeSub) {
-      if (plan === 'elite' && currentPlan === 'pro') {
-        return NextResponse.json(
-          {
-            error:
-              'Tu as déjà un abonnement Pro actif. Utilise la mise à niveau Elite (même abonnement, prorata Stripe).',
-            code: 'PRO_TO_ELITE_USE_UPGRADE',
-          },
-          { status: 400 }
-        );
-      }
       return NextResponse.json(
         {
           error: 'Tu as déjà un abonnement Stripe actif. Gère-le depuis le dashboard ou contacte le support.',
@@ -85,7 +83,7 @@ export async function POST(request: NextRequest) {
 
     const baseUrl = getSiteUrl(request.headers.get('origin'));
     const stripe = getStripe();
-    const priceId = getStripePriceId(plan);
+    const priceId = getStripePriceId(plan as PaidStripePlan, interval);
 
     const priceCheck = await assertStripePriceIsMonthlySubscription(stripe, priceId);
     if (!priceCheck.ok) {
@@ -105,14 +103,16 @@ export async function POST(request: NextRequest) {
       metadata: {
         userId: session.userId,
         plan,
+        interval,
       },
       subscription_data: {
         metadata: {
           userId: session.userId,
           plan,
+          interval,
         },
       },
-      success_url: `${baseUrl}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${baseUrl}/dashboard-v2?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/pricing`,
       // Stripe Checkout : lien « Ajouter un code promotionnel » (codes actifs dans Dashboard → Produits → Codes promo)
       allow_promotion_codes: true,
@@ -132,6 +132,7 @@ export async function POST(request: NextRequest) {
       priceId,
       userId: session.userId,
       plan,
+      interval,
       allow_promotion_codes: true,
       customer: params.customer ?? '(nouveau via customer_email)',
       // payment_method_types absent → Stripe Checkout choisit automatiquement (carte + PayPal actifs)

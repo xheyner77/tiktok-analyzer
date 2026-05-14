@@ -4,19 +4,18 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import FloatingParticles from '@/components/FloatingParticles';
 import {
-  MAX_ANALYSES_ELITE,
-  MAX_ANALYSES_FREE,
+  MAX_ANALYSES_CREATOR,
   MAX_ANALYSES_PRO,
-  MAX_HOOKS_ELITE,
+  MAX_HOOKS_CREATOR,
   MAX_HOOKS_PRO,
   HISTORY_LIMITS,
 } from '@/lib/plan-limits';
-import { DISPLAY_CATALOG_ELITE_EUR, DISPLAY_CATALOG_PRO_EUR } from '@/lib/stripe-pricing';
+import { DISPLAY_CATALOG_CREATOR_EUR, DISPLAY_CATALOG_PRO_EUR, DISPLAY_CATALOG_SCALE_EUR } from '@/lib/stripe-pricing';
 
 export const PENDING_URL_KEY  = 'pending_tiktok_url';
 export const PENDING_PLAN_KEY = 'pending_plan_after_signup';
 
-type PlanVariant = 'free' | 'pro' | 'elite';
+type PlanVariant = 'creator' | 'pro' | 'scale';
 
 /* ── Shared icon helpers ───────────────────────────────────────────────── */
 
@@ -152,38 +151,39 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
           {/* ── Plan cards ─────────────────────────────────────── */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:items-end sm:gap-0">
 
-            {/* ── STARTER ── */}
+            {/* ── CREATOR ── */}
             <div className="sm:pr-3">
               <div className="flex flex-col rounded-2xl border border-white/[0.07] bg-[#09090f] p-5 h-full">
                 <div className="mb-4">
                   <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-widest bg-white/[0.04] text-gray-600 border border-white/[0.05]">
-                    Starter
+                    Creator
                   </span>
                   <div className="mt-4 mb-1">
-                    <span className="text-[2.2rem] font-black text-white leading-none">Gratuit</span>
+                    <span className="text-[2.2rem] font-black text-white leading-none">{DISPLAY_CATALOG_CREATOR_EUR}€</span>
+                    <span className="text-gray-500 text-sm pb-1">/ mois</span>
                   </div>
                   <p className="text-[12px] text-gray-600 mt-1.5 leading-relaxed">
-                    Découvre Viralynz sans risque. Vois ce que l&apos;IA repère sur tes vidéos.
+                    Comprends pourquoi tes vidéos flop et repars avec une version plus forte.
                   </p>
                 </div>
 
                 <button
                   type="button"
-                  onClick={() => handlePlanSelect('free')}
+                  onClick={() => handlePlanSelect('creator')}
                   className="w-full text-center py-3 rounded-xl font-semibold text-[13px] text-gray-300 bg-white/[0.05] border border-white/[0.09] hover:bg-white/[0.09] hover:text-white transition-all mb-5"
                 >
-                  Commencer gratuitement
+                  Commencer avec Creator
                 </button>
 
                 <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-gray-700 mb-2.5">Ce que tu obtiens</p>
                 <ul className="space-y-2 flex-1">
                   {[
-                    { text: `${MAX_ANALYSES_FREE} analyses complètes`, sub: 'Score + Hook + Montage + Rétention', ok: true },
-                    { text: 'Recommandations IA', sub: 'Plan de correction basique', ok: true },
-                    { text: 'Dashboard de progression', sub: null, ok: true },
-                    { text: 'Générateur de hooks', sub: null, ok: false },
-                    { text: "Plan d'action priorisé", sub: null, ok: false },
-                    { text: 'Historique des analyses', sub: null, ok: false },
+                    { text: `${MAX_ANALYSES_CREATOR} analyses / mois`, sub: 'Score + Hook + Montage + Rétention', ok: true },
+                    { text: `${MAX_HOOKS_CREATOR} hooks / mois`, sub: 'Hooks corrigés à tester', ok: true },
+                    { text: 'Plan de remontage', sub: 'Cuts, CTA et structure recommandée', ok: true },
+                    { text: `Historique ${HISTORY_LIMITS.creator} analyses`, sub: null, ok: true },
+                    { text: 'Radar Tendances', sub: null, ok: false },
+                    { text: 'Multi-comptes TikTok', sub: null, ok: false },
                   ].map((f, i) => (
                     <li key={i} className={`flex items-start gap-2 ${!f.ok ? 'opacity-35' : ''}`}>
                       {f.ok ? <CheckGray /> : <CrossIcon />}
@@ -224,7 +224,7 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
                   {/* ROI anchor */}
                   <div className="mt-2 mb-3 px-3 py-2 rounded-lg bg-vn-fuchsia/[0.08] border border-vn-fuchsia/15">
                     <p className="text-[11px] text-vn-fuchsia/80 leading-snug">
-                      💡 <span className="font-semibold">1 vidéo mieux optimisée</span> = des dizaines de milliers de vues supplémentaires.
+                    <span className="font-semibold">1 vidéo mieux structurée</span> = un remontage avec une hypothèse claire.
                     </p>
                   </div>
 
@@ -236,7 +236,7 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
                           className="w-[22px] h-[22px] rounded-full border-2 border-[#0a0810] object-cover" />
                       ))}
                     </div>
-                    <span className="text-[10px] text-gray-500">Choisi par <span className="text-gray-300 font-semibold">80% des créateurs</span></span>
+                    <span className="text-[10px] text-gray-500">Pensé pour <span className="text-gray-300 font-semibold">construire une boucle de reconstruction</span></span>
                   </div>
                 </div>
 
@@ -254,13 +254,13 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
                 {/* Feature groups */}
                 <div className="space-y-4 flex-1 relative">
                   <div>
-                    <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-vn-fuchsia/50 mb-2">Analyse IA</p>
+                    <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-vn-fuchsia/50 mb-2">Analyse & mémoire</p>
                     <ul className="space-y-1.5">
                       {[
                         { text: `${MAX_ANALYSES_PRO} analyses / mois`, bold: true },
                         { text: 'Score + Hook / Montage / Rétention', bold: false },
-                        { text: "Plan d'action IA priorisé", bold: false },
-                        { text: 'Recommandations avancées', bold: false },
+                        { text: "Priorités de correction", bold: false },
+                        { text: 'Mémoire créateur étendue', bold: false },
                       ].map((f, i) => (
                         <li key={i} className="flex items-start gap-2">
                           <CheckFuchsia />
@@ -270,12 +270,12 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
                     </ul>
                   </div>
                   <div>
-                    <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-vn-fuchsia/50 mb-2">Création</p>
+                    <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-vn-fuchsia/50 mb-2">Exécution</p>
                     <ul className="space-y-1.5">
                       {[
-                        { text: `${MAX_HOOKS_PRO} hooks générés / mois`, bold: true },
+                        { text: `${MAX_HOOKS_PRO} hooks réécrits / mois`, bold: true },
                         { text: `Historique ${HISTORY_LIMITS.pro} analyses`, bold: false },
-                        { text: 'Dashboard coach personnalisé', bold: false },
+                        { text: 'Reconstruction Workspace + Creator Memory', bold: false },
                       ].map((f, i) => (
                         <li key={i} className="flex items-start gap-2">
                           <CheckFuchsia />
@@ -288,7 +288,7 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
               </div>
             </div>
 
-            {/* ── ELITE ── */}
+            {/* ── SCALE ── */}
             <div className="sm:pl-3">
               <div className="relative flex flex-col rounded-2xl border border-violet-500/25 bg-gradient-to-b from-[#0e0b16] to-[#080810] p-5 h-full overflow-hidden">
                 <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-400/50 to-transparent" />
@@ -296,31 +296,31 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
 
                 <div className="relative mb-4">
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-widest bg-violet-500/15 text-violet-300 border border-violet-500/25">Elite</span>
+                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-widest bg-violet-500/15 text-violet-300 border border-violet-500/25">Scale</span>
                     <span className="inline-flex items-center gap-1 text-[9px] font-bold px-2 py-1 rounded-full bg-violet-500/15 text-violet-300 border border-violet-500/20">
-                      🔥 Volume max
+                      Workspace équipe
                     </span>
                   </div>
 
                   <div className="flex items-end gap-2 mb-1">
-                    <span className="text-[2.2rem] font-black text-white leading-none">{DISPLAY_CATALOG_ELITE_EUR}€</span>
+                    <span className="text-[2.2rem] font-black text-white leading-none">{DISPLAY_CATALOG_SCALE_EUR}€</span>
                     <span className="text-gray-500 text-sm pb-1">/ mois</span>
                   </div>
 
                   {/* ROI anchor */}
                   <div className="mt-2 mb-3 px-3 py-2 rounded-lg bg-violet-500/[0.07] border border-violet-500/15">
                     <p className="text-[11px] text-violet-300/80 leading-snug">
-                      ⚡ Pour les <span className="font-semibold">agences & créateurs 100k+</span> qui publient chaque semaine.
+                      ⚡ Pour les <span className="font-semibold">agences, studios et équipes</span> qui publient chaque semaine.
                     </p>
                   </div>
                 </div>
 
                 <button
                   type="button"
-                  onClick={() => handlePlanSelect('elite')}
+                  onClick={() => handlePlanSelect('scale')}
                   className="relative w-full py-3.5 rounded-xl font-bold text-[13px] text-white bg-gradient-to-r from-violet-600 to-vn-fuchsia hover:opacity-90 active:scale-[0.98] transition-all shadow-[0_8px_32px_-8px_rgba(139,92,246,0.4)] mb-1 ring-1 ring-white/10"
                 >
-                  Passer en Elite →
+                  Passer en Scale →
                 </button>
                 <p className="text-[10px] text-gray-700 text-center mb-4">Sans engagement · Annule en 1 clic</p>
 
@@ -328,35 +328,35 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
 
                 <div className="space-y-4 flex-1 relative">
                   <div>
-                    <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-violet-400/50 mb-2">Volume &amp; Analyse</p>
+                    <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-violet-400/50 mb-2">Workspace & analyse</p>
                     <ul className="space-y-1.5">
                       {[
-                        { text: `${MAX_ANALYSES_ELITE} analyses / mois`, elite: true },
-                        { text: 'Score + Hook / Montage / Rétention', elite: false },
-                        { text: 'Recommandations IA complètes', elite: false },
-                        { text: "Plan d'action IA priorisé", elite: false },
+                        { text: 'Analyses illimitées', scale: true },
+                        { text: 'Score + Hook / Montage / Rétention' },
+                        { text: 'Décisions, automations et publishing' },
+                        { text: "Priority Engine + Structure Queue" },
                       ].map((f, i) => (
                         <li key={i} className="flex items-start gap-2">
                           <CheckViolet />
-                          <span className={`text-[12px] leading-snug flex-1 ${f.elite ? 'text-violet-100 font-bold' : 'text-gray-400'}`}>{f.text}</span>
-                          {f.elite && <span className="shrink-0 text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-violet-500/15 text-violet-400 border border-violet-500/20 uppercase tracking-wide ml-1 self-center">Elite</span>}
+                          <span className={`text-[12px] leading-snug flex-1 ${'scale' in f && f.scale ? 'text-violet-100 font-bold' : 'text-gray-400'}`}>{f.text}</span>
+                          {'scale' in f && f.scale && <span className="shrink-0 text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-violet-500/15 text-violet-400 border border-violet-500/20 uppercase tracking-wide ml-1 self-center">Scale</span>}
                         </li>
                       ))}
                     </ul>
                   </div>
                   <div>
-                    <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-violet-400/50 mb-2">Exclusif Elite</p>
+                    <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-violet-400/50 mb-2">Exclusif Scale</p>
                     <ul className="space-y-1.5">
                       {[
-                        { text: `${MAX_HOOKS_ELITE} hooks / mois`, elite: true },
-                        { text: 'Historique illimité', elite: true },
-                        { text: 'Stratégie & Insights viraux', elite: true },
-                        { text: 'Support prioritaire', elite: false },
+                        { text: 'Hooks illimités', scale: true },
+                        { text: 'Jusqu’à 8 comptes TikTok', scale: true },
+                        { text: 'Benchmarks anonymisés + mémoire multi-comptes', scale: true },
+                        { text: 'Support prioritaire' },
                       ].map((f, i) => (
                         <li key={i} className="flex items-start gap-2">
                           <CheckViolet />
-                          <span className={`text-[12px] leading-snug flex-1 ${f.elite ? 'text-violet-100 font-bold' : 'text-gray-400'}`}>{f.text}</span>
-                          {f.elite && <span className="shrink-0 text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-violet-500/15 text-violet-400 border border-violet-500/20 uppercase tracking-wide ml-1 self-center">Elite</span>}
+                          <span className={`text-[12px] leading-snug flex-1 ${'scale' in f && f.scale ? 'text-violet-100 font-bold' : 'text-gray-400'}`}>{f.text}</span>
+                          {'scale' in f && f.scale && <span className="shrink-0 text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-violet-500/15 text-violet-400 border border-violet-500/20 uppercase tracking-wide ml-1 self-center">Scale</span>}
                         </li>
                       ))}
                     </ul>

@@ -17,7 +17,7 @@ function getStripe(): Stripe {
 }
 
 /**
- * Pro → Elite : met à jour **Stripe** uniquement. Le plan en base est mis à jour par
+ * Pro → Scale : met à jour **Stripe** uniquement. Le plan en base est mis à jour par
  * `customer.subscription.updated` (webhook signé).
  */
 export async function POST() {
@@ -40,7 +40,7 @@ export async function POST() {
 
     if (user.plan !== 'pro') {
       return NextResponse.json(
-        { error: 'La mise à niveau Elite est réservée aux comptes Pro.', code: 'NOT_PRO' },
+        { error: 'La mise à niveau Scale est réservée aux comptes Pro.', code: 'NOT_PRO' },
         { status: 400 }
       );
     }
@@ -52,27 +52,27 @@ export async function POST() {
       return NextResponse.json({ error: 'Abonnement Stripe invalide (aucun item).' }, { status: 500 });
     }
 
-    const elitePriceId = getStripePriceId('elite');
-    const eliteCheck = await assertStripePriceIsMonthlySubscription(stripe, elitePriceId);
-    if (!eliteCheck.ok) {
-      console.error('[upgrade-subscription] Price Elite invalide:', eliteCheck.code);
-      return NextResponse.json({ error: eliteCheck.message, code: eliteCheck.code }, { status: 400 });
+    const scalePriceId = getStripePriceId('scale');
+    const scaleCheck = await assertStripePriceIsMonthlySubscription(stripe, scalePriceId);
+    if (!scaleCheck.ok) {
+      console.error('[upgrade-subscription] Price Scale invalide:', scaleCheck.code);
+      return NextResponse.json({ error: scaleCheck.message, code: scaleCheck.code }, { status: 400 });
     }
-    if (item.price.id === elitePriceId) {
-      return NextResponse.json({ error: 'Tu es déjà sur le plan Elite.', code: 'ALREADY_ELITE' }, { status: 400 });
+    if (item.price.id === scalePriceId) {
+      return NextResponse.json({ error: 'Tu es déjà sur le plan Scale.', code: 'ALREADY_SCALE' }, { status: 400 });
     }
 
     await stripe.subscriptions.update(sub.id, {
-      items: [{ id: item.id, price: elitePriceId }],
+      items: [{ id: item.id, price: scalePriceId }],
       proration_behavior: 'create_prorations',
       metadata: {
         ...sub.metadata,
         userId: session.userId,
-        plan: 'elite',
+        plan: 'scale',
       },
     });
 
-    console.log('[upgrade-subscription] Stripe subscription updated → Elite; DB via webhook user', session.userId);
+    console.log('[upgrade-subscription] Stripe subscription updated → Scale; DB via webhook user', session.userId);
     return NextResponse.json({ success: true, pendingWebhook: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

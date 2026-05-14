@@ -12,10 +12,6 @@ export const MAX_HOOKS_CREATOR = 150;
 export const MAX_HOOKS_PRO = 500;
 export const MAX_HOOKS_SCALE = Number.POSITIVE_INFINITY;
 
-// Legacy aliases kept for older UI modules still using the former Elite naming.
-export const MAX_ANALYSES_ELITE = MAX_ANALYSES_SCALE;
-export const MAX_HOOKS_ELITE = MAX_HOOKS_SCALE;
-
 export const MAX_RECONSTRUCTIONS_CREATOR = 0;
 export const MAX_RECONSTRUCTIONS_PRO = 30;
 export const MAX_RECONSTRUCTIONS_SCALE = 150;

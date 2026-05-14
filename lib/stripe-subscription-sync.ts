@@ -1,5 +1,5 @@
 /**
- * Écritures abonnement / plan payant (pro, elite) sur `public.users` :
+ * Écritures abonnement / plan payant (creator, pro, scale) sur `public.users` :
  * **uniquement** depuis `app/api/webhook/route.ts` (événements Stripe signés).
  * Ne pas appeler ces fonctions depuis une route « success », le client ou des query params.
  */
@@ -62,7 +62,7 @@ export async function syncUserFromPaidSubscriptionCheckout(
 
   const userId = session.metadata?.userId;
   const metaPlan = session.metadata?.plan;
-  if (!userId || (metaPlan !== 'pro' && metaPlan !== 'elite')) {
+  if (!userId || (metaPlan !== 'creator' && metaPlan !== 'pro' && metaPlan !== 'scale')) {
     return { ok: false, reason: 'invalid_metadata', log: session.id };
   }
   if (opts.expectedUserId && opts.expectedUserId !== userId) {
@@ -154,6 +154,7 @@ export async function syncUserFromPaidSubscriptionCheckout(
       subscription_cancel_at_period_end: sub.cancel_at_period_end ?? false,
       analyses_count: 0,
       hooks_count: 0,
+      reconstructions_count: 0,
       last_reset_at: now,
     })
     .eq('id', userId);
@@ -211,7 +212,7 @@ export async function syncUserRowFromStripeSubscription(sub: Stripe.Subscription
     return { ok: false, reason: 'db_read_failed', log: readErr.message };
   }
 
-  let nextPlan = (currentUser?.plan ?? 'free') as 'free' | 'pro' | 'elite';
+  let nextPlan = (currentUser?.plan ?? 'free') as 'free' | 'creator' | 'pro' | 'scale';
   const statusAllowsTierFromPrice =
     sub.status === 'active' || sub.status === 'trialing' || sub.status === 'past_due';
   if (planFromPrice && statusAllowsTierFromPrice) {
@@ -246,7 +247,7 @@ export async function resetMonthlyCountersForSubscription(subscriptionId: string
   const now = new Date().toISOString();
   const { error } = await supabase
     .from('users')
-    .update({ analyses_count: 0, hooks_count: 0, last_reset_at: now })
+    .update({ analyses_count: 0, hooks_count: 0, reconstructions_count: 0, last_reset_at: now })
     .eq('stripe_subscription_id', subscriptionId);
 
   if (error) {

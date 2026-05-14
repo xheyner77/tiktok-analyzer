@@ -12,7 +12,7 @@ function getStripe(): Stripe {
 
 /**
  * Vérifie côté serveur que le Checkout Session est payé et appartient à l’utilisateur.
- * **Ne modifie pas le plan en base** : seul le webhook `checkout.session.completed` (signé Stripe) applique pro/elite.
+ * **Ne modifie pas le plan en base** : seul le webhook `checkout.session.completed` (signé Stripe) applique creator/pro/scale.
  */
 export async function POST(request: NextRequest) {
   const skBlock = blockTestStripeSecretInProduction();
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
 
     const { plan, sessionId } = await request.json() as { plan?: string; sessionId?: string };
 
-    if (plan !== 'pro' && plan !== 'elite') {
+    if (plan !== 'creator' && plan !== 'pro' && plan !== 'scale') {
       return NextResponse.json({ error: 'Plan invalide.' }, { status: 400 });
     }
 

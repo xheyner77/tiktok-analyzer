@@ -1,9 +1,13 @@
 import type { Plan } from '@/lib/supabase';
 import type Stripe from 'stripe';
+import { normalizePlan, type AppPlan } from './plans';
+
+export type PaidStripePlan = 'creator' | 'pro' | 'scale';
+export type BillingInterval = 'month' | 'year';
 
 export type PriceValidationResult =
   | { ok: true }
-  | { ok: false; code: 'PRICE_NOT_RECURRING' | 'PRICE_NOT_MONTHLY'; message: string };
+  | { ok: false; code: 'PRICE_NOT_RECURRING' | 'PRICE_NOT_SUPPORTED_INTERVAL'; message: string };
 
 /**
  * Un Checkout `mode: subscription` exige un Price **récurrent**. Un price one-time → paiement simple (pi_) sans sub_.
@@ -18,57 +22,83 @@ export async function assertStripePriceIsMonthlySubscription(
       ok: false,
       code: 'PRICE_NOT_RECURRING',
       message:
-        'Ce Price Stripe est en paiement unique. Dans Products, crée un prix « Récurrent », intervalle « mois », puis mets à jour STRIPE_PRICE_PRO / STRIPE_PRICE_ELITE avec ce price_id.',
+        'Ce Price Stripe est en paiement unique. Dans Products, crée un prix « Récurrent », intervalle « mois », puis mets à jour les variables STRIPE_PRICE_*_MONTHLY avec ce price_id.',
     };
   }
-  if (price.recurring?.interval !== 'month') {
+  if (price.recurring?.interval !== 'month' && price.recurring?.interval !== 'year') {
     return {
       ok: false,
-      code: 'PRICE_NOT_MONTHLY',
-      message: `L’abonnement doit être mensuel (interval: month). Price actuel : ${price.recurring?.interval ?? '?'}.`,
+      code: 'PRICE_NOT_SUPPORTED_INTERVAL',
+      message: `L’abonnement doit être mensuel ou annuel. Price actuel : ${price.recurring?.interval ?? '?'}.`,
     };
   }
   return { ok: true };
 }
 
 /** Rang pour comparer les plans (anti-rétrogradation via webhooks en retard). */
-export const PLAN_RANK: Record<string, number> = { free: 0, pro: 1, elite: 2 };
+export const PLAN_RANK: Record<string, number> = { free: 0, creator: 1, pro: 2, scale: 3 };
 
-export function getStripePriceId(plan: 'pro' | 'elite'): string {
-  const envKey = plan === 'pro' ? 'STRIPE_PRICE_PRO' : 'STRIPE_PRICE_ELITE';
+export function getStripePriceId(plan: PaidStripePlan, interval: BillingInterval = 'month'): string {
+  const normalized = normalizePlan(plan);
+  if (normalized === 'free') {
+    throw new Error('Plan Stripe invalide : free');
+  }
+  const envKey =
+    normalized === 'creator' ? 'STRIPE_PRICE_CREATOR_MONTHLY' :
+    normalized === 'pro' && interval === 'year' ? 'STRIPE_PRICE_PRO_YEARLY' :
+    normalized === 'pro' ? 'STRIPE_PRICE_PRO_MONTHLY' :
+    interval === 'year' ? 'STRIPE_PRICE_SCALE_YEARLY' :
+    'STRIPE_PRICE_SCALE_MONTHLY';
   const id = process.env[envKey]?.trim();
   if (!id) {
     throw new Error(
-      `${envKey} manquant — crée les prix récurrents dans Stripe (Products) et mets les price_… dans les variables d’environnement.`
+      `${envKey} manquant — mets le price_… Stripe correspondant dans les variables d’environnement.`
     );
   }
   return id;
 }
 
-export function planFromStripePriceId(priceId: string): 'pro' | 'elite' | null {
-  const pro = process.env.STRIPE_PRICE_PRO?.trim();
-  const elite = process.env.STRIPE_PRICE_ELITE?.trim();
-  if (priceId && priceId === pro) return 'pro';
-  if (priceId && priceId === elite) return 'elite';
+export function planFromStripePriceId(priceId: string): PaidStripePlan | null {
+  const mappings: Array<[string | undefined, PaidStripePlan]> = [
+    [process.env.STRIPE_PRICE_CREATOR_MONTHLY?.trim(), 'creator'],
+    [process.env.STRIPE_PRICE_PRO_MONTHLY?.trim(), 'pro'],
+    [process.env.STRIPE_PRICE_PRO_YEARLY?.trim(), 'pro'],
+    [process.env.STRIPE_PRICE_SCALE_MONTHLY?.trim(), 'scale'],
+    [process.env.STRIPE_PRICE_SCALE_YEARLY?.trim(), 'scale'],
+    [process.env.STRIPE_PRICE_PRO?.trim(), 'pro'],
+    [process.env.STRIPE_PRICE_ELITE?.trim(), 'scale'],
+  ];
+  const match = mappings.find(([id]) => id && id === priceId);
+  if (match) return match[1];
   return null;
 }
 
-/** Abonnement considéré comme payé et ouvrant l’accès aux fonctionnalités Pro/Elite. */
+/** Abonnement considéré comme payé et ouvrant l’accès aux fonctionnalités payantes. */
 export function isSubscriptionStatusAllowingAccess(status: string | null | undefined): boolean {
   return status === 'active' || status === 'trialing';
 }
 
 /**
  * Plan effectif pour quotas / features API.
- * Sans `stripe_subscription_id` (anciens achats one-shot) : on honore encore `plan` en base.
+ * `elite` reste uniquement une valeur legacy Stripe et est converti ici vers le plan actif équivalent.
  */
 export function getEffectivePlan(user: {
-  plan: Plan;
+  plan: Plan | string | null | undefined;
   stripe_subscription_id?: string | null;
   subscription_status?: string | null;
-}): Plan {
-  if (user.plan === 'free') return 'free';
-  if (!user.stripe_subscription_id) return user.plan;
-  if (isSubscriptionStatusAllowingAccess(user.subscription_status)) return user.plan;
+}): AppPlan {
+  if (user.plan === 'elite') {
+    if (user.stripe_subscription_id && isSubscriptionStatusAllowingAccess(user.subscription_status)) {
+      return 'scale';
+    }
+    if (process.env.NODE_ENV !== 'production') return 'scale';
+    return 'free';
+  }
+
+  const normalized = normalizePlan(user.plan);
+  if (normalized === 'free') return 'free';
+  if (!user.stripe_subscription_id) return normalized;
+  if (isSubscriptionStatusAllowingAccess(user.subscription_status)) return normalized;
+  if (process.env.NODE_ENV !== 'production') return normalized;
   return 'free';
 }

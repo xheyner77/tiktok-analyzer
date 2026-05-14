@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { MAX_ANALYSES_ELITE, MAX_ANALYSES_PRO } from '@/lib/plan-limits';
-import { DISPLAY_CATALOG_ELITE_EUR, DISPLAY_CATALOG_PRO_EUR } from '@/lib/stripe-pricing';
+import { MAX_ANALYSES_PRO } from '@/lib/plan-limits';
+import { DISPLAY_CATALOG_PRO_EUR, DISPLAY_CATALOG_SCALE_EUR } from '@/lib/stripe-pricing';
 
 interface PremiumGateProps {
   onReset?: () => void;
@@ -12,23 +12,23 @@ const CheckIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const freeFeatures = ['3 analyses (utilisées)', 'Score de viralité', 'Conseils basiques'];
+const freeFeatures = ['3 analyses (utilisées)', 'Score vidéo', 'Diagnostic partiel'];
 
 const proFeatures = [
   `${MAX_ANALYSES_PRO} analyses / mois`,
-  'Score de viralité détaillé',
-  'Conseils personnalisés IA',
+  'Score vidéo expliqué',
+  'Mémoire créateur étendue',
   'Historique des analyses',
   'Hook generator (150 / mois)',
 ];
 
-const eliteFeatures = [
-  `${MAX_ANALYSES_ELITE} analyses / mois`,
-  'Score de viralité détaillé',
-  'Conseils personnalisés IA',
+const scaleFeatures = [
+  'Analyses illimitées',
+  'Score vidéo expliqué',
+  'Mémoire créateur multi-comptes',
   'Historique illimité',
   'Hook generator (500 / mois)',
-  'Analyse comparative concurrents',
+  'Benchmarks par niche et format',
   'Support prioritaire',
 ];
 
@@ -51,7 +51,7 @@ export default function PremiumGate({ onReset }: PremiumGateProps) {
         </div>
         <h2 className="text-2xl font-bold text-white">Tes 3 analyses gratuites sont épuisées</h2>
         <p className="text-gray-400 text-sm max-w-sm mx-auto leading-relaxed">
-          Choisis un plan pour continuer à analyser tes vidéos courtes et affiner hook, montage et rétention avec Viralynz.
+          Choisis un plan pour continuer à analyser tes vidéos, repérer les drops et préparer des structures plus claires.
         </p>
       </div>
 
@@ -133,17 +133,17 @@ export default function PremiumGate({ onReset }: PremiumGateProps) {
           </Link>
         </div>
 
-        {/* ── Elite ──────────────────────────────────────────────── */}
+        {/* ── Scale ──────────────────────────────────────────────── */}
         <div className="rounded-2xl border border-vn-violet/25 bg-gradient-to-b from-vn-violet/[0.07] to-transparent p-5">
           <div className="mb-4">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-vn-glow uppercase tracking-widest">Elite</span>
+              <span className="text-xs font-semibold text-vn-glow uppercase tracking-widest">Scale</span>
               <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-vn-violet/15 text-vn-glow border border-vn-violet/25 whitespace-nowrap">
                 Créateurs sérieux
               </span>
             </div>
             <div className="flex items-end gap-1">
-              <span className="text-3xl font-bold text-white">{DISPLAY_CATALOG_ELITE_EUR}</span>
+              <span className="text-3xl font-bold text-white">{DISPLAY_CATALOG_SCALE_EUR}</span>
               <span className="text-base font-semibold text-gray-300 mb-0.5">€</span>
               <span className="text-sm text-gray-400 mb-1">/mois</span>
             </div>
@@ -151,7 +151,7 @@ export default function PremiumGate({ onReset }: PremiumGateProps) {
           </div>
 
           <div className="space-y-2.5 mb-5">
-            {eliteFeatures.map((f) => (
+            {scaleFeatures.map((f) => (
               <div key={f} className="flex items-center gap-2">
                 <CheckIcon className="w-3.5 h-3.5 text-[#b060ff] shrink-0" />
                 <span className="text-xs text-gray-300">{f}</span>
@@ -163,7 +163,7 @@ export default function PremiumGate({ onReset }: PremiumGateProps) {
             href="/pricing"
             className="block w-full rounded-xl py-3 text-sm font-semibold text-vn-glow text-center bg-vn-violet/10 border border-vn-violet/30 hover:bg-vn-violet/20 hover:border-vn-violet/50 active:scale-[0.99] transition-all"
           >
-            Choisir Elite →
+            Choisir Scale →
           </Link>
         </div>
 
