@@ -55,7 +55,7 @@ export async function createSessionToken(userId: string, email: string): Promise
  */
 export async function getSession(): Promise<SessionPayload | null> {
   try {
-    const token = cookies().get(COOKIE_NAME)?.value;
+    const token = (await cookies()).get(COOKIE_NAME)?.value;
     if (!token) return null;
 
     // ── Attempt 1: custom HS256 JWT (new sessions) ────────────────────────────
