@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { supabaseAuth } from '@/lib/supabase';
+import { ensureUserProfile } from '@/lib/auth';
 import { COOKIE_NAME, COOKIE_OPTIONS, createSessionToken } from '@/lib/session';
 
 // Supabase error messages that indicate the email hasn't been confirmed yet.
@@ -85,6 +86,8 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
+
+    await ensureUserProfile({ userId: data.user.id, email: data.user.email ?? email });
 
     // Create a custom JWT (signed with JWT_SECRET, valid 7 days) instead of
     // storing the Supabase access token (which expires after only 1 hour).

@@ -45,6 +45,32 @@ export interface UserProfile {
 
 export type User = UserProfile;
 
+export async function ensureUserProfile(input: { userId: string; email: string }): Promise<UserProfile | null> {
+  const existing = await getUserById(input.userId);
+  if (existing) return existing;
+
+  const { error } = await supabase
+    .from('users')
+    .upsert(
+      {
+        id: input.userId,
+        email: input.email,
+        plan: 'free',
+        analyses_count: 0,
+        hooks_count: 0,
+        reconstructions_count: 0,
+      },
+      { onConflict: 'id', ignoreDuplicates: true }
+    );
+
+  if (error) {
+    console.error('[ensureUserProfile] public.users upsert failed:', error.message);
+    return null;
+  }
+
+  return getUserById(input.userId);
+}
+
 // ── Read ─────────────────────────────────────────────────────────────────────
 
 /** Read the user profile from public.users (single source of truth) */
