@@ -1,21 +1,29 @@
 import { NextResponse } from 'next/server';
 
-function isDeployedProduction(): boolean {
-  return (
-    process.env.VERCEL_ENV === 'production' ||
-    (process.env.NODE_ENV === 'production' && process.env.VERCEL === '1')
-  );
+function isVercelProduction(): boolean {
+  return process.env.VERCEL_ENV === 'production';
 }
 
-/** Clé secrète : toutes les routes Stripe serveur (checkout, webhooks, upgrade, cancel). */
-export function blockTestStripeSecretInProduction(): NextResponse | null {
-  if (!isDeployedProduction()) return null;
+function isVercelPreview(): boolean {
+  return process.env.VERCEL_ENV === 'preview';
+}
 
+/** Cle secrete : toutes les routes Stripe serveur (checkout, webhooks, upgrade, cancel). */
+export function blockTestStripeSecretInProduction(): NextResponse | null {
   const sk = process.env.STRIPE_SECRET_KEY?.trim();
-  if (sk?.startsWith('sk_test')) {
-    console.error('[stripe] PRODUCTION: STRIPE_SECRET_KEY est sk_test_ — requête bloquée.');
+
+  if (isVercelProduction() && sk?.startsWith('sk_test')) {
+    console.error('[stripe] PRODUCTION: STRIPE_SECRET_KEY est sk_test_ - requete bloquee.');
     return NextResponse.json(
-      { error: 'Configuration Stripe incorrecte (clé secrète test en production).' },
+      { error: 'Configuration Stripe incorrecte (cle secrete test en production).' },
+      { status: 500 }
+    );
+  }
+
+  if (isVercelPreview() && sk?.startsWith('sk_live')) {
+    console.error('[stripe] PREVIEW: STRIPE_SECRET_KEY est sk_live_ - requete bloquee.');
+    return NextResponse.json(
+      { error: 'Configuration Stripe incorrecte (cle secrete live en preview).' },
       { status: 500 }
     );
   }
@@ -24,17 +32,24 @@ export function blockTestStripeSecretInProduction(): NextResponse | null {
 }
 
 /**
- * Clé publique : checkout uniquement (alignée avec ce que le front chargera pour Stripe.js).
- * Le webhook n’utilise pas cette variable — ne pas l’y vérifier.
+ * Cle publique : checkout uniquement (alignee avec ce que le front chargera pour Stripe.js).
+ * Le webhook n'utilise pas cette variable - ne pas l'y verifier.
  */
 export function blockTestStripePublishableInProduction(): NextResponse | null {
-  if (!isDeployedProduction()) return null;
-
   const pk = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim();
-  if (pk?.startsWith('pk_test')) {
-    console.error('[stripe] PRODUCTION: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY est pk_test_ — checkout bloqué.');
+
+  if (isVercelProduction() && pk?.startsWith('pk_test')) {
+    console.error('[stripe] PRODUCTION: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY est pk_test_ - checkout bloque.');
     return NextResponse.json(
-      { error: 'Configuration Stripe incorrecte (clé publique test en production).' },
+      { error: 'Configuration Stripe incorrecte (cle publique test en production).' },
+      { status: 500 }
+    );
+  }
+
+  if (isVercelPreview() && pk?.startsWith('pk_live')) {
+    console.error('[stripe] PREVIEW: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY est pk_live_ - checkout bloque.');
+    return NextResponse.json(
+      { error: 'Configuration Stripe incorrecte (cle publique live en preview).' },
       { status: 500 }
     );
   }
