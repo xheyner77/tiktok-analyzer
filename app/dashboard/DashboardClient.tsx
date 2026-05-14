@@ -4,11 +4,11 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createPortal } from 'react-dom';
-import { Plan } from '@/lib/supabase';
+import type { Plan } from '@/lib/supabase';
 import type { AnalysisRow } from '@/lib/analyses';
 import { getScoreTextColor, getRatingColors } from '@/lib/utils';
-import { MAX_ANALYSES_ELITE, MAX_ANALYSES_PRO, MAX_HOOKS_ELITE, MAX_HOOKS_PRO, HISTORY_LIMITS } from '@/lib/plan-limits';
-import { DISPLAY_CATALOG_ELITE_EUR, DISPLAY_CATALOG_PRO_EUR } from '@/lib/stripe-pricing';
+import { MAX_ANALYSES_PRO, MAX_HOOKS_PRO, HISTORY_LIMITS, RECONSTRUCTION_LIMITS } from '@/lib/plan-limits';
+import { DISPLAY_CATALOG_PRO_EUR, DISPLAY_CATALOG_SCALE_EUR } from '@/lib/stripe-pricing';
 import { waitForBillingPlan } from '@/lib/wait-for-billing-sync';
 import TikTokConnectCard from '@/components/TikTokConnectCard';
 
@@ -17,11 +17,12 @@ interface DashboardClientProps {
   plan: Plan;
   billingPlan: Plan;
   usesStripeSubscription: boolean;
-  showEliteUpgrade: boolean;
+  showScaleUpgrade: boolean;
   analysesCount: number;
   analysesLimit: number;
   hooksCount: number;
   hooksLimit: number;
+  reconstructionsCount: number;
   memberSince: string;
   analyses: AnalysisRow[];
   stripeSessionId?: string | null;
@@ -92,12 +93,13 @@ function tiktokOAuthFlashMessage(
   };
 }
 
-const planLabels: Record<Plan, string> = { free: 'Free', pro: 'Pro', elite: 'Elite' };
+const planLabels: Record<Plan, string> = { free: 'Free', creator: 'Creator', pro: 'Pro', scale: 'Scale' };
 
 const planGradient: Record<Plan, string> = {
   free:  'from-gray-500/20 to-gray-600/20 border-gray-500/25 text-gray-300',
-  pro:   'from-vn-fuchsia/25 to-vn-violet/20 border-vn-fuchsia/30 text-vn-fuchsia',
-  elite: 'from-vn-violet/30 to-vn-indigo/25 border-vn-violet/35 text-vn-glow',
+  creator: 'from-vn-fuchsia/25 to-vn-violet/20 border-vn-fuchsia/30 text-vn-fuchsia',
+  pro:   'from-cyan-300/20 to-vn-indigo/20 border-cyan-300/30 text-cyan-200',
+  scale: 'from-vn-violet/30 to-vn-indigo/25 border-vn-violet/35 text-vn-glow',
 };
 
 function scoreColor(s: number) {
@@ -118,18 +120,18 @@ const DAILY_TIPS: { tip: string; category: string }[] = [
   { category: 'Hook', tip: "Un hook puissant active une des 4 motivations primaires : curiosité, peur de rater (FOMO), désir de statut, ou résolution d'un problème urgent. Reformule ton accroche en te demandant : laquelle de ces 4 est-ce que j'active ?" },
   { category: 'Hook', tip: "Commence en plein milieu de l'action — zéro intro, zéro 'salut c'est moi'. L'algorithme mesure si les viewers regardent encore après 3s. Chaque mot d'intro avant la valeur réelle te coûte de la rétention." },
   { category: 'Hook', tip: "Le meilleur hook crée une tension irrésolue dès la 1ère seconde : 'Ce que personne ne te dit sur X', 'J'ai essayé pendant 30 jours', 'La vraie raison pour laquelle tu fais X mal'. La tension force le cerveau à rester pour la résolution." },
-  { category: 'Hook', tip: "Teste le 'pattern interrupt visuel' : zoom brutal au début, coupe abrupte sur un détail inattendu, ou texte énorme qui claque à l'écran dès la frame 1. Les créateurs top 10% utilisent systématiquement un élément visuel surprenant dans leurs 2 premières secondes." },
+  { category: 'Hook', tip: "Teste le 'pattern interrupt visuel' : zoom brutal au début, coupe abrupte sur un détail inattendu, ou texte énorme qui claque à l'écran dès la frame 1. C'est un signal détecté fréquent dans les ouvertures qui retiennent mieux l'attention." },
   { category: 'Hook', tip: "La règle des 3 secondes : lis à voix haute tes 3 premières secondes. Si tu ne peux pas promettre une valeur ou créer une curiosité dans ce temps, coupe tout ce qui précède la promesse. Chaque seconde d'intro générique = -12% de rétention." },
   { category: 'Hook', tip: "Le hook sous forme d'affirmation paradoxale bat la question. Pas 'Savais-tu que...' — mais 'Tu fais X complètement à l'envers.' Le cerveau résiste à l'affirmation et reste pour la preuve. C'est un des patterns de hook les plus performants en 2025." },
-  { category: 'Hook', tip: "Le son du hook compte autant que l'image. Un son intrigant, un effet sonore fort ou une phrase parlée percutante dans la 1ère seconde double le taux de rétention initial. TikTok analyse l'engagement audio séparément de l'image." },
+  { category: 'Hook', tip: "Le son du hook compte autant que l'image. Un son intrigant, un effet sonore fort ou une phrase parlée percutante dans la 1ère seconde peut améliorer la rétention initiale. TikTok analyse l'engagement audio séparément de l'image." },
   // MONTAGE
   { category: 'Montage', tip: "La règle des 2 secondes : aucun plan fixe ne devrait durer plus de 2s sur TikTok, sauf s'il contient une info dense ou une tension forte. Recompte tes plans — chaque plan fixe de +3s te coûte en moyenne 8% de viewers supplémentaires." },
-  { category: 'Montage', tip: "Les sous-titres animés augmentent la completion rate de +28% en moyenne. Mais ce qui compte encore plus : la synchronisation. Les sous-titres doivent apparaître 0.2s avant que tu prononces le mot — le cerveau anticipe, l'engagement monte." },
+  { category: 'Montage', tip: "Les sous-titres animés peuvent améliorer la completion rate. Mais ce qui compte encore plus : la synchronisation. Les sous-titres doivent apparaître 0.2s avant que tu prononces le mot — le cerveau anticipe, l'engagement monte." },
   { category: 'Montage', tip: "La technique du 'jump cut rapproché' : coupe sur le même angle avec un léger zoom avant entre les deux plans. C'est la signature visuelle des créateurs viraux — ça crée un effet de dynamisme sans changer de décor ni de contexte." },
   { category: 'Montage', tip: "Ajoute un layer sonore de fond discret — ambiance, musique instrumentale basse, sons de clavier. Le cerveau associe le silence à une faible valeur de production. Un fond sonore subtil signale instantanément 'qualité'." },
   { category: 'Montage', tip: "Chaque 5-7s, intègre un 'micro-reset' visuel : changement d'angle, texte qui apparaît, zoom, B-roll court. Ce n'est pas juste pour le dynamisme — c'est un signal que ton contenu continue à livrer de la valeur. L'algorithme détecte ces micro-pics d'engagement." },
-  { category: 'Montage', tip: "La vitesse de la musique doit dicter le rythme de tes coupes. Coupe sur le beat, pas aléatoirement. Les vidéos avec des coupes synchronisées au tempo ont en moyenne +18% de watch time comparé aux mêmes vidéos avec des coupes non-synchronisées." },
-  { category: 'Montage', tip: "L'éclairage est sous-estimé : une vidéo bien éclairée génère +40% de follow rate qu'une vidéo sombre ou plate. Investis dans un panneau LED simple — c'est le meilleur ROI en termes de qualité perçue pour le moins d'effort." },
+  { category: 'Montage', tip: "La vitesse de la musique doit dicter le rythme de tes coupes. Coupe sur le beat, pas aléatoirement. Les coupes synchronisées au tempo sont un signal détecté de montage plus lisible." },
+  { category: 'Montage', tip: "L'éclairage est sous-estimé : une vidéo bien éclairée renforce la qualité perçue par rapport à une vidéo sombre ou plate. Un panneau LED simple peut améliorer la lisibilité pour peu d'effort." },
   // RÉTENTION
   { category: 'Rétention', tip: "La courbe de rétention TikTok a 3 moments critiques : seconde 3 (hook), seconde 15 (confirmation de valeur), seconde 30 (engagement ou drop). Identifie ce que tu livres à chacun de ces 3 points. Si un est vide, c'est là que tu perds ton audience." },
   { category: 'Rétention', tip: "L'open loop est la technique de rétention la plus puissante : tu ouvres une question dans les premières secondes et tu ne la fermes qu'à la fin. 'Je vais te montrer les 3 étapes — la 3ème va te surprendre.' Le cerveau est câblé pour chercher la clôture." },
@@ -147,16 +149,16 @@ const DAILY_TIPS: { tip: string; category: string }[] = [
   { category: 'Stratégie', tip: "Batche ta production : filme 5-8 vidéos en une seule session. Tu maintiens le même décor, la même énergie, le même style. Ce n'est pas juste plus efficace — ça crée une cohérence visuelle qui renforce ta marque personnelle et ton taux de follow." },
   { category: 'Stratégie', tip: "Le 'résultat avant le processus' est le hook le plus testé : montre la fin (le résultat impressionnant) dans les 3 premières secondes, puis explique le chemin. Le cerveau est naturellement curieux du 'comment' après avoir vu le 'quoi'." },
   // ALGORITHME
-  { category: 'Algo', tip: "L'engagement rate = (likes + commentaires + partages) / vues. En dessous de 2% = distribution faible. 2-5% = normale. 5-10% = fort. Au-dessus de 10% = viral potentiel. Si tu es sous 2%, le problème est dans la valeur perçue du contenu, pas dans le hook." },
+  { category: 'Algo', tip: "L'engagement rate = (likes + commentaires + partages) / vues. En dessous de 2% = distribution faible. 2-5% = normale. 5-10% = fort. Au-dessus de 10% = signal d'intérêt élevé. Si tu es sous 2%, le problème est souvent dans la valeur perçue du contenu, pas seulement dans le hook." },
   { category: 'Algo', tip: "Les commentaires sont le signal le plus fort pour l'algorithme — environ 5-7x plus de valeur qu'un like. Termine tes vidéos avec une question ouverte spécifique plutôt qu'un vague 'qu'en pensez-vous ?'. Plus la question est précise, plus tu obtiens de commentaires." },
   { category: 'Algo', tip: "Le partage est l'action la plus rare et la plus précieuse. Les vidéos partagées atteignent une nouvelle audience seed. Pour déclencher un partage : crée du contenu que le viewer veut montrer à quelqu'un de précis — une info utile, une émotion forte, une blague de niche." },
   { category: 'Algo', tip: "Ne supprime jamais une vidéo qui performe mal — attends 48-72h. L'algorithme peut décider de la distribuer à une nouvelle seed jusqu'à 3 jours après la publication. Des vidéos 'mortes' à J+1 ont souvent décollé à J+3. La patience paye." },
   { category: 'Algo', tip: "Les duets et stitchs sont des multiplicateurs de portée. Réagir à une vidéo populaire dans ta niche avec un angle nouveau te positionne dans la distribution de l'original. C'est le moyen le plus rapide d'atteindre une audience qualifiée qui ne te connaît pas encore." },
-  { category: 'Algo', tip: "Le timing importe moins que la vélocité initiale. Si ta vidéo génère de l'engagement dans les 30 premières minutes, l'algo la booste quel que soit l'heure. Mais pour maximiser cette fenêtre : 7h-9h, 12h-13h ou 18h-21h heure française sont tes créneaux optimaux." },
+  { category: 'Algo', tip: "Le timing importe moins que la vélocité initiale. Si ta vidéo génère de l'engagement dans les 30 premières minutes, c'est un signal positif quel que soit l'heure. Mais pour maximiser cette fenêtre : 7h-9h, 12h-13h ou 18h-21h heure française sont des créneaux à tester." },
   // PSYCHOLOGIE
   { category: 'Psychologie', tip: "Mets la valeur la plus forte en premier. Les viewers ont appris à décider en 5 secondes si une vidéo vaut leur temps. Ne garde jamais le meilleur pour la fin — livre ta meilleure info d'abord, puis explique comment l'appliquer." },
   { category: 'Psychologie', tip: "La preuve sociale dans les 3 premières secondes multiplie l'autorité instantanément. '200 000 personnes utilisent cette méthode', 'j'ai testé 30 produits', 'après 5 ans dans ce secteur' — positionne ton autorité avant d'entrer dans la valeur." },
-  { category: 'Psychologie', tip: "L'émotion est le carburant de la viralité. Contenu qui génère : surprise (+46% de partages), inspiration (+32%), humour (+28%), indignation (+22%). Identifie l'émotion principale que doit déclencher chaque vidéo avant de l'écrire, pas après." },
+  { category: 'Psychologie', tip: "L'émotion est un levier de rétention. Surprise, inspiration, humour ou indignation peuvent créer des signaux d'engagement différents. Identifie l'émotion principale que doit déclencher chaque vidéo avant de l'écrire, pas après." },
   { category: 'Psychologie', tip: "La technique du 'contre-intuitif' génère 2x plus d'engagement. Prends une croyance commune dans ta niche et retourne-la : 'Arrête de [faire X que tout le monde conseille]'. Le cerveau est câblé pour remarquer ce qui contredit ses attentes existantes." },
   { category: 'Psychologie', tip: "Utilise les patterns de curiosité : listes incomplètes ('voici les 3 erreurs — la 2ème est la plus grave'), révélations progressives, teasing de la suite. La curiosité est une légère douleur que le cerveau cherche à résoudre. Tu es le seul à pouvoir la soulager." },
   { category: 'Psychologie', tip: "Le format 'before/after' est universel sur TikTok car il correspond au pattern narratif le plus basique : problème → solution → résultat. Quel que soit ton domaine, tu peux structurer : 'Avant de connaître X, je faisais Y — maintenant je fais Z'." },
@@ -201,7 +203,7 @@ function getSmartTip(weakest: { key: string; score: number } | null): string {
   // retention
   if (score < 40) return "Ta rétention chute fortement. Ajoute un micro-hook toutes les 5–7 secondes pour relancer l'attention.";
   if (score < 60) return "Place une révélation ou un rebondissement à mi-vidéo pour relancer ta courbe de rétention.";
-  return "Pour booster la rétention, ajoute des sous-titres et textes à l'écran sur les moments clés de ta vidéo.";
+  return "Pour améliorer la rétention, ajoute des sous-titres et textes à l'écran sur les moments clés de ta vidéo.";
 }
 
 type Dim = { key: 'hook' | 'editing' | 'retention'; label: string; score: number };
@@ -231,8 +233,8 @@ function getActionPlan(dims: Dim[]): { emoji: string; title: string; action: str
   }
   // Always fill up to 3 actions
   const extras = [
-    { emoji: '🚀', title: 'Optimise ton CTA', action: "Termine chaque vidéo par un CTA clair — pose une question ou demande un follow. Ça booste l'engagement.", cta: 'Analyser' },
-    { emoji: '🎵', title: 'Utilise les tendances audio', action: "Utilise des sons en tendance dans ta niche — l'algo TikTok booste les vidéos avec de l'audio viral.", cta: 'Analyser' },
+    { emoji: '🚀', title: 'Optimise ton CTA', action: "Termine chaque vidéo par un CTA clair — pose une question ou demande un follow. C'est une zone à améliorer pour l'engagement.", cta: 'Analyser' },
+    { emoji: '🎵', title: 'Utilise les tendances audio', action: "Utilise des sons en tendance dans ta niche — c'est un signal audio à tester, pas une garantie de distribution.", cta: 'Analyser' },
     { emoji: '📲', title: 'Optimise ta description', action: "3–5 hashtags de niche + une phrase d'accroche dans la description augmentent la portée organique.", cta: 'Analyser' },
   ];
   let i = 0;
@@ -242,9 +244,9 @@ function getActionPlan(dims: Dim[]): { emoji: string; title: string; action: str
 
 function getBenchmark(hookScore: number | null): { top: string; sub: string } {
   if (hookScore === null) return { top: 'Pas encore de data', sub: 'Analyse une vidéo pour te positionner' };
-  if (hookScore >= 80) return { top: 'Top 10%', sub: 'sur les hooks TikTok' };
-  if (hookScore >= 70) return { top: 'Top 20%', sub: 'sur les hooks TikTok' };
-  if (hookScore >= 60) return { top: 'Top 35%', sub: 'au-dessus de la moyenne' };
+  if (hookScore >= 80) return { top: 'Signal fort', sub: 'hook très lisible' };
+  if (hookScore >= 70) return { top: 'Signal solide', sub: 'hook clair à renforcer' };
+  if (hookScore >= 60) return { top: 'Signal correct', sub: 'au-dessus du seuil de base' };
   if (hookScore >= 50) return { top: 'Moyenne', sub: 'du marché — du potentiel à exploiter' };
   return { top: 'Sous la moyenne', sub: 'améliore ton hook en priorité' };
 }
@@ -326,6 +328,12 @@ function AnalysisHistoryItem({ row, prevScore }: { row: AnalysisRow; prevScore?:
   const score = typeof result?.viralityScore === 'number' ? result.viralityScore : null;
   const isUpload = video_url.startsWith('upload:');
   const delta = (score !== null && prevScore != null) ? score - prevScore : null;
+  const analyzerMeta = result?.analyzerMeta;
+  const analysisModeLabel = analyzerMeta?.analysisModeLabel;
+  const analysisConfidence = analyzerMeta?.analysisConfidence?.score;
+  const firstWarning = analyzerMeta?.validationWarnings?.[0];
+  const signalDisclosure = analyzerMeta?.signalDisclosure;
+  const isDegraded = analyzerMeta?.isFallback || analyzerMeta?.analysisMode === 'fallback' || analyzerMeta?.analysisMode === 'demo' || Boolean(firstWarning);
 
   const displayUrl = isUpload
     ? video_url.replace(/^upload:/, '').replace(/-\d+$/, '')
@@ -347,6 +355,7 @@ function AnalysisHistoryItem({ row, prevScore }: { row: AnalysisRow; prevScore?:
           <div className="flex items-center gap-2 mt-0.5">
             <span className="text-[10px] text-gray-600">{date} · {time}</span>
             {isUpload && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-vn-fuchsia/15 text-vn-fuchsia border border-vn-fuchsia/20 uppercase tracking-wide">Vision</span>}
+            {analysisModeLabel && <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full border uppercase tracking-wide ${isDegraded ? 'bg-amber-400/10 text-amber-300 border-amber-400/20' : 'bg-white/[0.04] text-gray-400 border-white/[0.08]'}`}>{analysisModeLabel}</span>}
             <TrendBadge delta={delta} />
           </div>
         </div>
@@ -371,6 +380,28 @@ function AnalysisHistoryItem({ row, prevScore }: { row: AnalysisRow; prevScore?:
 
       {open && (
         <div className="border-t border-white/[0.06] px-4 py-4 space-y-4">
+          {(analysisModeLabel || analysisConfidence != null || firstWarning || signalDisclosure) && (
+            <div className="rounded-xl border border-amber-300/12 bg-amber-300/[0.045] px-3 py-2.5">
+              <div className="flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-amber-200">
+                {analysisModeLabel && <span>Mode : {analysisModeLabel}</span>}
+                {analysisConfidence != null && <span>Confiance : {analysisConfidence}/100</span>}
+              </div>
+              {firstWarning && <p className="mt-1 text-[11px] leading-snug text-amber-100/80">{firstWarning}</p>}
+              {signalDisclosure && (
+                <div className="mt-2 grid gap-1 text-[10px] leading-snug text-amber-100/70 sm:grid-cols-2">
+                  {[
+                    ['Données observées', signalDisclosure.observedData],
+                    ['Hypothèses IA', signalDisclosure.aiHypotheses],
+                    ['Simulations', signalDisclosure.simulations],
+                    ['Previews', signalDisclosure.previews],
+                  ].filter(([, values]) => Array.isArray(values) && values.length > 0).map(([label, values]) => (
+                    <p key={label as string}><span className="font-bold text-amber-100">{label as string} :</span> {(values as string[]).slice(0, 2).join(', ')}</p>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="grid grid-cols-3 gap-2">
             {([
               { label: 'Hook', section: result?.hook },
@@ -498,7 +529,7 @@ function AnalysisHistoryPaginated({
 function LockedSection({
   targetPlan, price, badge, title, subtitle, features,
 }: {
-  targetPlan: 'pro' | 'elite';
+  targetPlan: 'pro' | 'scale';
   price: string;
   badge: string;
   title: string;
@@ -565,8 +596,8 @@ function LockedSection({
               ))}
             </div>
             <div className="rounded-xl border border-vn-violet/15 bg-vn-violet/[0.04] p-4">
-              <p className="text-[9px] uppercase tracking-widest text-violet-400/60 mb-2.5">Stratégie &amp; Insights viraux</p>
-              {['Détection des trends avant qu\'ils explosent','Analyse comparative vs top créateurs de ta niche','Stratégie de contenu IA personnalisée semaine par semaine','Support prioritaire — réponse en moins de 24h'].map(f=>(
+              <p className="text-[9px] uppercase tracking-widest text-violet-400/60 mb-2.5">Décisions &amp; benchmarks</p>
+              {['Patterns émergents selon tes analyses','Comparaison par niche et format similaire','Priorités de contenu semaine par semaine','Support prioritaire — réponse en moins de 24h'].map(f=>(
                 <div key={f} className="flex items-center gap-2 mb-2">
                   <div className="w-1.5 h-1.5 rounded-full shrink-0 bg-violet-400" />
                   <p className="text-[11px] text-gray-400">{f}</p>
@@ -625,7 +656,7 @@ function LockedSection({
                 : 'from-vn-violet to-vn-fuchsia shadow-[0_8px_32px_-8px_rgba(139,92,246,0.45)]'
             }`}
           >
-            {isPro ? '⭐' : '🔥'} {isPro ? 'Passer à Pro' : 'Passer à Elite'} — {price}€/mois
+            {isPro ? '⭐' : '🔥'} {isPro ? 'Passer à Pro' : 'Passer à Scale'} — {price}€/mois
             <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
               <path fillRule="evenodd" d="M6.22 4.22a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06L7.28 11.78a.75.75 0 0 1-1.06-1.06L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
             </svg>
@@ -643,11 +674,12 @@ export default function DashboardClient({
   plan,
   billingPlan,
   usesStripeSubscription,
-  showEliteUpgrade,
+  showScaleUpgrade,
   analysesCount,
   analysesLimit,
   hooksCount,
   hooksLimit,
+  reconstructionsCount,
   memberSince,
   analyses,
   stripeSessionId,
@@ -657,7 +689,7 @@ export default function DashboardClient({
   const router = useRouter();
   const [upgradeStatus, setUpgradeStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [upgradedPlan, setUpgradedPlan] = useState<string | null>(null);
-  const [eliteUpgradeLoading, setEliteUpgradeLoading] = useState(false);
+  const [scaleUpgradeLoading, setScaleUpgradeLoading] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelStatus, setCancelStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [cancelError, setCancelError] = useState('');
@@ -671,7 +703,7 @@ export default function DashboardClient({
   useEffect(() => {
     if (!stripeSessionId) return;
     const pendingPlan = localStorage.getItem('pendingPlan');
-    if (!pendingPlan || (pendingPlan !== 'pro' && pendingPlan !== 'elite')) { router.replace('/dashboard'); return; }
+    if (!pendingPlan || (pendingPlan !== 'pro' && pendingPlan !== 'scale')) { router.replace('/dashboard'); return; }
     setUpgradeStatus('loading');
     fetch('/api/upgrade-plan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ plan: pendingPlan, sessionId: stripeSessionId }) })
       .then(r => r.json())
@@ -680,7 +712,7 @@ export default function DashboardClient({
           localStorage.removeItem('pendingPlan');
           setUpgradedPlan(pendingPlan);
           setUpgradeStatus('success');
-          const ok = await waitForBillingPlan(pendingPlan as 'pro' | 'elite');
+          const ok = await waitForBillingPlan(pendingPlan as 'pro' | 'scale');
           if (!ok) console.warn('[Dashboard] billingPlan pas encore à jour — reload.');
           window.location.href = '/dashboard';
         } else { setUpgradeStatus('error'); }
@@ -692,6 +724,8 @@ export default function DashboardClient({
   // ── Base computed values ────────────────────────────────────────────────
   const remaining = Math.max(0, analysesLimit - analysesCount);
   const hooksRemaining = hooksLimit > 0 ? Math.max(0, hooksLimit - hooksCount) : 0;
+  const reconstructionsLimit = RECONSTRUCTION_LIMITS[plan] ?? 0;
+  const reconstructionsRemaining = Math.max(0, reconstructionsLimit - reconstructionsCount);
   const canAnalyze = remaining > 0;
   const initials = email.slice(0, 2).toUpperCase();
   const hasHistory = analyses.length > 0;
@@ -751,7 +785,7 @@ export default function DashboardClient({
     }
     if (trend !== null && trend < -3) return `Tes dernières vidéos baissent de ${Math.abs(trend)} pts. Interviens sur ton ${weakest?.label ?? 'contenu'}.`;
     if (potential !== null && potential > 10) return `Tu as +${potential} pts de progression possible — corrige tes faiblesses et performe.`;
-    return `Score moyen de ${avgScore} — tu approches le seuil viral. Maintiens ce niveau.`;
+    return `Score moyen de ${avgScore} — ton score de structure est solide. Maintiens ce niveau.`;
   }, [hasHistory, trend, weakest, potential, avgScore]);
 
   // Second weakest dimension (for potential card)
@@ -763,17 +797,17 @@ export default function DashboardClient({
   const actionPlan = getActionPlan(dims);
 
   // ── Handlers ────────────────────────────────────────────────────────────
-  async function handleEliteUpgrade() {
-    setEliteUpgradeLoading(true);
+  async function handleScaleUpgrade() {
+    setScaleUpgradeLoading(true);
     try {
       const res = await fetch('/api/upgrade-subscription', { method: 'POST' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) { alert(data.error ?? 'Mise à niveau impossible.'); return; }
-      const synced = await waitForBillingPlan('elite');
-      if (!synced) console.warn('[Dashboard] Elite webhook lent.');
+      const synced = await waitForBillingPlan('scale');
+      if (!synced) console.warn('[Dashboard] Scale webhook lent.');
       window.location.href = '/dashboard?t=' + Date.now();
     } catch (e) { console.error(e); alert('Erreur réseau.'); }
-    finally { setEliteUpgradeLoading(false); }
+    finally { setScaleUpgradeLoading(false); }
   }
 
   async function handleCancelPlan() {
@@ -814,7 +848,7 @@ export default function DashboardClient({
             <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-5">
               <svg viewBox="0 0 16 16" fill="currentColor" className="w-5 h-5 text-red-400"><path fillRule="evenodd" d="M8 1a3.5 3.5 0 0 0-3.5 3.5V7A1.5 1.5 0 0 0 3 8.5v5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 11.5 7V4.5A3.5 3.5 0 0 0 8 1Zm2 6V4.5a2 2 0 1 0-4 0V7h4Z" clipRule="evenodd" /></svg>
             </div>
-            <h3 className="text-base font-bold text-white text-center mb-2">Annuler ton abonnement {billingPlan === 'elite' ? 'Elite' : 'Pro'} ?</h3>
+            <h3 className="text-base font-bold text-white text-center mb-2">Annuler ton abonnement {planLabels[billingPlan]} ?</h3>
             <p className="text-sm text-gray-400 text-center leading-relaxed mb-5">
               {usesStripeSubscription ? (<>L&apos;abonnement sera arrêté à la <span className="text-white font-medium">fin de la période en cours</span>.</>) : (<>Ton plan passera immédiatement en <span className="text-white font-medium">Free</span>.</>)}
               <br /><span className="text-gray-600 text-xs">Ton historique sera conservé.</span>
@@ -853,7 +887,7 @@ export default function DashboardClient({
             </div>
             <div>
               <p className="text-sm font-semibold text-emerald-400">Paiement réussi — compte mis à jour !</p>
-              <p className="text-xs text-emerald-600 mt-0.5">Plan {upgradedPlan === 'elite' ? 'Elite' : 'Pro'} actif.</p>
+              <p className="text-xs text-emerald-600 mt-0.5">Plan {upgradedPlan === 'scale' ? 'Scale' : 'Pro'} actif.</p>
             </div>
           </div>
         )}
@@ -978,7 +1012,7 @@ export default function DashboardClient({
         {/* ═══════════════════════════════════════════════════════════════ */}
         {/* KPI STRIP */}
         {/* ═══════════════════════════════════════════════════════════════ */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
           {/* Quota analyses */}
           <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 flex items-center gap-4">
             <RingProgress value={analysesCount} max={analysesLimit} size={52} />
@@ -1008,7 +1042,7 @@ export default function DashboardClient({
             {bestScore !== null ? (
               <>
                 <p className={`text-3xl font-black leading-none ${scoreColor(bestScore)}`}>{bestScore}</p>
-                <p className="text-[11px] text-gray-600 mt-1">record viral</p>
+                <p className="text-[11px] text-gray-600 mt-1">meilleur score</p>
               </>
             ) : (
               <p className="text-2xl font-black text-gray-700">—</p>
@@ -1031,6 +1065,14 @@ export default function DashboardClient({
           )}
         </div>
 
+        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
+          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500 mb-3">Reconstructions IA</p>
+          <p className="text-3xl font-black text-white leading-none">{reconstructionsCount}<span className="text-sm text-gray-600 font-medium"> / {reconstructionsLimit}</span></p>
+          <p className={`text-[11px] mt-1 ${reconstructionsLimit > 0 && reconstructionsRemaining === 0 ? 'text-red-400' : 'text-gray-600'}`}>
+            {reconstructionsLimit > 0 ? `${reconstructionsRemaining} restante${reconstructionsRemaining > 1 ? 's' : ''}` : 'Disponible avec Pro'}
+          </p>
+        </div>
+
         <TikTokConnectCard
           connected={tiktok.connected}
           displayName={tiktok.displayName}
@@ -1045,11 +1087,11 @@ export default function DashboardClient({
             targetPlan="pro"
             price={DISPLAY_CATALOG_PRO_EUR}
             badge="Fonctionnalités Pro"
-            title="Débloque ton coach IA complet"
-            subtitle="Plan d'action priorisé, progression détaillée, générateur de hooks et historique complet. Tout ce dont tu as besoin pour progresser vraiment."
+            title="Débloque le moteur de reconstruction complet"
+            subtitle="Plan d'action priorisé, mémoire créateur, hooks testables et historique complet pour transformer les diagnostics en corrections."
             features={[
               { icon: '🎯', text: `${MAX_ANALYSES_PRO} analyses/mois` },
-              { icon: '📊', text: 'Coach IA complet' },
+              { icon: '📊', text: 'Moteur de reconstruction complet' },
               { icon: '⚡', text: `${MAX_HOOKS_PRO} hooks/mois` },
               { icon: '📋', text: 'Historique 30 analyses' },
               { icon: '🏆', text: "Plan d'action priorisé" },
@@ -1084,7 +1126,7 @@ export default function DashboardClient({
                 <p className="text-[12px] text-gray-400 leading-relaxed mb-4">
                   {priorityTip
                     ?? (weakest
-                      ? `Ton ${weakest.label} tire ton score viral vers le bas. C'est là que se joue ta prochaine progression.`
+                      ? `Ton ${weakest.label} tire ton score de structure vers le bas. C'est là que se joue ta prochaine progression.`
                       : 'Continue à analyser tes vidéos pour identifier tes priorités.')}
                 </p>
                 <Link href="/analyzer" className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-vn-fuchsia hover:text-white transition-colors group">
@@ -1109,8 +1151,8 @@ export default function DashboardClient({
                 </div>
                 <p className="text-[12px] text-gray-400 leading-relaxed">
                   {potential !== null && potential > 0
-                    ? `En corrigeant ton ${weakest?.label ?? 'contenu'}${secondWeakest ? ` et ton ${secondWeakest.label}` : ''}, tu peux atteindre le seuil viral.`
-                    : "Tu es déjà près du seuil viral. Maintiens ce niveau de qualité."}
+                    ? `En corrigeant ton ${weakest?.label ?? 'contenu'}${secondWeakest ? ` et ton ${secondWeakest.label}` : ''}, tu peux atteindre un meilleur potentiel de rétention estimé.`
+                    : "Tu es déjà près d'un score de structure solide. Maintiens ce niveau de qualité."}
                 </p>
                 {trend !== null && (
                   <div className={`mt-3 inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full border ${
@@ -1305,37 +1347,37 @@ export default function DashboardClient({
         )}
 
         {/* ═══════════════════════════════════════════════════════════════ */}
-        {/* LOCKED ELITE (free + pro users) */}
+        {/* LOCKED SCALE (free + pro users) */}
         {/* ═══════════════════════════════════════════════════════════════ */}
-        {plan !== 'elite' && (
+        {plan !== 'scale' && (
           <LockedSection
-            targetPlan="elite"
-            price={DISPLAY_CATALOG_ELITE_EUR}
-            badge="Fonctionnalités Elite"
-            title="Passe en mode Elite et domine TikTok"
-            subtitle="Volume max, stratégie virale IA exclusive, détection des trends avant qu'ils explosent. Pour les créateurs qui veulent vraiment dominer l'algorithme."
+            targetPlan="scale"
+            price={DISPLAY_CATALOG_SCALE_EUR}
+            badge="Fonctionnalités Scale"
+            title="Passe en mode Scale"
+            subtitle="Volume équipe, stratégie avancée, comptes TikTok multiples et pilotage contenu pour agences, studios et créateurs ambitieux."
             features={[
-              { icon: '📈', text: `${MAX_ANALYSES_ELITE} analyses/mois` },
-              { icon: '⚡', text: `${MAX_HOOKS_ELITE} hooks/mois` },
+              { icon: '📈', text: 'Analyses illimitées' },
+              { icon: '⚡', text: 'Hooks illimités' },
               { icon: '♾️', text: 'Historique illimité' },
-              { icon: '🔮', text: 'Insights viraux exclusifs' },
+              { icon: '🔮', text: 'Insights avancés' },
               { icon: '💬', text: 'Support prioritaire' },
             ]}
           />
         )}
 
-        {/* ── Elite upgrade banner (Pro + Stripe only — quick 1-click upgrade) ── */}
-        {showEliteUpgrade && (
+        {/* ── Scale upgrade banner (Pro + Stripe only — quick 1-click upgrade) ── */}
+        {showScaleUpgrade && (
           <div className="relative overflow-hidden rounded-2xl border border-vn-violet/30 bg-gradient-to-br from-vn-violet/10 to-vn-fuchsia/[0.06] p-6">
             <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-vn-violet/50 to-transparent pointer-events-none" />
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <p className="text-sm font-bold text-white mb-1">Passer à Elite</p>
-                <p className="text-xs text-gray-400">{MAX_ANALYSES_ELITE} analyses · {MAX_HOOKS_ELITE} hooks · Stratégie Elite · Insights viraux</p>
+                <p className="text-sm font-bold text-white mb-1">Passer à Scale</p>
+                <p className="text-xs text-gray-400">Analyses illimitées · hooks illimités · stratégie avancée · comptes TikTok multiples</p>
               </div>
-              <button type="button" disabled={eliteUpgradeLoading} onClick={handleEliteUpgrade}
+              <button type="button" disabled={scaleUpgradeLoading} onClick={handleScaleUpgrade}
                 className="shrink-0 px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-vn-indigo to-vn-fuchsia hover:opacity-90 disabled:opacity-50 transition-all shadow-lg shadow-vn-fuchsia/20">
-                {eliteUpgradeLoading ? 'Mise à niveau…' : `Elite — ${DISPLAY_CATALOG_ELITE_EUR}€/mois`}
+                {scaleUpgradeLoading ? 'Mise à niveau…' : `Scale — ${DISPLAY_CATALOG_SCALE_EUR}€/mois`}
               </button>
             </div>
           </div>
@@ -1470,7 +1512,7 @@ export default function DashboardClient({
                 <div className="flex items-center justify-between px-5 py-4 border-t border-white/[0.05]">
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-600 mb-1">Abonnement</p>
-                    <p className="text-[12px] font-semibold text-white">Plan {billingPlan === 'elite' ? 'Elite' : 'Pro'}</p>
+                    <p className="text-[12px] font-semibold text-white">Plan {planLabels[billingPlan]}</p>
                     <p className="text-[10px] text-gray-600 mt-0.5">Facturation {usesStripeSubscription ? 'Stripe' : 'manuelle'}</p>
                   </div>
                   <button

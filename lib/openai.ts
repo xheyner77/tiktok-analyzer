@@ -3,7 +3,8 @@ import type { ChatCompletion, ChatCompletionContentPart } from 'openai/resources
 import type { Plan } from './supabase';
 import { OPENAI_CHAT_MODEL } from './openai-models';
 import { VISION_MAX_FRAMES } from './vision-config';
-import type { AnalysisResult, Rating, Priority } from './types';
+import type { CompactAnalysisContext } from './analysis-quality';
+import type { AnalysisResult, Rating, Priority, StructuredDiagnostic } from './types';
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -51,29 +52,31 @@ function systemPrompt(): string {
     '4. AUTEUR / NICHE = inference sur le format et les attentes de l\'audience',
     '',
     '=== DONNEES ALGO TIKTOK A UTILISER POUR CALIBRER ===',
-    'Taux d\'engagement (likes+comments+shares / vues) : <2% = faible | 2-5% = correct | 5-10% = fort | >10% = viral',
+    'Taux d\'engagement (likes+comments+shares / vues) : <2% = faible | 2-5% = correct | 5-10% = fort | >10% = signal d\'interet eleve',
     'Duree optimale completion : 15-25s = max | 26-45s = bon | 46-90s = risque | >90s = tres risque',
     'Hook textuel fort : "Comment j\'ai..." / "Personne ne dit ca..." / chiffre choc / affirmation contre-intuitive',
     'Hook textuel faible : "Aujourd\'hui je vais vous parler de..." / introduction generique = kill switch #1',
-    'Sous-titres animes : +28% completion rate (85% audience sans son)',
+    'Sous-titres animes : zone a ameliorer pour les viewers sans son',
     '',
     '=== REGLES STRICTES ===',
     '- Dans "analysis" : commence TOUJOURS par ta source reelle ("D\'apres la legende : ..." / "Les stats indiquent : ..." / "La duree de Xs suggere : ...")',
     '- Ne pretends JAMAIS observer des elements visuels que tu ne peux pas voir',
     '- Pour le montage : deduis depuis la duree + le format infere de la legende, donne des benchmarks TikTok chiffres',
-    '- Chaque weakness : [observation ancree dans les metadonnees] => [impact algorithmique chiffre si possible]',
-    '- Chaque improvement : cite l\'ancrage (hook/montage/retention) + action precise + benefice attendu chiffre',
+    '- Chaque weakness : [observation ancree dans les metadonnees] => [impact probable formule prudemment]',
+    '- Chaque improvement : cite l\'ancrage (hook/montage/retention) + action precise + benefice attendu formule comme hypothese',
     '- Scores calibres honnetement : 0-100, ne pas gonfler sans base reelle dans les metadonnees',
     '',
     'Tu reponds UNIQUEMENT en JSON valide, sans texte avant ou apres.',
+    'Tout diagnostic doit contenir une preuve. Si la preuve manque, ecris "risque probable" et mets confidence <= 0.55.',
+    'N invente jamais des vues, taux de retention, donnees compte ou performances non fournies.',
   ].join('\n');
 }
 
 function buildPrompt(
   videoUrl: string,
-  plan: 'pro' | 'elite',
+  plan: 'pro' | 'scale',
   observedMetrics?: { views?: number; likes?: number; comments?: number; shares?: number },
-  videoContext?: { caption?: string; authorUsername?: string; durationSec?: number }
+  videoContext?: { caption?: string; authorUsername?: string; durationSec?: number; memoryPrompt?: string }
 ): string {
   const isPro = plan === 'pro';
   const tipsCount = isPro ? 5 : 10;
@@ -113,7 +116,7 @@ function buildPrompt(
       }`
     : 'Duree : inconnue';
 
-  const eliteSection = isPro ? '' : [
+  const scaleSection = isPro ? '' : [
     '',
     '  "strategy": "150-200 mots — strategie de contenu ANCREE dans ce type de video/niche.',
     '    Mentionne : frequence de publication, creneaux horaires, format des prochaines videos.",',
@@ -132,6 +135,7 @@ function buildPrompt(
     captionLine,
     '',
     statsLines,
+    videoContext?.memoryPrompt ? `\n${videoContext.memoryPrompt}` : '',
     '',
     'MISSION : Analyse cette video depuis ses metadonnees. Sois precis, ancre dans les donnees reelles, honnete sur tes sources.',
     '',
@@ -152,7 +156,10 @@ function buildPrompt(
     '  "retention": { "score": int, "rating": "Excellent|Bon|Moyen|Faible", "analysis": "...", "strengths": [...], "weaknesses": [...] },',
     `  "improvements": [ { "priority": "haute|moyenne|basse", "tip": "Cote [hook/montage/retention] : action precise + benefice chiffre" } — exactement ${tipsCount} items ],`,
     '  "comparativeInsight": "2-3 phrases avec chiffres reels",',
-    '  "comparativePriority": "1-2 phrases action prioritaire"' + eliteSection,
+    '  "comparativePriority": "1-2 phrases action prioritaire",',
+    '  "diagnostics": [',
+    '    { "title": "Payoff trop tardif", "timestamp": "0:04-0:07 ou risque probable", "evidence": "preuve issue de la legende/stats/duree", "explanation": "probleme concret", "impact": "impact probable sans inventer de metrique", "fix": "correction actionnable", "confidence": 0.0-1.0 }',
+    '  ]' + scaleSection,
     '}',
     '',
     'Regles :',
@@ -195,6 +202,21 @@ function parseResult(raw: string): AnalysisResult {
     throw new Error(`IA: ${json.error}`);
   }
 
+  const structuredDiagnostics: StructuredDiagnostic[] = Array.isArray(json.diagnostics)
+    ? json.diagnostics.map((item: unknown) => {
+        const o = (item && typeof item === 'object' ? item : {}) as Record<string, unknown>;
+        return {
+          title: String(o.title ?? 'Diagnostic'),
+          explanation: String(o.explanation ?? ''),
+          timestamp: typeof o.timestamp === 'string' ? o.timestamp : undefined,
+          evidence: String(o.evidence ?? 'Signal disponible mais preuve detaillee non fournie.'),
+          impact: String(o.impact ?? ''),
+          fix: String(o.fix ?? ''),
+          confidence: Math.max(0.05, Math.min(1, Number(o.confidence) || 0.45)),
+        };
+      }).filter((item) => item.title && item.fix)
+    : [];
+
   return {
     viralityScore: Math.min(100, Math.max(0, Number(json.viralityScore) || 0)),
     hook:      section(json.hook),
@@ -213,6 +235,7 @@ function parseResult(raw: string): AnalysisResult {
       typeof json.comparativeInsight === 'string' ? json.comparativeInsight.trim() : undefined,
     comparativePriority:
       typeof json.comparativePriority === 'string' ? json.comparativePriority.trim() : undefined,
+    structuredDiagnostics: structuredDiagnostics.length ? structuredDiagnostics : undefined,
     strategy:  typeof json.strategy  === 'string' ? json.strategy  : undefined,
     viralTips: Array.isArray(json.viralTips)
       ? json.viralTips.map(String).filter(Boolean)
@@ -233,19 +256,19 @@ function systemPromptVision(): string {
     'COMPLETION RATE (signal #1 — le plus pondérant) :',
     '<30% = distribution bloquee | 30-50% = normale | 50-65% = bonne | >65% = distribution maximale',
     'TAUX D\'ENGAGEMENT (likes+comments+shares / vues) :',
-    '<2% = faible | 2-5% = correct | 5-10% = fort | >10% = viral/exceptionnel',
+    '<2% = faible | 2-5% = correct | 5-10% = fort | >10% = signal d\'interet eleve',
     '',
     '=== CE QUE TU DOIS ANALYSER FRAME PAR FRAME ===',
     'HOOK (frames du debut, ~0-4s) :',
-    '- TEXTE OVERLAY visible des la 1ere frame ? CRITIQUE : absent = -28% retention (85% audience sans son)',
+    '- TEXTE OVERLAY visible des la 1ere frame ? CRITIQUE : absent = risque de friction pour audience sans son',
     '- PATTERN INTERRUPT visuel : cut brutal / zoom / element choc / visage expressif ? Absent = le scroll ne s\'arrete pas',
-    '- VISAGE HUMAIN expressif dans les premieres frames ? Oui = +35% hook rate',
+    '- VISAGE HUMAIN expressif dans les premieres frames ? Oui = signal de hook a mentionner prudemment',
     '- CURIOSITY GAP visible : la 1ere frame cree-t-elle une question chez le viewer ?',
     '- TON/ENERGIE : expression neutre ou plate visible = signal negatif immediat',
     '',
     'MONTAGE (toutes les frames) :',
     '- DENSITE DE COUPE estimee : peu de changement entre frames adjacentes = plans longs (>4s = signal "lent")',
-    '- SOUS-TITRES ANIMES sur les dialogues ? Absent = -28% completion rate',
+    '- SOUS-TITRES ANIMES sur les dialogues ? Absent = risque de friction pour la comprehension sans son',
     '- DYNAMISME VISUEL : zooms, B-roll, changements de cadrage, textes animes, split-screen ?',
     '- QUALITE TECHNIQUE : eclairage sombre ou plat ? Flou ? Instabilite ? (eclairage faible = -40% follow rate)',
     '- EFFETS : speed ramp, transition impactante, highlight visuel ?',
@@ -267,6 +290,12 @@ function systemPromptVision(): string {
     '4. Tu ne peux PAS entendre l\'audio — ne commente pas la qualite sonore sauf si deduit visuellement',
     '   (micro visible, sous-titres presents/absents, casque audible, etc.)',
     '',
+    '5. Chaque insight suit: Signal observe -> probleme -> impact -> correction.',
+    '6. Interdit: "le hook est faible" sans preuve concrete tiree des frames/OCR/transcript.',
+    '7. Wording humain, phrases courtes, pas de ton ChatGPT, pas de jargon vide.',
+    '8. Anti-hallucination: n invente jamais des metrics TikTok, courbes de retention, vues, donnees compte ou performances non fournies.',
+    '9. Si un signal manque: indique "non disponible", "risque probable" ou confidence <= 0.55.',
+    '10. Chaque diagnostic JSON doit avoir title, timestamp, evidence, explanation, impact, fix, confidence.',
     'Reponds UNIQUEMENT en JSON valide. Aucun texte avant ou apres.',
   ].join('\n');
 }
@@ -280,12 +309,12 @@ function buildVisionUserContent(
   plan: Plan,
   frameCount: number,
   observedMetrics?: { views?: number; likes?: number; comments?: number; shares?: number },
-  meta?: { durationSec?: number; tiktokUrl?: string; fileName?: string; transcript?: string }
+  meta?: { durationSec?: number; tiktokUrl?: string; fileName?: string; transcript?: string; analysisContext?: CompactAnalysisContext }
 ): string {
-  const isElite = plan === 'elite';
+  const isScale = plan === 'scale';
   const isFree = plan === 'free';
-  const tipsCount = isElite ? 10 : 5;
-  const depth = isElite
+  const tipsCount = isScale ? 10 : 5;
+  const depth = isScale
     ? '4-5 phrases par section avec donnees chiffrees'
     : isFree
       ? '1-2 phrases concises par section (apercu plan gratuit — concret et actionnable)'
@@ -316,7 +345,9 @@ function buildVisionUserContent(
     : 'Stats TikTok : non disponibles';
 
   // Transcript block — this is the most valuable signal when available
-  const transcriptBlock = meta?.transcript?.trim()
+  const transcriptBlock = meta?.analysisContext?.promptContext
+    ? `\n=== CONTEXTE PRE-ANALYSE LOCAL ===\n${meta.analysisContext.promptContext}\n===`
+    : meta?.transcript?.trim()
     ? [
         '',
         '=== TRANSCRIPTION AUDIO COMPLETE (Whisper) ===',
@@ -325,16 +356,16 @@ function buildVisionUserContent(
         '- La qualite du copywriting et de la promesse',
         '- La presence et la qualite du CTA final',
         '- La structure narrative (setup → montee → revelation → CTA)',
-        `"${meta.transcript.trim().slice(0, 1200)}"`,
+        `"${meta.transcript.trim().slice(0, 700)}"`,
         '===',
       ].join('\n')
     : '\nAudio : non transcrit (analyse visuelle uniquement).';
 
-  const eliteJsonTail = isElite
+  const scaleJsonTail = isScale
     ? ',\n  "strategy": "150-200 mots — strategie de contenu ancree dans CE QUI EST DIT (transcription) ET CE QUI EST VU (frames). Frequence, creneaux, formats complementaires.",\n  "viralTips": ["tip1", "tip2", "tip3", "tip4"] — 4 insights tres specifiques au contenu/niche observe'
     : '';
 
-  const priorityRule = isElite
+  const priorityRule = isScale
     ? 'Exactement 10 tips : 4 haute, 4 moyenne, 2 basse'
     : 'Exactement 5 tips : 2 haute, 2 moyenne, 1 basse';
 
@@ -346,7 +377,7 @@ function buildVisionUserContent(
     : [
         '  "comparativeInsight": "2-3 phrases : positionnement de cette video (scores + stats si dispo). Chiffres concrets.",',
         '  "comparativePriority": "1-2 phrases : l\'action la plus rentable en priorite, ancree dans la faiblesse principale"' +
-          eliteJsonTail,
+          scaleJsonTail,
       ].join('\n');
 
   return [
@@ -359,7 +390,7 @@ function buildVisionUserContent(
     '',
     `ANALYSE DEMANDEE (${depth}) :`,
     meta?.transcript?.trim()
-      ? 'Tu as la TRANSCRIPTION COMPLETE + les frames visuelles. Croise les deux : analyse le hook verbal ET le hook visuel, le CTA dit ET le CTA visible.'
+      ? 'Tu as un contexte multimodal compresse + les frames essentielles. Croise les deux et analyse uniquement les signaux presents.'
       : 'Examine chaque frame precisement. Note les elements visibles (texte, visage, eclairage, sous-titres, dynamisme).',
     'Utilise les timestamps approximatifs pour contextualiser (hook = frames debut, retention = frames fin).',
     '',
@@ -370,6 +401,8 @@ function buildVisionUserContent(
     '  "editing":   { "score": int, "rating": "...", "analysis": "...", "strengths": [...], "weaknesses": [...] },',
     '  "retention": { "score": int, "rating": "...", "analysis": "...", "strengths": [...], "weaknesses": [...] },',
     `  "improvements": [ { "priority": "haute|moyenne|basse", "tip": "Cote [hook/montage/retention] : action precise => benefice attendu" } — exactement ${tipsCount} items ],`,
+    '  "diagnostics": [ { "title": "...", "timestamp": "0:04-0:07 ou risque probable", "evidence": "signal observe dans transcript/OCR/frame/memoire", "explanation": "...", "impact": "...", "fix": "...", "confidence": 0.0-1.0 } ],',
+    '  "qualityRules": "Chaque diagnostic doit contenir evidence, why et correction. Chaque action repost doit contenir timeRange.",',
     comparativeBlock,
     '}',
     '',
@@ -383,9 +416,9 @@ export async function analyzeWithOpenAIVision(
   framesBase64: string[],
   plan: Plan,
   observedMetrics?: { views?: number; likes?: number; comments?: number; shares?: number },
-  meta?: { durationSec?: number; tiktokUrl?: string; fileName?: string; transcript?: string }
+  meta?: { durationSec?: number; tiktokUrl?: string; fileName?: string; transcript?: string; analysisContext?: CompactAnalysisContext }
 ): Promise<AnalysisResult> {
-  const frames = framesBase64.slice(0, VISION_MAX_FRAMES);
+  const frames = framesBase64.slice(0, Math.min(VISION_MAX_FRAMES, 8));
   const text = buildVisionUserContent(plan, frames.length, observedMetrics, meta);
 
   const userContent: ChatCompletionContentPart[] = [
@@ -400,7 +433,7 @@ export async function analyzeWithOpenAIVision(
   ];
 
   // More tokens for richer analysis, lower temp for consistency
-  const maxOut = plan === 'elite' ? 3200 : plan === 'free' ? 1900 : 2400;
+  const maxOut = plan === 'scale' ? 3200 : plan === 'free' ? 1900 : 2400;
 
   const createParams = {
     model: OPENAI_CHAT_MODEL,
@@ -518,14 +551,14 @@ export function mapOpenAIVisionError(e: unknown): { message: string; status: num
 
 export async function analyzeWithOpenAI(
   videoUrl: string,
-  plan: Extract<Plan, 'pro' | 'elite'>,
+  plan: Extract<Plan, 'pro' | 'scale'>,
   observedMetrics?: { views?: number; likes?: number; comments?: number; shares?: number },
-  videoContext?: { caption?: string; authorUsername?: string; durationSec?: number }
+  videoContext?: { caption?: string; authorUsername?: string; durationSec?: number; memoryPrompt?: string }
 ): Promise<AnalysisResult> {
   const response = await client.chat.completions.create({
     model: OPENAI_CHAT_MODEL,
     temperature: 0.3,   // was 0.45 — lower = plus coherent, ancre dans les donnees
-    max_tokens: plan === 'elite' ? 3200 : 2200,  // was 2800/1600 — plus de place pour une analyse riche
+    max_tokens: plan === 'scale' ? 3200 : 2200,  // plus de place pour une analyse riche
     response_format: { type: 'json_object' as const },  // force JSON propre
     messages: [
       { role: 'system', content: systemPrompt() },

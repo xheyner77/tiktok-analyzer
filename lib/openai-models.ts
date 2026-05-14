@@ -22,4 +22,4 @@ export const OPENAI_CHAT_MODEL = 'gpt-4o-mini';
  *
  * Truncation at 240 caused JSON.parse to throw a 500 for batches of 10 hooks.
  */
-export const HOOK_GENERATION_MAX_TOKENS = 400;
+export const HOOK_GENERATION_MAX_TOKENS = 1600;

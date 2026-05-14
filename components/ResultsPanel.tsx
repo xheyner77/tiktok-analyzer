@@ -6,7 +6,7 @@ import { AnalysisResult, Improvement } from '@/lib/types';
 
 interface ResultsPanelProps {
   data: AnalysisResult;
-  plan: 'free' | 'pro' | 'elite';
+  plan: 'free' | 'pro' | 'scale';
   onReset?: () => void;
 }
 
@@ -22,11 +22,11 @@ function scoreBarCls(s: number) {
 }
 
 function viralBadge(s: number) {
-  if (s >= 85) return { label: 'Viral',          cls: 'bg-emerald-400/15 text-emerald-300 border border-emerald-400/20' };
-  if (s >= 75) return { label: 'Fort potentiel', cls: 'bg-emerald-400/15 text-emerald-300 border border-emerald-400/20' };
-  if (s >= 60) return { label: 'Potentiel',      cls: 'bg-amber-400/15  text-amber-300  border border-amber-400/20'  };
-  if (s >= 40) return { label: 'En progression', cls: 'bg-orange-400/15 text-orange-300 border border-orange-400/20' };
-  return              { label: 'À améliorer',    cls: 'bg-red-500/15    text-red-300    border border-red-500/20'    };
+  if (s >= 85) return { label: 'Très solide',       cls: 'bg-emerald-400/15 text-emerald-300 border border-emerald-400/20' };
+  if (s >= 75) return { label: 'Reconstruction prioritaire', cls: 'bg-emerald-400/15 text-emerald-300 border border-emerald-400/20' };
+  if (s >= 60) return { label: 'À tester',           cls: 'bg-amber-400/15  text-amber-300  border border-amber-400/20'  };
+  if (s >= 40) return { label: 'À corriger',         cls: 'bg-orange-400/15 text-orange-300 border border-orange-400/20' };
+  return              { label: 'À reconstruire',     cls: 'bg-red-500/15    text-red-300    border border-red-500/20'    };
 }
 
 function compBenchmark(s: number) {
@@ -41,22 +41,22 @@ function compBenchmark(s: number) {
 function buildSummary(data: AnalysisResult): string {
   const v = data.viralityScore, h = data.hook?.score ?? 0,
         e = data.editing?.score ?? 0, r = data.retention?.score ?? 0;
-  if (v >= 85) return 'Excellente vidéo — potentiel viral très fort.';
-  if (v >= 75) return 'Très bonne vidéo — optimise les détails pour le viral.';
+  if (v >= 85) return 'Structure solide. Le remontage doit surtout préserver le payoff et resserrer le CTA.';
+  if (v >= 75) return 'Bonne base. Corrige les détails qui ralentissent le hook ou le rythme.';
   const weak = [
     { label: 'hook',      score: h },
     { label: 'montage',   score: e },
     { label: 'rétention', score: r },
   ].filter(d => d.score < 60).sort((a, b) => a.score - b.score);
-  if (weak.length >= 2) return `Ta vidéo perd des vues à cause du\u00a0${weak[0].label} et de la\u00a0${weak[1].label}.`;
+  if (weak.length >= 2) return `La vidéo décroche surtout sur le\u00a0${weak[0].label} et la\u00a0${weak[1].label}.`;
   if (weak.length === 1) {
     if (weak[0].label === 'hook')    return "Ta vidéo décroche en hook — l'audience part avant 3\u00a0secondes.";
-    if (weak[0].label === 'montage') return 'Ta vidéo perd des vues à cause du montage.';
-    return 'Ta vidéo perd son audience trop rapidement.';
+    if (weak[0].label === 'montage') return 'Le rythme ralentit avant que la valeur soit assez visible.';
+    return 'La vidéo expose le sujet, mais ne donne pas assez vite une raison de rester.';
   }
   const verdict = data.finalVerdict?.trim();
   if (verdict) return verdict.split('.')[0] + '.';
-  return 'Ta vidéo est correcte — corrige les points faibles pour décoller.';
+  return 'Corrige le point faible principal avant de préparer le plan de remontage.';
 }
 
 function deriveMainProblem(data: AnalysisResult): string {
@@ -68,11 +68,11 @@ function deriveMainProblem(data: AnalysisResult): string {
   const w = dims[0];
   if (w.weakness) return w.weakness;
   const fallbacks: Record<string, string> = {
-    'Hook':      "Hook insuffisant — l'audience décroche avant 3\u00a0secondes.",
-    'Montage':   "Montage trop lent — perte d'attention au milieu.",
-    'Rétention': "Rétention faible — la vidéo n'est pas regardée jusqu'au bout.",
+    'Hook':      "Hook insuffisant — la raison de rester n'est pas visible assez tôt.",
+    'Montage':   "Rythme trop lent — le milieu manque de rupture ou de preuve.",
+    'Rétention': "Rétention fragile — la vidéo explique avant de relancer l'attention.",
   };
-  return fallbacks[w.label] ?? 'Optimisation nécessaire pour améliorer les performances.';
+  return fallbacks[w.label] ?? 'Signal principal à clarifier avant remontage.';
 }
 
 function deriveProjection(data: AnalysisResult): { label: string; gain: number } | null {
@@ -199,7 +199,12 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
               <span className={`text-[10px] font-bold px-3 py-1 rounded-full ${vb.cls}`}>{vb.label}</span>
               {data.analysisSource === 'vision_upload' && (
                 <span className="text-[9px] font-bold px-2.5 py-0.5 rounded-full bg-vn-fuchsia/15 text-vn-fuchsia border border-vn-fuchsia/20 uppercase tracking-wide">
-                  Vision IA
+                  Vision upload
+                </span>
+              )}
+              {data.analyzerMeta?.analysisModeLabel && (
+                <span className="text-[9px] font-bold px-2.5 py-0.5 rounded-full bg-white/[0.04] text-gray-300 border border-white/[0.08] uppercase tracking-wide">
+                  {data.analyzerMeta.analysisModeLabel}
                 </span>
               )}
               {data.overperformanceDetected && (
@@ -534,11 +539,11 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
         {plan === 'free' ? (
           <div className="relative px-7 sm:px-10 py-8 overflow-hidden min-h-[260px]">
             <div className="blur-sm pointer-events-none select-none opacity-25 min-h-[220px]" aria-hidden>
-              <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-gray-600 mb-5">Stratégie</p>
+              <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-gray-600 mb-5">Plan de correction</p>
               <div className="mb-5">
                 <p className="text-[12px] text-gray-500 mb-1">En améliorant le hook</p>
                 <p className="text-[3rem] font-black leading-none text-emerald-400">+22</p>
-                <p className="text-[11px] text-gray-600 mt-1">points de score potentiel</p>
+                <p className="text-[11px] text-gray-600 mt-1">points d'opportunité structure</p>
               </div>
               <div className="space-y-2 max-w-xs">
                 <div className="h-3 rounded-full bg-gray-700 w-4/5" />
@@ -555,9 +560,9 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
               <span className="text-[9px] font-bold px-3 py-1 rounded-full bg-vn-fuchsia/18 text-vn-fuchsia border border-vn-fuchsia/35 uppercase tracking-[0.14em] mb-3">
                 Plan Pro
               </span>
-              <p className="text-[14px] font-bold text-white mb-2">Stratégie personnalisée</p>
+              <p className="text-[14px] font-bold text-white mb-2">Structure recommandée complète</p>
               <p className="text-[11px] text-gray-400 mb-5 max-w-[220px] mx-auto leading-relaxed">
-                Gain potentiel, plan de progression et stratégie IA sur 30 jours.
+                Débloque l'ordre recommandé, les corrections priorisées et la mémoire créateur étendue.
               </p>
               <Link
                 href="/pricing"
@@ -569,14 +574,14 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
           </div>
         ) : (
           <div className="px-7 sm:px-10 py-8 text-center sm:text-left">
-            <p className={`${label9} mb-5`}>Stratégie</p>
+            <p className={`${label9} mb-5`}>Plan de correction</p>
             {projection && (
               <div className="mb-5">
                 <p className="text-[12px] text-gray-500 mb-1">{projection.label}</p>
                 <p className="text-[3rem] font-black leading-none" style={{ color: '#34d399', textShadow: 'rgba(52,211,153,0.3)' }}>
                   +{projection.gain}
                 </p>
-                <p className="text-[11px] text-gray-600 mt-1">points de score potentiel</p>
+                <p className="text-[11px] text-gray-600 mt-1">points d'opportunité structure</p>
               </div>
             )}
             {data.strategy ? (
@@ -587,7 +592,7 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
                   const weak = pillars.filter(p => (p.s?.score ?? 0) < 70).slice(0, 2).map(p => p.title.toLowerCase());
                   return weak.length
                     ? `Concentre-toi sur ${weak.join(' et ')} pour maximiser ta portée.`
-                    : 'Continue sur cette trajectoire — optimise chaque nouvelle vidéo.';
+                    : 'Continue sur cette trajectoire — transforme chaque diagnostic en hypothèse de remontage.';
                 })()}
               </p>
             )}
@@ -596,13 +601,13 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
 
       </div>
 
-      {/* 6. ELITE — Insights viraux */}
+      {/* 6. SCALE — Insights avancés */}
       <Hr />
-      {plan === 'elite' && (data.viralTips?.length ?? 0) > 0 ? (
+      {plan === 'scale' && (data.viralTips?.length ?? 0) > 0 ? (
         <div className="px-7 sm:px-10 py-8 text-center md:text-left">
           <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-2 sm:gap-3 mb-6">
-            <p className={label9}>Insights viraux</p>
-            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-vn-fuchsia/15 text-vn-fuchsia border border-vn-fuchsia/20 uppercase tracking-wide">Elite</span>
+            <p className={label9}>Hypothèses IA</p>
+            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-vn-fuchsia/15 text-vn-fuchsia border border-vn-fuchsia/20 uppercase tracking-wide">Scale</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3 text-left max-w-lg mx-auto md:max-w-none md:mx-0">
             {(data.viralTips ?? []).map((tip, i) => (
@@ -612,16 +617,16 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
             ))}
           </div>
         </div>
-      ) : plan !== 'elite' && (
-        /* Locked Elite insights preview */
+      ) : plan !== 'scale' && (
+        /* Locked Scale insights preview */
         <div className="relative overflow-hidden border-t-0 min-h-[300px]">
           <div className="blur-sm pointer-events-none select-none opacity-30 px-7 sm:px-10 py-10 min-h-[280px]" aria-hidden>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mb-6">
-              <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-gray-600">Insights viraux</p>
-              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-300 border border-violet-500/20 uppercase tracking-wide">Elite</span>
+              <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-gray-600">Hypothèses IA</p>
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-300 border border-violet-500/20 uppercase tracking-wide">Scale</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3 max-w-lg mx-auto">
-              {['Ton hook crée une tension narrative rare — continue sur cet angle spécifique.','Tes cuts synchronisés sur le beat placent ta vidéo dans le top 8% du format.','La rétention après 15s est anormalement haute — exploite cette fenêtre.','Détecté : pattern de viralité secondaire sur les 3 premières secondes.'].map((tip, i) => (
+              {['Ton hook crée une tension narrative à tester — continue sur cet angle spécifique.','Tes cuts synchronisés sur le beat sont un signal détecté à vérifier en montage.','La rétention après 15s semble solide — hypothèse IA à confirmer avec tes données TikTok.','Signal détecté : boucle d’attention possible sur les 3 premières secondes.'].map((tip, i) => (
                 <p key={i} className="text-[12px] text-gray-400 leading-snug">
                   <span className="text-vn-fuchsia font-black mr-2">{i + 1}</span>{tip}
                 </p>
@@ -636,11 +641,11 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
                 </svg>
               </div>
               <span className="text-[9px] font-bold px-3 py-1 rounded-full bg-vn-violet/20 text-violet-300 border border-vn-violet/35 uppercase tracking-[0.14em]">
-                Plan Elite
+                Plan Scale
               </span>
-              <p className="text-[15px] font-black text-white leading-tight">Insights viraux exclusifs</p>
+              <p className="text-[15px] font-black text-white leading-tight">Hypothèses IA avancées</p>
               <p className="text-[11px] text-gray-400 leading-relaxed">
-                Patterns viraux, benchmarks top créateurs et stratégie avancée.
+                Patterns internes, benchmarks par niche et décisions de reconstruction avancées.
               </p>
               <div className="flex flex-wrap justify-center gap-2 w-full pt-1">
                 {['🔮 Patterns', '📊 Benchmark', '⚡ Stratégie'].map((f, i) => (
@@ -653,7 +658,7 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
                 href="/pricing"
                 className="inline-flex items-center justify-center gap-2 text-[12px] font-bold px-6 py-3 rounded-xl bg-gradient-to-r from-vn-violet to-vn-fuchsia text-white hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_8px_28px_-8px_rgba(139,92,246,0.5)] mt-2 w-full max-w-[240px]"
               >
-                🔥 Passer à Elite
+                Passer à Scale
               </Link>
               <p className="text-[10px] text-gray-600 pt-1">Sans engagement · Annule en 1 clic</p>
             </div>
@@ -666,7 +671,7 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
       <div className="px-7 sm:px-10 py-8 flex flex-col items-center text-center sm:flex-row sm:items-center sm:text-left justify-between gap-4">
         <div>
           <p className="text-[14px] font-semibold text-white">Prêt à corriger&nbsp;?</p>
-          <p className="text-[11px] text-gray-600 mt-0.5">Analyse une autre vidéo ou génère des hooks optimisés.</p>
+          <p className="text-[11px] text-gray-600 mt-0.5">Analyse une autre vidéo ou prépare des hooks testables.</p>
         </div>
         <div className="flex gap-2.5 shrink-0 flex-wrap justify-center sm:justify-end">
           {onReset ? (
