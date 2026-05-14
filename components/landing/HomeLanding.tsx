@@ -2320,7 +2320,7 @@ function PricingSection() {
 
   return (
     <MotionSection className={`${shell} relative py-7 sm:py-14`}>
-      <div className="mx-auto max-w-4xl">
+      <div className="mx-auto max-w-7xl">
         <CreatorPromoCountdown />
 
         <div className="mb-5 text-center sm:mb-8">
@@ -2330,7 +2330,7 @@ function PricingSection() {
           </p>
         </div>
 
-        <div className="space-y-4 sm:space-y-7">
+        <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-5 xl:gap-7">
           {pricingCards.map((plan) => {
             const isAnnual = Boolean(plan.annualPrice && annualBilling[plan.name]);
             const displayedOldPrice = (isAnnual ? ('annualOldPrice' in plan ? plan.annualOldPrice : undefined) : ('oldPrice' in plan ? plan.oldPrice : undefined)) as string | undefined;
@@ -2359,7 +2359,7 @@ function PricingSection() {
             <motion.article
               key={plan.name}
               whileHover={cardHover}
-              className={`group relative overflow-hidden rounded-[1.25rem] border px-4 py-5 text-left transition duration-500 ease-out hover:border-white/25 sm:rounded-[1.35rem] sm:px-7 sm:py-7 ${cardChrome}`}
+              className={`group relative h-full overflow-hidden rounded-[1.25rem] border px-4 py-5 text-left transition duration-500 ease-out hover:border-white/25 sm:rounded-[1.35rem] sm:px-7 sm:py-7 ${cardChrome}`}
             >
               <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-white/55 to-transparent" aria-hidden />
               <div className="pointer-events-none absolute -right-16 -top-16 h-36 w-36 rounded-full bg-white/[0.045] blur-2xl transition duration-500 group-hover:bg-white/[0.07]" aria-hidden />
