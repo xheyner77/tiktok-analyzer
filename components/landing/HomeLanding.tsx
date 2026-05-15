@@ -493,138 +493,149 @@ function ResultProofPhone() {
 }
 
 function LandingFeaturesSection() {
-  const proofStats = [
-    ['1', 'vid?o analys?e'],
-    ['3', 'd?cisions claires'],
-    ['1', 'V2 pr?te ? tester'],
+  const microFlow = [
+    ['Upload', 'Vidéo TikTok ou fichier'],
+    ['Diagnostic', 'Moments faibles, hook, rythme, CTA'],
+    ['V2', 'Structure corrigée à tester'],
   ];
 
-  const workflowSteps = [
-    ['Analyse', 'Upload vid?o ou lien TikTok', 'Viralynz lit les signaux visibles : hook, rythme, drop, CTA et structure.'],
-    ['Diagnostic', 'Ce qui fait d?crocher', 'Tu vois les moments faibles, les secondes lentes et les signaux qui cassent la r?tention.'],
-    ['Reconstruction', 'Une V2 plus retenante', 'Viralynz propose quoi couper, avancer, r??crire ou renforcer.'],
-    ['Publication', 'Programmation TikTok - beta', 'En Pro et Scale, pr?pare la publication TikTok de ta version corrig?e.'],
+  const currentSignals = [
+    'Hook trop explicatif',
+    'Drop à 0:05',
+    'Séquence plate',
+    'CTA vague',
   ];
 
-  const features = [
-    ['Diagnostic de r?tention', 'Rep?re o? l?attention d?croche au lieu de deviner.'],
-    ['Timeline de correction', 'Les secondes ? couper, avancer, garder ou renforcer.'],
-    ['Reconstruction IA', 'Une nouvelle structure ? tester, pas une liste de conseils vagues.'],
-    ['Hooks alternatifs', 'Des ouvertures plus directes selon l?angle de ta vid?o.'],
-    ['CTA optimis?s', 'Des fins plus claires pour d?clencher commentaire, follow ou action.'],
-    ['Publishing TikTok', 'Pr?pare la V2 ? republier depuis Viralynz. Pro et Scale. Beta.'],
+  const recommendedActions = [
+    'Ouvrir sur la preuve',
+    'Couper 2 secondes',
+    'Ajouter une relance',
+    'Transformer en question',
   ];
 
-  const decisions = [
-    ['0:02', 'Hook trop lent', 'Ouvrir sur la preuve'],
-    ['0:05', 'Drop d?attention', 'Couper 2 secondes'],
-    ['0:11', 'S?quence plate', 'Ajouter une relance'],
-    ['Fin', 'CTA trop vague', 'Transformer en question'],
-  ];
-
-  const analysisOutputs = [
-    'Diagnostic de r?tention',
-    'Moments faibles d?tect?s',
-    'Structure de V2',
-    'Hooks alternatifs',
-    'CTA ? corriger',
-    'Priorit? de publication',
+  const decisionRows = [
+    ['Quoi couper', 'Les secondes qui ralentissent la vidéo.'],
+    ['Quoi avancer', 'La preuve ou le payoff qui arrive trop tard.'],
+    ['Quoi réécrire', 'Les hooks et CTA qui manquent de tension.'],
+    ['Quoi republier', 'La version corrigée qui mérite un nouveau test.'],
   ];
 
   return (
     <MotionSection id="features" className={`${shell} relative py-6 sm:py-14 scroll-mt-24`}>
       <div className="mx-auto max-w-7xl">
-        <div className="grid gap-4 lg:grid-cols-[0.92fr_1.08fr] lg:items-start">
-          <div>
+        <div className="grid gap-5 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
+          <div className="lg:sticky lg:top-24">
             <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-cyan-100 shadow-[0_18px_52px_-42px_rgba(34,211,238,0.95)]">
               <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_16px_rgba(34,211,238,0.95)]" aria-hidden />
-              WORKFLOW VIRALYNZ
+              OUTPUT VIRALYNZ
             </div>
             <h2 className="mt-4 max-w-2xl text-3xl font-black leading-tight tracking-tight text-white sm:text-5xl">
-              De ton flop ? une V2 <TitleAccent>pr?te ? tester</TitleAccent>
+              Un diagnostic qui finit <TitleAccent>en V2.</TitleAccent>
             </h2>
             <p className="mt-3 max-w-xl text-sm leading-6 text-gray-400 sm:text-base sm:leading-7">
-              Viralynz rep?re ce qui casse la r?tention, reconstruit la structure et pr?pare la version ? republier.
+              Upload ta vidéo. Viralynz repère où l’attention casse, puis sort les corrections à appliquer avant de republier.
             </p>
 
-            <div className="mt-5 grid grid-cols-3 gap-2">
-              {proofStats.map(([value, label]) => (
-                <div key={label} className="rounded-2xl border border-white/[0.08] bg-white/[0.04] px-2.5 py-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-                  <p className="text-2xl font-black leading-none text-white">{value}</p>
-                  <p className="mt-1 text-[9px] font-black uppercase leading-4 tracking-[0.1em] text-gray-500">{label}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-5 overflow-hidden rounded-[1.35rem] border border-cyan-300/16 bg-[radial-gradient(circle_at_18%_0%,rgba(34,211,238,0.12),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.052),rgba(255,255,255,0.018))] p-3.5 sm:p-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200/80">Pas un rapport IA. Une version corrig?e ? tester.</p>
-              <div className="mt-3 grid gap-2">
-                {workflowSteps.map(([label, title, body], index) => (
-                  <div key={label} className="grid grid-cols-[2.4rem_1fr] gap-3 rounded-2xl border border-white/[0.07] bg-black/22 p-3">
-                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-white/[0.07] text-xs font-black text-white">{index + 1}</span>
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-cyan-100/75">{label}</p>
-                      <p className="mt-1 text-sm font-black leading-5 text-white">{title}</p>
-                      <p className="mt-1 text-xs font-medium leading-5 text-gray-400">{body}</p>
-                    </div>
+            <div className="mt-5 rounded-[1.25rem] border border-white/[0.09] bg-white/[0.035] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.045)]">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200/80">La vidéo actuelle entre. La version corrigée sort.</p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                {microFlow.map(([label, body], index) => (
+                  <div key={label} className="relative rounded-2xl border border-white/[0.08] bg-black/22 p-3">
+                    {index < microFlow.length - 1 ? (
+                      <span className="absolute -right-2 top-1/2 hidden h-4 w-4 -translate-y-1/2 items-center justify-center rounded-full border border-cyan-300/20 bg-[#08090e] text-[10px] text-cyan-200 sm:flex" aria-hidden>
+                        →
+                      </span>
+                    ) : null}
+                    <p className="text-xs font-black uppercase tracking-[0.13em] text-white">{label}</p>
+                    <p className="mt-1 text-xs font-medium leading-5 text-gray-400">{body}</p>
                   </div>
                 ))}
               </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {['Trouve le drop', 'Réécrit le hook', 'Prépare la V2'].map((item) => (
+                  <span key={item} className="rounded-full border border-cyan-300/15 bg-cyan-300/[0.07] px-3 py-1.5 text-[10px] font-black text-cyan-100/85">
+                    {item}
+                  </span>
+                ))}
+              </div>
             </div>
+
+            <div className="mt-4 rounded-[1.25rem] border border-cyan-300/18 bg-[radial-gradient(circle_at_74%_0%,rgba(34,211,238,0.15),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.052),rgba(255,255,255,0.018))] p-4">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200/75">Ce que Viralynz décide pour toi</p>
+              <div className="mt-4 grid gap-2">
+                {decisionRows.map(([title, body]) => (
+                  <div key={title} className="grid grid-cols-[6.4rem_1fr] gap-3 rounded-xl border border-white/[0.07] bg-white/[0.035] px-3 py-2.5">
+                    <p className="text-xs font-black leading-5 text-white">{title}</p>
+                    <p className="text-xs font-medium leading-5 text-gray-400">{body}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 text-[11px] font-bold leading-5 text-gray-500">
+                Pro & Scale : programmation TikTok en beta.
+              </p>
+            </div>
+
+            <Link href="/analyzer" className="mt-4 inline-flex min-h-[46px] w-full items-center justify-center rounded-2xl bg-white px-5 text-sm font-black text-vn-bg transition hover:bg-cyan-50 sm:w-auto">
+              Analyser ma vidéo
+            </Link>
           </div>
 
-          <div className="space-y-3">
-            <div className="overflow-hidden rounded-[1.25rem] border border-vn-violet/22 bg-[radial-gradient(circle_at_18%_0%,rgba(168,85,247,0.18),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.018))] p-4 shadow-[0_28px_96px_-76px_rgba(168,85,247,0.9)] sm:p-5">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-violet-200/75">Sortie Viralynz</p>
-                  <h3 className="mt-1 text-xl font-black leading-tight text-white">Des d?cisions de montage, pas du blabla IA</h3>
-                </div>
+          <div className="relative overflow-hidden rounded-[1.45rem] border border-white/[0.1] bg-[#07080d] p-3 shadow-[0_34px_130px_-84px_rgba(168,85,247,0.95)] sm:p-4 lg:p-5">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_0%,rgba(232,121,249,0.2),transparent_34%),radial-gradient(circle_at_88%_18%,rgba(34,211,238,0.14),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.052),transparent_36%)]" aria-hidden />
+            <div className="relative">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-violet-200/75">Pas un rapport. Une V2.</p>
                 <span className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-emerald-200">ACTIONNABLE</span>
               </div>
 
-              <div className="mt-4 grid gap-2">
-                {decisions.map(([time, issue, action]) => (
-                  <div key={`${time}-${issue}`} className="grid grid-cols-[3.35rem_1fr] gap-3 rounded-2xl border border-white/[0.08] bg-black/24 p-3">
-                    <span className="rounded-xl bg-white/[0.07] px-2 py-2 text-center text-[10px] font-black uppercase tracking-[0.08em] text-cyan-100">{time}</span>
+              <div className="grid gap-3 lg:grid-cols-[1fr_auto_1fr] lg:items-stretch">
+                <div className="rounded-[1.2rem] border border-rose-300/20 bg-[linear-gradient(160deg,rgba(244,63,94,0.11),rgba(255,255,255,0.025))] p-4">
+                  <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-xs font-black text-white">{issue}</p>
-                      <p className="mt-1 text-xs leading-5 text-gray-400">{action}</p>
+                      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-rose-100/65">Input</p>
+                      <h3 className="mt-1 text-xl font-black leading-tight text-white">Vidéo actuelle</h3>
                     </div>
+                    <span className="rounded-full border border-rose-300/25 bg-rose-400/10 px-2.5 py-1 text-[10px] font-black text-rose-100">à corriger</span>
                   </div>
-                ))}
-              </div>
-            </div>
 
-            <div className="grid gap-3 lg:grid-cols-[1fr_0.82fr]">
-              <div className="grid gap-2 sm:grid-cols-2">
-                {features.map(([title, body]) => (
-                  <motion.div
-                    key={title}
-                    whileHover={cardHover}
-                    className="group relative min-h-[7.25rem] overflow-hidden rounded-[1.05rem] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.052),rgba(255,255,255,0.018))] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.055)] transition duration-500 hover:border-cyan-300/22 hover:bg-white/[0.06]"
-                  >
-                    <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/35 to-transparent opacity-0 transition group-hover:opacity-100" aria-hidden />
-                    <h3 className="text-sm font-black leading-tight text-white sm:text-base">{title}</h3>
-                    <p className="mt-2 text-xs font-medium leading-5 text-gray-400">{body}</p>
-                  </motion.div>
-                ))}
-              </div>
-
-              <div className="rounded-[1.25rem] border border-cyan-300/18 bg-[radial-gradient(circle_at_74%_0%,rgba(34,211,238,0.15),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.052),rgba(255,255,255,0.018))] p-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200/75">Ce que tu obtiens apr?s analyse</p>
-                <div className="mt-4 grid gap-2">
-                  {analysisOutputs.map((item) => (
-                    <div key={item} className="flex items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.035] px-3 py-2">
-                      <span className="grid h-5 w-5 place-items-center rounded-full border border-cyan-300/25 bg-cyan-300/10 text-[10px] text-cyan-200">?</span>
-                      <p className="text-xs font-black text-gray-200">{item}</p>
-                    </div>
-                  ))}
+                  <div className="mt-4 grid gap-2">
+                    {currentSignals.map((item) => (
+                      <div key={item} className="rounded-2xl border border-white/[0.08] bg-black/24 px-3 py-3">
+                        <p className="text-sm font-black leading-5 text-white">{item}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
-                <Link href="/analyzer" className="mt-4 inline-flex min-h-[46px] w-full items-center justify-center rounded-2xl bg-white px-5 text-sm font-black text-vn-bg transition hover:bg-cyan-50">
-                  Analyser ma vid?o
-                </Link>
+                <div className="flex items-center justify-center">
+                  <div className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-4 py-2 text-center text-[10px] font-black uppercase tracking-[0.12em] text-cyan-100 shadow-[0_0_36px_-18px_rgba(34,211,238,0.95)] lg:rotate-0">
+                    Analyse → Reconstruction
+                  </div>
+                </div>
+
+                <div className="rounded-[1.2rem] border border-cyan-300/22 bg-[linear-gradient(160deg,rgba(34,211,238,0.11),rgba(255,255,255,0.025))] p-4 shadow-[0_24px_88px_-68px_rgba(34,211,238,0.95)]">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-100/70">Output</p>
+                      <h3 className="mt-1 text-xl font-black leading-tight text-white">V2 recommandée</h3>
+                    </div>
+                    <span className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-2.5 py-1 text-[10px] font-black text-cyan-100">à tester</span>
+                  </div>
+
+                  <div className="mt-4 grid gap-2">
+                    {recommendedActions.map((item) => (
+                      <div key={item} className="rounded-2xl border border-white/[0.08] bg-black/24 px-3 py-3">
+                        <p className="text-sm font-black leading-5 text-white">{item}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-3 rounded-[1.1rem] border border-vn-fuchsia/18 bg-vn-fuchsia/[0.055] px-4 py-3 text-center">
+                <p className="text-sm font-black leading-6 text-white">
+                  Chaque analyse devient une décision de montage claire.
+                </p>
               </div>
             </div>
           </div>
