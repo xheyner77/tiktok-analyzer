@@ -407,7 +407,7 @@ export default function HomeLanding() {
         </div>
       </MotionSection>
 
-      <ReconstructionFeatureSection />
+      <LandingFeaturesSection />
 
       <PricingSection />
 
@@ -489,6 +489,148 @@ function ResultProofPhone() {
         </div>
       </div>
     </section>
+  );
+}
+
+function LandingFeaturesSection() {
+  const proofStats = [
+    ['1', 'vid?o analys?e'],
+    ['3', 'd?cisions claires'],
+    ['1', 'V2 pr?te ? tester'],
+  ];
+
+  const workflowSteps = [
+    ['Analyse', 'Upload vid?o ou lien TikTok', 'Viralynz lit les signaux visibles : hook, rythme, drop, CTA et structure.'],
+    ['Diagnostic', 'Ce qui fait d?crocher', 'Tu vois les moments faibles, les secondes lentes et les signaux qui cassent la r?tention.'],
+    ['Reconstruction', 'Une V2 plus retenante', 'Viralynz propose quoi couper, avancer, r??crire ou renforcer.'],
+    ['Publication', 'Programmation TikTok - beta', 'En Pro et Scale, pr?pare la publication TikTok de ta version corrig?e.'],
+  ];
+
+  const features = [
+    ['Diagnostic de r?tention', 'Rep?re o? l?attention d?croche au lieu de deviner.'],
+    ['Timeline de correction', 'Les secondes ? couper, avancer, garder ou renforcer.'],
+    ['Reconstruction IA', 'Une nouvelle structure ? tester, pas une liste de conseils vagues.'],
+    ['Hooks alternatifs', 'Des ouvertures plus directes selon l?angle de ta vid?o.'],
+    ['CTA optimis?s', 'Des fins plus claires pour d?clencher commentaire, follow ou action.'],
+    ['Publishing TikTok', 'Pr?pare la V2 ? republier depuis Viralynz. Pro et Scale. Beta.'],
+  ];
+
+  const decisions = [
+    ['0:02', 'Hook trop lent', 'Ouvrir sur la preuve'],
+    ['0:05', 'Drop d?attention', 'Couper 2 secondes'],
+    ['0:11', 'S?quence plate', 'Ajouter une relance'],
+    ['Fin', 'CTA trop vague', 'Transformer en question'],
+  ];
+
+  const analysisOutputs = [
+    'Diagnostic de r?tention',
+    'Moments faibles d?tect?s',
+    'Structure de V2',
+    'Hooks alternatifs',
+    'CTA ? corriger',
+    'Priorit? de publication',
+  ];
+
+  return (
+    <MotionSection id="features" className={`${shell} relative py-6 sm:py-14 scroll-mt-24`}>
+      <div className="mx-auto max-w-7xl">
+        <div className="grid gap-4 lg:grid-cols-[0.92fr_1.08fr] lg:items-start">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-cyan-100 shadow-[0_18px_52px_-42px_rgba(34,211,238,0.95)]">
+              <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_16px_rgba(34,211,238,0.95)]" aria-hidden />
+              WORKFLOW VIRALYNZ
+            </div>
+            <h2 className="mt-4 max-w-2xl text-3xl font-black leading-tight tracking-tight text-white sm:text-5xl">
+              De ton flop ? une V2 <TitleAccent>pr?te ? tester</TitleAccent>
+            </h2>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-gray-400 sm:text-base sm:leading-7">
+              Viralynz rep?re ce qui casse la r?tention, reconstruit la structure et pr?pare la version ? republier.
+            </p>
+
+            <div className="mt-5 grid grid-cols-3 gap-2">
+              {proofStats.map(([value, label]) => (
+                <div key={label} className="rounded-2xl border border-white/[0.08] bg-white/[0.04] px-2.5 py-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                  <p className="text-2xl font-black leading-none text-white">{value}</p>
+                  <p className="mt-1 text-[9px] font-black uppercase leading-4 tracking-[0.1em] text-gray-500">{label}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-5 overflow-hidden rounded-[1.35rem] border border-cyan-300/16 bg-[radial-gradient(circle_at_18%_0%,rgba(34,211,238,0.12),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.052),rgba(255,255,255,0.018))] p-3.5 sm:p-4">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200/80">Pas un rapport IA. Une version corrig?e ? tester.</p>
+              <div className="mt-3 grid gap-2">
+                {workflowSteps.map(([label, title, body], index) => (
+                  <div key={label} className="grid grid-cols-[2.4rem_1fr] gap-3 rounded-2xl border border-white/[0.07] bg-black/22 p-3">
+                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-white/[0.07] text-xs font-black text-white">{index + 1}</span>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-cyan-100/75">{label}</p>
+                      <p className="mt-1 text-sm font-black leading-5 text-white">{title}</p>
+                      <p className="mt-1 text-xs font-medium leading-5 text-gray-400">{body}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="overflow-hidden rounded-[1.25rem] border border-vn-violet/22 bg-[radial-gradient(circle_at_18%_0%,rgba(168,85,247,0.18),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.018))] p-4 shadow-[0_28px_96px_-76px_rgba(168,85,247,0.9)] sm:p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-violet-200/75">Sortie Viralynz</p>
+                  <h3 className="mt-1 text-xl font-black leading-tight text-white">Des d?cisions de montage, pas du blabla IA</h3>
+                </div>
+                <span className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-emerald-200">ACTIONNABLE</span>
+              </div>
+
+              <div className="mt-4 grid gap-2">
+                {decisions.map(([time, issue, action]) => (
+                  <div key={`${time}-${issue}`} className="grid grid-cols-[3.35rem_1fr] gap-3 rounded-2xl border border-white/[0.08] bg-black/24 p-3">
+                    <span className="rounded-xl bg-white/[0.07] px-2 py-2 text-center text-[10px] font-black uppercase tracking-[0.08em] text-cyan-100">{time}</span>
+                    <div>
+                      <p className="text-xs font-black text-white">{issue}</p>
+                      <p className="mt-1 text-xs leading-5 text-gray-400">{action}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-3 lg:grid-cols-[1fr_0.82fr]">
+              <div className="grid gap-2 sm:grid-cols-2">
+                {features.map(([title, body]) => (
+                  <motion.div
+                    key={title}
+                    whileHover={cardHover}
+                    className="group relative min-h-[7.25rem] overflow-hidden rounded-[1.05rem] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.052),rgba(255,255,255,0.018))] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.055)] transition duration-500 hover:border-cyan-300/22 hover:bg-white/[0.06]"
+                  >
+                    <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/35 to-transparent opacity-0 transition group-hover:opacity-100" aria-hidden />
+                    <h3 className="text-sm font-black leading-tight text-white sm:text-base">{title}</h3>
+                    <p className="mt-2 text-xs font-medium leading-5 text-gray-400">{body}</p>
+                  </motion.div>
+                ))}
+              </div>
+
+              <div className="rounded-[1.25rem] border border-cyan-300/18 bg-[radial-gradient(circle_at_74%_0%,rgba(34,211,238,0.15),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.052),rgba(255,255,255,0.018))] p-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200/75">Ce que tu obtiens apr?s analyse</p>
+                <div className="mt-4 grid gap-2">
+                  {analysisOutputs.map((item) => (
+                    <div key={item} className="flex items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.035] px-3 py-2">
+                      <span className="grid h-5 w-5 place-items-center rounded-full border border-cyan-300/25 bg-cyan-300/10 text-[10px] text-cyan-200">?</span>
+                      <p className="text-xs font-black text-gray-200">{item}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <Link href="/analyzer" className="mt-4 inline-flex min-h-[46px] w-full items-center justify-center rounded-2xl bg-white px-5 text-sm font-black text-vn-bg transition hover:bg-cyan-50">
+                  Analyser ma vid?o
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </MotionSection>
   );
 }
 
