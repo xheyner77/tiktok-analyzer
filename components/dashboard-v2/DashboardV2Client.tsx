@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import type { DashboardData, DashboardInsight, DashboardRecommendation, DashboardTopVideo } from '@/lib/dashboard-data';
 import TikTokConnectModal from '@/components/dashboard-v2/TikTokConnectModal';
 
@@ -218,7 +218,83 @@ function Sidebar({ user }: { user: DashboardData['user'] }) {
   );
 }
 
-function HeaderDashboard({ user, states }: { user: DashboardData['user']; states: DashboardData['states'] }) {
+function TikTokConnectedBadge({
+  connection,
+  compact = false,
+}: {
+  connection: DashboardData['tiktokConnection'];
+  compact?: boolean;
+}) {
+  const displayName = connection.displayName?.trim() || 'Compte TikTok';
+
+  return (
+    <div className={`flex min-w-0 items-center gap-2 rounded-[9px] border border-emerald-300/18 bg-emerald-300/[0.075] ${compact ? 'px-3 py-2' : 'h-[44px] px-3.5'} text-emerald-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.075)]`}>
+      <div className="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-full border border-emerald-200/20 bg-emerald-300/10 text-[15px] font-black text-white">
+        {connection.avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={connection.avatarUrl} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <span>♪</span>
+        )}
+      </div>
+      <div className="min-w-0">
+        <div className="flex min-w-0 items-center gap-1.5">
+          <span className="truncate text-[12.5px] font-black leading-tight text-white">TikTok connecté</span>
+          <span className="shrink-0 rounded-[5px] border border-amber-200/16 bg-amber-200/[0.07] px-1.5 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-amber-100">
+            {connection.modeLabel}
+          </span>
+        </div>
+        <div className="truncate text-[11px] font-medium leading-tight text-emerald-100/72">{displayName}</div>
+      </div>
+      {!compact && (
+        <Link href="/dashboard/settings" className="ml-1 shrink-0 rounded-[7px] border border-white/[0.08] bg-white/[0.045] px-2.5 py-1.5 text-[11px] font-bold text-emerald-50 transition hover:bg-white/[0.08]">
+          Gérer
+        </Link>
+      )}
+    </div>
+  );
+}
+
+function TikTokCallbackNotice({ states }: { states: DashboardData['states'] }) {
+  const searchParams = useSearchParams();
+  const [dismissed, setDismissed] = useState(false);
+  const tiktokStatus = searchParams?.get('tiktok');
+
+  if (dismissed || tiktokStatus !== 'connected' || !states.hasTikTokConnection) return null;
+
+  function closeNotice() {
+    setDismissed(true);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('tiktok');
+      window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+    } catch {}
+  }
+
+  return (
+    <section className="mt-4 overflow-hidden rounded-[12px] border border-emerald-300/[0.18] bg-[linear-gradient(135deg,rgba(16,185,129,0.13),rgba(8,16,31,0.92))] px-4 py-3 text-emerald-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_20px_70px_-48px_rgba(16,185,129,0.85)]">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-[13.5px] font-black leading-tight text-white">TikTok connecté avec succès</p>
+          <p className="mt-1 text-[12.5px] leading-relaxed text-emerald-100/75">Ton compte est bien relié. Tu peux maintenant analyser une vidéo.</p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <Link href="/dashboard/analyze" className={`flex h-9 items-center justify-center px-4 text-[12px] ${primaryButton}`}>
+            Analyser une vidéo
+          </Link>
+          <button type="button" onClick={closeNotice} className="grid h-9 w-9 place-items-center rounded-[8px] border border-white/[0.08] bg-white/[0.04] text-emerald-100/70 transition hover:bg-white/[0.08] hover:text-white" aria-label="Fermer le message TikTok">
+            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" aria-hidden="true">
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function HeaderDashboard({ user, states, tiktokConnection }: { user: DashboardData['user']; states: DashboardData['states']; tiktokConnection: DashboardData['tiktokConnection'] }) {
   return (
     <header className="flex h-[52px] items-start justify-between">
       <div>
@@ -235,7 +311,9 @@ function HeaderDashboard({ user, states }: { user: DashboardData['user']; states
           <Icon name="bell" className="h-[17px] w-[17px]" />
           <span className="absolute right-[9px] top-[8px] h-2 w-2 rounded-full bg-fuchsia-400 shadow-[0_0_12px_rgba(232,121,249,0.9)]" />
         </button>
-        {!states.hasTikTokConnection && (
+        {states.hasTikTokConnection ? (
+          <TikTokConnectedBadge connection={tiktokConnection} />
+        ) : (
           <Link href="/api/tiktok/connect" className="flex h-[44px] items-center gap-2 rounded-[8px] border border-cyan-300/18 bg-cyan-300/10 px-4 text-[13px] font-bold text-cyan-100 transition hover:border-cyan-200/30 hover:bg-cyan-300/14">
             <span className="text-[16px] leading-none">♪</span>
             Connecter TikTok
@@ -243,7 +321,7 @@ function HeaderDashboard({ user, states }: { user: DashboardData['user']; states
         )}
         <Link href="/dashboard/analyze" className={`flex h-[44px] items-center gap-2 px-5 text-[14px] ${primaryButton}`}>
           <Icon name="plus" className="h-4 w-4" />
-          Nouvelle analyse
+          Analyser une vidéo
         </Link>
       </div>
     </header>
@@ -292,11 +370,13 @@ function MobileDrawer({
   onClose,
   user,
   states,
+  tiktokConnection,
 }: {
   open: boolean;
   onClose: () => void;
   user: DashboardData['user'];
   states: DashboardData['states'];
+  tiktokConnection: DashboardData['tiktokConnection'];
 }) {
   return (
     <div data-mobile-dashboard-drawer="true" className={`fixed inset-0 z-[190] min-[1280px]:hidden ${open ? '' : 'pointer-events-none'}`} aria-hidden={!open}>
@@ -333,7 +413,7 @@ function MobileDrawer({
         <div className="mt-6 grid gap-3">
           <Link href="/dashboard/analyze" onClick={onClose} className={`flex h-[44px] items-center justify-center gap-2 px-5 text-[14px] ${primaryButton}`}>
             <Icon name="plus" className="h-4 w-4" />
-            Nouvelle analyse
+            Analyser une vidéo
           </Link>
           {!states.hasTikTokConnection && (
             <Link href="/api/tiktok/connect" onClick={onClose} className="flex h-[44px] items-center justify-center gap-2 rounded-[9px] border border-cyan-300/18 bg-cyan-300/10 px-4 text-[13px] font-bold text-cyan-100 transition hover:border-cyan-200/30 hover:bg-cyan-300/14">
@@ -341,6 +421,7 @@ function MobileDrawer({
               Connecter TikTok
             </Link>
           )}
+          {states.hasTikTokConnection && <TikTokConnectedBadge connection={tiktokConnection} compact />}
         </div>
 
         <div className="mt-6 space-y-4">
@@ -352,13 +433,19 @@ function MobileDrawer({
   );
 }
 
-function ResponsiveIntro({ user, states }: { user: DashboardData['user']; states: DashboardData['states'] }) {
+function ResponsiveIntro({ user, states, tiktokConnection }: { user: DashboardData['user']; states: DashboardData['states']; tiktokConnection: DashboardData['tiktokConnection'] }) {
   return (
     <section className="min-[1280px]:hidden">
       <div>
         <h1 className="text-[28px] font-semibold leading-[1.06] tracking-[-0.035em] text-white sm:text-[34px]">Bienvenue, {user.name} 👋</h1>
         <p className="mt-2 text-[14px] leading-relaxed text-slate-400 sm:text-[15px]">Voici ton aperçu de performance</p>
       </div>
+      {states.hasTikTokConnection && (
+        <div className="mt-4">
+          <TikTokConnectedBadge connection={tiktokConnection} compact />
+          <p className="mt-2 text-[12.5px] leading-relaxed text-slate-400">Les performances réelles seront disponibles après activation des permissions TikTok dédiées.</p>
+        </div>
+      )}
       <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
         {!states.hasTikTokConnection && (
           <Link href="/api/tiktok/connect" className="flex h-[46px] items-center justify-center gap-2 rounded-[9px] border border-cyan-300/18 bg-cyan-300/10 px-4 text-[13px] font-bold text-cyan-100 transition hover:border-cyan-200/30 hover:bg-cyan-300/14">
@@ -368,7 +455,7 @@ function ResponsiveIntro({ user, states }: { user: DashboardData['user']; states
         )}
         <Link href="/dashboard/analyze" className={`flex h-[46px] items-center justify-center gap-2 px-5 text-[14px] ${primaryButton} ${!states.hasTikTokConnection ? '' : 'sm:col-span-2'}`}>
           <Icon name="plus" className="h-4 w-4" />
-          Nouvelle analyse
+          Analyser une vidéo
         </Link>
       </div>
     </section>
@@ -388,8 +475,8 @@ type KpiItem = {
 
 function buildKpis(metrics: DashboardData['metrics'], states: DashboardData['states']): KpiItem[] {
   const tikTokNote = states.hasTikTokConnection
-    ? 'Aucune donnée TikTok importée'
-    : 'Connecte TikTok pour voir cette métrique';
+    ? 'Permissions performances non activées'
+    : 'Connecte TikTok pour relier ton profil';
   const analysisNote = states.hasAnalyses
     ? 'calculé depuis tes analyses'
     : 'analyse ta première vidéo';
@@ -732,8 +819,8 @@ function InsightsIACard({
         {!states.hasRealInsights ? (
           <div className="mt-5 min-h-[260px] flex-1 sm:min-h-0">
             <EmptyState
-              title="Analyse ta première vidéo pour débloquer tes insights IA."
-              message="Aucun score de hook, rétention ou engagement ne sera affiché tant qu’il ne vient pas d’une vraie analyse."
+              title={states.hasTikTokConnection ? 'Compte connecté. Analyse une vidéo pour débloquer tes insights.' : 'Analyse ta première vidéo pour débloquer tes insights IA.'}
+              message={states.hasTikTokConnection ? 'TikTok est relié. Viralynz attend une vraie vidéo avant d’afficher des décisions de montage.' : 'Aucun score de hook, rétention ou engagement ne sera affiché tant qu’il ne vient pas d’une vraie analyse.'}
               cta="Analyser une vidéo"
               href="/dashboard/analyze"
             />
@@ -871,7 +958,7 @@ function TopVideosCard({ videos, states }: { videos: DashboardTopVideo[]; states
         <div className="mt-4 min-h-[218px] sm:h-[242px]">
           <EmptyState
             title="Connecte TikTok"
-            message="Connecte ton compte TikTok pour voir tes vidéos les plus performantes."
+            message="Relie ton profil TikTok à Viralynz. Les vidéos demandent des permissions avancées."
             cta="Connecter TikTok"
             href="/api/tiktok/connect"
           />
@@ -879,8 +966,8 @@ function TopVideosCard({ videos, states }: { videos: DashboardTopVideo[]; states
       ) : videos.length === 0 ? (
         <div className="mt-4 min-h-[218px] sm:h-[242px]">
           <EmptyState
-            title="Aucune vidéo importée"
-            message="Aucune vidéo TikTok réelle n’est disponible pour le moment."
+            title="Compte TikTok connecté"
+            message="Les vidéos seront disponibles après activation des permissions avancées."
           />
         </div>
       ) : (
@@ -1001,7 +1088,7 @@ function DashboardV2Client({ dashboard }: { dashboard: DashboardData }) {
         <div className="pointer-events-none absolute inset-0 opacity-[0.018] [background-image:linear-gradient(rgba(255,255,255,.75)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.75)_1px,transparent_1px)] [background-size:42px_42px]" />
         <div className="pointer-events-none absolute left-[260px] top-0 hidden h-full w-px bg-white/[0.02] min-[1280px]:block" />
         <MobileDashboardHeader user={dashboard.user} onMenuOpen={() => setDrawerOpen(true)} />
-        <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} user={dashboard.user} states={dashboard.states} />
+        <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} user={dashboard.user} states={dashboard.states} tiktokConnection={dashboard.tiktokConnection} />
         <Sidebar user={dashboard.user} />
         {!dashboard.states.hasTikTokConnection && (
           <TikTokConnectModal
@@ -1014,9 +1101,10 @@ function DashboardV2Client({ dashboard }: { dashboard: DashboardData }) {
 
         <div data-dashboard-content="true" className="relative mx-auto w-full min-w-0 max-w-[1180px] px-4 pb-8 pt-5 sm:px-5 md:px-6 lg:px-8 min-[1280px]:ml-[260px] min-[1280px]:mr-0 min-[1280px]:w-[calc(100%-260px)] min-[1280px]:max-w-none min-[1280px]:px-6 min-[1280px]:py-5 min-[1440px]:px-8 min-[1680px]:px-9">
           <div className="hidden min-[1280px]:block">
-            <HeaderDashboard user={dashboard.user} states={dashboard.states} />
+            <HeaderDashboard user={dashboard.user} states={dashboard.states} tiktokConnection={dashboard.tiktokConnection} />
           </div>
-          <ResponsiveIntro user={dashboard.user} states={dashboard.states} />
+          <ResponsiveIntro user={dashboard.user} states={dashboard.states} tiktokConnection={dashboard.tiktokConnection} />
+          <TikTokCallbackNotice states={dashboard.states} />
           <KpiGrid metrics={dashboard.metrics} states={dashboard.states} />
 
           <section data-dashboard-main-grid="true" className="mt-3.5 grid grid-cols-1 gap-3.5 min-[1280px]:grid-cols-[minmax(0,1fr)_320px] min-[1440px]:grid-cols-[minmax(0,1fr)_390px] min-[1680px]:grid-cols-[minmax(0,1fr)_430px]">

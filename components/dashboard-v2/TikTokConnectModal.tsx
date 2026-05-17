@@ -14,7 +14,7 @@ type TikTokConnectModalProps = {
   hasAnalyses?: boolean;
 };
 
-const unlockedMetrics = ['Vues réelles', 'Engagement', 'Top vidéos', 'Opportunités IA'];
+const unlockedMetrics = ['Profil TikTok relié', 'Analyses associées', 'Dashboard prêt', 'Données avancées à venir'];
 
 const tiktokMessages: Record<string, { tone: 'warn' | 'error' | 'success'; title: string; body: string }> = {
   config: {
@@ -57,6 +57,11 @@ const tiktokMessages: Record<string, { tone: 'warn' | 'error' | 'success'; title
     title: 'Profil TikTok inaccessible',
     body: 'Le compte a été autorisé, mais Viralynz n’a pas pu récupérer le profil.',
   },
+  profile_error: {
+    tone: 'error',
+    title: 'Profil TikTok inaccessible',
+    body: 'Le compte a été autorisé, mais Viralynz n’a pas pu récupérer le profil.',
+  },
   db: {
     tone: 'error',
     title: 'Enregistrement impossible',
@@ -65,7 +70,7 @@ const tiktokMessages: Record<string, { tone: 'warn' | 'error' | 'success'; title
   connected: {
     tone: 'success',
     title: 'TikTok connecté',
-    body: 'Ton compte TikTok est bien lié à Viralynz.',
+    body: 'Ton compte TikTok est bien relié. Tu peux maintenant analyser une vidéo.',
   },
 };
 
@@ -163,10 +168,10 @@ export default function TikTokConnectModal({
 
           <div className="mt-3 max-w-[560px] pr-7 sm:pr-10">
             <h2 id="tiktok-connect-title" className="text-[23px] font-black leading-[1.05] tracking-[-0.025em] text-white sm:text-[30px]">
-              Débloque ton dashboard réel
+              Connecte TikTok à Viralynz
             </h2>
             <p className="mt-2 text-[12.5px] leading-[1.45] text-slate-300 sm:text-[13.5px]">
-              Connecte TikTok pour importer tes vraies performances. Sinon, commence maintenant avec une analyse manuelle.
+              Relie ton compte TikTok pour associer tes analyses à ton profil. Les performances avancées seront disponibles après activation des permissions TikTok dédiées.
             </p>
           </div>
 
@@ -200,7 +205,7 @@ export default function TikTokConnectModal({
                 <div className="min-w-0">
                   <h3 className="text-[15px] font-black leading-tight text-white">Connecter TikTok</h3>
                   <p className="mt-1 text-[12px] leading-[1.38] text-slate-300 sm:text-[12.5px]">
-                    Importe tes vues, ton engagement, ton watch time et tes top vidéos.
+                    Autorise Viralynz à reconnaître ton compte TikTok et préparer ton dashboard.
                   </p>
                 </div>
               </div>

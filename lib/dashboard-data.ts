@@ -7,6 +7,7 @@ import { supabase, type Plan } from '@/lib/supabase';
 import type { AnalysisResult } from '@/lib/types';
 import { HISTORY_LIMITS } from '@/lib/plan-limits';
 import { getConnectedTikTokAccountCount } from '@/lib/tiktok-account-limits';
+import { hasVideoListScope, listTikTokAccountsForUser } from '@/lib/tiktok-accounts';
 import type { RetentionPoint } from '@/types/reconstruction';
 
 export type DashboardInsightType = 'hook' | 'retention' | 'rewatch' | 'engagement';
@@ -18,6 +19,15 @@ export interface DashboardUser {
   planLabel: string;
   quotaUsed: number;
   quotaLimit: number | null;
+}
+
+export interface DashboardTikTokConnection {
+  connected: boolean;
+  displayName: string | null;
+  avatarUrl: string | null;
+  scopes: string[];
+  modeLabel: string;
+  hasAdvancedMetrics: boolean;
 }
 
 export interface DashboardMetrics {
@@ -87,6 +97,7 @@ export interface DashboardStates {
 
 export interface DashboardData {
   user: DashboardUser;
+  tiktokConnection: DashboardTikTokConnection;
   states: DashboardStates;
   metrics: DashboardMetrics;
   retention: DashboardRetention;
@@ -110,7 +121,7 @@ const FALLBACK_RECOMMENDATIONS: DashboardRecommendation[] = [
   },
   {
     title: 'Heure idéale de publication',
-    description: 'Connecte TikTok pour importer tes performances réelles par période.',
+    description: 'Les performances par période seront disponibles après activation des permissions TikTok dédiées.',
     cta: 'Voir les horaires',
   },
   {
@@ -359,7 +370,7 @@ function hasInsightSignal(latest: AnalysisRow | null): boolean {
   );
 }
 
-function buildMetrics(analyses: AnalysisRow[], totalAnalyses: number, hasTikTokConnection: boolean): DashboardMetrics {
+function buildMetrics(analyses: AnalysisRow[], totalAnalyses: number, hasAdvancedTikTokMetrics: boolean): DashboardMetrics {
   const scores = analyses.map((row) => row.result?.viralityScore).filter((score): score is number => typeof score === 'number');
   const totalViews = analyses.reduce((sum, row) => sum + (row.result?.observedMetrics?.views ?? 0), 0);
   const totalEngagements = analyses.reduce(
@@ -377,12 +388,12 @@ function buildMetrics(analyses: AnalysisRow[], totalAnalyses: number, hasTikTokC
 
   const averageScore = average(scores);
   const opportunityCount = analyses.filter((row) => (row.result?.viralityScore ?? 0) >= 75).length;
-  const canShowTikTokMetrics = hasTikTokConnection && totalViews > 0;
+  const canShowTikTokMetrics = hasAdvancedTikTokMetrics && totalViews > 0;
 
   return {
     totalViews: canShowTikTokMetrics ? formatCompact(totalViews, '—') : '—',
     engagementRate: canShowTikTokMetrics && totalEngagements > 0 ? `${((totalEngagements / totalViews) * 100).toFixed(2)}%` : '—',
-    averageWatchTime: hasTikTokConnection && watchTimes.length > 0 ? `${(watchTimes.reduce((sum, value) => sum + value, 0) / watchTimes.length).toFixed(1)}s` : '—',
+    averageWatchTime: hasAdvancedTikTokMetrics && totalViews > 0 && watchTimes.length > 0 ? `${(watchTimes.reduce((sum, value) => sum + value, 0) / watchTimes.length).toFixed(1)}s` : '—',
     averageViralScore: averageScore,
     viralScoreChange: scores.length >= 2 && averageScore !== null ? `${Math.max(0, averageScore - scores[scores.length - 1]).toFixed(1)}%` : null,
     opportunityCount,
@@ -403,20 +414,32 @@ export async function getDashboardData(): Promise<DashboardData> {
   const visibleAnalyses = session ? await getDashboardAnalyses(session.userId, plan) : [];
   const latest = visibleAnalyses[0] ?? null;
   const email = profile?.email ?? session?.email ?? '';
-  const name = profile?.tiktok_display_name?.trim() || (email ? firstNameFromEmail(email) : 'Créateur');
   const quotaUsed = profile?.analyses_count ?? visibleAnalyses.length;
-  const activeTikTokAccountCount = session ? await getConnectedTikTokAccountCount(session.userId) : 0;
+  const tiktokAccounts = session ? await listTikTokAccountsForUser(session.userId) : [];
+  const activeTikTokAccounts = tiktokAccounts.filter((account) => account.status === 'active');
+  const primaryTikTokAccount = activeTikTokAccounts[0] ?? null;
+  const activeTikTokAccountCount = activeTikTokAccounts.length || (session ? await getConnectedTikTokAccountCount(session.userId) : 0);
   const hasTikTokConnection = Boolean(activeTikTokAccountCount > 0 || profile?.tiktok_open_id || profile?.tiktok_connected_at);
+  const tikTokScopes = primaryTikTokAccount?.scopes ?? [];
+  const tiktokConnection: DashboardTikTokConnection = {
+    connected: hasTikTokConnection,
+    displayName: primaryTikTokAccount?.displayName ?? profile?.tiktok_display_name ?? null,
+    avatarUrl: primaryTikTokAccount?.avatarUrl ?? profile?.tiktok_avatar_url ?? null,
+    scopes: tikTokScopes,
+    modeLabel: process.env.TIKTOK_APP_MODE?.trim() || 'Sandbox',
+    hasAdvancedMetrics: hasVideoListScope(tikTokScopes),
+  };
+  const name = email ? firstNameFromEmail(email) : 'Créateur';
   const retention = buildRetention(latest);
-  const topVideos = hasTikTokConnection ? buildTopVideos(visibleAnalyses) : [];
+  const topVideos = tiktokConnection.hasAdvancedMetrics ? buildTopVideos(visibleAnalyses) : [];
   const insights = buildInsights(latest);
   const states: DashboardStates = {
     hasAnalyses: visibleAnalyses.length > 0,
     hasTikTokConnection,
-    hasTikTokMetrics: hasTikTokConnection && visibleAnalyses.some(hasObservedMetrics),
+    hasTikTokMetrics: tiktokConnection.hasAdvancedMetrics && visibleAnalyses.some(hasObservedMetrics),
     hasRetentionData: retention.points.length >= 2,
     hasLatestAnalysis: Boolean(latest),
-    hasRealTopVideos: hasTikTokConnection && topVideos.length > 0,
+    hasRealTopVideos: tiktokConnection.hasAdvancedMetrics && topVideos.length > 0,
     hasRealInsights: hasInsightSignal(latest),
   };
 
@@ -429,8 +452,9 @@ export async function getDashboardData(): Promise<DashboardData> {
       quotaUsed,
       quotaLimit,
     },
+    tiktokConnection,
     states,
-    metrics: buildMetrics(visibleAnalyses, quotaUsed, hasTikTokConnection),
+    metrics: buildMetrics(visibleAnalyses, quotaUsed, tiktokConnection.hasAdvancedMetrics),
     retention,
     latestVideo: buildLatestVideo(latest),
     analysisCta: latest
