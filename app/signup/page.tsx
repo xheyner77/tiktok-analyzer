@@ -42,7 +42,7 @@ function EmailConfirmationPending({ email }: { email: string }) {
 
         <h2 className="text-xl font-bold text-white mb-2">Vérifie ton email</h2>
         <p className="text-sm text-gray-400 mb-1">
-          Ton compte a bien été créé. Vérifie maintenant ton email pour activer ton accès.
+          Ton compte est prêt. Vérifie ton email pour activer l’espace où Viralynz gardera tes analyses et ta mémoire créateur.
         </p>
         <p className="text-xs text-gray-600 mb-6">
           Nous t&apos;avons envoyé un lien à <span className="text-gray-400 font-medium">{email}</span>. Pense à vérifier aussi tes spams.
@@ -83,7 +83,7 @@ function EmailConfirmationPending({ email }: { email: string }) {
       </div>
 
       <p className="text-center text-xs text-gray-600 mt-5">
-        Une fois l&apos;email confirmé, connecte-toi pour accéder à ton espace.
+        Une fois l&apos;email confirmé, connecte-toi pour lancer ta première analyse sans connecter TikTok.
       </p>
     </div>
   );
@@ -185,12 +185,9 @@ export default function SignupPage() {
         onComplete={() => {
           const pendingPlan = localStorage.getItem(PENDING_PLAN_KEY);
           localStorage.removeItem(PENDING_PLAN_KEY);
-          if (pendingPlan === 'pro' || pendingPlan === 'elite') {
+          if (pendingPlan === 'creator' || pendingPlan === 'pro' || pendingPlan === 'scale') {
             // User chose a paid plan from GuestGate → pricing page
             window.location.href = '/pricing';
-          } else if (pendingPlan === 'free') {
-            // User chose Free from GuestGate → analyzer
-            window.location.href = '/analyzer';
           } else {
             // Normal signup (no GuestGate) → dashboard
             window.location.href = '/dashboard';
@@ -208,7 +205,7 @@ export default function SignupPage() {
         <div className="flex flex-col items-center mb-8">
           <BrandLogo size="large" className="mb-6" />
           <h1 className="text-2xl font-bold text-white">Créer un compte</h1>
-          <p className="text-gray-500 text-sm mt-1">3 analyses gratuites à la création</p>
+          <p className="text-gray-500 text-sm mt-1">3 analyses gratuites par mois, sans connexion TikTok obligatoire.</p>
         </div>
 
         {/* Card */}

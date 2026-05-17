@@ -30,7 +30,7 @@ function ResetPasswordForm() {
 
     (async () => {
       try {
-        const code = searchParams.get('code');
+        const code = searchParams?.get('code');
         if (code) {
           const { error: exErr } = await supabase.auth.exchangeCodeForSession(code);
           if (exErr) {
@@ -193,7 +193,7 @@ export default function ResetPasswordPage() {
         <div className="flex flex-col items-center mb-8">
           <BrandLogo size="large" className="mb-6" />
           <h1 className="text-2xl font-bold text-white">Nouveau mot de passe</h1>
-          <p className="text-gray-500 text-sm mt-1 text-center">Choisis un mot de passe sécurisé pour ton compte.</p>
+          <p className="text-gray-500 text-sm mt-1 text-center">Choisis un mot de passe sécurisé pour retrouver ton workspace Viralynz.</p>
         </div>
 
         <Suspense

@@ -6,18 +6,19 @@ import { useRouter } from 'next/navigation';
 import type { AppPlan } from '@/lib/plans';
 
 type Plan = AppPlan;
+type UpgradePlan = 'creator' | 'pro' | 'scale';
 
 const PLAN_LABELS: Record<Plan, string> = {
-  free: 'Plan Free',
+  free:  'Plan Free',
   creator: 'Plan Creator',
-  pro: 'Plan Pro',
+  pro:   'Plan Pro',
   scale: 'Plan Scale',
 };
 
 const PLAN_COLORS: Record<Plan, string> = {
-  free: 'bg-[#1a1a1a] text-gray-500',
+  free:  'bg-[#1a1a1a] text-gray-500',
   creator: 'bg-vn-fuchsia/10 text-vn-fuchsia border border-vn-fuchsia/20',
-  pro: 'bg-cyan-300/10 text-cyan-200 border border-cyan-300/20',
+  pro:   'bg-cyan-300/10 text-cyan-200 border border-cyan-300/20',
   scale: 'bg-vn-violet/15 text-vn-glow border border-vn-violet/25',
 };
 
@@ -30,8 +31,14 @@ export default function NavbarUserMenu({ email, plan }: NavbarUserMenuProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isUpgrading, setIsUpgrading] = useState(false);
+  const [upgradeError, setUpgradeError] = useState<string | null>(null);
 
   const initials = email.slice(0, 2).toUpperCase();
+  const upgradeTarget: UpgradePlan | null = plan === 'free' ? 'creator' : plan === 'creator' ? 'pro' : plan === 'pro' ? 'scale' : null;
+  const upgradeLabel = upgradeTarget
+    ? `Passer à ${upgradeTarget === 'creator' ? 'Creator' : upgradeTarget === 'pro' ? 'Pro' : 'Scale'}`
+    : null;
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -41,6 +48,40 @@ export default function NavbarUserMenu({ email, plan }: NavbarUserMenuProps) {
       router.refresh();
     } catch {
       setIsLoggingOut(false);
+    }
+  };
+
+  const handleUpgrade = async () => {
+    if (!upgradeTarget || isUpgrading) return;
+
+    setIsUpgrading(true);
+    setUpgradeError(null);
+
+    try {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: upgradeTarget, interval: 'month' }),
+      });
+
+      if (res.status === 401) {
+        router.push('/login?redirect=/#pricing');
+        return;
+      }
+
+      const data = await res.json();
+
+      if (data.url) {
+        localStorage.setItem('pendingPlan', upgradeTarget);
+        window.location.href = data.url;
+        return;
+      }
+
+      setUpgradeError(data.error ?? 'Impossible d’ouvrir Stripe pour le moment.');
+    } catch {
+      setUpgradeError('Erreur réseau. Réessaie dans un instant.');
+    } finally {
+      setIsUpgrading(false);
     }
   };
 
@@ -97,30 +138,23 @@ export default function NavbarUserMenu({ email, plan }: NavbarUserMenuProps) {
                 </svg>
                 Dashboard
               </Link>
-
-              <Link
-                href="/analyzer"
-                onClick={() => setIsOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-gray-500">
-                  <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
-                  <path fillRule="evenodd" d="M.664 10.59a1.651 1.651 0 0 1 0-1.186A10.004 10.004 0 0 1 10 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0 1 10 17c-4.257 0-7.893-2.66-9.336-6.41Z" clipRule="evenodd" />
-                </svg>
-                Analyser
-              </Link>
-
-              {plan !== 'scale' && (
-                <Link
-                  href="/pricing"
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-vn-glow hover:text-violet-200 hover:bg-vn-violet/10 transition-colors"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-vn-violet">
-                    <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" />
-                  </svg>
-                  {plan === 'free' ? 'Passer à Creator' : plan === 'creator' ? 'Passer à Pro' : 'Passer à Scale'}
-                </Link>
+              {upgradeTarget && upgradeLabel && (
+                <div>
+                  <button
+                    type="button"
+                    onClick={handleUpgrade}
+                    disabled={isUpgrading}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-vn-glow hover:text-violet-200 hover:bg-vn-violet/10 transition-colors text-left disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 text-vn-violet">
+                      <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" />
+                    </svg>
+                    {isUpgrading ? 'Ouverture de Stripe...' : upgradeLabel}
+                  </button>
+                  {upgradeError ? (
+                    <p className="px-3 pb-2 text-xs font-medium leading-5 text-amber-300">{upgradeError}</p>
+                  ) : null}
+                </div>
               )}
             </div>
 

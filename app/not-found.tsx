@@ -16,7 +16,7 @@ export default function NotFound() {
           Accueil
         </Link>
         <Link
-          href="/analyzer"
+          href="/dashboard/analyze"
           className="inline-flex items-center justify-center rounded-xl px-6 py-3 text-sm font-semibold text-gray-300 border border-white/15 hover:border-white/25 hover:bg-white/5 transition-all"
         >
           Analyser une vid&eacute;o

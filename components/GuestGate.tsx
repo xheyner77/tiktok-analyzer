@@ -87,7 +87,7 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
 
   function handleLogin() {
     saveUrl();
-    router.push('/login?redirect=/analyzer');
+    router.push('/login?redirect=/dashboard/analyze');
   }
 
   return (

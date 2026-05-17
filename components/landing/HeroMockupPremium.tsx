@@ -180,7 +180,7 @@ export default function HeroMockupPremium() {
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-semibold text-vn-fuchsia"
           style={{ background: 'rgba(8,8,16,0.92)', border: '1px solid rgba(232,121,249,0.2)' }}
         >
-          <span>✨</span> Insight viral
+          <span>✨</span> Hypothèse IA
         </div>
       </div>
 
@@ -190,7 +190,7 @@ export default function HeroMockupPremium() {
           <div className="flex items-center gap-2 px-4 py-2 rounded-full"
             style={{ background: 'rgba(8,8,16,0.95)', border: '1px solid rgba(232,121,249,0.22)', backdropFilter: 'blur(14px)', boxShadow: '0 0 28px -6px rgba(232,121,249,0.35), 0 8px 32px rgba(0,0,0,0.6)' }}>
             <span className="text-[11px]">✨</span>
-            <span className="text-[11px] font-semibold text-vn-fuchsia">Insight viral détecté</span>
+            <span className="text-[11px] font-semibold text-vn-fuchsia">Signal détecté</span>
             <span className="relative flex h-2 w-2 ml-0.5 shrink-0">
               <span className="animate-ping absolute h-2 w-2 rounded-full bg-vn-fuchsia opacity-60" />
               <span className="h-2 w-2 rounded-full bg-vn-fuchsia" />
@@ -338,7 +338,7 @@ export default function HeroMockupPremium() {
         <div className="p-4 sm:p-5">
           <div className="flex items-start justify-between mb-4">
             <div>
-              <p className="text-[9px] uppercase tracking-[0.18em] text-gray-700 mb-1.5">Score de viralité</p>
+              <p className="text-[9px] uppercase tracking-[0.18em] text-gray-700 mb-1.5">Score de structure</p>
               <div className="flex items-baseline gap-2">
                 <motion.span className="text-[2.2rem] font-black text-white leading-none"
                   initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.8, duration: 0.5 } }}>
@@ -401,7 +401,7 @@ export default function HeroMockupPremium() {
           <div className="p-3 rounded-2xl"
             style={{ background: 'linear-gradient(145deg, rgba(14,14,26,0.98), rgba(9,9,15,0.99))', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(16px)', boxShadow: '0 0 56px -12px rgba(232,121,249,0.35), 0 24px 64px rgba(0,0,0,0.75)' }}>
             <ScoreGauge score={68} uid="sgd" />
-            <p className="text-center text-[9px] text-gray-600 mt-1 tracking-wide">Potentiel viral</p>
+            <p className="text-center text-[9px] text-gray-600 mt-1 tracking-wide">Potentiel de rétention estimé</p>
           </div>
         </div>
       </motion.div>

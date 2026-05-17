@@ -3,7 +3,7 @@ import { Improvement, Priority } from '@/lib/types';
 
 interface ImprovementTipsProps {
   improvements: Improvement[];
-  plan: 'free' | 'pro' | 'elite';
+  plan: 'free' | 'creator' | 'pro' | 'scale';
 }
 
 const VISIBLE_FREE = 3;

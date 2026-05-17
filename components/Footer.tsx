@@ -51,10 +51,10 @@ export default function Footer() {
             </p>
             <div>
               <Link
-                href="/analyzer"
+                href="/signup"
                 className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-vn-fuchsia to-vn-indigo px-5 py-2.5 text-[13px] font-semibold text-white hover:brightness-110 hover:scale-[1.02] transition-all shadow-lg"
               >
-                Commencer gratuitement
+                Commencer maintenant
                 <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
                   <path d="M3 8h10M9 4l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
@@ -67,9 +67,9 @@ export default function Footer() {
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white mb-5">Viralynz</p>
             <ul className="space-y-3">
               {[
-                { label: 'Fonctionnalités', href: '/features' },
-                { label: 'Tarifs',          href: '/pricing' },
-                { label: 'FAQ',             href: '/pricing#faq' },
+                { label: 'Fonctionnalités', href: '/#features' },
+                { label: 'Tarifs',          href: '/#pricing' },
+                { label: 'FAQ',             href: '/#faq' },
                 { label: 'Nouveautés',      href: '/changelog' },
               ].map(({ label, href }) => (
                 <li key={label}>
@@ -94,9 +94,9 @@ export default function Footer() {
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white mb-5">Outils</p>
             <ul className="space-y-3">
               {[
-                { label: 'Analyser une vidéo', href: '/analyzer' },
-                { label: 'Hook Generator',     href: '/hook-generator' },
-                { label: 'Dashboard',          href: '/dashboard' },
+                { label: 'Fonctionnalités', href: '/#features' },
+                { label: 'Tarifs',          href: '/#pricing' },
+                { label: 'Nouveautés',      href: '/changelog' },
               ].map(({ label, href }) => (
                 <li key={label}>
                   <Link href={href} className="text-[13px] text-gray-500 hover:text-white transition-colors">
@@ -139,3 +139,4 @@ export default function Footer() {
     </footer>
   );
 }
+

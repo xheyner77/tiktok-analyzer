@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
       email,
       password,
       options: {
-        data: { plan: 'free', analyses_count: 0 },
+        data: { plan: 'free', analyses_count: 0, reconstructions_count: 0 },
         emailRedirectTo,
       },
     });
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
       const { error: dbError } = await supabase
         .from('users')
         .upsert(
-          { id: userId, email, plan: 'free', analyses_count: 0, hooks_count: 0 },
+          { id: userId, email, plan: 'free', analyses_count: 0, hooks_count: 0, reconstructions_count: 0 },
           { onConflict: 'id', ignoreDuplicates: true }
         );
 

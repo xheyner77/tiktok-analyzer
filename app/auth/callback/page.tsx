@@ -25,7 +25,7 @@ function CallbackContent() {
 
   useEffect(() => {
     // Check for error param from Supabase (e.g. expired link)
-    const error = searchParams.get('error') ?? searchParams.get('error_description');
+    const error = searchParams?.get('error') ?? searchParams?.get('error_description');
     if (error) {
       setErrorMsg(error);
       setStatus('error');

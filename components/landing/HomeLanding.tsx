@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion';
 import Link from 'next/link';
 import CheckoutButton from '@/components/CheckoutButton';
+import PremiumFeaturesSection from '@/components/landing/FeaturesSection';
+import PremiumHowItWorksSection from '@/components/landing/HowItWorksSection';
 
 const shell = 'mx-auto w-full max-w-6xl px-3.5 sm:px-6 lg:px-8';
 const titleGradient = 'bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent';
@@ -87,6 +89,14 @@ const proof = [
   ['Diagnostic concret', 'Hook, rythme, drop, CTA.'],
   ['Plan de remontage', 'Couper, avancer, restructurer.'],
   ['Sans friction', '3 analyses gratuites.'],
+];
+
+const knownTikTokCreators = [
+  ['Créatrice lifestyle', 'https://i.pravatar.cc/96?img=47'],
+  ['Créateur business', 'https://i.pravatar.cc/96?img=12'],
+  ['Créatrice beauté', 'https://i.pravatar.cc/96?img=56'],
+  ['Monteur short-form', 'https://i.pravatar.cc/96?img=33'],
+  ['Créatrice food', 'https://i.pravatar.cc/96?img=22'],
 ];
 
 const testimonials = [
@@ -215,6 +225,59 @@ function ArrowIcon({ className = 'h-4 w-4' }: { className?: string }) {
   );
 }
 
+function RatingStar({ fill = 'full' }: { fill?: 'full' | 'partial' }) {
+  return (
+    <span className="relative inline-flex h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" aria-hidden>
+      <svg viewBox="0 0 20 20" className="h-full w-full text-blue-400/35" fill="currentColor">
+        <path d="m10 1.7 2.35 5.02 5.32.82-3.86 3.92.91 5.55L10 14.36 5.28 17l.91-5.55-3.86-3.92 5.32-.82L10 1.7Z" />
+      </svg>
+      <span className={`absolute inset-y-0 left-0 overflow-hidden ${fill === 'partial' ? 'w-[76%]' : 'w-full'}`}>
+        <svg viewBox="0 0 20 20" className="h-full w-3.5 text-blue-400 sm:w-4" fill="currentColor">
+          <path d="m10 1.7 2.35 5.02 5.32.82-3.86 3.92.91 5.55L10 14.36 5.28 17l.91-5.55-3.86-3.92 5.32-.82L10 1.7Z" />
+        </svg>
+      </span>
+    </span>
+  );
+}
+
+function HeroRatingBadge() {
+  return (
+    <div className="mb-3 inline-flex max-w-[21rem] items-center justify-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.045] px-3.5 py-1.5 text-[13px] font-bold text-gray-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_18px_45px_-32px_rgba(34,211,238,0.55)] sm:mb-5 sm:max-w-none sm:px-4">
+      <span className="flex items-center gap-1 text-blue-400" aria-label="Note de 4.8 sur 5">
+        <RatingStar />
+        <RatingStar />
+        <RatingStar />
+        <RatingStar />
+        <RatingStar fill="partial" />
+      </span>
+      <span className="font-black text-white">4.8</span>
+      <span className="h-4 w-px bg-white/15" aria-hidden />
+      <span className="whitespace-nowrap text-gray-400"><span className="font-black text-white">500+</span> avis</span>
+    </div>
+  );
+}
+
+function CreatorProofBadge() {
+  return (
+    <div className="mb-4 flex flex-wrap items-center justify-center gap-2.5 sm:mb-6 sm:gap-3">
+      <div className="flex -space-x-2" aria-label="Rep&egrave;res de TikTokeurs connus">
+        {knownTikTokCreators.map(([name, avatarUrl]) => (
+          <img
+            key={name}
+            src={avatarUrl}
+            alt=""
+            title={name}
+            className="h-7 w-7 rounded-full border-2 border-[#050508] object-cover shadow-[0_0_16px_-10px_rgba(34,211,238,0.95)] ring-1 ring-white/15 sm:h-8 sm:w-8"
+          />
+        ))}
+      </div>
+      <p className="text-xs font-semibold text-gray-300 sm:text-sm">
+        Approuv&eacute; par <span className="font-black text-blue-400">10K+ cr&eacute;ateurs</span>
+      </p>
+    </div>
+  );
+}
+
 export default function HomeLanding() {
   return (
     <main className="relative overflow-x-hidden bg-vn-bg text-white">
@@ -226,21 +289,13 @@ export default function HomeLanding() {
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,5,8,0.02),rgba(5,5,8,0.84)_58%,#050508)]" />
       </div>
 
-      <MotionSection className={`${shell} relative overflow-hidden pb-5 pt-24 sm:pb-16 sm:pt-20 lg:pt-24`}>
+      <MotionSection className={`${shell} relative overflow-hidden pb-5 pt-14 sm:pb-16 sm:pt-20 lg:pt-24`}>
         <div className="mx-auto max-w-5xl text-center">
           <div>
-            <div className="mb-3 inline-flex max-w-[19rem] flex-wrap items-center justify-center gap-x-1.5 gap-y-1 rounded-full border border-white/[0.1] bg-white/[0.045] px-2.5 py-1 text-[10px] font-bold text-gray-300 shadow-[0_18px_45px_-32px_rgba(34,211,238,0.55)] sm:mb-6 sm:max-w-none sm:flex-nowrap sm:gap-x-2 sm:px-3 sm:py-1.5 sm:text-[11px]">
-              <span className="flex gap-0.5 text-cyan-300" aria-hidden>
-                <span>*</span><span>*</span><span>*</span><span>*</span><span>*</span>
-              </span>
-              <span className="text-white">Diagnostic</span>
-              <span className="h-3 w-px bg-white/15" aria-hidden />
-              <span>Hypotheses de correction testables</span>
+            <HeroRatingBadge />
 
-            </div>
-
-            <h1 className="mx-auto max-w-[20rem] text-[clamp(2.12rem,9.6vw,2.82rem)] font-black leading-[0.96] tracking-tight text-white sm:max-w-4xl sm:text-6xl sm:leading-[0.98] lg:text-[4.55rem]">
-              L'IA qui reconstruit les videos TikTok <span className={titleGradient}>qui auraient du performer.</span>
+            <h1 className="mx-auto max-w-[20rem] text-[clamp(2.25rem,10vw,3rem)] font-black leading-[0.94] tracking-tight text-white sm:max-w-4xl sm:text-6xl sm:leading-[0.96] lg:text-[4.7rem]">
+              Comprends pourquoi tes vid&eacute;os <span className={titleGradient}>flopent</span>
             </h1>
 
             <p className="hidden">
@@ -251,25 +306,26 @@ export default function HomeLanding() {
               Upload une vidéo qui n'a pas percé. Viralynz repère le hook faible, le drop, le rythme qui casse et le CTA à resserrer dans ton plan de remontage.
             </p>
 
-            <p className="mx-auto mt-3 max-w-[21rem] text-[0.91rem] leading-5 text-gray-300 sm:mt-5 sm:max-w-2xl sm:text-lg sm:leading-7">
-              Comprends ou la retention casse. Puis reconstruis une meilleure structure: hook, sequences, cuts, relances et CTA, sans generation video automatique.
+            <p className="mx-auto mt-3 max-w-[21rem] text-[0.95rem] leading-5 text-gray-300 sm:mt-5 sm:max-w-2xl sm:text-lg sm:leading-7">
+              Viralynz rep&egrave;re les moments qui font d&eacute;crocher les viewers et te montre quoi corriger avant de republier.
             </p>
 
             <div className="mt-4 flex flex-col items-center justify-center gap-2.5 sm:mt-6 sm:flex-row sm:gap-3">
               <Link
-                href="/analyzer"
+                href="/signup"
                 className="group inline-flex min-h-[46px] w-full max-w-[19rem] items-center justify-center gap-2 rounded-xl border border-vn-fuchsia/35 bg-gradient-to-r from-vn-fuchsia to-vn-indigo px-5 text-sm font-black text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08)_inset,0_22px_70px_-32px_rgba(232,121,249,0.95)] transition duration-500 ease-out hover:-translate-y-0.5 hover:scale-[1.012] hover:brightness-110 hover:shadow-[0_0_0_1px_rgba(255,255,255,0.12)_inset,0_30px_95px_-42px_rgba(232,121,249,1)] active:scale-[0.99] sm:min-h-[54px] sm:w-auto sm:max-w-[24rem] sm:px-8"
               >
-                Tester Reconstruction IA
+                Analyser ma vid&eacute;o
               </Link>
             </div>
 
-            <p className="mt-2 text-[10px] font-bold uppercase leading-5 tracking-[0.1em] text-gray-400 sm:mt-4 sm:text-xs">
-              Plus qu'une analyse. Une reconstruction complete de la structure.
+            <p className="mt-2 text-[11px] font-bold text-gray-500">
+              3 analyses gratuites · sans carte bancaire
             </p>
+
             <div className="mt-5 sm:mt-8">
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-500">Plateformes supportées</p>
-              <div className="mt-2 flex items-start justify-center gap-2.5 sm:mt-3 sm:gap-6">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-500">Plateformes support&eacute;es</p>
+              <div className="mt-2 flex flex-wrap items-start justify-center gap-x-2.5 gap-y-2 sm:mt-3 sm:gap-x-4">
                 <div className="flex min-h-[2.65rem] flex-col items-center justify-start">
                   <div className="flex items-center gap-1.5 text-lg font-black tracking-tight text-white sm:text-2xl">
                     <span className="relative flex h-6 w-6 items-center justify-center text-base sm:h-7 sm:w-7 sm:text-lg" aria-hidden>
@@ -279,51 +335,38 @@ export default function HomeLanding() {
                     </span>
                     <span>TikTok</span>
                   </div>
-                  <span className="mt-1 text-[8px] font-black uppercase tracking-[0.12em] text-transparent">disponible</span>
                 </div>
 
-                <div className="flex min-h-[2.65rem] flex-col items-center justify-start text-white/35" title="Bientôt disponible">
+                <div className="flex min-h-[2.65rem] flex-col items-center justify-start text-white/35" title="Bient&ocirc;t disponible">
                   <div className="flex items-center gap-1.5 text-base font-black tracking-tight grayscale sm:text-2xl">
-                    <span className="relative flex h-5 w-7 items-center justify-center rounded-md bg-red-600/55 sm:h-6 sm:w-8" aria-hidden>
+                    <span className="relative flex h-5 w-7 items-center justify-center rounded-md bg-white/15 sm:h-6 sm:w-8" aria-hidden>
                       <svg viewBox="0 0 24 16" className="h-5 w-7 sm:h-6 sm:w-8" fill="none">
-                        <rect width="24" height="16" rx="4" fill="#ff0033" />
-                        <path d="M10 4.5v7l6-3.5-6-3.5Z" fill="white" />
+                        <rect width="24" height="16" rx="4" fill="currentColor" />
+                        <path d="M10 4.5v7l6-3.5-6-3.5Z" fill="#050508" />
                       </svg>
                     </span>
                     <span>YouTube</span>
                   </div>
-                  <span className="mt-1 rounded-full border border-white/10 bg-white/[0.035] px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.12em] text-white/35">prochainement</span>
+                  <span className="mt-1 rounded-full border border-white/10 bg-white/[0.035] px-2.5 py-0.5 text-[8px] font-black uppercase tracking-[0.12em] text-white/35">prochainement</span>
                 </div>
 
-                <div className="flex min-h-[2.65rem] flex-col items-center justify-start text-white/35" title="Bientôt disponible">
+                <div className="flex min-h-[2.65rem] flex-col items-center justify-start text-white/35" title="Bient&ocirc;t disponible">
                   <div className="flex items-center gap-1.5 text-base font-black tracking-tight grayscale sm:text-2xl">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-md bg-gradient-to-br from-fuchsia-500 via-rose-500 to-amber-300 opacity-70 sm:h-6 sm:w-6" aria-hidden>
+                    <span className="flex h-5 w-5 items-center justify-center rounded-md bg-white/15 sm:h-6 sm:w-6" aria-hidden>
                       <svg viewBox="0 0 24 24" className="h-4 w-4 sm:h-5 sm:w-5" fill="none">
-                        <rect x="5" y="5" width="14" height="14" rx="4" stroke="white" strokeWidth="2" />
-                        <circle cx="12" cy="12" r="3.2" stroke="white" strokeWidth="2" />
-                        <circle cx="16.6" cy="7.4" r="1.2" fill="white" />
+                        <rect x="5" y="5" width="14" height="14" rx="4" stroke="currentColor" strokeWidth="2" />
+                        <circle cx="12" cy="12" r="3.2" stroke="currentColor" strokeWidth="2" />
+                        <circle cx="16.6" cy="7.4" r="1.2" fill="currentColor" />
                       </svg>
                     </span>
                     <span>Instagram</span>
                   </div>
-                  <span className="mt-1 rounded-full border border-white/10 bg-white/[0.035] px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.12em] text-white/35">prochainement</span>
+                  <span className="mt-1 rounded-full border border-white/10 bg-white/[0.035] px-2.5 py-0.5 text-[8px] font-black uppercase tracking-[0.12em] text-white/35">prochainement</span>
                 </div>
               </div>
 
-              <div className="mt-4 flex items-center justify-center gap-2.5 sm:mt-8 sm:gap-3">
-                <div className="flex -space-x-2">
-                  {[11, 32, 47, 15, 56].map((avatar) => (
-                    <img
-                      key={avatar}
-                      src={`https://i.pravatar.cc/48?img=${avatar}`}
-                      alt=""
-                      className="h-7 w-7 rounded-full border-2 border-[#050508] object-cover ring-1 ring-white/15 sm:h-8 sm:w-8"
-                    />
-                  ))}
-                </div>
-                <p className="text-xs font-semibold text-gray-300 sm:text-sm">
-                  Diagnostic base sur <span className="font-black text-cyan-300">signaux observables</span>
-                </p>
+              <div className="mt-4 sm:mt-5">
+                <CreatorProofBadge />
               </div>
             </div>
           </div>
@@ -332,17 +375,19 @@ export default function HomeLanding() {
         </div>
       </MotionSection>
 
-      <ResultProofPhone />
+      <PremiumFeaturesSection />
+
+      <PremiumHowItWorksSection />
 
 
       <MotionSection className={`${shell} relative py-4 sm:py-12`}>
         <div className="mx-auto max-w-4xl rounded-[1.25rem] border border-white/[0.09] bg-[#090a10]/90 p-3.5 shadow-[0_28px_90px_-60px_rgba(34,211,238,0.45)] sm:rounded-[1.75rem] sm:p-7">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-[1.45rem] font-black leading-tight tracking-tight text-white sm:text-4xl">
-              Ce qui se passe quand tu remontes <TitleAccent>au feeling</TitleAccent>
+              Sans diagnostic, tu postes <TitleAccent>presque au hasard</TitleAccent>
             </h2>
             <p className="mt-2 text-[13px] leading-5 text-gray-400 sm:text-base sm:leading-6">
-              Sans diagnostic, tu remets le même hook, le même rythme et le même drop. Viralynz te montre quoi changer dans la structure avant de retester.
+              Une bonne idée peut flopper juste parce que le hook arrive trop tard, que le rythme tombe ou que le payoff est mal placé. Viralynz te montre quoi corriger avant de republier.
             </p>
           </div>
 
@@ -353,15 +398,15 @@ export default function HomeLanding() {
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-rose-400/35 bg-rose-500/12 text-sm leading-none text-rose-200 shadow-[0_0_28px_-12px_rgba(244,63,94,0.9)]" aria-hidden>
                   ×
                 </span>
-                <h3 className="text-base font-black leading-tight text-rose-200">Sans analyser ta vidéo</h3>
+                <h3 className="text-base font-black leading-tight text-rose-200">Sans Viralynz</h3>
               </div>
 
               <div className="space-y-2 sm:space-y-2.5">
                 {[
-                  'Tu ne sais pas à quel moment les gens scrollent.',
-                  'Tu remontes avec la même intro trop lente.',
-                  'Tu gardes les secondes qui cassent le watch time.',
-                  'Tu changes l’habillage au lieu de corriger l’ordre.',
+                  'Tu publies en espérant que l’algorithme comprenne.',
+                  'Tu ne sais pas si le flop vient du hook, du rythme ou du CTA.',
+                  'Tu risques de jeter une bonne idée au lieu de corriger sa structure.',
+                  'Tu changes le décor ou le texte, mais tu gardes le vrai problème.',
                 ].map((item) => (
                   <div key={item} className="flex items-center gap-3 py-0.5">
                     <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-rose-400/25 text-[11px] leading-none text-rose-300" aria-hidden>
@@ -383,10 +428,10 @@ export default function HomeLanding() {
 
               <div className="space-y-2 sm:space-y-2.5">
                 {[
-                  'Tu vois le hook, le drop et le CTA qui bloquent.',
-                  'Tu obtiens une ouverture qui donne une raison de rester.',
-                  'Tu sais quoi couper, garder et avancer dans la timeline.',
-                  'Tu repars avec une structure plus nette à tester.',
+                  'Tu sais où l’attention décroche et pourquoi.',
+                  'Tu identifies les secondes à couper, avancer ou renforcer.',
+                  'Tu transformes un flop en hypothèse de repost claire.',
+                  'Tu republies avec un plan, pas avec une intuition vague.',
                 ].map((item) => (
                   <div key={item} className="flex items-center gap-3 py-0.5">
                     <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-emerald-300/25 bg-emerald-400/10 text-[11px] leading-none text-emerald-300" aria-hidden>
@@ -401,13 +446,11 @@ export default function HomeLanding() {
 
           <div className="mt-4 rounded-2xl border border-blue-400/30 bg-[linear-gradient(135deg,rgba(59,130,246,0.12),rgba(34,211,238,0.05))] px-4 py-3 text-center shadow-[0_18px_65px_-55px_rgba(59,130,246,0.9)] sm:mt-5">
             <p className="text-sm font-black leading-6 text-white">
-              Tu ne devines plus : tu sais quoi changer avant de remonter la vidéo.
+              Le but n’est pas de poster plus. C’est de poster avec une raison claire de performer.
             </p>
           </div>
         </div>
       </MotionSection>
-
-      <LandingFeaturesSection />
 
       <PricingSection />
 
@@ -416,23 +459,18 @@ export default function HomeLanding() {
       <FAQSection />
 
       <MotionSection className={`${shell} relative pb-8 pt-6 sm:pb-16 sm:pt-12`}>
-        <div className="mx-auto mb-4 flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/[0.045] px-3 py-1.5 text-[11px] font-bold text-gray-300 shadow-[0_18px_45px_-32px_rgba(34,211,238,0.55)]">
-          <span className="text-blue-400" aria-hidden>* * * * *</span>
-          <span className="text-white">Transparent</span>
-          <span className="h-3 w-px bg-white/15" aria-hidden />
-          <span>Signaux distingues des hypotheses</span>
-        </div>
+        <CreatorProofBadge />
         <div className="relative overflow-hidden rounded-[1.35rem] border border-white/[0.1] bg-[linear-gradient(135deg,rgba(232,121,249,0.18),rgba(34,211,238,0.08),rgba(99,102,241,0.14))] px-4 py-7 text-center sm:rounded-[1.7rem] sm:px-10 sm:py-12">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent" aria-hidden />
           <h2 className="mx-auto max-w-3xl text-2xl font-black leading-tight tracking-tight text-white sm:text-5xl">
-            Ta prochaine structure gagnante peut venir de <TitleAccent>ton dernier flop.</TitleAccent>
+            Ta prochaine structure gagnante peut venir de <TitleAccent>ton dernier flop</TitleAccent>
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-gray-300 sm:text-base sm:leading-7">
             Une vidéo qui n’a pas pris n’est pas forcément mauvaise. Parfois, le payoff arrive trop tard, le hook explique trop, ou le CTA tombe après le drop.
           </p>
           <div className="mt-5 flex justify-center">
             <Link
-              href="/analyzer"
+              href="/signup"
               className="group inline-flex min-h-[50px] w-full max-w-[24rem] items-center justify-center gap-2 rounded-full bg-white px-6 text-sm font-black text-vn-bg transition duration-500 ease-out hover:-translate-y-0.5 hover:bg-cyan-50 hover:shadow-[0_24px_80px_-48px_rgba(255,255,255,0.75)] active:scale-[0.99] sm:w-auto sm:px-8"
             >
               Tester une analyse gratuite
@@ -465,25 +503,25 @@ function SectionHeader({ label, title, body }: { label?: string; title: React.Re
 
 function ResultProofPhone() {
   return (
-    <section id="exemple-analyse" className={`${shell} relative py-6 sm:py-12`}>
+    <section id="comment-ca-marche" className={`${shell} relative py-6 scroll-mt-24 sm:py-12`}>
       <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
         <div className="text-center lg:text-left">
           <h2 className="mx-auto max-w-xl text-2xl font-black leading-tight tracking-tight text-white sm:text-4xl lg:mx-0">
-            Une structure plus nette. <TitleAccent>Un watch time plus solide.</TitleAccent>
+            Tes vid&eacute;os ont plus de potentiel <TitleAccent>que tu le crois</TitleAccent>
           </h2>
           <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-gray-400 sm:text-base lg:mx-0">
-            Viralynz t’aide à comprendre ce qui décroche, puis à construire un plan de remontage autour du hook, du payoff et du CTA.
+            Viralynz aide &agrave; comprendre ce qui bloque vraiment les performances.
           </p>
         </div>
 
         <div className="relative isolate mx-auto w-full max-w-[18.75rem] sm:max-w-[22rem]">
-          <div className="absolute -inset-7 rounded-[3rem] bg-[radial-gradient(circle_at_50%_22%,rgba(168,85,247,0.36),transparent_52%),radial-gradient(circle_at_72%_68%,rgba(34,211,238,0.18),transparent_44%)] blur-2xl" aria-hidden />
-          <div className="relative overflow-hidden">
+          <div className="absolute -inset-7 rounded-[3rem] bg-[radial-gradient(circle_at_50%_28%,rgba(168,85,247,0.2),transparent_55%),radial-gradient(circle_at_72%_68%,rgba(34,211,238,0.12),transparent_46%)] blur-2xl" aria-hidden />
+          <div className="relative overflow-hidden [mask-image:radial-gradient(ellipse_64%_76%_at_50%_50%,black_58%,rgba(0,0,0,0.82)_73%,transparent_100%)] [-webkit-mask-image:radial-gradient(ellipse_64%_76%_at_50%_50%,black_58%,rgba(0,0,0,0.82)_73%,transparent_100%)]">
             <img
-              src="/fb8096e3-6426-4910-995d-37c064793767.png"
-              alt="Aperçu TikTok avec diagnostic de rétention, hook faible et plan de remontage"
-              className="block w-[108%] max-w-none -translate-x-[3.8%] mix-blend-lighten drop-shadow-[0_32px_80px_rgba(168,85,247,0.32)]"
-              style={{ filter: 'drop-shadow(0 0 1.5px rgba(255,255,255,0.95)) drop-shadow(0 0 18px rgba(168,85,247,0.3)) drop-shadow(0 28px 72px rgba(168,85,247,0.24))' }}
+              src="/ChatGPT Image 15 mai 2026, 13_58_30.png"
+              alt="Aperçu TikTok Analytics avec vues, engagement et récompenses estimées"
+              className="block w-[108%] max-w-none -translate-x-[3.8%] mix-blend-lighten drop-shadow-[0_28px_70px_rgba(168,85,247,0.24)]"
+              style={{ filter: 'drop-shadow(0 0 1.5px rgba(255,255,255,0.86)) drop-shadow(0 0 16px rgba(168,85,247,0.22)) drop-shadow(0 24px 64px rgba(168,85,247,0.18))' }}
             />
           </div>
         </div>
@@ -493,152 +531,131 @@ function ResultProofPhone() {
 }
 
 function LandingFeaturesSection() {
-  const microFlow = [
-    ['Upload', 'Vidéo TikTok ou fichier'],
-    ['Diagnostic', 'Moments faibles, hook, rythme, CTA'],
-    ['V2', 'Structure corrigée à tester'],
+  const currentVideo = [
+    ['0:00', 'Tu expliques le contexte avant de donner une raison de rester.'],
+    ['0:04', 'Le payoff arrive trop tard, la tension retombe.'],
+    ['0:07', 'La séquence répète l’idée au lieu de l’avancer.'],
+    ['0:11', 'Le CTA demande une action sans créer d’urgence.'],
   ];
 
-  const currentSignals = [
-    'Hook trop explicatif',
-    'Drop à 0:05',
-    'Séquence plate',
-    'CTA vague',
+  const correctedVersion = [
+    'Ouvrir avec le résultat, pas avec le contexte.',
+    'Couper les 3 premières secondes.',
+    'Avancer la preuve avant l’explication.',
+    'Transformer le CTA en question qui crée de la curiosité.',
   ];
 
-  const recommendedActions = [
-    'Ouvrir sur la preuve',
-    'Couper 2 secondes',
-    'Ajouter une relance',
-    'Transformer en question',
-  ];
-
-  const decisionRows = [
-    ['Quoi couper', 'Les secondes qui ralentissent la vidéo.'],
-    ['Quoi avancer', 'La preuve ou le payoff qui arrive trop tard.'],
-    ['Quoi réécrire', 'Les hooks et CTA qui manquent de tension.'],
-    ['Quoi republier', 'La version corrigée qui mérite un nouveau test.'],
+  const decisions = [
+    ['01', 'À couper', 'Les secondes qui ralentissent le rythme ou répètent la même idée.'],
+    ['02', 'À avancer', 'Le payoff, la preuve ou le bénéfice qui arrive trop tard.'],
+    ['03', 'À réécrire', 'Les hooks, transitions et CTA qui manquent de tension.'],
+    ['04', 'À garder', 'Les moments qui créent de la clarté, de la preuve ou de la curiosité.'],
+    ['05', 'À republier', 'La version corrigée avec une structure plus testable.'],
   ];
 
   return (
-    <MotionSection id="features" className={`${shell} relative py-6 sm:py-14 scroll-mt-24`}>
-      <div className="mx-auto max-w-7xl">
-        <div className="grid gap-5 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
-          <div className="lg:sticky lg:top-24">
-            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-cyan-100 shadow-[0_18px_52px_-42px_rgba(34,211,238,0.95)]">
-              <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_16px_rgba(34,211,238,0.95)]" aria-hidden />
-              OUTPUT VIRALYNZ
+    <MotionSection id="features" className={`${shell} relative py-6 sm:py-16 scroll-mt-24`}>
+      <div className="mx-auto max-w-[82rem]">
+        <div className="mx-auto max-w-3xl text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-cyan-100 shadow-[0_18px_52px_-42px_rgba(34,211,238,0.95)]">
+            <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_16px_rgba(34,211,238,0.95)]" aria-hidden />
+            FONCTIONNALITÉS
+          </div>
+          <h2 className="mt-4 text-3xl font-black leading-tight tracking-tight text-white sm:text-5xl">
+            Viralynz ne te donne pas un rapport. <TitleAccent>Il te donne la V2</TitleAccent>
+          </h2>
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-gray-400 sm:text-base sm:leading-7">
+            Upload ta vidéo. Viralynz repère les secondes qui font décrocher, réécrit les passages faibles et te sort une version à republier avec un plan clair.
+          </p>
+        </div>
+
+        <div className="relative mt-6 overflow-hidden rounded-[1.55rem] border border-white/[0.11] bg-[#07080d] p-3 shadow-[0_44px_160px_-92px_rgba(168,85,247,0.98)] sm:mt-9 sm:p-5 lg:p-6">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_0%,rgba(232,121,249,0.2),transparent_34%),radial-gradient(circle_at_86%_10%,rgba(34,211,238,0.16),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.06),transparent_36%)]" aria-hidden />
+          <div className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/55 to-transparent" aria-hidden />
+
+          <div className="relative grid gap-3 lg:grid-cols-[1fr_auto_1fr] lg:items-stretch">
+            <div className="rounded-[1.25rem] border border-rose-300/20 bg-[linear-gradient(155deg,rgba(244,63,94,0.115),rgba(255,255,255,0.022))] p-4 sm:p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-rose-100/65">Avant</p>
+                  <h3 className="mt-1 text-2xl font-black leading-tight text-white">Vidéo actuelle</h3>
+                </div>
+                <span className="rounded-full border border-rose-300/25 bg-rose-400/10 px-3 py-1.5 text-[10px] font-black text-rose-100">
+                  Rétention probable : en baisse
+                </span>
+              </div>
+
+              <div className="mt-5 grid gap-2.5">
+                {currentVideo.map(([time, line]) => (
+                  <div key={time} className="grid grid-cols-[3.2rem_1fr] gap-3 rounded-2xl border border-white/[0.08] bg-black/25 p-3">
+                    <span className="rounded-xl border border-rose-300/20 bg-rose-400/10 px-2 py-2 text-center text-[10px] font-black text-rose-100">{time}</span>
+                    <p className="text-sm font-semibold leading-5 text-gray-200">{line}</p>
+                  </div>
+                ))}
+              </div>
             </div>
-            <h2 className="mt-4 max-w-2xl text-3xl font-black leading-tight tracking-tight text-white sm:text-5xl">
-              Un diagnostic qui finit <TitleAccent>en V2.</TitleAccent>
-            </h2>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-gray-400 sm:text-base sm:leading-7">
-              Upload ta vidéo. Viralynz repère où l’attention casse, puis sort les corrections à appliquer avant de republier.
+
+            <div className="flex items-center justify-center">
+              <div className="relative rounded-full border border-cyan-300/20 bg-cyan-300/10 px-4 py-2 text-center text-[10px] font-black uppercase tracking-[0.12em] text-cyan-100 shadow-[0_0_42px_-18px_rgba(34,211,238,0.95)]">
+                <span className="absolute inset-[-8px] rounded-full border border-cyan-300/5" aria-hidden />
+                Diagnostic → Reconstruction
+              </div>
+            </div>
+
+            <div className="rounded-[1.25rem] border border-cyan-300/22 bg-[linear-gradient(155deg,rgba(34,211,238,0.11),rgba(255,255,255,0.024))] p-4 shadow-[0_28px_95px_-70px_rgba(34,211,238,0.98)] sm:p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-100/70">Après</p>
+                  <h3 className="mt-1 text-2xl font-black leading-tight text-white">V2 recommandée</h3>
+                </div>
+                <span className="rounded-full border border-emerald-300/25 bg-emerald-400/10 px-3 py-1.5 text-[10px] font-black text-emerald-100">
+                  Version prête à tester
+                </span>
+              </div>
+
+              <div className="mt-5 grid gap-2.5">
+                {correctedVersion.map((line, index) => (
+                  <div key={line} className="grid grid-cols-[2.25rem_1fr] gap-3 rounded-2xl border border-white/[0.08] bg-black/25 p-3">
+                    <span className="grid h-9 w-9 place-items-center rounded-xl border border-cyan-300/20 bg-cyan-300/10 text-[11px] font-black text-cyan-100">0{index + 1}</span>
+                    <p className="text-sm font-semibold leading-5 text-gray-100">{line}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="relative mt-3 rounded-[1.15rem] border border-vn-fuchsia/18 bg-vn-fuchsia/[0.055] px-4 py-3 text-center">
+            <p className="text-sm font-black leading-6 text-white">
+              Chaque analyse devient une décision de montage. Coupe. Avance. Réécris. Republie.
             </p>
-
-            <div className="mt-5 rounded-[1.25rem] border border-white/[0.09] bg-white/[0.035] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.045)]">
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200/80">La vidéo actuelle entre. La version corrigée sort.</p>
-              <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                {microFlow.map(([label, body], index) => (
-                  <div key={label} className="relative rounded-2xl border border-white/[0.08] bg-black/22 p-3">
-                    {index < microFlow.length - 1 ? (
-                      <span className="absolute -right-2 top-1/2 hidden h-4 w-4 -translate-y-1/2 items-center justify-center rounded-full border border-cyan-300/20 bg-[#08090e] text-[10px] text-cyan-200 sm:flex" aria-hidden>
-                        →
-                      </span>
-                    ) : null}
-                    <p className="text-xs font-black uppercase tracking-[0.13em] text-white">{label}</p>
-                    <p className="mt-1 text-xs font-medium leading-5 text-gray-400">{body}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {['Trouve le drop', 'Réécrit le hook', 'Prépare la V2'].map((item) => (
-                  <span key={item} className="rounded-full border border-cyan-300/15 bg-cyan-300/[0.07] px-3 py-1.5 text-[10px] font-black text-cyan-100/85">
-                    {item}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-4 rounded-[1.25rem] border border-cyan-300/18 bg-[radial-gradient(circle_at_74%_0%,rgba(34,211,238,0.15),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.052),rgba(255,255,255,0.018))] p-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200/75">Ce que Viralynz décide pour toi</p>
-              <div className="mt-4 grid gap-2">
-                {decisionRows.map(([title, body]) => (
-                  <div key={title} className="grid grid-cols-[6.4rem_1fr] gap-3 rounded-xl border border-white/[0.07] bg-white/[0.035] px-3 py-2.5">
-                    <p className="text-xs font-black leading-5 text-white">{title}</p>
-                    <p className="text-xs font-medium leading-5 text-gray-400">{body}</p>
-                  </div>
-                ))}
-              </div>
-              <p className="mt-3 text-[11px] font-bold leading-5 text-gray-500">
-                Pro & Scale : programmation TikTok en beta.
-              </p>
-            </div>
-
-            <Link href="/analyzer" className="mt-4 inline-flex min-h-[46px] w-full items-center justify-center rounded-2xl bg-white px-5 text-sm font-black text-vn-bg transition hover:bg-cyan-50 sm:w-auto">
-              Analyser ma vidéo
-            </Link>
           </div>
+        </div>
 
-          <div className="relative overflow-hidden rounded-[1.45rem] border border-white/[0.1] bg-[#07080d] p-3 shadow-[0_34px_130px_-84px_rgba(168,85,247,0.95)] sm:p-4 lg:p-5">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_0%,rgba(232,121,249,0.2),transparent_34%),radial-gradient(circle_at_88%_18%,rgba(34,211,238,0.14),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.052),transparent_36%)]" aria-hidden />
-            <div className="relative">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-violet-200/75">Pas un rapport. Une V2.</p>
-                <span className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-emerald-200">ACTIONNABLE</span>
+        <div className="mt-4 grid gap-2.5 sm:mt-5 sm:grid-cols-2 lg:grid-cols-5">
+          {decisions.map(([number, title, body]) => (
+            <motion.div
+              key={title}
+              whileHover={cardHover}
+              className="relative min-h-[8.5rem] overflow-hidden rounded-[1.15rem] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.052),rgba(255,255,255,0.018))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.055)] transition duration-500 hover:border-cyan-300/24 hover:bg-white/[0.06]"
+            >
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/35 to-transparent" aria-hidden />
+              <div className="flex items-center justify-between gap-3">
+                <span className="rounded-full border border-white/10 bg-white/[0.055] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-cyan-100/75">{number}</span>
+                <span className="h-2 w-2 rounded-full bg-cyan-300 shadow-[0_0_18px_rgba(34,211,238,0.85)]" aria-hidden />
               </div>
+              <h3 className="mt-4 text-base font-black leading-tight text-white">{title}</h3>
+              <p className="mt-2 text-xs font-medium leading-5 text-gray-400">{body}</p>
+            </motion.div>
+          ))}
+        </div>
 
-              <div className="grid gap-3 lg:grid-cols-[1fr_auto_1fr] lg:items-stretch">
-                <div className="rounded-[1.2rem] border border-rose-300/20 bg-[linear-gradient(160deg,rgba(244,63,94,0.11),rgba(255,255,255,0.025))] p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-rose-100/65">Input</p>
-                      <h3 className="mt-1 text-xl font-black leading-tight text-white">Vidéo actuelle</h3>
-                    </div>
-                    <span className="rounded-full border border-rose-300/25 bg-rose-400/10 px-2.5 py-1 text-[10px] font-black text-rose-100">à corriger</span>
-                  </div>
-
-                  <div className="mt-4 grid gap-2">
-                    {currentSignals.map((item) => (
-                      <div key={item} className="rounded-2xl border border-white/[0.08] bg-black/24 px-3 py-3">
-                        <p className="text-sm font-black leading-5 text-white">{item}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-center">
-                  <div className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-4 py-2 text-center text-[10px] font-black uppercase tracking-[0.12em] text-cyan-100 shadow-[0_0_36px_-18px_rgba(34,211,238,0.95)] lg:rotate-0">
-                    Analyse → Reconstruction
-                  </div>
-                </div>
-
-                <div className="rounded-[1.2rem] border border-cyan-300/22 bg-[linear-gradient(160deg,rgba(34,211,238,0.11),rgba(255,255,255,0.025))] p-4 shadow-[0_24px_88px_-68px_rgba(34,211,238,0.95)]">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-100/70">Output</p>
-                      <h3 className="mt-1 text-xl font-black leading-tight text-white">V2 recommandée</h3>
-                    </div>
-                    <span className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-2.5 py-1 text-[10px] font-black text-cyan-100">à tester</span>
-                  </div>
-
-                  <div className="mt-4 grid gap-2">
-                    {recommendedActions.map((item) => (
-                      <div key={item} className="rounded-2xl border border-white/[0.08] bg-black/24 px-3 py-3">
-                        <p className="text-sm font-black leading-5 text-white">{item}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-3 rounded-[1.1rem] border border-vn-fuchsia/18 bg-vn-fuchsia/[0.055] px-4 py-3 text-center">
-                <p className="text-sm font-black leading-6 text-white">
-                  Chaque analyse devient une décision de montage claire.
-                </p>
-              </div>
-            </div>
-          </div>
+        <div className="mt-5 text-center sm:mt-7">
+          <Link href="/signup" className="inline-flex min-h-[50px] w-full max-w-[24rem] items-center justify-center rounded-full bg-white px-6 text-sm font-black text-vn-bg transition duration-500 ease-out hover:-translate-y-0.5 hover:bg-cyan-50 hover:shadow-[0_24px_80px_-48px_rgba(255,255,255,0.75)] active:scale-[0.99] sm:w-auto sm:px-8">
+            Analyser ma vidéo
+          </Link>
+          <p className="mt-2 text-xs font-semibold leading-5 text-gray-500">
+            Reçois les corrections à appliquer avant ton prochain repost.
+          </p>
         </div>
       </div>
     </MotionSection>
@@ -663,9 +680,6 @@ function ReconstructionFeatureSection() {
               <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_16px_rgba(34,211,238,0.95)]" />
               Pro + Scale
             </div>
-            <h2 className="mt-4 text-2xl font-black leading-tight tracking-tight text-white sm:text-4xl">
-              Plus qu'une analyse. <TitleAccent>Une reconstruction complete de la structure.</TitleAccent>
-            </h2>
             <p className="mt-3 text-sm leading-6 text-gray-400 sm:text-base sm:leading-7">
               Ta video perd l'attention. Viralynz detecte exactement ou. L'IA reconstruit une meilleure structure, puis tu remontes une version optimisee avec tes propres images.
             </p>
@@ -726,16 +740,13 @@ function ReviewsSection() {
   return (
     <MotionSection className={`${shell} relative py-5 sm:py-14`}>
       <div className="mx-auto max-w-4xl">
-        <div className="mx-auto mb-4 flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/[0.045] px-3 py-1.5 text-[10px] font-bold text-gray-300 sm:mb-6 sm:text-[11px]">
-          <span className="text-cyan-300" aria-hidden>* * * * *</span>
-          <span className="text-white">Diagnostic</span>
-          <span className="h-3 w-px bg-white/15" aria-hidden />
-          <span>Sorties basees sur signaux et hypotheses</span>
+        <div className="text-center">
+          <HeroRatingBadge />
         </div>
 
         <div className="text-center">
           <h2 className="text-[1.45rem] font-black leading-tight tracking-tight text-white sm:text-4xl">
-            Des créateurs qui corrigent vraiment <TitleAccent>leur structure.</TitleAccent>
+            Des créateurs qui corrigent vraiment <TitleAccent>leur structure</TitleAccent>
           </h2>
           <p className="mx-auto mt-2 max-w-2xl text-[13px] leading-5 text-gray-400 sm:text-base sm:leading-6">
             Pas des avis vagues. Des hooks réécrits, des drops repérés, des cuts appliqués et des structures remontées plus intelligemment.
@@ -947,7 +958,7 @@ function FeaturesSection() {
             Système de reconstruction
           </p>
           <h2 className="text-2xl font-black leading-tight tracking-tight text-white sm:text-4xl">
-            Tout ce qu’il faut pour transformer un flop en <TitleAccent>structure à tester.</TitleAccent>
+            Tout ce qu’il faut pour transformer un flop en <TitleAccent>structure à tester</TitleAccent>
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-gray-400 sm:text-base">
             Viralynz ne te donne pas juste un score : il te donne les décisions de montage qui rendent ta prochaine version retravaillée plus solide.
@@ -1035,7 +1046,7 @@ function PremiumPageStyle() {
             footer .grid > div:nth-child(3) { display: none !important; }
             footer ul.space-y-3 > :not([hidden]) ~ :not([hidden]) { margin-top: .34rem !important; }
             footer p.mb-5 { margin-bottom: .48rem !important; }
-            footer a[href="/analyzer"] { min-height: 2.35rem !important; padding: .5rem .95rem !important; }
+            footer a[href="/signup"] { min-height: 2.35rem !important; padding: .5rem .95rem !important; }
             footer .mt-12 { margin-top: .8rem !important; }
             footer .pt-7 { padding-top: .65rem !important; }
           }
@@ -1810,8 +1821,8 @@ function ProductCommandCenter() {
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-300/80">Ce que tu reçois après analyse</p>
             <h2 className="mt-2 text-[1.45rem] font-black leading-tight text-white sm:text-4xl">
-              Viralynz ne te dit pas seulement que ça flop.
-              <TitleAccent> Il te montre comment le remonter mieux.</TitleAccent>
+              Viralynz ne te dit pas seulement que ça flop
+              <TitleAccent> Il te montre comment le remonter mieux</TitleAccent>
             </h2>
             <p className="mx-auto mt-2 max-w-2xl text-[13px] font-semibold leading-5 text-gray-400 sm:mt-3 sm:text-base sm:leading-6">
               Tu ne repars pas avec une note. Tu repars avec quoi couper, quoi avancer et quoi tester.
@@ -1922,7 +1933,7 @@ function ProductCommandCenter() {
               </div>
               <div className="flex flex-col items-stretch gap-2 sm:flex-row lg:flex-col">
                 <Link
-                  href="/analyzer"
+                  href="/signup"
                   className="group inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-white px-5 text-sm font-black text-vn-bg transition duration-500 ease-out hover:-translate-y-0.5 hover:bg-cyan-50 hover:shadow-[0_22px_72px_-46px_rgba(255,255,255,0.78)] active:scale-[0.99] sm:min-h-[48px]"
                 >
                   Analyser mon TikTok
@@ -1977,7 +1988,7 @@ function RepostTransformationSection() {
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-300/80">Avant / aprÃ¨s repost</p>
             <h2 className="mt-2 text-[1.55rem] font-black leading-tight tracking-tight text-white sm:text-4xl">
-              La mÃªme idÃ©e. <TitleAccent>Une structure qui retient.</TitleAccent>
+              La mÃªme idÃ©e <TitleAccent>Une structure qui retient</TitleAccent>
             </h2>
             <p className="mx-auto mt-2 max-w-2xl text-[13px] font-semibold leading-5 text-gray-400 sm:mt-3 sm:text-base sm:leading-6">
               Viralynz ne maquille pas la vidÃ©o. Il change lâ€™ordre des moments qui comptent : hook, preuve, rythme, payoff et CTA.
@@ -1990,7 +2001,7 @@ function RepostTransformationSection() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-[0.18em] text-rose-200/70">Avant repost</p>
-                  <h3 className="mt-1 text-xl font-black leading-tight text-white sm:text-2xl">La vidÃ©o explique avant de donner envie.</h3>
+                  <h3 className="mt-1 text-xl font-black leading-tight text-white sm:text-2xl">La vidÃ©o explique avant de donner envie</h3>
                 </div>
                 <div className="rounded-2xl border border-rose-300/24 bg-rose-400/10 px-3 py-2 text-right">
                   <p className="text-[9px] font-black uppercase tracking-[0.14em] text-rose-100/65">Score</p>
@@ -2043,7 +2054,7 @@ function RepostTransformationSection() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200/75">AprÃ¨s correction Viralynz</p>
-                  <h3 className="mt-1 text-xl font-black leading-tight text-white sm:text-2xl">La vidÃ©o ouvre sur la tension, puis prouve.</h3>
+                  <h3 className="mt-1 text-xl font-black leading-tight text-white sm:text-2xl">La vidÃ©o ouvre sur la tension, puis prouve</h3>
                 </div>
                 <div className="rounded-2xl border border-cyan-300/24 bg-cyan-300/10 px-3 py-2 text-right">
                   <p className="text-[9px] font-black uppercase tracking-[0.14em] text-cyan-100/65">Score</p>
@@ -2348,36 +2359,38 @@ function getCreatorPromoTimeLeft() {
 }
 
 function CreatorPromoCountdown() {
-  const [timeLeft, setTimeLeft] = useState(getCreatorPromoTimeLeft);
+  const [timeLeft, setTimeLeft] = useState<ReturnType<typeof getCreatorPromoTimeLeft> | null>(null);
 
   useEffect(() => {
+    setTimeLeft(getCreatorPromoTimeLeft());
     const timer = window.setInterval(() => setTimeLeft(getCreatorPromoTimeLeft()), 1000);
     return () => window.clearInterval(timer);
   }, []);
 
   const parts = [
-    ['jours', timeLeft.days],
-    ['heures', timeLeft.hours],
-    ['min', timeLeft.minutes],
-    ['sec', timeLeft.seconds],
+    ['jours', timeLeft?.days],
+    ['heures', timeLeft?.hours],
+    ['min', timeLeft?.minutes],
+    ['sec', timeLeft?.seconds],
   ];
 
   return (
-    <div className="mx-auto mb-5 max-w-xl overflow-hidden rounded-2xl border border-red-400/25 bg-[radial-gradient(circle_at_18%_0%,rgba(248,113,113,0.22),transparent_36%),linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.025))] p-3 shadow-[0_24px_90px_-62px_rgba(248,113,113,0.8)] sm:mb-8 sm:p-4">
-      <div className="flex flex-wrap items-center justify-center gap-2 text-center">
-        <span className="inline-flex items-center gap-2 rounded-full border border-red-300/25 bg-red-400/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.1em] text-red-100">
-          <span className="h-1.5 w-1.5 rounded-full bg-red-300 shadow-[0_0_16px_rgba(248,113,113,0.95)]" aria-hidden />
-          Promo Creator
-        </span>
-        <span className="text-xs font-black text-white sm:text-sm">se termine dimanche 31 mai</span>
-      </div>
-      <div className="mt-3 grid grid-cols-4 gap-1.5 sm:gap-2">
-        {parts.map(([label, value]) => (
-          <div key={label} className="rounded-xl border border-white/[0.08] bg-black/24 px-2 py-2 text-center">
-            <p className="text-xl font-black leading-none text-white sm:text-2xl">{String(value).padStart(2, '0')}</p>
-            <p className="mt-1 text-[9px] font-black uppercase tracking-[0.08em] text-red-100/65">{label}</p>
-          </div>
-        ))}
+    <div className="relative mt-4 rounded-xl border border-white/[0.09] bg-white/[0.025] px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.045)]">
+      <div className="grid gap-2 xl:grid-cols-[1fr_auto] xl:items-center xl:gap-3">
+        <div className="min-w-0 text-center xl:text-left">
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-fuchsia-100/80">Offre limit&eacute;e</p>
+          <p className="mt-0.5 text-[11px] font-semibold text-gray-500">Tarif bloqu&eacute; jusqu'au 31 mai</p>
+        </div>
+        <div className="grid grid-cols-4 overflow-hidden rounded-lg border border-white/[0.08] bg-black/20">
+          {parts.map(([label, value]) => (
+            <div key={label} className="min-w-[2.55rem] border-r border-white/[0.07] px-1.5 py-1.5 text-center last:border-r-0">
+              <p className="text-sm font-black leading-none text-white">
+                {typeof value === 'number' ? String(value).padStart(2, '0') : '--'}
+              </p>
+              <p className="mt-0.5 text-[7px] font-black uppercase tracking-[0.08em] text-gray-500">{label}</p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -2394,7 +2407,7 @@ function PricingSection() {
       name: 'Creator',
       audience: 'Comprendre pourquoi les vidéos décrochent.',
       description: 'Pour voir clairement ce qui casse la rétention : hook trop lent, drop principal, secondes faibles et corrections prioritaires.',
-      oldPrice: '19,99€',
+      oldPrice: '14,99€',
       price: '7,99€',
       note: 'Diagnostic mensuel, sans reconstruction IA',
       cta: 'Diagnostiquer mes vidéos',
@@ -2420,8 +2433,9 @@ function PricingSection() {
       audience: 'Reconstruire et republier des vidéos plus retenantes.',
       description: 'Le plan principal pour passer du diagnostic à une nouvelle version : hooks, CTA, structure seconde par seconde et workflow repost TikTok.',
       price: '29,99€',
-      annualPrice: '21,99€',
-      annualTotal: '263,88€',
+      annualOldPrice: '29,99€',
+      annualPrice: '20,99€',
+      annualTotal: '251,88€',
       note: 'Reconstruction + publishing TikTok en beta',
       cta: 'Reconstruire mes vidéos',
       stripePlan: 'pro',
@@ -2447,8 +2461,9 @@ function PricingSection() {
       audience: 'Piloter plusieurs comptes et systèmes de contenu.',
       description: 'Pour gérer plus de volume sans perdre le fil : variantes, historique, comptes TikTok multiples et publishing avancé en accès anticipé.',
       price: '79,99€',
-      annualPrice: '64,99€',
-      annualTotal: '779,88€',
+      annualOldPrice: '79,99€',
+      annualPrice: '55,99€',
+      annualTotal: '671,88€',
       note: 'Volume premium + publishing avancé en accès anticipé',
       cta: 'Piloter plusieurs comptes',
       stripePlan: 'scale',
@@ -2472,10 +2487,9 @@ function PricingSection() {
   ];
 
   return (
-    <MotionSection className={`${shell} relative py-7 sm:py-14`}>
+    <MotionSection id="tarifs" className={`${shell} relative py-7 sm:py-14 scroll-mt-24`}>
       <div className="mx-auto max-w-7xl">
-        <CreatorPromoCountdown />
-
+        <span id="pricing" className="block scroll-mt-24" aria-hidden />
         <div className="mb-5 text-center sm:mb-8">
           <h2 className="text-2xl font-black tracking-tight text-white sm:text-5xl">Choisis ton niveau <TitleAccent>Viralynz</TitleAccent></h2>
           <p className="mx-auto mt-2 max-w-xl text-[13px] leading-5 text-gray-400 sm:mt-3 sm:text-base sm:leading-6">
@@ -2483,7 +2497,7 @@ function PricingSection() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-5 xl:gap-7">
+        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-5 xl:gap-7">
           {pricingCards.map((plan) => {
             const isAnnual = Boolean(plan.annualPrice && annualBilling[plan.name]);
             const displayedOldPrice = (isAnnual ? ('annualOldPrice' in plan ? plan.annualOldPrice : undefined) : ('oldPrice' in plan ? plan.oldPrice : undefined)) as string | undefined;
@@ -2507,12 +2521,15 @@ function PricingSection() {
               : isScale
                 ? 'border-violet-300/35 bg-violet-300/10 text-violet-100'
                 : 'border-vn-fuchsia/35 bg-vn-fuchsia/10 text-fuchsia-100';
+            const cardLayout = isScale
+              ? 'md:col-span-2 md:mx-auto md:w-[calc((100%-1rem)/2)] lg:col-span-1 lg:w-auto'
+              : '';
 
             return (
             <motion.article
               key={plan.name}
               whileHover={cardHover}
-              className={`group relative h-full overflow-hidden rounded-[1.25rem] border px-4 py-5 text-left transition duration-500 ease-out hover:border-white/25 sm:rounded-[1.35rem] sm:px-7 sm:py-7 ${cardChrome}`}
+              className={`group relative overflow-hidden rounded-[1.25rem] border px-4 py-5 text-left transition duration-500 ease-out hover:border-white/25 sm:rounded-[1.35rem] sm:px-6 sm:py-7 xl:px-7 ${cardLayout} ${cardChrome}`}
             >
               <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-white/55 to-transparent" aria-hidden />
               <div className="pointer-events-none absolute -right-16 -top-16 h-36 w-36 rounded-full bg-white/[0.045] blur-2xl transition duration-500 group-hover:bg-white/[0.07]" aria-hidden />
@@ -2528,12 +2545,18 @@ function PricingSection() {
                 </div>
               ) : null}
 
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2.5">
                     <h3 className="text-2xl font-black text-white">{plan.name}</h3>
                     {isCreator || isPro || isScale ? (
-                      <span className="animate-pulse rounded-full bg-red-500/18 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-red-200 ring-1 ring-red-400/25">
+                      <span className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.08em] ${
+                        isCreator
+                          ? 'bg-white/[0.045] text-fuchsia-100 ring-1 ring-vn-fuchsia/20'
+                          : isPro
+                            ? 'bg-cyan-300/10 text-cyan-100 ring-1 ring-cyan-300/20'
+                            : 'bg-violet-300/10 text-violet-100 ring-1 ring-violet-300/20'
+                      }`}>
                         {plan.microBadge}
                       </span>
                     ) : null}
@@ -2546,7 +2569,7 @@ function PricingSection() {
                     type="button"
                     aria-pressed={isAnnual}
                     onClick={() => setAnnualBilling((current) => ({ ...current, [plan.name]: !current[plan.name] }))}
-                    className={`flex items-center gap-2 text-[11px] font-bold uppercase transition hover:text-white ${isPro ? 'text-cyan-100' : 'text-violet-100'}`}
+                    className={`shrink-0 flex items-center gap-2 text-[11px] font-bold uppercase transition hover:text-white ${isPro ? 'text-cyan-100' : 'text-violet-100'}`}
                   >
                     Annuel
                     <span className={`relative h-6 w-11 rounded-full transition ${isAnnual ? 'bg-white' : 'bg-white/10'}`}>
@@ -2557,9 +2580,9 @@ function PricingSection() {
               </div>
 
               <div className="mt-5 sm:mt-7">
-                <div className="flex items-end gap-2">
-                  {displayedOldPrice ? <span className="pb-1 text-xl font-black text-gray-500 line-through sm:text-2xl">{displayedOldPrice}</span> : null}
-                  <span className="text-4xl font-black tracking-tight text-white sm:text-5xl">{displayedPrice}</span>
+                <div className="flex flex-wrap items-end gap-x-2 gap-y-0.5">
+                  {displayedOldPrice ? <span className="pb-1 text-lg font-black text-gray-500 line-through sm:text-xl xl:text-2xl">{displayedOldPrice}</span> : null}
+                  <span className="text-4xl font-black tracking-tight text-white xl:text-5xl">{displayedPrice}</span>
                   <span className="pb-2 text-xs font-bold leading-4 text-gray-300">/mois</span>
                 </div>
                 {isAnnual && plan.annualTotal ? (
@@ -2570,6 +2593,8 @@ function PricingSection() {
                   <p className="mt-2 text-xs font-semibold text-gray-400">{plan.note}</p>
                 )}
               </div>
+
+              {isCreator ? <CreatorPromoCountdown /> : null}
 
               <CheckoutButton
                 plan={plan.stripePlan as 'creator' | 'pro' | 'scale'}
@@ -2584,7 +2609,7 @@ function PricingSection() {
 
               <div className="grid grid-cols-2 gap-2">
                 {displayedQuotas.map((quota) => (
-                  <span key={quota} className={`flex min-h-[2.55rem] items-center justify-center rounded-full border px-2.5 py-1.5 text-center text-[11px] font-black leading-4 sm:px-3 sm:text-sm ${pillChrome}`}>
+                  <span key={quota} className={`flex min-h-[2.6rem] items-center justify-center rounded-2xl border px-2 py-1.5 text-center text-[11px] font-black leading-[1.15] sm:text-[12px] xl:px-3 xl:text-[13px] ${pillChrome}`}>
                     {quota}
                   </span>
                 ))}
@@ -2594,8 +2619,8 @@ function PricingSection() {
                 <p className="mb-3 text-base font-black text-white">Ce que tu débloques</p>
                 <div className="grid grid-cols-2 gap-2">
                   {plan.access.map((item) => (
-                    <span key={item} className="inline-flex min-h-[2.7rem] items-center justify-center gap-2 rounded-lg border border-white/15 bg-white/[0.025] px-2.5 py-1.5 text-center text-[12px] font-black leading-4 text-white sm:px-3 sm:text-sm">
-                      <PricingFeatureIcon name={getAccessIcon(item)} className="h-3.5 w-3.5 text-emerald-400" />
+                    <span key={item} className="inline-flex min-h-[2.75rem] items-center justify-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.025] px-2 py-1.5 text-center text-[11px] font-black leading-[1.18] text-white xl:gap-2 xl:px-3 xl:text-[13px]">
+                      <PricingFeatureIcon name={getAccessIcon(item)} className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
                       {item}
                     </span>
                   ))}
@@ -2608,7 +2633,7 @@ function PricingSection() {
                 <p className="mb-3 text-sm font-black text-white sm:mb-4 sm:text-base">{plan.includedTitle}</p>
                 <ul className="space-y-2.5 sm:space-y-3.5">
                   {plan.included.map((item) => (
-                    <li key={item} className="flex items-start gap-3 text-[13px] font-bold leading-5 text-white sm:text-sm">
+                    <li key={item} className="flex items-start gap-3 text-[13px] font-bold leading-5 text-white">
                       <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.35)]">
                         <PricingFeatureIcon name={getIncludedIcon(item)} className="h-4 w-4" />
                       </span>

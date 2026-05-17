@@ -1001,7 +1001,7 @@ export default function DashboardClient({
 
             {/* CTA */}
             <div className="shrink-0">
-              <Link href="/analyzer" className={`inline-flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm text-white transition-all ${canAnalyze ? 'bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:brightness-110 shadow-lg shadow-vn-fuchsia/25' : 'bg-white/[0.06] border border-white/[0.10] opacity-60 cursor-not-allowed pointer-events-none'}`}>
+              <Link href="/dashboard/analyze" className={`inline-flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm text-white transition-all ${canAnalyze ? 'bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:brightness-110 shadow-lg shadow-vn-fuchsia/25' : 'bg-white/[0.06] border border-white/[0.10] opacity-60 cursor-not-allowed pointer-events-none'}`}>
                 <svg viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4"><path d="M9.196.944a.75.75 0 0 0-1.483.183l.175 1.417A8.001 8.001 0 0 0 2.25 8.5h1.5a6.5 6.5 0 0 1 4.637-6.224l.175 1.417a.75.75 0 0 0 1.374.293l1.346-3a.75.75 0 0 0-.623-1.045l-1.463.003Z" /><path d="M5.483 13.897a.75.75 0 0 1-.957-.408l-.565-1.356a6.5 6.5 0 0 1-1.711-5.633h-1.5A8 8 0 0 0 4 14.75a.75.75 0 0 0 .957.408l1.346-3a.75.75 0 0 0-.82-1.261Z" /></svg>
                 {hasHistory ? 'Corriger ma prochaine vidéo' : 'Nouvelle analyse'}
               </Link>
@@ -1129,7 +1129,7 @@ export default function DashboardClient({
                       ? `Ton ${weakest.label} tire ton score de structure vers le bas. C'est là que se joue ta prochaine progression.`
                       : 'Continue à analyser tes vidéos pour identifier tes priorités.')}
                 </p>
-                <Link href="/analyzer" className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-vn-fuchsia hover:text-white transition-colors group">
+                <Link href="/dashboard/analyze" className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-vn-fuchsia hover:text-white transition-colors group">
                   Analyser une vidéo
                   <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3 group-hover:translate-x-0.5 transition-transform"><path fillRule="evenodd" d="M6.22 4.22a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06L7.28 11.78a.75.75 0 0 1-1.06-1.06L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" /></svg>
                 </Link>
@@ -1321,7 +1321,7 @@ export default function DashboardClient({
                       <p className="text-[11px] text-gray-500 leading-snug">{step.action}</p>
                     </div>
                     <Link
-                      href="/analyzer"
+                      href="/dashboard/analyze"
                       className="shrink-0 text-[10px] font-semibold text-vn-violet/70 hover:text-vn-violet transition-colors px-2.5 py-1.5 rounded-lg hover:bg-vn-violet/10 border border-transparent hover:border-vn-violet/20 self-start mt-0.5 whitespace-nowrap"
                     >
                       → Corriger
@@ -1340,7 +1340,7 @@ export default function DashboardClient({
             </div>
             <p className="text-sm font-semibold text-white mb-1">Lance ta première analyse</p>
             <p className="text-xs text-gray-500 mb-5">Tes insights de performance, priorités et conseils personnalisés apparaîtront ici.</p>
-            <Link href="/analyzer" className="inline-flex items-center gap-2 text-xs font-semibold px-5 py-2.5 rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:opacity-90 transition-opacity shadow-lg shadow-vn-fuchsia/20">
+            <Link href="/dashboard/analyze" className="inline-flex items-center gap-2 text-xs font-semibold px-5 py-2.5 rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:opacity-90 transition-opacity shadow-lg shadow-vn-fuchsia/20">
               Analyser une vidéo →
             </Link>
           </div>
@@ -1446,7 +1446,7 @@ export default function DashboardClient({
               </div>
 
               <Link
-                href="/analyzer"
+                href="/dashboard/analyze"
                 className={`flex items-center gap-3.5 px-5 py-3.5 border-t border-white/[0.05] transition-all group ${canAnalyze ? 'hover:bg-white/[0.04]' : 'opacity-40 pointer-events-none'}`}
               >
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-vn-fuchsia/30 to-vn-indigo/30 border border-vn-fuchsia/25 flex items-center justify-center shrink-0">
@@ -1478,7 +1478,7 @@ export default function DashboardClient({
                   <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 text-gray-600 shrink-0 group-hover:text-gray-400 transition-colors"><path fillRule="evenodd" d="M6.22 4.22a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06L7.28 11.78a.75.75 0 0 1-1.06-1.06L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" /></svg>
                 </Link>
               ) : (
-                <Link href="/hook-generator" className="flex items-center gap-3.5 px-5 py-3.5 border-t border-white/[0.05] hover:bg-white/[0.04] transition-all group">
+                <Link href="/dashboard/hooks" className="flex items-center gap-3.5 px-5 py-3.5 border-t border-white/[0.05] hover:bg-white/[0.04] transition-all group">
                   <div className="w-8 h-8 rounded-lg bg-vn-violet/15 border border-vn-violet/20 flex items-center justify-center shrink-0">
                     <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 text-vn-violet">
                       <path d="M7.557 2.066A.75.75 0 0 1 8 2.75v10.5a.75.75 0 0 1-1.248.56L3.59 11H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1.59l3.162-2.81a.75.75 0 0 1 .805-.124ZM12.95 3.05a.75.75 0 1 0-1.06 1.06 5.5 5.5 0 0 1 0 7.78.75.75 0 1 0 1.06 1.06 7 7 0 0 0 0-9.9Z" />

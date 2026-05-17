@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 import { getUserById, getEffectivePlan } from '@/lib/auth';
+import { extractTranscriptFromVideo } from '@/lib/video-intelligence';
 
 export const maxDuration = 30;
 
@@ -10,7 +11,7 @@ export const maxDuration = 30;
  * Returns: { transcript: string }
  *
  * Uses OpenAI Whisper to transcribe the audio track of the uploaded video.
- * Limited to Pro / Elite plans (same auth gate as vision analysis).
+ * Limited to Pro / Scale plans (same auth gate as vision analysis).
  * Max audio size: 25 MB (Whisper API limit).
  */
 export async function POST(request: NextRequest) {
@@ -28,48 +29,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ transcript: '' });
     }
 
-    const hasOpenAI =
-      !!process.env.OPENAI_API_KEY &&
-      process.env.OPENAI_API_KEY !== 'sk-your-key-here';
-
-    if (!hasOpenAI) {
-      return NextResponse.json({ transcript: '' });
+    let body: { audio?: string; mimeType?: string };
+    try {
+      body = await request.json() as { audio?: string; mimeType?: string };
+    } catch {
+      return NextResponse.json({ transcript: '', limitations: ['Payload JSON audio invalide.'] });
     }
-
-    const body = await request.json() as { audio?: string; mimeType?: string };
     const { audio, mimeType = 'audio/webm' } = body;
 
     if (!audio || typeof audio !== 'string') {
       return NextResponse.json({ transcript: '' });
     }
 
-    // Decode base64 → Buffer
-    const audioBuffer = Buffer.from(audio, 'base64');
+    const result = await extractTranscriptFromVideo({ audioBase64: audio, mimeType, plan });
+    const transcript = result.text ?? '';
+    if (transcript) console.log('[transcribe] OK —', transcript.slice(0, 120));
 
-    // Whisper limit = 25 MB
-    if (audioBuffer.byteLength > 25 * 1024 * 1024) {
-      console.warn('[transcribe] audio too large:', audioBuffer.byteLength);
-      return NextResponse.json({ transcript: '' });
-    }
-
-    // Build a File-like object for the OpenAI SDK
-    const ext = mimeType.includes('mp4') ? 'mp4' : mimeType.includes('ogg') ? 'ogg' : 'webm';
-    const audioFile = new File([audioBuffer], `audio.${ext}`, { type: mimeType });
-
-    const { default: OpenAI } = await import('openai');
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-    const response = await openai.audio.transcriptions.create({
-      model: 'whisper-1',
-      file: audioFile,
-      language: 'fr',          // French-first; Whisper auto-detects if wrong
-      response_format: 'text',
-    });
-
-    const transcript = typeof response === 'string' ? response.trim() : '';
-    console.log('[transcribe] OK —', transcript.slice(0, 120));
-
-    return NextResponse.json({ transcript });
+    return NextResponse.json({ transcript, confidence: result.confidence, limitations: result.limitations });
   } catch (err) {
     console.error('[transcribe] error:', err instanceof Error ? err.message : err);
     // Non-blocking: return empty transcript rather than blocking the analysis

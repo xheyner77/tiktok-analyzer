@@ -175,7 +175,7 @@ Titre :
 
 Texte :
 
-> Free pour tester. Pro pour publier plus intelligemment chaque semaine. Elite pour les createurs qui veulent optimiser leur systeme contenu.
+> Creator pour comprendre et corriger. Pro pour piloter un vrai système TikTok. Scale pour les équipes qui industrialisent contenu et reposts.
 
 ### Logique de conversion
 
@@ -549,7 +549,7 @@ Angle :
 
 Le plan Pro doit etre presente comme le meilleur choix pour la majorite.
 
-### Elite
+### Scale
 
 Positionnement :
 
@@ -566,7 +566,7 @@ Valeur :
 
 CTA :
 
-> Passer Elite
+> Passer Scale
 
 ### Presentation marketing
 
@@ -757,7 +757,7 @@ Travail :
 
 - Free = test ;
 - Pro = createur regulier ;
-- Elite = optimisation avancee ;
+- Scale = optimisation avancee ;
 - CTA plus nets ;
 - mettre en avant la valeur "version a reposter".
 

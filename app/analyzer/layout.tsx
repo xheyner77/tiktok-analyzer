@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Analyser une vidéo',
+  title: 'Analyser une vidéo TikTok',
   description:
-    'Importe une vidéo courte, enrichis avec un lien TikTok optionnel, et reçois une analyse IA : hook, montage, rétention et conseils — Viralynz.',
+    'Importe ta vidéo TikTok et reçois un diagnostic structuré avec hook, rétention, CTA, timeline et plan de remontage — Viralynz.',
 };
 
 export default function AnalyzerLayout({ children }: { children: React.ReactNode }) {

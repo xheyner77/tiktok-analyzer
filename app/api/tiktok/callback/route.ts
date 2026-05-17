@@ -6,7 +6,7 @@ import {
   fetchTikTokUserInfoBasic,
   getTikTokOAuthSecrets,
 } from '@/lib/tiktok-oauth';
-import { supabase } from '@/lib/supabase';
+import { upsertTikTokAccountForUser } from '@/lib/tiktok-accounts';
 
 function redirectDashboard(request: NextRequest, query: Record<string, string>) {
   const u = new URL('/dashboard', request.url);
@@ -69,37 +69,10 @@ export async function GET(request: NextRequest) {
     return clearState(r);
   }
 
-  const { data: other } = await supabase
-    .from('users')
-    .select('id')
-    .eq('tiktok_open_id', profile.open_id)
-    .neq('id', session.userId)
-    .maybeSingle();
-
-  if (other?.id) {
-    const r = redirectDashboard(request, { tiktok: 'in_use' });
-    return clearState(r);
-  }
-
-  const expiresAt = new Date(Date.now() + Math.max(60, tokens.expires_in) * 1000).toISOString();
-
-  const { error: upErr } = await supabase
-    .from('users')
-    .update({
-      tiktok_open_id: profile.open_id,
-      tiktok_union_id: profile.union_id ?? null,
-      tiktok_display_name: profile.display_name ?? null,
-      tiktok_avatar_url: profile.avatar_url ?? null,
-      tiktok_access_token: tokens.access_token,
-      tiktok_refresh_token: tokens.refresh_token ?? null,
-      tiktok_token_expires_at: expiresAt,
-      tiktok_connected_at: new Date().toISOString(),
-    })
-    .eq('id', session.userId);
-
-  if (upErr) {
-    console.error('[tiktok/callback] DB update:', upErr);
-    const r = redirectDashboard(request, { tiktok: 'db' });
+  const saved = await upsertTikTokAccountForUser({ userId: session.userId, profile, tokens });
+  if (!saved.ok) {
+    console.error('[tiktok/callback] account save:', saved);
+    const r = redirectDashboard(request, { tiktok: saved.code === 'limit_reached' ? 'limit' : 'db' });
     return clearState(r);
   }
 

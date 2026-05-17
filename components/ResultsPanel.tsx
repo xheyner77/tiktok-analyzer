@@ -683,12 +683,12 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
               Analyser une autre vidéo
             </button>
           ) : (
-            <Link href="/analyzer"
+            <Link href="/dashboard/analyze"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:brightness-110 active:scale-[0.98] transition-all">
               Analyser une autre vidéo
             </Link>
           )}
-          <Link href="/hook-generator"
+          <Link href="/dashboard/hooks"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white/70 bg-white/[0.05] border border-white/[0.10] hover:bg-white/[0.08] hover:border-white/[0.16] active:scale-[0.98] transition-all">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 shrink-0">
               <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />

@@ -5,8 +5,8 @@
 
 export const TIKTOK_OAUTH_STATE_COOKIE = 'tiktok_oauth_state';
 
-/** Scope minimal : profil de base (open_id, avatar, display name). */
-export const TIKTOK_LOGIN_SCOPES = 'user.info.basic';
+/** Scope minimal : profil de base. Add video.list in env only after TikTok approval. */
+export const TIKTOK_LOGIN_SCOPES = process.env.TIKTOK_OAUTH_SCOPES?.trim() || 'user.info.basic';
 
 const AUTH_URL = 'https://www.tiktok.com/v2/auth/authorize/';
 const TOKEN_URL = 'https://open.tiktokapis.com/v2/oauth/token/';
@@ -118,6 +118,47 @@ export async function exchangeTikTokAuthorizationCode(
       typeof data.refresh_expires_in === 'number' ? data.refresh_expires_in : undefined,
     scope: typeof data.scope === 'string' ? data.scope : undefined,
     token_type: typeof data.token_type === 'string' ? data.token_type : undefined,
+  };
+}
+
+export async function refreshTikTokAccessToken(
+  refreshToken: string,
+  secrets: TikTokOAuthSecrets
+): Promise<TikTokTokenResponse> {
+  const body = new URLSearchParams({
+    client_key: secrets.clientKey,
+    client_secret: secrets.clientSecret,
+    grant_type: 'refresh_token',
+    refresh_token: refreshToken,
+  });
+
+  const res = await fetch(TOKEN_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Cache-Control': 'no-cache',
+    },
+    body: body.toString(),
+    cache: 'no-store',
+  });
+
+  const raw = await res.text();
+  const json = JSON.parse(raw) as Record<string, unknown>;
+  if (!res.ok) {
+    throw new Error(String(json.error_description ?? json.error ?? `HTTP ${res.status}`));
+  }
+
+  const access_token = String(json.access_token ?? '');
+  if (!access_token) throw new Error('Réponse refresh TikTok sans access_token.');
+
+  return {
+    access_token,
+    open_id: String(json.open_id ?? ''),
+    expires_in: Number(json.expires_in) || 86400,
+    refresh_token: typeof json.refresh_token === 'string' ? json.refresh_token : refreshToken,
+    refresh_expires_in: typeof json.refresh_expires_in === 'number' ? json.refresh_expires_in : undefined,
+    scope: typeof json.scope === 'string' ? json.scope : undefined,
+    token_type: typeof json.token_type === 'string' ? json.token_type : undefined,
   };
 }
 

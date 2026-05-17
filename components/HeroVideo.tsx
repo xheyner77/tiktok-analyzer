@@ -24,8 +24,8 @@ function AnimatedPlaceholder() {
           <span className="text-[1.1rem] font-black text-white leading-none">/100</span>
         </div>
         <div className="pt-1">
-          <p className="text-[13px] font-bold text-vn-fuchsia">Potentiel viral détecté</p>
-          <p className="text-[11px] text-gray-500 mt-0.5">Score de viralité global</p>
+          <p className="text-[13px] font-bold text-vn-fuchsia">Structure récupérable</p>
+          <p className="text-[11px] text-gray-500 mt-0.5">Score vidéo expliqué</p>
           <div className="mt-2 h-1.5 w-36 rounded-full bg-white/[0.07] overflow-hidden">
             <div
               className="h-full rounded-full bg-gradient-to-r from-vn-fuchsia to-vn-indigo"
@@ -91,7 +91,7 @@ function AnimatedPlaceholder() {
           Verdict
         </p>
         <p className="text-[12.5px] text-gray-300 leading-snug">
-          Bonne base — le fond est solide. Corrige le hook et le rythme d'ouverture pour doubler ta rétention.
+          Bonne base — le fond est solide. Corrige le hook et le rythme d'ouverture pour améliorer ta rétention estimée.
         </p>
       </div>
     </div>

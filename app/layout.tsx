@@ -36,13 +36,13 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.viralynz.com'),
   title: {
-    default: 'Viralynz — Analyse vidéo IA pour comprendre ce qui fait performer',
+    default: 'Viralynz — Comprends pourquoi tes TikToks décrochent',
     template: '%s | Viralynz',
   },
   description:
-    'Viralynz : intelligence virale pour le court format — analyse vidéo IA (hook, rétention, montage, CTA), priorités actionnables. Hook generator en complément. TikTok aujourd’hui, Reels & Shorts en roadmap.',
+    'Viralynz analyse tes vidéos, repère les moments faibles et prépare une structure optimisée à remonter avec hook, rétention, CTA, mémoire créateur et priorités actionnables.',
   openGraph: {
-    title: 'Viralynz — Analyse vidéo IA',
+    title: 'Viralynz — Analyse, mémoire créateur et reconstruction TikTok',
     description:
       'Comprends pourquoi ta vidéo performe ou non : diagnostic structuré, moins de publication au hasard. Pour créateurs, e‑com, UGC, agences.',
     url: 'https://www.viralynz.com',
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Viralynz',
-    description: 'Analyse vidéo IA pour TikTok et le court format — hooks en accélérateur.',
+    description: 'Comprends pourquoi tes TikToks décrochent, corrige le hook et prépare une structure optimisée avec une mémoire créateur persistante.',
   },
 };
 

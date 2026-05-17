@@ -13,11 +13,28 @@ const DEMO: AnalysisResult = {
   overperformanceDetected: false,
   finalVerdict: 'Retravailler packaging/timing pour maximiser la rétention.',
   observedStatsSource: 'live_page',
+  analyzerMeta: {
+    analysisMode: 'demo',
+    analysisModeLabel: 'Preview demo',
+    isFallback: true,
+    analysisConfidence: {
+      score: 45,
+      level: 'faible',
+      reasons: ['Donnees de demonstration, non issues de votre compte.'],
+    },
+    signalDisclosure: {
+      observedData: ['Exemple de metrics affichees'],
+      aiHypotheses: ['Diagnostic hook', 'Risque de retention'],
+      simulations: ['Score de diagnostic'],
+      previews: ['Sortie demo non personnalisee'],
+    },
+    validationWarnings: ['Preview demo : donnees fictives et hypotheses non personnalisees.'],
+  },
   observedMetrics: { views: 213900, likes: 2200, comments: 180, shares: 154 },
   comparativeInsight:
-    'Cette vidéo performe dans le top 10\u00a0% de sa catégorie sur TikTok. Le hook est au-dessus de la moyenne créateurs.',
+    'Exemple de sortie : cette vidéo montre des signaux de hook favorables, à confirmer avec des données TikTok réelles.',
   comparativePriority:
-    'Améliore le montage pour franchir le seuil top 5\u00a0%.',
+    'Priorité estimée : améliorer le montage pour renforcer le potentiel de rétention.',
   hook: {
     score: 80,
     rating: 'Bon',

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomBytes } from 'crypto';
 import { getSession, COOKIE_OPTIONS } from '@/lib/session';
+import { canConnectTikTokAccount } from '@/lib/tiktok-account-limits';
+import { getEffectivePlan, getUserById } from '@/lib/auth';
 import {
   TIKTOK_OAUTH_STATE_COOKIE,
   buildTikTokAuthorizeUrl,
@@ -19,6 +21,15 @@ export async function GET(request: NextRequest) {
   if (!secrets) {
     const dash = new URL('/dashboard', request.url);
     dash.searchParams.set('tiktok', 'config');
+    return NextResponse.redirect(dash);
+  }
+
+  const user = await getUserById(session.userId);
+  const plan = user ? getEffectivePlan(user) : 'free';
+  const eligibility = await canConnectTikTokAccount(session.userId, plan);
+  if (!eligibility.allowed) {
+    const dash = new URL('/dashboard', request.url);
+    dash.searchParams.set('tiktok', 'limit');
     return NextResponse.redirect(dash);
   }
 

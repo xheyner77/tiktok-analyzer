@@ -81,8 +81,8 @@ Etat actuel :
   - `deriveMainProblem`
   - `deriveProjection`
   - `findReco`
-- Gere les gates Free / Pro / Elite visuellement.
-- Affiche score, probleme principal, plan d'action, piliers Hook/Montage/Retention, stats publiques, strategie, insights Elite et CTA.
+- Gere les gates Creator / Pro / Scale visuellement.
+- Affiche score, probleme principal, plan d'action, piliers Hook/Montage/Retention, stats publiques, strategie, insights Scale et CTA.
 
 Implication V2 :
 
@@ -118,14 +118,14 @@ Etat actuel :
 - Gere :
   - flash OAuth TikTok ;
   - sync post-checkout via `/api/upgrade-plan` ;
-  - upgrade Elite via `/api/upgrade-subscription` ;
+  - upgrade Scale via `/api/upgrade-subscription` ;
   - annulation via `/api/cancel-plan` ;
   - logout apres annulation legacy ;
   - modal d'annulation via `createPortal` ;
   - tri historique recent/meilleur ;
   - calculs de scores moyens, meilleurs scores, tendance, points faibles ;
   - daily tips ;
-  - locked sections Pro/Elite ;
+  - locked sections Pro/Scale ;
   - `TikTokConnectCard`.
 - Contient beaucoup de helpers locaux : `AnalysisHistoryItem`, `AnalysisHistoryPaginated`, `LockedSection`, `RingProgress`, `ScorePill`, etc.
 
@@ -133,7 +133,7 @@ Implication V2 :
 
 - Zone sensible car elle touche indirectement Stripe, plan, TikTok OAuth et auth logout.
 - Refonte V2 a faire apres landing/analyzer/results.
-- Ne pas toucher aux handlers `handleEliteUpgrade`, `handleCancelPlan`, ni au flow `stripeSessionId` dans la premiere passe.
+- Ne pas toucher aux handlers `handleScaleUpgrade`, `handleCancelPlan`, ni au flow `stripeSessionId` dans la premiere passe.
 - Idealement extraire des composants d'affichage purs autour des donnees existantes.
 
 ### `app/pricing/page.tsx`
@@ -142,13 +142,13 @@ Etat actuel :
 
 - Page serveur sans etat client direct.
 - Utilise `CheckoutButton`, `PricingFAQ`, `FloatingParticles`, constantes de plan et prix.
-- Contient les cartes Free/Pro/Elite, tableau de comparaison, section "pour qui", FAQ et CTA final.
+- Contient les cartes Creator/Pro/Scale, tableau de comparaison, section "pour qui", FAQ et CTA final.
 - Logique de paiement encapsulee dans `CheckoutButton`.
 
 Implication V2 :
 
 - Refonte marketing possible sans changer la logique Stripe.
-- Conserver `CheckoutButton plan="pro"` et `CheckoutButton plan="elite"`.
+- Conserver `CheckoutButton plan="pro"` et `CheckoutButton plan="scale"`.
 - Ne pas modifier les constantes de pricing ou les routes checkout.
 
 ### `components/Navbar.tsx`
@@ -461,7 +461,7 @@ Strategie compatible :
 4. Conserver les gates plan actuels :
    - Free : preview limitee.
    - Pro : version a reposter plus complete.
-   - Elite : insights viraux et strategie.
+   - Scale : insights viraux et strategie.
 
 Structure V2 cible du composant :
 
@@ -474,14 +474,14 @@ Structure V2 cible du composant :
 - Plan de montage.
 - CTA recommande.
 - Stats publiques si disponibles.
-- Gates Pro/Elite.
+- Gates Pro/Scale.
 
 Validation results :
 
 - Anciennes analyses de l'historique s'affichent encore.
 - Les champs optionnels absents ne cassent pas le rendu.
 - Free garde les limites visibles.
-- Pro/Elite gardent les contenus debloques.
+- Pro/Scale gardent les contenus debloques.
 - Les stats publiques restent lisibles quand `observedMetrics` existe.
 
 ## 9. Risques Techniques
@@ -530,7 +530,7 @@ Tous les nouveaux blocs doivent avoir des fallbacks depuis `AnalysisResult` actu
 
 Cause :
 
-Modification de `CheckoutButton`, `handleEliteUpgrade`, `handleCancelPlan`, `stripeSessionId`.
+Modification de `CheckoutButton`, `handleScaleUpgrade`, `handleCancelPlan`, `stripeSessionId`.
 
 Mitigation :
 
@@ -597,7 +597,7 @@ Preferer Tailwind local et composants. Ne globaliser qu'un motif vraiment reutil
 - Nouvelle analyse affiche le resultat V2.
 - Ancienne analyse depuis historique s'affiche sans crash.
 - Free voit les gates.
-- Pro/Elite voient les blocs avances.
+- Pro/Scale voient les blocs avances.
 - Stats publiques s'affichent si disponibles.
 - Bouton "Analyser une autre video" fonctionne.
 
@@ -610,15 +610,15 @@ Preferer Tailwind local et composants. Ne globaliser qu'un motif vraiment reutil
 - Quotas analyses/hooks corrects.
 - TikTokConnectCard visible avec bon etat.
 - Flash `?tiktok=connected`, `?tiktok=db`, etc. toujours affiche.
-- Upgrade Elite Pro -> Elite toujours declenche le meme endpoint.
+- Upgrade Scale Pro -> Scale toujours declenche le meme endpoint.
 - Annulation plan ouvre toujours la modal.
 
 ### Apres Phase 5 - Pricing
 
 - `npm.cmd run build`
-- Boutons Pro/Elite appellent toujours `CheckoutButton`.
+- Boutons Pro/Scale appellent toujours `CheckoutButton`.
 - CTA Free va vers `/analyzer`.
-- Prix affiches depuis `DISPLAY_CATALOG_PRO_EUR` et `DISPLAY_CATALOG_ELITE_EUR`.
+- Prix affiches depuis `DISPLAY_CATALOG_PRO_EUR` et `DISPLAY_CATALOG_SCALE_EUR`.
 - Les limites viennent toujours de `plan-limits`.
 - Aucun changement dans routes Stripe.
 

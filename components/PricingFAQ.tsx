@@ -9,31 +9,31 @@ const faqs = [
   },
   {
     q: 'Le plan gratuit suffit-il pour tester ?',
-    a: "Oui — les 3 analyses gratuites te donnent accès à la totalité de l'analyse : score de viralité, hook, montage, rétention, et recommandations. C'est une vraie expérience produit, pas une démo limitée.",
+    a: "Oui — les 3 analyses gratuites permettent de tester sans connecter TikTok : score vidéo, hook, drop principal, mini timeline et recommandations essentielles. Les blocs avancés restent floutés.",
   },
   {
     q: 'À quoi servent exactement les analyses ?',
-    a: "Chaque analyse décompose ta vidéo en 3 dimensions clés : Hook (accroche), Montage (rythme et cuts), Rétention (courbe d'attention). Tu reçois un score, des points forts, des points faibles et des recommandations concrètes pour corriger avant de reposter.",
+    a: "Chaque analyse décompose ta vidéo en 3 dimensions clés : Hook (accroche), Montage (rythme et cuts), Rétention (courbe d'attention). Tu reçois un score, des points forts, des points faibles et des recommandations concrètes pour corriger la structure avant remontage.",
   },
   {
     q: 'À quoi sert le générateur de hooks ?',
-    a: "C'est un bonus pour les plans Pro et Elite. Il génère des accroches optimisées pour TikTok basées sur ta niche et ton type de contenu. Utile pour écrire des premières secondes plus percutantes sans partir d'une page blanche.",
+    a: "C'est inclus dans les plans Creator, Pro et Scale. Il transforme un angle ou un hook faible en variantes testables basées sur ta niche, ton format et ta mémoire créateur.",
   },
   {
     q: "Est-ce seulement pour TikTok ?",
-    a: "Aujourd'hui, Viralynz est optimisé pour TikTok. Le support Instagram Reels, YouTube Shorts et d'autres plateformes est en développement et arrivera prochainement.",
+    a: "Aujourd'hui, Viralynz est prioritaire sur TikTok. La structure du moteur prépare aussi Reels et Shorts, sans diluer le workflow TikTok actuel.",
   },
   {
     q: "Que se passe-t-il si j'atteins ma limite mensuelle ?",
-    a: "Tes analyses sont suspendues jusqu'au prochain renouvellement. Ton historique et ton compte sont intacts. Tu peux upgrader à tout moment pour continuer immédiatement.",
+    a: "Les nouvelles analyses attendent le prochain renouvellement. Ton historique, ta mémoire et tes structures restent intacts. Tu peux changer de plan quand tu as besoin de plus de volume.",
   },
   {
     q: 'Dois-je être monteur ou expert vidéo ?',
     a: "Non. Viralynz est conçu pour les créateurs, pas les techniciens. Les analyses sont formulées en langage clair, avec des actions concrètes à appliquer même sans formation technique.",
   },
   {
-    q: 'Puis-je passer de Pro à Elite ?',
-    a: "Oui, la mise à niveau de Pro vers Elite est disponible depuis ton tableau de bord. La différence de prix est proratisée selon ta période de facturation.",
+    q: 'Puis-je passer de Pro à Scale ?',
+    a: "Oui, la mise à niveau de Pro vers Scale est disponible depuis ton tableau de bord. La différence de prix est proratisée selon ta période de facturation.",
   },
 ];
 

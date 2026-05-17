@@ -10,7 +10,7 @@ export default function Header() {
           </span>
         </h1>
         <p className="mt-2 text-[13px] text-gray-500 max-w-xs sm:max-w-xs mx-auto sm:mx-0 leading-relaxed">
-          Hook, montage, rétention — identifie quoi corriger avant de reposter.
+          Hook, montage, rétention — identifie quoi corriger avant de remonter.
         </p>
       </div>
 
@@ -20,7 +20,7 @@ export default function Header() {
           { label: 'Hook',        color: 'border-vn-fuchsia/20 text-vn-fuchsia/75' },
           { label: 'Montage',     color: 'border-vn-violet/20 text-vn-violet/75'  },
           { label: 'Rétention',   color: 'border-vn-indigo/20 text-vn-indigo/75'  },
-          { label: 'Conseils IA', color: 'border-purple-400/20 text-purple-400/70' },
+          { label: 'Actions', color: 'border-purple-400/20 text-purple-400/70' },
         ].map(({ label, color }) => (
           <span key={label}
             className={`text-[10px] font-medium bg-vn-surface border px-3 py-0.5 rounded-full ${color}`}>

@@ -6,6 +6,7 @@
   /* Menus natifs (select, etc.) : évite fond clair + texte clair illisible sur Windows / Chrome */
   html {
     color-scheme: dark;
+    scroll-behavior: smooth;
   }
 
   body {
@@ -117,7 +118,7 @@
       0 8px 32px rgba(0, 0, 0, 0.45);
   }
 
-  .elite-pricing-card {
+  .scale-pricing-card {
     background:
       radial-gradient(ellipse 90% 60% at 50% 0%, rgba(139, 92, 246, 0.22) 0%, #090910 55%),
       #090910;
@@ -464,6 +465,29 @@
   body[data-stars-full] .stars-backdrop {
     -webkit-mask-image: none;
     mask-image: none;
+  }
+
+  body[data-dashboard-v2] > nav,
+  body[data-dashboard-v2] .stars-backdrop,
+  body[data-dashboard-v2] footer {
+    display: none !important;
+  }
+
+  @media (min-width: 1280px) {
+    [data-dashboard-v2-root='true'] [data-mobile-dashboard-header='true'],
+    [data-dashboard-v2-root='true'] [data-mobile-dashboard-drawer='true'] {
+      display: none !important;
+    }
+
+    [data-dashboard-v2-root='true'] [data-dashboard-sidebar='desktop'] {
+      display: flex !important;
+    }
+  }
+
+  @media (max-width: 1279.98px) {
+    [data-dashboard-v2-root='true'] [data-dashboard-sidebar='desktop'] {
+      display: none !important;
+    }
   }
 
   /* ── Stars background (global) ──────────────────────────────────────── */

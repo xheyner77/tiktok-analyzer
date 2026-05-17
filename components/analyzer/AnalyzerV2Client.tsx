@@ -225,7 +225,7 @@ function TikTokRequiredAccess({ email }: { email: string }) {
             <Link href="/api/tiktok/connect" className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-gradient-to-r from-cyan-300 to-vn-indigo px-5 text-sm font-black text-white shadow-[0_18px_60px_-34px_rgba(34,211,238,0.95)] transition hover:brightness-110">
               Connecter mon TikTok
             </Link>
-            <Link href="/dashboard-v2" className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-white/[0.09] bg-white/[0.045] px-5 text-sm font-black text-white transition hover:bg-white/[0.07]">
+            <Link href="/dashboard" className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-white/[0.09] bg-white/[0.045] px-5 text-sm font-black text-white transition hover:bg-white/[0.07]">
               Retour au dashboard
             </Link>
           </div>
@@ -781,7 +781,7 @@ function ReconstructionPaywall({ plan }: { plan?: AppPlan }) {
               <Link href="/pricing" className="inline-flex min-h-[46px] items-center justify-center rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo px-5 text-sm font-black text-white shadow-[0_18px_65px_-34px_rgba(232,121,249,0.95)] transition hover:brightness-110">
                 Debloquer la reconstruction IA
               </Link>
-              <Link href="/dashboard-v2" className="inline-flex min-h-[46px] items-center justify-center rounded-xl border border-white/[0.09] bg-white/[0.045] px-5 text-sm font-black text-white transition hover:bg-white/[0.07]">
+              <Link href="/dashboard" className="inline-flex min-h-[46px] items-center justify-center rounded-xl border border-white/[0.09] bg-white/[0.045] px-5 text-sm font-black text-white transition hover:bg-white/[0.07]">
                 Voir mon plan
               </Link>
             </div>
@@ -1493,8 +1493,8 @@ function ResultsView({
           <p className="mt-1 text-xs text-gray-500">Crée une ouverture, prépare le plan de remontage ou retourne au dashboard pour suivre la progression.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href={`/hook-generator?objective=repost&trendHook=${encodeURIComponent(repost.hook)}&trendTitle=${encodeURIComponent(verdict)}`} className="rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo px-4 py-3 text-sm font-bold text-white transition hover:brightness-110">Créer un Hook Pack</Link>
-          <Link href="/dashboard-v2#growth-loop" className="rounded-xl border border-white/[0.09] bg-white/[0.04] px-4 py-3 text-sm font-bold text-white transition hover:bg-white/[0.07]">Voir dans le dashboard</Link>
+          <Link href={`/dashboard/hooks?objective=repost&trendHook=${encodeURIComponent(repost.hook)}&trendTitle=${encodeURIComponent(verdict)}`} className="rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo px-4 py-3 text-sm font-bold text-white transition hover:brightness-110">Créer un Hook Pack</Link>
+          <Link href="/dashboard#growth-loop" className="rounded-xl border border-white/[0.09] bg-white/[0.04] px-4 py-3 text-sm font-bold text-white transition hover:bg-white/[0.07]">Voir dans le dashboard</Link>
           <button
             type="button"
             onClick={onReset}
@@ -1526,6 +1526,7 @@ export default function AnalyzerV2Client() {
   const [progress, setProgress] = useState(0);
   const [stepIndex, setStepIndex] = useState(0);
   const [pipelineState, setPipelineState] = useState<AnalysisPipelineState>(() => createPipelineState());
+  const requestedAnalysisIdRef = useRef<string | null>(null);
 
   const updatePipelineStep = (
     id: PipelineStepId,
@@ -1583,6 +1584,7 @@ export default function AnalyzerV2Client() {
       setGuestCount(Number.isFinite(n) ? Math.max(0, n) : 0);
     }
     setMounted(true);
+    requestedAnalysisIdRef.current = new URLSearchParams(window.location.search).get('analysisId');
 
     fetch('/api/auth/me')
       .then((r) => r.json())
@@ -1626,6 +1628,17 @@ export default function AnalyzerV2Client() {
     () => [...history].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
     [history]
   );
+
+  useEffect(() => {
+    const requestedAnalysisId = requestedAnalysisIdRef.current;
+    if (!requestedAnalysisId || results || historyLocked || sortedHistory.length === 0) return;
+
+    const requestedAnalysis = sortedHistory.find((item) => item.id === requestedAnalysisId);
+    if (!requestedAnalysis) return;
+
+    setResults(enrichResult(requestedAnalysis.result, '', null));
+    requestedAnalysisIdRef.current = null;
+  }, [historyLocked, results, sortedHistory]);
 
   const handleFileSelect = (file: File | null) => {
     if (!file) return;

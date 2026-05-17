@@ -51,7 +51,7 @@ export default function ForgotPasswordPage() {
           <BrandLogo size="large" className="mb-6" />
           <h1 className="text-2xl font-bold text-white">Mot de passe oublié</h1>
           <p className="text-gray-500 text-sm mt-1 text-center">
-            On t&apos;envoie un lien pour choisir un nouveau mot de passe.
+            On t&apos;envoie un lien pour reprendre accès à tes analyses, ta mémoire créateur et tes structures.
           </p>
         </div>
 

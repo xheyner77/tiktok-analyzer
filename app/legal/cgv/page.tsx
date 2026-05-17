@@ -38,9 +38,9 @@ export default function CGVPage() {
           <Section title="2. Plans et tarifs">
             <p>Viralynz propose les abonnements suivants (prix TTC) :</p>
             <ul>
-              <li><strong className="text-white">Starter</strong> — Gratuit, 3 analyses à vie, sans engagement</li>
-              <li><strong className="text-white">Pro</strong> — 19 €/mois, 50 analyses/mois, 150 hooks/mois</li>
-              <li><strong className="text-white">Elite</strong> — 49 €/mois, 200 analyses/mois, 500 hooks/mois</li>
+              <li><strong className="text-white">Creator</strong> — 7,99 €/mois, 30 analyses/mois, 150 hooks/mois</li>
+              <li><strong className="text-white">Pro</strong> — 29,99 €/mois, 150 analyses/mois, 500 hooks/mois</li>
+              <li><strong className="text-white">Scale</strong> — 79,99 €/mois, analyses et hooks illimités, jusqu’à 8 comptes TikTok</li>
             </ul>
             <p>Tous les prix sont indiqués en euros TTC. Viralynz se réserve le droit de modifier ses tarifs avec un préavis de 30 jours. Les modifications tarifaires ne s&apos;appliquent pas aux abonnements en cours pendant leur période de facturation.</p>
           </Section>
@@ -52,7 +52,7 @@ export default function CGVPage() {
           </Section>
 
           <Section title="4. Durée et renouvellement">
-            <p>Les abonnements Pro et Elite sont des abonnements mensuels à reconduction tacite. Ils se renouvellent automatiquement chaque mois sauf résiliation avant la date de renouvellement.</p>
+            <p>Les abonnements Creator, Pro et Scale sont des abonnements mensuels à reconduction tacite. Ils se renouvellent automatiquement chaque mois sauf résiliation avant la date de renouvellement.</p>
             <p>Les quotas (analyses, hooks) sont réinitialisés à chaque date de renouvellement. Les quotas non utilisés ne sont pas reportés.</p>
           </Section>
 

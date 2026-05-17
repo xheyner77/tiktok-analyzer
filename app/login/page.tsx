@@ -13,9 +13,9 @@ import StarsFullPage from '@/components/StarsFullPage';
 function LoginForm() {
   const searchParams = useSearchParams();
   // Validate redirect to prevent open redirect — only allow internal relative paths
-  const rawRedirect = searchParams.get('redirect') ?? '/dashboard';
+  const rawRedirect = searchParams?.get('redirect') ?? '/dashboard';
   const redirectTo = rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') ? rawRedirect : '/dashboard';
-  const passwordResetSuccess = searchParams.get('reset') === 'success';
+  const passwordResetSuccess = searchParams?.get('reset') === 'success';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -88,16 +88,21 @@ function LoginForm() {
         }}
       />
 
-    <div className="relative w-full max-w-sm animate-fade-up">
+    <div className="relative z-10 w-full max-w-[26rem] animate-fade-up">
       {/* Logo */}
-      <div className="flex flex-col items-center mb-8">
-        <BrandLogo size="large" className="mb-6" />
-        <h1 className="text-2xl font-bold text-white">Connexion</h1>
-        <p className="text-gray-500 text-sm mt-1">Accède à ton espace Viralynz</p>
+      <div className="mb-7 flex flex-col items-center text-center">
+        <BrandLogo size="large" className="mb-5" />
+        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.035] px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-vn-fuchsia/80">
+          <span className="h-1.5 w-1.5 rounded-full bg-vn-fuchsia shadow-[0_0_14px_rgba(232,121,249,0.9)]" aria-hidden />
+          Espace cr&eacute;ateur
+        </div>
+        <h1 className="text-3xl font-black tracking-tight text-white">Connexion</h1>
+        <p className="text-gray-500 text-sm mt-1">Retrouve tes analyses, ta mémoire créateur et tes structures.</p>
       </div>
 
       {/* Card */}
-      <div className="bg-[#111] border border-[#1a1a1a] rounded-2xl p-6 card-glow">
+      <div className="relative overflow-hidden rounded-[1.35rem] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.025))] p-5 shadow-[0_28px_100px_-70px_rgba(232,121,249,0.95),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur sm:p-6">
+        <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-vn-fuchsia/70 to-transparent" aria-hidden />
         {passwordResetSuccess && (
           <div className="mb-4 rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-3.5 py-2.5">
             <p className="text-xs text-emerald-300">
@@ -108,7 +113,7 @@ function LoginForm() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Email */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-gray-400">Adresse email</label>
+            <label className="text-xs font-bold text-gray-400">Adresse email</label>
             <input
               type="email"
               value={email}
@@ -116,13 +121,13 @@ function LoginForm() {
               placeholder="vous@exemple.com"
               autoComplete="email"
               disabled={isLoading}
-              className="w-full bg-[#0e0e0e] border border-[#222] hover:border-[#2a2a2a] focus:border-vn-fuchsia/40 focus:ring-2 focus:ring-vn-fuchsia/8 rounded-xl px-4 py-3 text-white placeholder-gray-600 text-sm outline-none transition-all disabled:opacity-50"
+              className="h-12 w-full rounded-xl border border-white/[0.09] bg-black/30 px-4 text-[13px] font-semibold text-white outline-none transition-all placeholder:text-gray-700 hover:border-white/[0.14] focus:border-vn-fuchsia/45 focus:bg-black/40 focus:ring-2 focus:ring-vn-fuchsia/10 disabled:opacity-50"
             />
           </div>
 
           {/* Password */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-gray-400">Mot de passe</label>
+            <label className="text-xs font-bold text-gray-400">Mot de passe</label>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
@@ -131,12 +136,13 @@ function LoginForm() {
                 placeholder="••••••••"
                 autoComplete="current-password"
                 disabled={isLoading}
-                className="w-full bg-[#0e0e0e] border border-[#222] hover:border-[#2a2a2a] focus:border-vn-fuchsia/40 focus:ring-2 focus:ring-vn-fuchsia/8 rounded-xl px-4 py-3 pr-11 text-white placeholder-gray-600 text-sm outline-none transition-all disabled:opacity-50"
+                className="h-12 w-full rounded-xl border border-white/[0.09] bg-black/30 px-4 pr-11 text-[13px] font-semibold text-white outline-none transition-all placeholder:text-gray-700 hover:border-white/[0.14] focus:border-vn-fuchsia/45 focus:bg-black/40 focus:ring-2 focus:ring-vn-fuchsia/10 disabled:opacity-50"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400 transition-colors"
+                aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-gray-600 transition-colors hover:bg-white/[0.04] hover:text-gray-300"
               >
                 {showPassword ? (
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
@@ -154,7 +160,7 @@ function LoginForm() {
             <div className="flex justify-end">
               <Link
                 href="/forgot-password"
-                className="text-[11px] text-gray-500 hover:text-vn-fuchsia transition-colors"
+                className="text-[11px] font-semibold text-gray-500 transition-colors hover:text-vn-fuchsia"
               >
                 Mot de passe oublié ?
               </Link>
@@ -204,7 +210,7 @@ function LoginForm() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full rounded-xl py-3.5 font-semibold text-white text-sm bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:opacity-90 active:scale-[0.99] transition-all shadow-lg shadow-vn-fuchsia/15 disabled:opacity-50 disabled:cursor-not-allowed mt-1"
+            className="mt-1 inline-flex min-h-[48px] w-full items-center justify-center rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo px-5 text-sm font-black text-white shadow-[0_22px_70px_-38px_rgba(232,121,249,0.95)] transition-all hover:-translate-y-0.5 hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isLoading ? (
               <span className="flex items-center justify-center gap-2">
@@ -222,9 +228,9 @@ function LoginForm() {
       </div>
 
       {/* Footer link */}
-      <p className="text-center text-sm text-gray-600 mt-5">
+      <p className="mt-5 text-center text-sm text-gray-600">
         Pas encore de compte ?{' '}
-        <Link href="/signup" className="text-gray-300 hover:text-white transition-colors font-medium">
+        <Link href="/signup" className="font-semibold text-gray-300 transition-colors hover:text-white">
           Créer un compte
         </Link>
       </p>
@@ -235,11 +241,11 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-dvh items-center justify-center px-4 py-8 [padding-bottom:max(2rem,env(safe-area-inset-bottom,0px)+1rem)]">
+    <main className="flex min-h-dvh items-center justify-center px-4 py-10 [padding-bottom:max(2rem,env(safe-area-inset-bottom,0px)+1rem)] sm:py-12">
       <StarsFullPage />
       {/* Ambient glow */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-vn-fuchsia/5 to-vn-indigo/5 blur-3xl" />
+        <div className="absolute left-1/2 top-1/3 h-[34rem] w-[34rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-vn-fuchsia/8 via-vn-indigo/5 to-cyan-400/5 blur-3xl" />
       </div>
 
       {/* Suspense required by Next.js 14 when a child uses useSearchParams() */}

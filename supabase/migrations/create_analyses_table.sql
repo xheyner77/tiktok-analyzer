@@ -5,12 +5,19 @@ create table if not exists public.analyses (
   user_id     uuid        not null references auth.users(id) on delete cascade,
   video_url   text        not null,
   result      jsonb       not null,
+  reconstruction jsonb,
+  reconstruction_created_at timestamptz,
+  reconstruction_plan_used text check (reconstruction_plan_used in ('pro', 'scale')),
   created_at  timestamptz not null default now()
 );
 
 -- Fast lookup: latest analyses per user
 create index if not exists analyses_user_created_idx
   on public.analyses (user_id, created_at desc);
+
+create index if not exists analyses_reconstruction_user_created_idx
+  on public.analyses (user_id, reconstruction_created_at desc)
+  where reconstruction is not null;
 
 -- Row Level Security (service role bypasses RLS automatically)
 alter table public.analyses enable row level security;

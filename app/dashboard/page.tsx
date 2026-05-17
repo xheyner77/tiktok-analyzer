@@ -1,84 +1,18 @@
 import { redirect } from 'next/navigation';
+import DashboardV2Client from '@/components/dashboard-v2/DashboardV2Client';
+import { getDashboardData } from '@/lib/dashboard-data';
 import { getSession } from '@/lib/session';
-import FloatingParticles from '@/components/FloatingParticles';
-import { getUserById, PLAN_LIMITS, HOOK_LIMITS, getEffectivePlan } from '@/lib/auth';
-import { isSubscriptionStatusAllowingAccess } from '@/lib/stripe-billing';
-import { getAnalyses } from '@/lib/analyses';
-import DashboardClient from './DashboardClient';
 
-// Always fetch fresh data — never serve a cached version of the dashboard.
 export const dynamic = 'force-dynamic';
 
-export default async function DashboardPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ success?: string; tiktok?: string; session_id?: string; [key: string]: string | undefined }>;
-}) {
+export default async function DashboardPage() {
   const session = await getSession();
 
   if (!session) {
-    // Session absent or token expired — just redirect to /login.
-    // Do NOT touch cookies here: modifying cookies is only allowed in
-    // Route Handlers and Server Actions, not Server Component pages.
-    // The stale cookie (if any) will be overwritten on next successful login.
-    console.error('[DashboardPage] No valid session — redirecting to /login.');
     redirect('/login?redirect=/dashboard');
   }
 
-  const user = await getUserById(session.userId);
-  const memberSince   = user?.created_at      ?? new Date().toISOString();
-  const billingPlan   = user?.plan             ?? 'free';
-  const plan          = user ? getEffectivePlan(user) : 'free';
-  const analysesCount = user?.analyses_count   ?? 0;
-  const hooksCount    = user?.hooks_count      ?? 0;
-  const reconstructionsCount = user?.reconstructions_count ?? 0;
-  const analysesLimit = PLAN_LIMITS[plan]      ?? 3;
-  const hooksLimit    = HOOK_LIMITS[plan]      ?? 0;
+  const dashboard = await getDashboardData();
 
-  const analyses = await getAnalyses(session.userId, plan);
-
-  const usesStripeSubscription = !!user?.stripe_subscription_id;
-  const showScaleUpgrade =
-    !!user &&
-    user.plan === 'pro' &&
-    !!user.stripe_subscription_id &&
-    isSubscriptionStatusAllowingAccess(user.subscription_status);
-  // Stripe appends the real session ID — use it to verify the payment server-side
-  const resolvedSearchParams = await searchParams;
-  const stripeSessionId = resolvedSearchParams.session_id ?? null;
-  const tiktokFlash = resolvedSearchParams.tiktok ?? null;
-
-  return (
-    <main className="relative min-h-screen overflow-x-hidden">
-      <div className="absolute top-0 inset-x-0 h-[540px] pointer-events-none overflow-hidden">
-        <div className="absolute -top-60 left-1/4 w-[900px] h-[600px] rounded-full bg-gradient-to-br from-vn-fuchsia/8 to-vn-indigo/6 blur-[120px]" />
-        <div className="absolute top-1/2 -right-40 w-[600px] h-[500px] rounded-full bg-vn-violet/5 blur-[100px]" />
-        <FloatingParticles count={28} />
-      </div>
-
-      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-10 pb-24">
-        <DashboardClient
-          email={session.email}
-          plan={plan}
-          billingPlan={billingPlan}
-          usesStripeSubscription={usesStripeSubscription}
-          showScaleUpgrade={showScaleUpgrade}
-          analysesCount={analysesCount}
-          analysesLimit={analysesLimit}
-          hooksCount={hooksCount}
-          hooksLimit={hooksLimit}
-          reconstructionsCount={reconstructionsCount}
-          memberSince={memberSince}
-          analyses={analyses}
-          stripeSessionId={stripeSessionId}
-          tiktokFlash={tiktokFlash}
-          tiktok={{
-            connected: !!user?.tiktok_open_id,
-            displayName: user?.tiktok_display_name ?? null,
-            avatarUrl: user?.tiktok_avatar_url ?? null,
-          }}
-        />
-      </div>
-    </main>
-  );
+  return <DashboardV2Client dashboard={dashboard} />;
 }
