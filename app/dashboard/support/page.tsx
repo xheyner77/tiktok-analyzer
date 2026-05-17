@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation';
-import DashboardPlaceholderPage from '@/components/dashboard-v2/DashboardPlaceholderPage';
+import SupportPageClient from '@/components/dashboard-v2/support/SupportPageClient';
+import { getUserById } from '@/lib/auth';
+import { getDashboardData } from '@/lib/dashboard-data';
 import { getSession } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
@@ -11,19 +13,24 @@ export default async function DashboardSupportPage() {
     redirect('/login?redirect=/dashboard/support');
   }
 
+  const [dashboard, profile] = await Promise.all([
+    getDashboardData(),
+    getUserById(session.userId),
+  ]);
+
   return (
-    <DashboardPlaceholderPage
-      eyebrow="Assistance"
-      title="Support"
-      description="Besoin d’aide ? Contacte l’équipe Viralynz."
-      status="Support"
-      ctaHref="mailto:contact@viralynz.com"
-      ctaLabel="Nous contacter"
-      details={[
-        'Question compte, billing ou accès.',
-        'Bug sur une analyse, un hook ou une V2.',
-        'Retour produit pour rendre le coach de repost plus utile.',
-      ]}
+    <SupportPageClient
+      context={{
+        email: dashboard.user.email,
+        planLabel: dashboard.user.planLabel,
+        quotaUsed: dashboard.user.quotaUsed,
+        quotaLimit: dashboard.user.quotaLimit,
+        tiktokConnected: dashboard.tiktokConnection.connected,
+        tiktokDisplayName: dashboard.tiktokConnection.displayName,
+        tiktokModeLabel: dashboard.tiktokConnection.modeLabel,
+        tiktokScopes: dashboard.tiktokConnection.scopes,
+        billingStatus: profile?.subscription_status ?? null,
+      }}
     />
   );
 }
