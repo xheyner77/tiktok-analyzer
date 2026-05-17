@@ -7,6 +7,8 @@ import {
   TIKTOK_OAUTH_STATE_COOKIE,
   buildTikTokAuthorizeUrl,
   getTikTokOAuthSecrets,
+  getTikTokRedirectUri,
+  logTikTokOAuthConfig,
 } from '@/lib/tiktok-oauth';
 
 export async function GET(request: NextRequest) {
@@ -33,7 +35,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(dash);
   }
 
-  const redirectUri = new URL('/api/tiktok/callback', request.nextUrl.origin).href;
+  const redirectUri = getTikTokRedirectUri(request.headers.get('origin'));
+  logTikTokOAuthConfig({ clientKey: secrets.clientKey, redirectUri });
   const state = randomBytes(24).toString('hex');
   const authorizeUrl = buildTikTokAuthorizeUrl({
     clientKey: secrets.clientKey,

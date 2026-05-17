@@ -3,6 +3,8 @@
  * @see https://developers.tiktok.com/doc/login-kit-web/
  */
 
+import { CANONICAL_PRODUCTION_SITE_URL, getSiteUrl } from './site-url';
+
 export const TIKTOK_OAUTH_STATE_COOKIE = 'tiktok_oauth_state';
 
 /** Scope minimal : profil de base. Add video.list in env only after TikTok approval. */
@@ -23,6 +25,24 @@ export function getTikTokOAuthSecrets(): TikTokOAuthSecrets | null {
   const clientSecret = process.env.TIKTOK_CLIENT_SECRET?.trim();
   if (!clientKey || !clientSecret) return null;
   return { clientKey, clientSecret };
+}
+
+export function getTikTokRedirectUri(originHeader?: string | null): string {
+  const siteUrl =
+    process.env.VERCEL_ENV === 'production'
+      ? CANONICAL_PRODUCTION_SITE_URL
+      : getSiteUrl(originHeader);
+  return `${siteUrl}/api/tiktok/callback`;
+}
+
+export function logTikTokOAuthConfig(params: { clientKey: string; redirectUri: string }) {
+  console.info('[tiktok/connect] OAuth config', {
+    hasClientKey: params.clientKey.length > 0,
+    clientKeyLength: params.clientKey.length,
+    clientKeyPrefix: params.clientKey.slice(0, 4),
+    redirectUri: params.redirectUri,
+    scopes: TIKTOK_LOGIN_SCOPES,
+  });
 }
 
 export function buildTikTokAuthorizeUrl(params: {

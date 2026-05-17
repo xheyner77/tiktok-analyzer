@@ -5,6 +5,7 @@ import {
   exchangeTikTokAuthorizationCode,
   fetchTikTokUserInfoBasic,
   getTikTokOAuthSecrets,
+  getTikTokRedirectUri,
 } from '@/lib/tiktok-oauth';
 import { upsertTikTokAccountForUser } from '@/lib/tiktok-accounts';
 
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest) {
     return clearState(r);
   }
 
-  const redirectUri = new URL('/api/tiktok/callback', request.nextUrl.origin).href;
+  const redirectUri = getTikTokRedirectUri(request.headers.get('origin'));
 
   let tokens: Awaited<ReturnType<typeof exchangeTikTokAuthorizationCode>>;
   try {
