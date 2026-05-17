@@ -2,9 +2,10 @@
 
 import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import type { DashboardData, DashboardInsight, DashboardRecommendation, DashboardTopVideo } from '@/lib/dashboard-data';
 import TikTokConnectModal from '@/components/dashboard-v2/TikTokConnectModal';
+import { TikTokConnectedSuccessModal } from '@/components/dashboard-v2/TikTokConnectedSuccessModal';
 
 type IconName =
   | 'home'
@@ -252,45 +253,6 @@ function TikTokConnectedBadge({
         </Link>
       )}
     </div>
-  );
-}
-
-function TikTokCallbackNotice({ states }: { states: DashboardData['states'] }) {
-  const searchParams = useSearchParams();
-  const [dismissed, setDismissed] = useState(false);
-  const tiktokStatus = searchParams?.get('tiktok');
-
-  if (dismissed || tiktokStatus !== 'connected' || !states.hasTikTokConnection) return null;
-
-  function closeNotice() {
-    setDismissed(true);
-    try {
-      const url = new URL(window.location.href);
-      url.searchParams.delete('tiktok');
-      window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
-    } catch {}
-  }
-
-  return (
-    <section className="mt-4 overflow-hidden rounded-[12px] border border-emerald-300/[0.18] bg-[linear-gradient(135deg,rgba(16,185,129,0.13),rgba(8,16,31,0.92))] px-4 py-3 text-emerald-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_20px_70px_-48px_rgba(16,185,129,0.85)]">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <p className="text-[13.5px] font-black leading-tight text-white">TikTok connecté avec succès</p>
-          <p className="mt-1 text-[12.5px] leading-relaxed text-emerald-100/75">Ton compte est bien relié. Tu peux maintenant analyser une vidéo.</p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Link href="/dashboard/analyze" className={`flex h-9 items-center justify-center px-4 text-[12px] ${primaryButton}`}>
-            Analyser une vidéo
-          </Link>
-          <button type="button" onClick={closeNotice} className="grid h-9 w-9 place-items-center rounded-[8px] border border-white/[0.08] bg-white/[0.04] text-emerald-100/70 transition hover:bg-white/[0.08] hover:text-white" aria-label="Fermer le message TikTok">
-            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" aria-hidden="true">
-              <path d="M18 6 6 18" />
-              <path d="m6 6 12 12" />
-            </svg>
-          </button>
-        </div>
-      </div>
-    </section>
   );
 }
 
@@ -1098,13 +1060,17 @@ function DashboardV2Client({ dashboard }: { dashboard: DashboardData }) {
             hasAnalyses={dashboard.states.hasAnalyses}
           />
         )}
+        <TikTokConnectedSuccessModal
+          enabled={dashboard.states.hasTikTokConnection}
+          connection={dashboard.tiktokConnection}
+          analyzeUrl="/dashboard/analyze"
+        />
 
         <div data-dashboard-content="true" className="relative mx-auto w-full min-w-0 max-w-[1180px] px-4 pb-8 pt-5 sm:px-5 md:px-6 lg:px-8 min-[1280px]:ml-[260px] min-[1280px]:mr-0 min-[1280px]:w-[calc(100%-260px)] min-[1280px]:max-w-none min-[1280px]:px-6 min-[1280px]:py-5 min-[1440px]:px-8 min-[1680px]:px-9">
           <div className="hidden min-[1280px]:block">
             <HeaderDashboard user={dashboard.user} states={dashboard.states} tiktokConnection={dashboard.tiktokConnection} />
           </div>
           <ResponsiveIntro user={dashboard.user} states={dashboard.states} tiktokConnection={dashboard.tiktokConnection} />
-          <TikTokCallbackNotice states={dashboard.states} />
           <KpiGrid metrics={dashboard.metrics} states={dashboard.states} />
 
           <section data-dashboard-main-grid="true" className="mt-3.5 grid grid-cols-1 gap-3.5 min-[1280px]:grid-cols-[minmax(0,1fr)_320px] min-[1440px]:grid-cols-[minmax(0,1fr)_390px] min-[1680px]:grid-cols-[minmax(0,1fr)_430px]">
