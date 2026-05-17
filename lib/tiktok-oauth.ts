@@ -14,6 +14,7 @@ const AUTH_URL = 'https://www.tiktok.com/v2/auth/authorize/';
 const TOKEN_URL = 'https://open.tiktokapis.com/v2/oauth/token/';
 const REVOKE_URL = 'https://open.tiktokapis.com/v2/oauth/revoke/';
 const USER_INFO_URL = 'https://open.tiktokapis.com/v2/user/info/';
+export const TIKTOK_USER_INFO_BASIC_FIELDS = ['open_id', 'union_id', 'avatar_url', 'display_name'] as const;
 
 export interface TikTokOAuthSecrets {
   clientKey: string;
@@ -189,8 +190,20 @@ export interface TikTokUserInfoBasic {
   display_name?: string;
 }
 
+export class TikTokUserInfoFetchError extends Error {
+  status: number;
+  code: string | null;
+
+  constructor(message: string, status: number, code: string | null = null) {
+    super(message);
+    this.name = 'TikTokUserInfoFetchError';
+    this.status = status;
+    this.code = code;
+  }
+}
+
 export async function fetchTikTokUserInfoBasic(accessToken: string): Promise<TikTokUserInfoBasic> {
-  const fields = 'open_id,union_id,avatar_url,display_name';
+  const fields = TIKTOK_USER_INFO_BASIC_FIELDS.join(',');
   const url = `${USER_INFO_URL}?fields=${encodeURIComponent(fields)}`;
   const res = await fetch(url, {
     method: 'GET',
@@ -206,18 +219,20 @@ export async function fetchTikTokUserInfoBasic(accessToken: string): Promise<Tik
   try {
     json = JSON.parse(raw) as Record<string, unknown>;
   } catch {
-    throw new Error(`Réponse user/info TikTok invalide (${res.status})`);
+    throw new TikTokUserInfoFetchError(`Réponse user/info TikTok invalide (${res.status})`, res.status);
   }
 
   const err = json.error as Record<string, unknown> | undefined;
-  if (err && typeof err.message === 'string') {
-    throw new Error(err.message);
+  const errorCode = typeof err?.code === 'string' ? err.code : null;
+  const errorMessage = typeof err?.message === 'string' ? err.message : null;
+  if (!res.ok || (errorCode && errorCode !== 'ok')) {
+    throw new TikTokUserInfoFetchError(errorMessage || `HTTP ${res.status}`, res.status, errorCode);
   }
 
   const data = json.data as Record<string, unknown> | undefined;
   const user = data?.user as Record<string, unknown> | undefined;
   if (!user || typeof user.open_id !== 'string') {
-    throw new Error('Profil TikTok introuvable dans la réponse API.');
+    throw new TikTokUserInfoFetchError('Profil TikTok introuvable dans la réponse API.', res.status, errorCode);
   }
 
   return {

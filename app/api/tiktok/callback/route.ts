@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession, COOKIE_OPTIONS } from '@/lib/session';
 import {
   TIKTOK_OAUTH_STATE_COOKIE,
+  TIKTOK_USER_INFO_BASIC_FIELDS,
   exchangeTikTokAuthorizationCode,
   fetchTikTokUserInfoBasic,
   getTikTokOAuthSecrets,
   getTikTokRedirectUri,
+  TikTokUserInfoFetchError,
 } from '@/lib/tiktok-oauth';
 import { upsertTikTokAccountForUser } from '@/lib/tiktok-accounts';
 
@@ -38,6 +40,12 @@ export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code');
   const state = request.nextUrl.searchParams.get('state');
   const cookieState = request.cookies.get(TIKTOK_OAUTH_STATE_COOKIE)?.value;
+  console.info('[tiktok/callback] received', {
+    step: 'callback_received',
+    hasCode: Boolean(code),
+    hasState: Boolean(state),
+    hasCookieState: Boolean(cookieState),
+  });
 
   if (!code || !state || !cookieState || state !== cookieState) {
     const r = redirectDashboard(request, { tiktok: 'state' });
@@ -55,8 +63,18 @@ export async function GET(request: NextRequest) {
   let tokens: Awaited<ReturnType<typeof exchangeTikTokAuthorizationCode>>;
   try {
     tokens = await exchangeTikTokAuthorizationCode(code, redirectUri, secrets);
+    console.info('[tiktok/callback] token exchange', {
+      step: 'token_exchange',
+      tokenExchangeStatus: 'ok',
+      hasAccessToken: Boolean(tokens.access_token),
+      scope: tokens.scope ?? null,
+    });
   } catch (e) {
-    console.error('[tiktok/callback] token exchange:', e);
+    console.error('[tiktok/callback] token exchange:', {
+      step: 'token_exchange',
+      tokenExchangeStatus: 'error',
+      message: e instanceof Error ? e.message : 'unknown_error',
+    });
     const r = redirectDashboard(request, { tiktok: 'token' });
     return clearState(r);
   }
@@ -64,8 +82,23 @@ export async function GET(request: NextRequest) {
   let profile: Awaited<ReturnType<typeof fetchTikTokUserInfoBasic>>;
   try {
     profile = await fetchTikTokUserInfoBasic(tokens.access_token);
+    console.info('[tiktok/callback] user info', {
+      step: 'profile_fetch',
+      profileFetchStatus: 'ok',
+      fields: TIKTOK_USER_INFO_BASIC_FIELDS,
+      hasOpenId: Boolean(profile.open_id),
+      hasDisplayName: Boolean(profile.display_name),
+      hasAvatarUrl: Boolean(profile.avatar_url),
+    });
   } catch (e) {
-    console.error('[tiktok/callback] user info:', e);
+    console.error('[tiktok/callback] user info:', {
+      step: 'profile_fetch',
+      profileFetchStatus: 'error',
+      fields: TIKTOK_USER_INFO_BASIC_FIELDS,
+      profileErrorCode: e instanceof TikTokUserInfoFetchError ? e.code : null,
+      profileFetchStatusCode: e instanceof TikTokUserInfoFetchError ? e.status : null,
+      profileErrorMessage: e instanceof Error ? e.message : 'unknown_error',
+    });
     const r = redirectDashboard(request, { tiktok: 'profile' });
     return clearState(r);
   }
