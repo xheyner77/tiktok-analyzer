@@ -1049,6 +1049,7 @@ function RecommendationsSection({
 }
 
 function DashboardV2Client({ dashboard, children }: { dashboard: DashboardData; children?: ReactNode }) {
+  const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [managerOpen, setManagerOpen] = useState(false);
   const [locallyDisconnected, setLocallyDisconnected] = useState(false);
@@ -1075,6 +1076,7 @@ function DashboardV2Client({ dashboard, children }: { dashboard: DashboardData; 
         hasAdvancedMetrics: false,
       }
     : dashboard.tiktokConnection;
+  const showOverview = pathname === '/dashboard';
 
   useEffect(() => {
     document.body.setAttribute('data-dashboard-v2', 'true');
@@ -1137,7 +1139,7 @@ function DashboardV2Client({ dashboard, children }: { dashboard: DashboardData; 
           <div className="hidden min-[1280px]:block">
             <HeaderDashboard user={dashboard.user} states={visibleStates} tiktokConnection={visibleTikTokConnection} onManageTikTok={() => setManagerOpen(true)} />
           </div>
-          {children ?? (
+          {showOverview ? (
             <>
               <ResponsiveIntro user={dashboard.user} states={visibleStates} tiktokConnection={visibleTikTokConnection} />
               <KpiGrid metrics={dashboard.metrics} states={visibleStates} />
@@ -1172,7 +1174,7 @@ function DashboardV2Client({ dashboard, children }: { dashboard: DashboardData; 
                 </div>
               </section>
             </>
-          )}
+          ) : children}
         </div>
       </div>
     </main>
