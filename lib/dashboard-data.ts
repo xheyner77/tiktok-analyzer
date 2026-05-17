@@ -6,6 +6,7 @@ import { getSession } from '@/lib/session';
 import { supabase, type Plan } from '@/lib/supabase';
 import type { AnalysisResult } from '@/lib/types';
 import { HISTORY_LIMITS } from '@/lib/plan-limits';
+import { getConnectedTikTokAccountCount } from '@/lib/tiktok-account-limits';
 import type { RetentionPoint } from '@/types/reconstruction';
 
 export type DashboardInsightType = 'hook' | 'retention' | 'rewatch' | 'engagement';
@@ -404,7 +405,8 @@ export async function getDashboardData(): Promise<DashboardData> {
   const email = profile?.email ?? session?.email ?? '';
   const name = profile?.tiktok_display_name?.trim() || (email ? firstNameFromEmail(email) : 'Créateur');
   const quotaUsed = profile?.analyses_count ?? visibleAnalyses.length;
-  const hasTikTokConnection = Boolean(profile?.tiktok_open_id || profile?.tiktok_connected_at);
+  const activeTikTokAccountCount = session ? await getConnectedTikTokAccountCount(session.userId) : 0;
+  const hasTikTokConnection = Boolean(activeTikTokAccountCount > 0 || profile?.tiktok_open_id || profile?.tiktok_connected_at);
   const retention = buildRetention(latest);
   const topVideos = hasTikTokConnection ? buildTopVideos(visibleAnalyses) : [];
   const insights = buildInsights(latest);

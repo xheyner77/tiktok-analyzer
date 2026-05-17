@@ -27,6 +27,11 @@ const tiktokMessages: Record<string, { tone: 'warn' | 'error' | 'success'; title
     title: 'Limite TikTok atteinte',
     body: 'Ton plan actuel ne permet pas de connecter un compte TikTok supplémentaire.',
   },
+  setup: {
+    tone: 'error',
+    title: 'Connexion TikTok indisponible',
+    body: 'La connexion TikTok n’est pas prête côté serveur. Réessaie dans quelques minutes.',
+  },
   session: {
     tone: 'warn',
     title: 'Session requise',

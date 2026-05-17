@@ -7,6 +7,16 @@ import {
 
 export { formatTikTokAccountLimit, getTikTokAccountLimitForPlan, type TikTokPlanKey };
 
+type TikTokAccountLimitReason = 'count_failed' | 'limit_reached';
+
+export type TikTokAccountEligibility = {
+  allowed: boolean;
+  limit: number;
+  current: number;
+  remaining: number;
+  reason?: TikTokAccountLimitReason;
+};
+
 export async function getConnectedTikTokAccountCount(userId: string): Promise<number> {
   const { count, error } = await supabase
     .from('tiktok_accounts')
@@ -26,15 +36,15 @@ export async function canConnectTikTokAccount(
   userId: string,
   plan: string | null | undefined,
   options: { excludingOpenId?: string } = {}
-) {
+): Promise<TikTokAccountEligibility> {
   const limit = getTikTokAccountLimitForPlan(plan);
   if (!Number.isFinite(limit)) {
     return { allowed: true, limit, current: 0, remaining: Number.POSITIVE_INFINITY };
   }
 
-  const { data, count, error } = await supabase
+  const { data, error } = await supabase
     .from('tiktok_accounts')
-    .select('id,tiktok_open_id', { count: 'exact' })
+    .select('id,tiktok_open_id')
     .eq('user_id', userId)
     .eq('status', 'active');
 
@@ -43,7 +53,7 @@ export async function canConnectTikTokAccount(
     return { allowed: false, limit, current: 0, remaining: 0, reason: 'count_failed' as const };
   }
 
-  const current = (data ?? []).filter((row) => row.tiktok_open_id !== options.excludingOpenId).length || count || 0;
+  const current = (data ?? []).filter((row) => row.tiktok_open_id !== options.excludingOpenId).length;
   const remaining = Math.max(0, limit - current);
   return {
     allowed: current < limit,

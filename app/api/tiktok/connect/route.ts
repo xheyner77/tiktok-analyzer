@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
   const eligibility = await canConnectTikTokAccount(session.userId, plan);
   if (!eligibility.allowed) {
     const dash = new URL('/dashboard', request.url);
-    dash.searchParams.set('tiktok', 'limit');
+    dash.searchParams.set('tiktok', eligibility.reason === 'count_failed' ? 'setup' : 'limit');
     return NextResponse.redirect(dash);
   }
 

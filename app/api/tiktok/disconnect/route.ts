@@ -45,5 +45,15 @@ export async function POST() {
     return NextResponse.json({ error: 'Mise à jour impossible.' }, { status: 500 });
   }
 
+  const { error: accountErr } = await supabase
+    .from('tiktok_accounts')
+    .update({ status: 'revoked', access_token: '', refresh_token: null })
+    .eq('user_id', session.userId)
+    .eq('status', 'active');
+
+  if (accountErr) {
+    console.error('[tiktok/disconnect] account update:', accountErr);
+  }
+
   return NextResponse.json({ ok: true });
 }
