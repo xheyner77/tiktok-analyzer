@@ -1508,7 +1508,11 @@ function ResultsView({
   );
 }
 
-export default function AnalyzerV2Client() {
+interface AnalyzerV2ClientProps {
+  embedded?: boolean;
+}
+
+export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientProps) {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [uploadTiktokUrl, setUploadTiktokUrl] = useState('');
   const [objective] = useState<ObjectiveId>('repost');
@@ -1872,23 +1876,25 @@ export default function AnalyzerV2Client() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  return (
-    <main className="relative min-h-dvh overflow-x-hidden pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
+  const content = (
+    <>
       <GuestGate show={showGuestGate} pendingUrl={uploadTiktokUrl} onClose={() => setShowGuestGate(false)} />
 
-      <div className="absolute top-0 inset-x-0 h-[620px] pointer-events-none overflow-hidden">
-        <div className="absolute -top-56 left-1/2 h-[520px] w-[920px] -translate-x-1/2 rounded-full bg-gradient-to-br from-vn-fuchsia/10 via-vn-violet/7 to-vn-indigo/8 blur-[110px]" />
-        <div className="absolute top-72 -right-44 h-[360px] w-[520px] rounded-full bg-vn-indigo/6 blur-[90px]" />
-        <FloatingParticles count={28} />
-      </div>
+      {!embedded && (
+        <div className="absolute top-0 inset-x-0 h-[620px] pointer-events-none overflow-hidden">
+          <div className="absolute -top-56 left-1/2 h-[520px] w-[920px] -translate-x-1/2 rounded-full bg-gradient-to-br from-vn-fuchsia/10 via-vn-violet/7 to-vn-indigo/8 blur-[110px]" />
+          <div className="absolute top-72 -right-44 h-[360px] w-[520px] rounded-full bg-vn-indigo/6 blur-[90px]" />
+          <FloatingParticles count={28} />
+        </div>
+      )}
 
-      <div className="relative mx-auto max-w-6xl px-4 py-8 pb-20 sm:px-6 sm:py-10">
-        <header className="mt-4">
+      <div className={embedded ? 'relative mx-auto w-full max-w-[1120px] pb-10 pt-2' : 'relative mx-auto max-w-6xl px-4 py-8 pb-20 sm:px-6 sm:py-10'}>
+        <header className={embedded ? 'mt-0' : 'mt-4'}>
           <div>
-            <h1 className="max-w-3xl text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
+            <h1 className={embedded ? 'max-w-3xl text-[30px] font-black leading-[1.02] tracking-[-0.04em] text-white sm:text-[38px]' : 'max-w-3xl text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl'}>
               Analyser une vidéo <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">TikTok</span>
             </h1>
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-gray-400 sm:text-lg">
+            <p className={embedded ? 'mt-3 max-w-2xl text-[14px] leading-relaxed text-slate-400 sm:text-[15px]' : 'mt-4 max-w-2xl text-base leading-relaxed text-gray-400 sm:text-lg'}>
               Importe ta vidéo et reçois un diagnostic précis avec les signaux à corriger avant remontage.
             </p>
           </div>
@@ -1950,7 +1956,7 @@ export default function AnalyzerV2Client() {
             )}
           </div>
 
-          <aside className="space-y-4 lg:sticky lg:top-6">
+          <aside className={`space-y-4 lg:sticky ${embedded ? 'lg:top-5' : 'lg:top-6'}`}>
             {isReady && !isLimitReached && (
               <AnalysisCounter used={effectiveCount} limit={effectiveLimit === Infinity ? undefined : effectiveLimit} />
             )}
@@ -2048,6 +2054,20 @@ export default function AnalyzerV2Client() {
           </aside>
         </div>
       </div>
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <section data-dashboard-analyze-section="true" className="relative min-w-0 overflow-x-hidden pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
+        {content}
+      </section>
+    );
+  }
+
+  return (
+    <main className="relative min-h-dvh overflow-x-hidden pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
+      {content}
     </main>
   );
 }

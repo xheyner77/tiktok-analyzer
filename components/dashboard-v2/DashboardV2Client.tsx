@@ -1048,7 +1048,7 @@ function RecommendationsSection({
   );
 }
 
-function DashboardV2Client({ dashboard }: { dashboard: DashboardData }) {
+function DashboardV2Client({ dashboard, children }: { dashboard: DashboardData; children?: ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [managerOpen, setManagerOpen] = useState(false);
   const [locallyDisconnected, setLocallyDisconnected] = useState(false);
@@ -1137,38 +1137,42 @@ function DashboardV2Client({ dashboard }: { dashboard: DashboardData }) {
           <div className="hidden min-[1280px]:block">
             <HeaderDashboard user={dashboard.user} states={visibleStates} tiktokConnection={visibleTikTokConnection} onManageTikTok={() => setManagerOpen(true)} />
           </div>
-          <ResponsiveIntro user={dashboard.user} states={visibleStates} tiktokConnection={visibleTikTokConnection} />
-          <KpiGrid metrics={dashboard.metrics} states={visibleStates} />
+          {children ?? (
+            <>
+              <ResponsiveIntro user={dashboard.user} states={visibleStates} tiktokConnection={visibleTikTokConnection} />
+              <KpiGrid metrics={dashboard.metrics} states={visibleStates} />
 
-          <section data-dashboard-main-grid="true" className="mt-3.5 grid grid-cols-1 gap-3.5 min-[1280px]:grid-cols-[minmax(0,1fr)_320px] min-[1440px]:grid-cols-[minmax(0,1fr)_390px] min-[1680px]:grid-cols-[minmax(0,1fr)_430px]">
-            <div className="min-w-0 space-y-3.5">
-              <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 min-[1680px]:grid-cols-[minmax(0,1fr)_290px]">
-                <RetentionChartCard retention={dashboard.retention} states={visibleStates} cta={dashboard.analysisCta} />
-                <VideoPreviewCard latestVideo={dashboard.latestVideo} states={visibleStates} cta={dashboard.analysisCta} />
-              </div>
+              <section data-dashboard-main-grid="true" className="mt-3.5 grid grid-cols-1 gap-3.5 min-[1280px]:grid-cols-[minmax(0,1fr)_320px] min-[1440px]:grid-cols-[minmax(0,1fr)_390px] min-[1680px]:grid-cols-[minmax(0,1fr)_430px]">
+                <div className="min-w-0 space-y-3.5">
+                  <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 min-[1680px]:grid-cols-[minmax(0,1fr)_290px]">
+                    <RetentionChartCard retention={dashboard.retention} states={visibleStates} cta={dashboard.analysisCta} />
+                    <VideoPreviewCard latestVideo={dashboard.latestVideo} states={visibleStates} cta={dashboard.analysisCta} />
+                  </div>
 
-              <div className="min-[1280px]:hidden">
-                <InsightsIACard insights={dashboard.insights} cta={dashboard.analysisCta} states={visibleStates} />
-              </div>
+                  <div className="min-[1280px]:hidden">
+                    <InsightsIACard insights={dashboard.insights} cta={dashboard.analysisCta} states={visibleStates} />
+                  </div>
 
-              <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 lg:grid-cols-3 min-[1680px]:grid-cols-[250px_minmax(0,1fr)_360px]">
-                <ViralPotentialCard metrics={dashboard.metrics} states={visibleStates} />
-                <EmotionalCurveCard states={visibleStates} />
-                <ContentPillarsCard states={visibleStates} />
-              </div>
+                  <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 lg:grid-cols-3 min-[1680px]:grid-cols-[250px_minmax(0,1fr)_360px]">
+                    <ViralPotentialCard metrics={dashboard.metrics} states={visibleStates} />
+                    <EmotionalCurveCard states={visibleStates} />
+                    <ContentPillarsCard states={visibleStates} />
+                  </div>
 
-              <RecommendationsSection recommendations={dashboard.recommendations} context={dashboard.metrics.recommendationsContext} states={visibleStates} />
+                  <RecommendationsSection recommendations={dashboard.recommendations} context={dashboard.metrics.recommendationsContext} states={visibleStates} />
 
-              <div className="min-[1280px]:hidden">
-                <TopVideosCard videos={dashboard.topVideos} states={visibleStates} />
-              </div>
-            </div>
+                  <div className="min-[1280px]:hidden">
+                    <TopVideosCard videos={dashboard.topVideos} states={visibleStates} />
+                  </div>
+                </div>
 
-            <div data-dashboard-right-rail="true" className="hidden min-w-0 space-y-3.5 min-[1280px]:block">
-              <InsightsIACard insights={dashboard.insights} cta={dashboard.analysisCta} states={visibleStates} />
-              <TopVideosCard videos={dashboard.topVideos} states={visibleStates} />
-            </div>
-          </section>
+                <div data-dashboard-right-rail="true" className="hidden min-w-0 space-y-3.5 min-[1280px]:block">
+                  <InsightsIACard insights={dashboard.insights} cta={dashboard.analysisCta} states={visibleStates} />
+                  <TopVideosCard videos={dashboard.topVideos} states={visibleStates} />
+                </div>
+              </section>
+            </>
+          )}
         </div>
       </div>
     </main>
