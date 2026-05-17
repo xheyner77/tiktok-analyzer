@@ -25,6 +25,7 @@ export interface DashboardTikTokConnection {
   connected: boolean;
   displayName: string | null;
   avatarUrl: string | null;
+  connectedAt: string | null;
   scopes: string[];
   modeLabel: string;
   hasAdvancedMetrics: boolean;
@@ -425,6 +426,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     connected: hasTikTokConnection,
     displayName: primaryTikTokAccount?.displayName ?? profile?.tiktok_display_name ?? null,
     avatarUrl: primaryTikTokAccount?.avatarUrl ?? profile?.tiktok_avatar_url ?? null,
+    connectedAt: primaryTikTokAccount?.connectedAt ?? profile?.tiktok_connected_at ?? null,
     scopes: tikTokScopes,
     modeLabel: process.env.TIKTOK_APP_MODE?.trim() || 'Sandbox',
     hasAdvancedMetrics: hasVideoListScope(tikTokScopes),

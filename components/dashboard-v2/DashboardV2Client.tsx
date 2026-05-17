@@ -2,9 +2,10 @@
 
 import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import type { DashboardData, DashboardInsight, DashboardRecommendation, DashboardTopVideo } from '@/lib/dashboard-data';
 import TikTokConnectModal from '@/components/dashboard-v2/TikTokConnectModal';
+import { TikTokConnectionManager } from '@/components/dashboard-v2/TikTokConnectionManager';
 import { TikTokConnectedSuccessModal } from '@/components/dashboard-v2/TikTokConnectedSuccessModal';
 
 type IconName =
@@ -222,9 +223,11 @@ function Sidebar({ user }: { user: DashboardData['user'] }) {
 function TikTokConnectedBadge({
   connection,
   compact = false,
+  onManage,
 }: {
   connection: DashboardData['tiktokConnection'];
   compact?: boolean;
+  onManage?: () => void;
 }) {
   const displayName = connection.displayName?.trim() || 'Compte TikTok';
 
@@ -247,16 +250,30 @@ function TikTokConnectedBadge({
         </div>
         <div className="truncate text-[11px] font-medium leading-tight text-emerald-100/72">{displayName}</div>
       </div>
-      {!compact && (
-        <Link href="/dashboard/settings" className="ml-1 shrink-0 rounded-[7px] border border-white/[0.08] bg-white/[0.045] px-2.5 py-1.5 text-[11px] font-bold text-emerald-50 transition hover:bg-white/[0.08]">
+      {!compact && onManage && (
+        <button
+          type="button"
+          onClick={onManage}
+          className="ml-1 shrink-0 rounded-[7px] border border-white/[0.08] bg-white/[0.045] px-2.5 py-1.5 text-[11px] font-bold text-emerald-50 transition hover:bg-white/[0.08] focus:outline-none focus:ring-2 focus:ring-emerald-200/30"
+        >
           Gérer
-        </Link>
+        </button>
       )}
     </div>
   );
 }
 
-function HeaderDashboard({ user, states, tiktokConnection }: { user: DashboardData['user']; states: DashboardData['states']; tiktokConnection: DashboardData['tiktokConnection'] }) {
+function HeaderDashboard({
+  user,
+  states,
+  tiktokConnection,
+  onManageTikTok,
+}: {
+  user: DashboardData['user'];
+  states: DashboardData['states'];
+  tiktokConnection: DashboardData['tiktokConnection'];
+  onManageTikTok: () => void;
+}) {
   return (
     <header className="flex h-[52px] items-start justify-between">
       <div>
@@ -274,7 +291,7 @@ function HeaderDashboard({ user, states, tiktokConnection }: { user: DashboardDa
           <span className="absolute right-[9px] top-[8px] h-2 w-2 rounded-full bg-fuchsia-400 shadow-[0_0_12px_rgba(232,121,249,0.9)]" />
         </button>
         {states.hasTikTokConnection ? (
-          <TikTokConnectedBadge connection={tiktokConnection} />
+          <TikTokConnectedBadge connection={tiktokConnection} onManage={onManageTikTok} />
         ) : (
           <Link href="/api/tiktok/connect" className="flex h-[44px] items-center gap-2 rounded-[8px] border border-cyan-300/18 bg-cyan-300/10 px-4 text-[13px] font-bold text-cyan-100 transition hover:border-cyan-200/30 hover:bg-cyan-300/14">
             <span className="text-[16px] leading-none">♪</span>
@@ -1033,15 +1050,53 @@ function RecommendationsSection({
 
 function DashboardV2Client({ dashboard }: { dashboard: DashboardData }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [managerOpen, setManagerOpen] = useState(false);
+  const [locallyDisconnected, setLocallyDisconnected] = useState(false);
+  const [disconnectNotice, setDisconnectNotice] = useState(false);
+  const router = useRouter();
+
+  const visibleStates = locallyDisconnected
+    ? {
+        ...dashboard.states,
+        hasTikTokConnection: false,
+        hasTikTokMetrics: false,
+        hasRealTopVideos: false,
+      }
+    : dashboard.states;
+
+  const visibleTikTokConnection = locallyDisconnected
+    ? {
+        ...dashboard.tiktokConnection,
+        connected: false,
+        displayName: null,
+        avatarUrl: null,
+        connectedAt: null,
+        scopes: [],
+        hasAdvancedMetrics: false,
+      }
+    : dashboard.tiktokConnection;
 
   useEffect(() => {
     document.body.setAttribute('data-dashboard-v2', 'true');
     return () => document.body.removeAttribute('data-dashboard-v2');
   }, []);
 
+  useEffect(() => {
+    if (!disconnectNotice) return;
+    const timeout = window.setTimeout(() => setDisconnectNotice(false), 4200);
+    return () => window.clearTimeout(timeout);
+  }, [disconnectNotice]);
+
+  function handleTikTokDisconnected() {
+    setLocallyDisconnected(true);
+    setManagerOpen(false);
+    setDisconnectNotice(true);
+    router.refresh();
+  }
+
   return (
     <main
-      data-tiktok-connected={dashboard.states.hasTikTokConnection ? 'true' : 'false'}
+      data-tiktok-connected={visibleStates.hasTikTokConnection ? 'true' : 'false'}
       data-has-analyses={dashboard.states.hasAnalyses ? 'true' : 'false'}
       data-dashboard-v2-root="true"
       className="fixed inset-0 z-[100] overflow-y-auto overflow-x-hidden bg-[#020611] font-sans text-white antialiased"
@@ -1050,56 +1105,68 @@ function DashboardV2Client({ dashboard }: { dashboard: DashboardData }) {
         <div className="pointer-events-none absolute inset-0 opacity-[0.018] [background-image:linear-gradient(rgba(255,255,255,.75)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.75)_1px,transparent_1px)] [background-size:42px_42px]" />
         <div className="pointer-events-none absolute left-[260px] top-0 hidden h-full w-px bg-white/[0.02] min-[1280px]:block" />
         <MobileDashboardHeader user={dashboard.user} onMenuOpen={() => setDrawerOpen(true)} />
-        <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} user={dashboard.user} states={dashboard.states} tiktokConnection={dashboard.tiktokConnection} />
+        <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} user={dashboard.user} states={visibleStates} tiktokConnection={visibleTikTokConnection} />
         <Sidebar user={dashboard.user} />
-        {!dashboard.states.hasTikTokConnection && (
+        {!visibleStates.hasTikTokConnection && !locallyDisconnected && (
           <TikTokConnectModal
-            isTikTokConnected={dashboard.states.hasTikTokConnection}
+            isTikTokConnected={visibleStates.hasTikTokConnection}
             connectUrl="/api/tiktok/connect"
             analyzerUrl="/dashboard/analyze"
-            hasAnalyses={dashboard.states.hasAnalyses}
+            hasAnalyses={visibleStates.hasAnalyses}
           />
         )}
         <TikTokConnectedSuccessModal
-          enabled={dashboard.states.hasTikTokConnection}
-          connection={dashboard.tiktokConnection}
+          enabled={visibleStates.hasTikTokConnection}
+          connection={visibleTikTokConnection}
           analyzeUrl="/dashboard/analyze"
         />
+        <TikTokConnectionManager
+          open={managerOpen}
+          connection={visibleTikTokConnection}
+          onClose={() => setManagerOpen(false)}
+          onDisconnected={handleTikTokDisconnected}
+        />
+        {disconnectNotice && (
+          <div className="fixed right-4 top-4 z-[260] max-w-[330px] rounded-[14px] border border-cyan-200/[0.14] bg-[linear-gradient(135deg,rgba(12,18,34,0.96),rgba(4,8,18,0.98))] px-4 py-3 text-white shadow-[0_22px_70px_-38px_rgba(34,211,238,0.75),inset_0_1px_0_rgba(255,255,255,0.08)]">
+            <p className="text-[13px] font-black">TikTok déconnecté</p>
+            <p className="mt-1 text-[12px] leading-relaxed text-slate-400">Ton dashboard est revenu en état non connecté.</p>
+          </div>
+        )}
 
         <div data-dashboard-content="true" className="relative mx-auto w-full min-w-0 max-w-[1180px] px-4 pb-8 pt-5 sm:px-5 md:px-6 lg:px-8 min-[1280px]:ml-[260px] min-[1280px]:mr-0 min-[1280px]:w-[calc(100%-260px)] min-[1280px]:max-w-none min-[1280px]:px-6 min-[1280px]:py-5 min-[1440px]:px-8 min-[1680px]:px-9">
           <div className="hidden min-[1280px]:block">
-            <HeaderDashboard user={dashboard.user} states={dashboard.states} tiktokConnection={dashboard.tiktokConnection} />
+            <HeaderDashboard user={dashboard.user} states={visibleStates} tiktokConnection={visibleTikTokConnection} onManageTikTok={() => setManagerOpen(true)} />
           </div>
-          <ResponsiveIntro user={dashboard.user} states={dashboard.states} tiktokConnection={dashboard.tiktokConnection} />
-          <KpiGrid metrics={dashboard.metrics} states={dashboard.states} />
+          <ResponsiveIntro user={dashboard.user} states={visibleStates} tiktokConnection={visibleTikTokConnection} />
+          <KpiGrid metrics={dashboard.metrics} states={visibleStates} />
 
           <section data-dashboard-main-grid="true" className="mt-3.5 grid grid-cols-1 gap-3.5 min-[1280px]:grid-cols-[minmax(0,1fr)_320px] min-[1440px]:grid-cols-[minmax(0,1fr)_390px] min-[1680px]:grid-cols-[minmax(0,1fr)_430px]">
             <div className="min-w-0 space-y-3.5">
               <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 min-[1680px]:grid-cols-[minmax(0,1fr)_290px]">
-                <RetentionChartCard retention={dashboard.retention} states={dashboard.states} cta={dashboard.analysisCta} />
-                <VideoPreviewCard latestVideo={dashboard.latestVideo} states={dashboard.states} cta={dashboard.analysisCta} />
+                <RetentionChartCard retention={dashboard.retention} states={visibleStates} cta={dashboard.analysisCta} />
+                <VideoPreviewCard latestVideo={dashboard.latestVideo} states={visibleStates} cta={dashboard.analysisCta} />
               </div>
 
               <div className="min-[1280px]:hidden">
-                <InsightsIACard insights={dashboard.insights} cta={dashboard.analysisCta} states={dashboard.states} />
+                <InsightsIACard insights={dashboard.insights} cta={dashboard.analysisCta} states={visibleStates} />
               </div>
 
               <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 lg:grid-cols-3 min-[1680px]:grid-cols-[250px_minmax(0,1fr)_360px]">
-                <ViralPotentialCard metrics={dashboard.metrics} states={dashboard.states} />
-                <EmotionalCurveCard states={dashboard.states} />
-                <ContentPillarsCard states={dashboard.states} />
+                <ViralPotentialCard metrics={dashboard.metrics} states={visibleStates} />
+                <EmotionalCurveCard states={visibleStates} />
+                <ContentPillarsCard states={visibleStates} />
               </div>
 
-              <RecommendationsSection recommendations={dashboard.recommendations} context={dashboard.metrics.recommendationsContext} states={dashboard.states} />
+              <RecommendationsSection recommendations={dashboard.recommendations} context={dashboard.metrics.recommendationsContext} states={visibleStates} />
 
               <div className="min-[1280px]:hidden">
-                <TopVideosCard videos={dashboard.topVideos} states={dashboard.states} />
+                <TopVideosCard videos={dashboard.topVideos} states={visibleStates} />
               </div>
             </div>
 
             <div data-dashboard-right-rail="true" className="hidden min-w-0 space-y-3.5 min-[1280px]:block">
-              <InsightsIACard insights={dashboard.insights} cta={dashboard.analysisCta} states={dashboard.states} />
-              <TopVideosCard videos={dashboard.topVideos} states={dashboard.states} />
+              <InsightsIACard insights={dashboard.insights} cta={dashboard.analysisCta} states={visibleStates} />
+              <TopVideosCard videos={dashboard.topVideos} states={visibleStates} />
             </div>
           </section>
         </div>
