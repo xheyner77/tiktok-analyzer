@@ -50,7 +50,10 @@ export async function POST(request: NextRequest) {
     }
 
     const userProfile = await getUserById(session.userId);
-    const currentPlan = userProfile?.plan ?? 'free';
+    const hasActiveStripeSub =
+      !!userProfile?.stripe_subscription_id &&
+      isSubscriptionStatusAllowingAccess(userProfile.subscription_status);
+    const currentPlan = hasActiveStripeSub ? (userProfile?.plan ?? 'free') : 'free';
     const currentRank = PLAN_RANK[currentPlan] ?? 0;
     const targetRank = PLAN_RANK[plan] ?? 0;
 
@@ -66,10 +69,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    const hasActiveStripeSub =
-      !!userProfile?.stripe_subscription_id &&
-      isSubscriptionStatusAllowingAccess(userProfile.subscription_status);
 
     if (hasActiveStripeSub) {
       return NextResponse.json(
