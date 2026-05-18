@@ -1,14 +1,17 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { Resend } from 'resend';
+import { getDashboardData } from '@/lib/dashboard-data';
 import { getUserById } from '@/lib/auth';
 import { getSession } from '@/lib/session';
 
 const requestTypes = {
-  account: 'Compte / accès',
-  billing: 'Billing / abonnement',
+  account: 'Compte & accès',
+  billing: 'Billing',
   analysis_bug: 'Bug analyse',
-  tiktok: 'TikTok / connexion',
-  product_feedback: 'Suggestion produit',
+  ai_result: 'Résultat IA à vérifier',
+  tiktok: 'TikTok Sync',
+  quotas: 'Quotas',
+  product_feedback: 'Idée produit',
   other: 'Autre',
 } as const;
 
@@ -43,6 +46,10 @@ function isPriority(value: string): value is Priority {
   return value in priorities;
 }
 
+function buildMailto(to: string, subject: string, message: string, context: string): string {
+  return `mailto:${to}?subject=${encodeURIComponent(`[Viralynz Support] ${subject}`)}&body=${encodeURIComponent(`${message}\n\n---\nContexte Viralynz\n${context}`)}`;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getSession();
@@ -58,6 +65,7 @@ export async function POST(request: NextRequest) {
     const browserContext = cleanText(body.browserContext, 800);
     const currentRoute = cleanText(body.currentRoute, 160);
     const feedbackSignal = cleanText(body.feedbackSignal, 120);
+    const issueReference = cleanText(body.issueReference, 500);
 
     if (!isRequestType(typeRaw)) {
       return NextResponse.json({ error: 'Type de demande invalide.' }, { status: 400 });
@@ -72,16 +80,39 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Décris le problème avec un peu plus de contexte.' }, { status: 400 });
     }
 
-    const profile = await getUserById(session.userId);
-    const supportEmail = process.env.SUPPORT_EMAIL?.trim() || 'support@viralynz.com';
-    const resendKey = process.env.RESEND_API_KEY?.trim();
+    const [profile, dashboard] = await Promise.all([
+      getUserById(session.userId),
+      getDashboardData(),
+    ]);
 
-    if (!resendKey) {
+    const supportEmail = process.env.SUPPORT_EMAIL?.trim();
+    const resendKey = process.env.RESEND_API_KEY?.trim();
+    const fallbackEmail = supportEmail || 'support@viralynz.com';
+    const planLabel = dashboard.user.planLabel || (profile?.plan ? profile.plan.toUpperCase() : 'Non disponible');
+    const subscriptionStatus = profile?.subscription_status || 'none';
+    const tiktokStatus = dashboard.tiktokConnection.connected ? 'connecté' : 'non connecté';
+    const routeLabel = currentRoute || '/dashboard/support';
+    const accountContext = [
+      `Email: ${dashboard.user.email || session.email}`,
+      `User ID: ${session.userId}`,
+      `Plan: ${planLabel}`,
+      `Analyses: ${dashboard.user.quotaUsed} / ${dashboard.user.quotaLimit ?? '∞'}`,
+      `TikTok: ${tiktokStatus}`,
+      `Mode TikTok: ${dashboard.tiktokConnection.modeLabel || 'Non disponible'}`,
+      `Billing: ${subscriptionStatus}`,
+      `Route: ${routeLabel}`,
+      `Signal: ${feedbackSignal || requestTypes[typeRaw]}`,
+      issueReference ? `Reference: ${issueReference}` : '',
+    ].filter(Boolean).join('\n');
+
+    if (!supportEmail || !resendKey) {
       return NextResponse.json(
         {
-          error: 'Configuration email support manquante.',
-          code: 'EMAIL_NOT_CONFIGURED',
-          mailto: `mailto:${supportEmail}?subject=${encodeURIComponent(`[Viralynz Support] ${subject}`)}&body=${encodeURIComponent(message)}`,
+          error: !supportEmail
+            ? 'Email support non configuré. Ouvre l’email prérempli pour envoyer la demande.'
+            : 'Configuration email support manquante. Ouvre l’email prérempli pour envoyer la demande.',
+          code: !supportEmail ? 'SUPPORT_EMAIL_NOT_CONFIGURED' : 'EMAIL_NOT_CONFIGURED',
+          mailto: buildMailto(fallbackEmail, subject, message, accountContext),
         },
         { status: 503 }
       );
@@ -89,9 +120,6 @@ export async function POST(request: NextRequest) {
 
     const resend = new Resend(resendKey);
     const from = process.env.RESEND_FROM_EMAIL?.trim() || 'Viralynz Support <onboarding@resend.dev>';
-    const planLabel = profile?.plan ? profile.plan.toUpperCase() : 'UNKNOWN';
-    const subscriptionStatus = profile?.subscription_status || 'none';
-    const tiktokStatus = profile?.tiktok_connected_at || profile?.tiktok_open_id ? 'connected' : 'not_connected';
 
     await resend.emails.send({
       from,
@@ -110,15 +138,9 @@ export async function POST(request: NextRequest) {
             <p style="white-space:pre-wrap;margin:0;font-size:15px;line-height:1.65;color:#1f2937">${escapeHtml(message)}</p>
           </div>
           <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:22px">
-            <h2 style="margin:0 0 12px;font-size:15px;color:#111827">Contexte compte</h2>
-            <p style="margin:0;color:#4b5563;font-size:14px;line-height:1.7">
-              Email: <strong>${escapeHtml(session.email)}</strong><br/>
-              User ID: ${escapeHtml(session.userId)}<br/>
-              Plan Supabase: ${escapeHtml(planLabel)}<br/>
-              Subscription status: ${escapeHtml(subscriptionStatus)}<br/>
-              TikTok: ${escapeHtml(tiktokStatus)}<br/>
-              Route: ${escapeHtml(currentRoute || 'Non fournie')}<br/>
-              Signal feedback: ${escapeHtml(feedbackSignal || 'Non fourni')}<br/>
+            <h2 style="margin:0 0 12px;font-size:15px;color:#111827">Contexte attaché</h2>
+            <p style="white-space:pre-wrap;margin:0;color:#4b5563;font-size:14px;line-height:1.7">${escapeHtml(accountContext)}</p>
+            <p style="margin:16px 0 0;color:#6b7280;font-size:12px;line-height:1.6">
               Navigateur: ${escapeHtml(browserContext || 'Non fourni')}<br/>
               Date: ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}
             </p>

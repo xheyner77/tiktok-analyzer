@@ -30,6 +30,9 @@ export default async function DashboardSupportPage() {
         tiktokModeLabel: dashboard.tiktokConnection.modeLabel,
         tiktokScopes: dashboard.tiktokConnection.scopes,
         billingStatus: profile?.subscription_status ?? null,
+        hasLatestAnalysis: dashboard.states.hasLatestAnalysis,
+        latestAnalysisTitle: dashboard.latestVideo.title,
+        latestAnalysisDate: dashboard.latestVideo.date,
       }}
     />
   );

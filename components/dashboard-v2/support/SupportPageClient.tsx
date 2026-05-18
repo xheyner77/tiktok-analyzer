@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 
-type SupportType = 'account' | 'billing' | 'analysis_bug' | 'tiktok' | 'product_feedback' | 'other';
+type SupportType = 'analysis_bug' | 'ai_result' | 'tiktok' | 'billing' | 'quotas' | 'product_feedback';
 type SupportPriority = 'standard' | 'important' | 'blocking';
+type IconName = 'analysis' | 'spark' | 'tiktok' | 'billing' | 'quota' | 'idea' | 'shield' | 'route' | 'arrow' | 'check' | 'clock';
 
 type SupportPageClientProps = {
   context: {
@@ -17,58 +18,143 @@ type SupportPageClientProps = {
     tiktokModeLabel: string;
     tiktokScopes: string[];
     billingStatus: string | null;
+    hasLatestAnalysis: boolean;
+    latestAnalysisTitle: string;
+    latestAnalysisDate: string;
   };
 };
 
-const typeOptions: Array<{ id: SupportType; title: string; description: string }> = [
-  { id: 'account', title: 'Problème compte / accès', description: 'Connexion, mot de passe, profil, données.' },
-  { id: 'billing', title: 'Billing / abonnement', description: 'Plan, facture, abonnement, Stripe.' },
-  { id: 'analysis_bug', title: 'Bug analyse', description: 'Upload bloqué, diagnostic étrange, analyse qui échoue.' },
-  { id: 'tiktok', title: 'TikTok / connexion', description: 'Connexion TikTok, permissions, compte relié.' },
-  { id: 'product_feedback', title: 'Suggestion produit', description: 'Propose une amélioration pour le coach de repost.' },
-  { id: 'other', title: 'Autre', description: 'Un sujet qui ne rentre pas dans les catégories.' },
+const typeOptions: Array<{
+  id: SupportType;
+  title: string;
+  description: string;
+  subject: string;
+  badge?: string;
+  icon: IconName;
+  helper: string;
+}> = [
+  {
+    id: 'analysis_bug',
+    title: 'Analyse bloquée',
+    description: 'Upload, traitement, résultat vide ou analyse qui échoue.',
+    subject: 'Analyse bloquée ou résultat vide',
+    badge: 'Fréquent',
+    icon: 'analysis',
+    helper: 'Ajoute ce que tu as envoyé, à quel moment ça bloque, et ce que tu attendais comme résultat.',
+  },
+  {
+    id: 'ai_result',
+    title: 'Résultat IA étrange',
+    description: 'Diagnostic trop vague, mauvais contexte, recommandations incohérentes.',
+    subject: 'Résultat IA à vérifier',
+    icon: 'spark',
+    helper: 'Indique ce qui paraît incohérent : hook, diagnostic, V2, CTA ou contexte de la vidéo.',
+  },
+  {
+    id: 'tiktok',
+    title: 'TikTok Sync',
+    description: 'Connexion, permissions, compte relié, données manquantes.',
+    subject: 'Problème TikTok Sync',
+    icon: 'tiktok',
+    helper: 'Précise si le problème vient de la connexion, des permissions ou du compte relié.',
+  },
+  {
+    id: 'billing',
+    title: 'Abonnement / Stripe',
+    description: 'Plan, facture, paiement, portail Stripe.',
+    subject: 'Question abonnement ou Stripe',
+    icon: 'billing',
+    helper: 'Ne partage jamais tes informations de carte. Utilise uniquement le portail Stripe pour les paiements.',
+  },
+  {
+    id: 'quotas',
+    title: 'Quotas',
+    description: 'Analyses restantes, hooks, limite mensuelle.',
+    subject: 'Question sur mes quotas',
+    icon: 'quota',
+    helper: 'Ajoute le quota concerné : analyses, hooks, reconstructions IA ou synchronisation TikTok.',
+  },
+  {
+    id: 'product_feedback',
+    title: 'Idée produit',
+    description: 'Proposer une amélioration du coach de repost.',
+    subject: 'Idée produit Viralynz',
+    icon: 'idea',
+    helper: 'Décris le workflow que tu veux accélérer : analyse, hook, V2, repost ou reporting.',
+  },
 ];
 
-const quickCards: Array<{ type: SupportType; title: string; body: string; cta: string; href?: string }> = [
-  { type: 'account', title: 'Compte & accès', body: 'Connexion, mot de passe, profil, données.', cta: 'Demander de l’aide' },
-  { type: 'billing', title: 'Billing', body: 'Plan, facture, abonnement, Stripe.', cta: 'Gérer l’abonnement', href: '/dashboard/billing' },
-  { type: 'analysis_bug', title: 'Bug analyse', body: 'Résultat incohérent, upload bloqué, analyse qui échoue.', cta: 'Signaler un bug' },
-  { type: 'tiktok', title: 'TikTok Sync', body: 'Connexion TikTok, permissions, compte relié.', cta: 'Gérer TikTok' },
-  { type: 'product_feedback', title: 'Idée produit', body: 'Propose une amélioration pour le coach de repost.', cta: 'Envoyer une idée' },
+const quickResources = [
+  { title: 'Première analyse', body: 'Importer une vidéo et lire le diagnostic.', href: '/dashboard/analyze' },
+  { title: 'Comprendre la V2', body: 'Transformer le diagnostic en version à republier.', href: '/dashboard/rewrite' },
+  { title: 'TikTok connecté', body: 'Vérifier le compte relié et les permissions.', href: '/dashboard/settings' },
+  { title: 'Abonnement', body: 'Voir les quotas, le plan et la facturation.', href: '/dashboard/billing' },
 ];
 
-const resources = [
-  { title: 'Première analyse', body: 'Comment importer une vidéo et lire ton diagnostic.', status: 'Support guidé' },
-  { title: 'Comprendre la V2', body: 'Comment utiliser la version recommandée avant de republier.', status: 'Bientôt' },
-  { title: 'TikTok connecté', body: 'Ce que Viralynz peut lire avec les permissions actuelles.', status: 'Disponible ici' },
-  { title: 'Abonnement', body: 'Comprendre les quotas et les modules inclus.', status: 'Dashboard billing' },
-];
+function Icon({ name, className = 'h-4 w-4' }: { name: IconName; className?: string }) {
+  const stroke = {
+    className,
+    fill: 'none',
+    viewBox: '0 0 24 24',
+    stroke: 'currentColor',
+    strokeWidth: 1.8,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+  };
 
-const feedbackSignals = ['Analyse plus précise', 'Meilleurs hooks', 'Plus de dashboard', 'Publication TikTok', 'Autre'];
+  if (name === 'analysis') return <svg {...stroke}><path d="M4 19V5" /><path d="M8 17V9" /><path d="M12 17V4" /><path d="M16 17v-6" /><path d="M20 17V7" /></svg>;
+  if (name === 'spark') return <svg {...stroke}><path d="M13 2 4 14h7l-1 8 10-13h-7V2Z" /></svg>;
+  if (name === 'tiktok') return <svg {...stroke}><path d="M15 4v9.5a4.5 4.5 0 1 1-4.5-4.5" /><path d="M15 4c.8 2.8 2.4 4.5 5 5" /></svg>;
+  if (name === 'billing') return <svg {...stroke}><rect x="3" y="5" width="18" height="14" rx="3" /><path d="M3 10h18" /><path d="M7 15h3" /></svg>;
+  if (name === 'quota') return <svg {...stroke}><circle cx="12" cy="12" r="9" /><path d="M12 7v5l4 2" /></svg>;
+  if (name === 'idea') return <svg {...stroke}><path d="M9 18h6" /><path d="M10 22h4" /><path d="M8.5 14.5A6 6 0 1 1 15.5 14c-.9.8-1.5 1.7-1.5 3h-4c0-1.2-.6-2-1.5-2.5Z" /></svg>;
+  if (name === 'shield') return <svg {...stroke}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" /><path d="m9 12 2 2 4-4" /></svg>;
+  if (name === 'route') return <svg {...stroke}><path d="M6 19a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" /><path d="M18 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" /><path d="M8.5 15h4A3.5 3.5 0 0 0 16 11.5V11" /></svg>;
+  if (name === 'arrow') return <svg {...stroke}><path d="M5 12h14" /><path d="m13 6 6 6-6 6" /></svg>;
+  if (name === 'check') return <svg {...stroke}><path d="m5 12 4 4L19 6" /></svg>;
+  if (name === 'clock') return <svg {...stroke}><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>;
+  return null;
+}
 
 function formatQuota(used: number, limit: number | null): string {
   return `${used} / ${limit ?? '∞'}`;
 }
 
-function Badge({ children, tone = 'violet' }: { children: React.ReactNode; tone?: 'violet' | 'cyan' | 'green' | 'amber' | 'slate' }) {
+function billingLabel(status: string | null): string {
+  if (status === 'active') return 'Actif';
+  if (status === 'trialing') return 'Essai actif';
+  if (status === 'canceled') return 'Annulé';
+  if (status === 'past_due' || status === 'unpaid') return 'À vérifier';
+  return 'Aucun abonnement actif';
+}
+
+function Badge({ children, tone = 'violet' }: { children: React.ReactNode; tone?: 'violet' | 'cyan' | 'green' | 'slate' | 'amber' }) {
   const tones = {
     violet: 'border-violet-300/18 bg-violet-400/10 text-violet-100',
     cyan: 'border-cyan-300/18 bg-cyan-400/10 text-cyan-100',
     green: 'border-emerald-300/18 bg-emerald-400/10 text-emerald-100',
-    amber: 'border-amber-300/20 bg-amber-400/10 text-amber-100',
     slate: 'border-slate-300/14 bg-slate-400/10 text-slate-200',
+    amber: 'border-amber-300/18 bg-amber-400/10 text-amber-100',
   };
-  return <span className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-black ${tones[tone]}`}>{children}</span>;
+
+  return (
+    <span className={`inline-flex shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.13em] ${tones[tone]}`}>
+      {children}
+    </span>
+  );
 }
 
-function SectionTitle({ eyebrow, title, description }: { eyebrow: string; title: string; description: string }) {
+function ContextRow({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <p className="text-[11px] font-black uppercase tracking-[0.22em] text-cyan-200/70">{eyebrow}</p>
-      <h2 className="mt-2 text-[24px] font-black tracking-[-0.035em] text-white sm:text-[28px]">{title}</h2>
-      <p className="mt-2 max-w-2xl text-[14px] leading-6 text-slate-400">{description}</p>
+    <div className="flex items-center justify-between gap-3 rounded-[12px] border border-white/[0.065] bg-white/[0.035] px-3 py-2.5">
+      <span className="text-[12px] font-semibold text-slate-500">{label}</span>
+      <span className="max-w-[210px] truncate text-right text-[12.5px] font-black text-white">{value}</span>
     </div>
   );
+}
+
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return <span className="text-[13px] font-black text-white">{children}</span>;
 }
 
 function scrollToForm() {
@@ -76,36 +162,46 @@ function scrollToForm() {
 }
 
 export default function SupportPageClient({ context }: SupportPageClientProps) {
-  const [type, setType] = useState<SupportType>('account');
+  const [type, setType] = useState<SupportType>('analysis_bug');
   const [priority, setPriority] = useState<SupportPriority>('standard');
-  const [subject, setSubject] = useState('');
+  const [subject, setSubject] = useState('Analyse bloquée ou résultat vide');
   const [message, setMessage] = useState('');
-  const [feedbackSignal, setFeedbackSignal] = useState<string>('Analyse plus précise');
-  const [status, setStatus] = useState<{ tone: 'success' | 'error' | 'info'; text: string; mailto?: string } | null>(null);
+  const [issueReference, setIssueReference] = useState('');
+  const [status, setStatus] = useState<{ tone: 'success' | 'error'; text: string; mailto?: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [requestDateLabel, setRequestDateLabel] = useState('Ajoutée à l’envoi');
+  const [routeLabel, setRouteLabel] = useState('/dashboard/support');
 
   const selectedType = useMemo(() => typeOptions.find((item) => item.id === type) ?? typeOptions[0], [type]);
+  const tiktokLabel = context.tiktokConnected
+    ? context.tiktokDisplayName ? `Connecté · ${context.tiktokDisplayName}` : 'Connecté'
+    : 'Non connecté';
+  const latestAnalysis = context.hasLatestAnalysis ? `${context.latestAnalysisTitle} · ${context.latestAnalysisDate}` : 'Aucune analyse';
 
   useEffect(() => {
-    setRequestDateLabel(new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date()));
+    if (typeof window !== 'undefined') {
+      setRouteLabel(window.location.pathname || '/dashboard/support');
+    }
   }, []);
 
-  function applyQuickType(nextType: SupportType) {
+  function selectType(nextType: SupportType) {
+    const option = typeOptions.find((item) => item.id === nextType);
     setType(nextType);
-    if (!subject.trim()) {
-      const label = typeOptions.find((item) => item.id === nextType)?.title ?? 'Support';
-      setSubject(label);
+    if (!subject.trim() || typeOptions.some((item) => item.subject === subject)) {
+      setSubject(option?.subject ?? '');
     }
-    scrollToForm();
+    setStatus(null);
   }
 
   async function submitRequest(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setStatus(null);
 
-    if (!subject.trim() || !message.trim()) {
-      setStatus({ tone: 'error', text: 'Ajoute un sujet et un message avant d’envoyer.' });
+    const cleanSubject = subject.trim();
+    const cleanMessage = message.trim();
+    const cleanReference = issueReference.trim();
+
+    if (!cleanSubject || !cleanMessage) {
+      setStatus({ tone: 'error', text: 'Choisis un sujet, ajoute un titre et décris ce qui bloque.' });
       return;
     }
 
@@ -122,9 +218,10 @@ export default function SupportPageClient({ context }: SupportPageClientProps) {
         body: JSON.stringify({
           type,
           priority,
-          subject,
-          message,
-          feedbackSignal,
+          subject: cleanSubject,
+          message: cleanMessage,
+          issueReference: cleanReference,
+          feedbackSignal: selectedType.title,
           browserContext,
           currentRoute,
         }),
@@ -140,9 +237,10 @@ export default function SupportPageClient({ context }: SupportPageClientProps) {
         return;
       }
 
-      setStatus({ tone: 'success', text: 'Demande envoyée. L’équipe Viralynz répondra avec le contexte de ton compte.' });
-      setSubject('');
+      setStatus({ tone: 'success', text: 'Demande envoyée. On revient vers toi dès que possible.' });
+      setSubject(selectedType.subject);
       setMessage('');
+      setIssueReference('');
       setPriority('standard');
     } catch {
       setStatus({ tone: 'error', text: 'Erreur réseau. Réessaie dans un instant.' });
@@ -152,236 +250,206 @@ export default function SupportPageClient({ context }: SupportPageClientProps) {
   }
 
   return (
-    <section className="mx-auto w-full max-w-[1500px] pb-12 pt-4 text-white">
-      <div className="relative overflow-hidden rounded-[22px] border border-white/[0.075] bg-[linear-gradient(135deg,rgba(15,23,42,0.92),rgba(5,10,24,0.98)_56%,rgba(20,11,42,0.96))] p-5 shadow-[0_34px_110px_-72px_rgba(124,58,237,0.95),inset_0_1px_0_rgba(255,255,255,0.07)] sm:p-7">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_16%,rgba(34,211,238,0.16),transparent_35%),radial-gradient(circle_at_10%_0%,rgba(168,85,247,0.22),transparent_34%)]" />
-        <div className="relative grid gap-7 lg:grid-cols-[minmax(0,1fr)_400px]">
+    <section className="mx-auto w-full max-w-[1460px] pb-10 pt-4 text-white">
+      <section className="relative overflow-hidden rounded-[26px] border border-white/[0.075] bg-[linear-gradient(135deg,rgba(12,19,38,0.97),rgba(4,8,19,0.99)_56%,rgba(28,13,54,0.96))] p-5 shadow-[0_38px_124px_-82px_rgba(124,58,237,0.98),inset_0_1px_0_rgba(255,255,255,0.07)] sm:p-6 lg:p-7">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_84%_12%,rgba(34,211,238,0.14),transparent_32%),radial-gradient(circle_at_9%_4%,rgba(168,85,247,0.2),transparent_34%)]" />
+        <div className="pointer-events-none absolute inset-0 opacity-[0.13] [background-image:linear-gradient(rgba(255,255,255,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)] [background-size:42px_42px]" />
+
+        <div className="relative grid gap-7 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-center">
           <div>
-            <span className="inline-flex rounded-full border border-cyan-200/18 bg-cyan-300/10 px-3 py-1 text-[11px] font-black uppercase tracking-[0.22em] text-cyan-100">
-              ASSISTANCE
-            </span>
-            <h1 className="mt-5 text-[36px] font-black tracking-[-0.055em] text-white sm:text-[50px]">Support</h1>
-            <p className="mt-3 max-w-2xl text-[15px] leading-7 text-slate-300">
-              Contacte l’équipe Viralynz, signale un bug ou envoie une idée produit.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-2">
-              <Badge>Compte {context.planLabel}</Badge>
-              <Badge tone={context.tiktokConnected ? 'green' : 'slate'}>{context.tiktokConnected ? 'TikTok connecté' : 'TikTok non connecté'}</Badge>
-              <Badge tone="cyan">Réponse sous 24–48h</Badge>
+            <div className="flex flex-wrap gap-2">
+              <Badge tone="cyan">Support Center</Badge>
+              <Badge tone="slate">Réponse 24-48h</Badge>
+              <Badge tone="green">Contexte compte attaché</Badge>
+              <Badge tone="slate">Aucun token secret envoyé</Badge>
+              <Badge tone={context.tiktokConnected ? 'green' : 'amber'}>{context.tiktokConnected ? 'TikTok connecté' : 'TikTok non connecté'}</Badge>
+              <Badge tone="violet">Plan {context.planLabel}</Badge>
             </div>
+            <h1 className="mt-5 max-w-4xl text-[36px] font-black leading-[0.95] tracking-[-0.06em] text-white sm:text-[52px] lg:text-[64px]">
+              Un blocage ? Viralynz joint déjà le contexte.
+            </h1>
+            <p className="mt-5 max-w-3xl text-[15px] leading-7 text-slate-300 sm:text-[17px]">
+              Décris le problème. Ton plan, ton quota, ton état TikTok et la route actuelle sont ajoutés automatiquement pour accélérer la réponse.
+            </p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-              <button type="button" onClick={scrollToForm} className="min-h-[46px] rounded-[10px] bg-[linear-gradient(135deg,#e879f9,#8b5cf6_55%,#2563eb)] px-5 text-[14px] font-black text-white shadow-[0_18px_42px_-22px_rgba(139,92,246,0.95)] transition hover:brightness-110">
+              <button type="button" onClick={scrollToForm} className="min-h-[46px] rounded-[12px] bg-[linear-gradient(135deg,#e879f9,#8b5cf6_55%,#2563eb)] px-5 text-[14px] font-black text-white shadow-[0_22px_52px_-26px_rgba(139,92,246,1)] transition hover:-translate-y-0.5 hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-violet-300/40">
                 Ouvrir une demande
               </button>
-              <button type="button" onClick={() => applyQuickType('analysis_bug')} className="min-h-[46px] rounded-[10px] border border-white/[0.09] bg-white/[0.045] px-5 text-[14px] font-black text-slate-100 transition hover:bg-white/[0.075]">
-                Signaler un bug
+              <button type="button" onClick={() => { selectType('analysis_bug'); scrollToForm(); }} className="min-h-[46px] rounded-[12px] border border-white/[0.10] bg-white/[0.045] px-5 text-[14px] font-black text-slate-100 transition hover:border-cyan-200/20 hover:bg-white/[0.075]">
+                Diagnostiquer mon problème
               </button>
             </div>
           </div>
-          <div className="rounded-[18px] border border-white/[0.09] bg-white/[0.045] p-5">
-            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Comment peut-on t’aider ?</p>
-            <h2 className="mt-3 text-[25px] font-black tracking-[-0.04em] text-white">Choisis le sujet, décris le problème.</h2>
-            <p className="mt-3 text-[14px] leading-6 text-slate-400">
-              Viralynz ajoute automatiquement le contexte de ton compte: plan, quota, état TikTok et route dashboard.
-            </p>
-            <div className="mt-5 grid gap-2">
-              <div className="rounded-[12px] border border-white/[0.065] bg-black/15 px-3 py-2.5 text-[13px] text-slate-300">
-                Billing et accès traités avec priorité.
-              </div>
-              <div className="rounded-[12px] border border-white/[0.065] bg-black/15 px-3 py-2.5 text-[13px] text-slate-300">
-                Le support voit l’état TikTok, jamais les tokens.
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <section className="mt-8">
-        <SectionTitle
-          eyebrow="Raccourcis"
-          title="Choisis ton raccourci"
-          description="Préremplis la demande ou ouvre directement la section utile."
-        />
-        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-          {quickCards.map((card) => (
-            <article key={card.title} className="rounded-[16px] border border-white/[0.075] bg-[linear-gradient(180deg,rgba(10,18,34,0.88),rgba(5,9,20,0.98))] p-4 transition hover:border-violet-300/20 hover:bg-white/[0.055]">
-              <h3 className="text-[15px] font-black text-white">{card.title}</h3>
-              <p className="mt-2 min-h-[54px] text-[12.5px] leading-5 text-slate-400">{card.body}</p>
-              {card.href ? (
-                <Link href={card.href} className="mt-4 inline-flex text-[12px] font-black text-cyan-100 transition hover:text-white">{card.cta}</Link>
-              ) : (
-                <button type="button" onClick={() => applyQuickType(card.type)} className="mt-4 text-left text-[12px] font-black text-cyan-100 transition hover:text-white">{card.cta}</button>
-              )}
-            </article>
-          ))}
+          <aside className="rounded-[20px] border border-white/[0.09] bg-white/[0.045] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.065),0_30px_88px_-66px_rgba(34,211,238,0.8)]">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Contexte joint automatiquement</p>
+                <p className="mt-1 text-[12px] font-semibold text-slate-400">Capsule intelligente de support</p>
+              </div>
+              <Badge tone="green">Auto-joint</Badge>
+            </div>
+            <div className="mt-4 grid gap-2.5">
+              <ContextRow label="Email" value={context.email} />
+              <ContextRow label="Plan" value={context.planLabel} />
+              <ContextRow label="TikTok" value={tiktokLabel} />
+              <ContextRow label="Analyses" value={formatQuota(context.quotaUsed, context.quotaLimit)} />
+              <ContextRow label="Route" value={routeLabel} />
+            </div>
+          </aside>
         </div>
       </section>
 
-      <div className="mt-8 grid gap-5 xl:grid-cols-[minmax(0,1fr)_410px]">
-        <main className="space-y-6">
-          <section id="support-request-form" className="rounded-[20px] border border-white/[0.075] bg-[linear-gradient(180deg,rgba(10,18,34,0.92),rgba(5,9,20,0.98))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_28px_96px_-72px_rgba(124,58,237,0.72)] sm:p-5">
-            <SectionTitle
-              eyebrow="Nouvelle demande"
-              title="Décris ce qui bloque"
-              description="Explique le contexte. Plus le signal est précis, plus la réponse peut être utile."
-            />
-            <form onSubmit={submitRequest} className="mt-5 space-y-5">
-              <div>
-                <p className="text-[13px] font-black text-white">Type de demande</p>
-                <div className="mt-3 grid gap-3 md:grid-cols-2">
-                  {typeOptions.map((option) => (
-                    <button
-                      key={option.id}
-                      type="button"
-                      onClick={() => setType(option.id)}
-                      className={`rounded-[14px] border px-4 py-3 text-left transition ${
-                        type === option.id
-                          ? 'border-violet-300/35 bg-violet-400/12 shadow-[0_0_34px_-20px_rgba(168,85,247,0.95)]'
-                          : 'border-white/[0.065] bg-white/[0.035] hover:bg-white/[0.055]'
-                      }`}
-                    >
-                      <span className="block text-[14px] font-black text-white">{option.title}</span>
-                      <span className="mt-1 block text-[12px] leading-5 text-slate-400">{option.description}</span>
-                    </button>
-                  ))}
+      <section className="mt-5 rounded-[22px] border border-white/[0.075] bg-[linear-gradient(180deg,rgba(10,18,34,0.9),rgba(5,9,20,0.985))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.045)] sm:p-5">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-200/70">Résoudre vite</p>
+            <h2 className="mt-2 text-[26px] font-black tracking-[-0.045em] text-white">Choisis le signal le plus proche.</h2>
+          </div>
+          <p className="max-w-xl text-[13px] leading-6 text-slate-400">Viralynz prépare la demande avec les bons détails.</p>
+        </div>
+
+        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {typeOptions.map((option) => {
+            const active = type === option.id;
+            return (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => selectType(option.id)}
+                className={`group relative overflow-hidden rounded-[17px] border p-4 text-left transition duration-200 hover:-translate-y-0.5 ${
+                  active
+                    ? 'border-violet-300/35 bg-violet-400/[0.10] shadow-[0_28px_82px_-60px_rgba(168,85,247,1),inset_0_1px_0_rgba(255,255,255,0.08)]'
+                    : 'border-white/[0.065] bg-white/[0.032] hover:border-cyan-200/16 hover:bg-white/[0.052]'
+                }`}
+              >
+                <div className="pointer-events-none absolute inset-0 opacity-0 transition group-hover:opacity-100 bg-[radial-gradient(circle_at_18%_0%,rgba(34,211,238,0.12),transparent_38%)]" />
+                <div className="relative flex items-start gap-3">
+                  <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-[12px] border ${active ? 'border-violet-200/25 bg-violet-300/[0.12] text-violet-100' : 'border-white/[0.08] bg-white/[0.045] text-cyan-100'}`}>
+                    <Icon name={option.icon} className="h-[18px] w-[18px]" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2">
+                      <span className="text-[15px] font-black text-white">{option.title}</span>
+                      {option.badge ? <span className="rounded-full border border-amber-300/18 bg-amber-300/[0.08] px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-amber-100">{option.badge}</span> : null}
+                    </span>
+                    <span className="mt-2 block text-[12.5px] leading-5 text-slate-400">{option.description}</span>
+                  </span>
                 </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-[220px_minmax(0,1fr)]">
-                <label className="block">
-                  <span className="text-[13px] font-black text-white">Priorité</span>
-                  <select value={priority} onChange={(event) => setPriority(event.target.value as SupportPriority)} className="mt-2 h-12 w-full rounded-[12px] border border-white/[0.08] bg-[#070d1c] px-3 text-[13px] font-bold text-slate-100 outline-none focus:border-violet-300/35">
-                    <option value="standard">Standard</option>
-                    <option value="important">Important</option>
-                    <option value="blocking">Bloquant</option>
-                  </select>
-                </label>
-                <label className="block">
-                  <span className="text-[13px] font-black text-white">Sujet</span>
-                  <input value={subject} onChange={(event) => setSubject(event.target.value)} maxLength={140} placeholder={selectedType.title} className="mt-2 h-12 w-full rounded-[12px] border border-white/[0.08] bg-[#070d1c] px-3 text-[13px] font-semibold text-white outline-none placeholder:text-slate-600 focus:border-violet-300/35" />
-                </label>
-              </div>
-
-              <label className="block">
-                <span className="text-[13px] font-black text-white">Message</span>
-                <textarea value={message} onChange={(event) => setMessage(event.target.value)} maxLength={4000} rows={8} placeholder="Explique ce qui se passe, ce que tu attendais et ce que tu as essayé." className="mt-2 w-full resize-y rounded-[14px] border border-white/[0.08] bg-[#070d1c] px-3 py-3 text-[13px] font-medium leading-6 text-white outline-none placeholder:text-slate-600 focus:border-violet-300/35" />
-                <span className="mt-2 block text-[12px] text-slate-500">{message.length} / 4000 caractères</span>
-              </label>
-
-              <div className="rounded-[16px] border border-cyan-200/[0.10] bg-cyan-300/[0.045] p-4">
-                <p className="text-[13px] font-black text-white">Contexte automatique</p>
-                <div className="mt-3 grid gap-2 text-[12.5px] text-slate-300 sm:grid-cols-2">
-                  <span>Email: {context.email}</span>
-                  <span>Plan: {context.planLabel}</span>
-                  <span>TikTok: {context.tiktokConnected ? 'connecté' : 'non connecté'}</span>
-                  <span>Route: /dashboard/support</span>
-                  <span>Date: {requestDateLabel}</span>
-                  <span>Navigateur: ajouté à l’envoi</span>
-                </div>
-              </div>
-
-              {status ? (
-                <div className={`rounded-[14px] border px-4 py-3 text-[13px] font-semibold ${
-                  status.tone === 'success'
-                    ? 'border-emerald-300/18 bg-emerald-400/10 text-emerald-50'
-                    : status.tone === 'error'
-                      ? 'border-rose-300/18 bg-rose-400/10 text-rose-50'
-                      : 'border-cyan-300/18 bg-cyan-400/10 text-cyan-50'
-                }`}>
-                  {status.text}
-                  {status.mailto ? <a href={status.mailto} className="ml-2 underline underline-offset-4">Ouvrir l’email</a> : null}
-                </div>
-              ) : null}
-
-              <button type="submit" disabled={submitting} className="min-h-[48px] w-full rounded-[12px] bg-[linear-gradient(135deg,#e879f9,#8b5cf6_55%,#2563eb)] px-5 text-[14px] font-black text-white shadow-[0_18px_42px_-22px_rgba(139,92,246,0.95)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto">
-                {submitting ? 'Envoi...' : 'Envoyer la demande'}
               </button>
-            </form>
-          </section>
+            );
+          })}
+        </div>
+      </section>
 
-          <section className="rounded-[20px] border border-white/[0.075] bg-[linear-gradient(180deg,rgba(10,18,34,0.88),rgba(5,9,20,0.98))] p-4 sm:p-5">
-            <SectionTitle
-              eyebrow="Ressources"
-              title="Ressources utiles"
-              description="Les guides complets arrivent progressivement. Pour l’instant, chaque sujet peut ouvrir une demande contextualisée."
-            />
-            <div className="mt-5 grid gap-3 md:grid-cols-2">
-              {resources.map((resource) => (
-                <article key={resource.title} className="rounded-[15px] border border-white/[0.065] bg-white/[0.035] p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <h3 className="text-[15px] font-black text-white">{resource.title}</h3>
-                    <Badge tone={resource.status === 'Bientôt' ? 'amber' : 'cyan'}>{resource.status}</Badge>
-                  </div>
-                  <p className="mt-2 text-[13px] leading-6 text-slate-400">{resource.body}</p>
-                </article>
-              ))}
+      <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_390px]">
+        <main id="support-request-form" className="rounded-[22px] border border-white/[0.075] bg-[linear-gradient(180deg,rgba(10,18,34,0.94),rgba(5,9,20,0.99))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_28px_96px_-74px_rgba(124,58,237,0.72)] sm:p-5 lg:p-6">
+          <div>
+            <Badge tone="cyan">Smart Request</Badge>
+            <h2 className="mt-3 text-[30px] font-black tracking-[-0.05em] text-white">Demande intelligente</h2>
+            <p className="mt-2 max-w-2xl text-[13.5px] leading-6 text-slate-400">Plus le signal est précis, plus la réponse est utile.</p>
+          </div>
+
+          <div className="mt-5 rounded-[16px] border border-cyan-300/12 bg-cyan-300/[0.055] px-4 py-3 text-[13px] font-semibold leading-6 text-cyan-50/88">
+            {selectedType.helper}
+          </div>
+
+          <form onSubmit={submitRequest} className="mt-5 space-y-4">
+            <div className="grid gap-3 md:grid-cols-[190px_minmax(0,1fr)]">
+              <label className="block">
+                <FieldLabel>Priorité</FieldLabel>
+                <select value={priority} onChange={(event) => setPriority(event.target.value as SupportPriority)} className="mt-2 h-12 w-full rounded-[13px] border border-white/[0.08] bg-[#070d1c] px-3 text-[13px] font-bold text-slate-100 outline-none transition focus:border-violet-300/40 focus:ring-2 focus:ring-violet-300/10">
+                  <option value="standard">Standard</option>
+                  <option value="important">Important</option>
+                  <option value="blocking">Bloquant</option>
+                </select>
+              </label>
+              <label className="block">
+                <FieldLabel>Sujet</FieldLabel>
+                <input value={subject} onChange={(event) => setSubject(event.target.value)} maxLength={140} placeholder={selectedType.subject} className="mt-2 h-12 w-full rounded-[13px] border border-white/[0.08] bg-[#070d1c] px-3 text-[13px] font-semibold text-white outline-none transition placeholder:text-slate-600 focus:border-violet-300/40 focus:ring-2 focus:ring-violet-300/10" />
+              </label>
             </div>
-          </section>
+
+            <label className="block">
+              <FieldLabel>Lien vidéo / ID analyse / référence</FieldLabel>
+              <input value={issueReference} onChange={(event) => setIssueReference(event.target.value)} maxLength={500} placeholder="Optionnel : URL TikTok, /analyses/..., ID, détail utile" className="mt-2 h-12 w-full rounded-[13px] border border-white/[0.08] bg-[#070d1c] px-3 text-[13px] font-semibold text-white outline-none transition placeholder:text-slate-600 focus:border-violet-300/40 focus:ring-2 focus:ring-violet-300/10" />
+            </label>
+
+            <label className="block">
+              <FieldLabel>Message</FieldLabel>
+              <textarea value={message} onChange={(event) => setMessage(event.target.value)} maxLength={4000} rows={8} placeholder="Décris ce qui se passe, ce que tu attendais et ce que tu as essayé." className="mt-2 w-full resize-y rounded-[15px] border border-white/[0.08] bg-[#070d1c] px-3 py-3 text-[13px] font-medium leading-6 text-white outline-none transition placeholder:text-slate-600 focus:border-violet-300/40 focus:ring-2 focus:ring-violet-300/10" />
+              <span className="mt-2 block text-right text-[12px] text-slate-500">{message.length} / 4000 caractères</span>
+            </label>
+
+            {status ? (
+              <div className={`rounded-[15px] border px-4 py-3 text-[13px] font-semibold ${
+                status.tone === 'success'
+                  ? 'border-emerald-300/18 bg-emerald-400/10 text-emerald-50'
+                  : 'border-rose-300/18 bg-rose-400/10 text-rose-50'
+              }`}>
+                {status.text}
+                {status.mailto ? <a href={status.mailto} className="ml-2 underline underline-offset-4">Ouvrir l’email</a> : null}
+              </div>
+            ) : null}
+
+            <button type="submit" disabled={submitting} className="min-h-[50px] w-full rounded-[13px] bg-[linear-gradient(135deg,#e879f9,#8b5cf6_55%,#2563eb)] px-5 text-[14px] font-black text-white shadow-[0_22px_54px_-24px_rgba(139,92,246,1)] transition hover:-translate-y-0.5 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60">
+              {submitting ? 'Envoi en cours...' : 'Envoyer la demande'}
+            </button>
+            <p className="text-center text-[12px] font-semibold text-slate-500">Le contexte compte est joint automatiquement. Aucun token ni secret n’est envoyé.</p>
+          </form>
         </main>
 
-        <aside className="space-y-5">
-          <section className="rounded-[20px] border border-white/[0.075] bg-[linear-gradient(180deg,rgba(10,18,34,0.92),rgba(5,9,20,0.98))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.045)]">
-            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-cyan-200/70">Compte</p>
-            <h2 className="mt-2 text-[22px] font-black tracking-[-0.035em] text-white">Contexte de ton compte</h2>
-            <p className="mt-2 text-[13px] leading-6 text-slate-400">Ce contexte accompagne ta demande. Aucun token ni secret n’est exposé.</p>
-            <div className="mt-5 grid gap-3">
-              <div className="rounded-[13px] border border-white/[0.065] bg-white/[0.035] p-3">
-                <p className="text-[11px] uppercase tracking-[0.14em] text-slate-500">Email</p>
-                <p className="mt-1 truncate text-[14px] font-black text-white">{context.email}</p>
+        <aside className="space-y-5 xl:sticky xl:top-[104px] xl:self-start">
+          <section className="rounded-[22px] border border-white/[0.075] bg-[linear-gradient(180deg,rgba(10,18,34,0.94),rgba(5,9,20,0.99))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.045)] sm:p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-200/70">Contexte attaché</p>
+                <h2 className="mt-2 text-[22px] font-black tracking-[-0.04em] text-white">Ces infos accompagnent ta demande.</h2>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-[13px] border border-white/[0.065] bg-white/[0.035] p-3">
-                  <p className="text-[11px] uppercase tracking-[0.14em] text-slate-500">Plan</p>
-                  <p className="mt-1 text-[14px] font-black text-white">{context.planLabel}</p>
-                </div>
-                <div className="rounded-[13px] border border-white/[0.065] bg-white/[0.035] p-3">
-                  <p className="text-[11px] uppercase tracking-[0.14em] text-slate-500">Analyses</p>
-                  <p className="mt-1 text-[14px] font-black text-white">{formatQuota(context.quotaUsed, context.quotaLimit)}</p>
-                </div>
-              </div>
-              <div className="rounded-[13px] border border-white/[0.065] bg-white/[0.035] p-3">
-                <p className="text-[11px] uppercase tracking-[0.14em] text-slate-500">TikTok</p>
-                <p className="mt-1 text-[14px] font-black text-white">{context.tiktokConnected ? (context.tiktokDisplayName || 'Compte relié') : 'Non connecté'}</p>
-                <p className="mt-1 text-[12px] text-slate-500">{context.tiktokConnected ? `${context.tiktokModeLabel} · ${context.tiktokScopes.length ? context.tiktokScopes.join(', ') : 'profil basique'}` : 'Aucune permission TikTok active'}</p>
-              </div>
-              <div className="rounded-[13px] border border-white/[0.065] bg-white/[0.035] p-3">
-                <p className="text-[11px] uppercase tracking-[0.14em] text-slate-500">Billing</p>
-                <p className="mt-1 text-[14px] font-black text-white">{context.billingStatus || 'Non disponible'}</p>
+              <Badge tone="green">Auto-joint</Badge>
+            </div>
+            <div className="mt-4 grid gap-2.5">
+              <ContextRow label="Email" value={context.email} />
+              <ContextRow label="Plan" value={context.planLabel} />
+              <ContextRow label="TikTok" value={tiktokLabel} />
+              <ContextRow label="Analyses utilisées" value={formatQuota(context.quotaUsed, context.quotaLimit)} />
+              <ContextRow label="Route actuelle" value={routeLabel} />
+              <ContextRow label="Stripe" value={billingLabel(context.billingStatus)} />
+              <ContextRow label="Dernière analyse" value={latestAnalysis} />
+            </div>
+            <div className="mt-4 rounded-[14px] border border-white/[0.065] bg-black/18 px-3 py-3">
+              <div className="flex gap-2 text-[12px] leading-5 text-slate-400">
+                <Icon name="shield" className="mt-0.5 h-4 w-4 shrink-0 text-cyan-100" />
+                <span>Aucun token, secret ou moyen de paiement n’est envoyé.</span>
               </div>
             </div>
           </section>
 
-          <section className="rounded-[20px] border border-white/[0.075] bg-[linear-gradient(160deg,rgba(8,47,73,0.30),rgba(8,13,28,0.98))] p-5">
-            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-cyan-200/70">Feedback produit</p>
-            <h2 className="mt-2 text-[22px] font-black tracking-[-0.035em] text-white">Aide-nous à améliorer Viralynz</h2>
-            <p className="mt-2 text-[13px] leading-6 text-slate-400">Choisis le signal principal; il sera ajouté à ta demande.</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {feedbackSignals.map((signal) => (
-                <button
-                  key={signal}
-                  type="button"
-                  onClick={() => {
-                    setFeedbackSignal(signal);
-                    setType('product_feedback');
-                  }}
-                  className={`rounded-full border px-3 py-2 text-[12px] font-black transition ${
-                    feedbackSignal === signal
-                      ? 'border-cyan-200/35 bg-cyan-300/14 text-cyan-50'
-                      : 'border-white/[0.08] bg-white/[0.04] text-slate-300 hover:bg-white/[0.07]'
-                  }`}
-                >
-                  {signal}
-                </button>
+          <section className="rounded-[22px] border border-white/[0.075] bg-[linear-gradient(180deg,rgba(10,18,34,0.88),rgba(5,9,20,0.99))] p-4 sm:p-5">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-200/70">Besoin rapide ?</p>
+            <div className="mt-4 grid gap-2.5">
+              {quickResources.map((resource) => (
+                <Link key={resource.title} href={resource.href} className="group rounded-[14px] border border-white/[0.065] bg-white/[0.035] px-3 py-3 transition hover:border-cyan-200/20 hover:bg-white/[0.06]">
+                  <span className="flex items-center justify-between gap-3">
+                    <span className="text-[13px] font-black text-white">{resource.title}</span>
+                    <Icon name="arrow" className="h-4 w-4 text-slate-600 transition group-hover:translate-x-0.5 group-hover:text-cyan-100" />
+                  </span>
+                  <span className="mt-1 block text-[12px] leading-5 text-slate-500">{resource.body}</span>
+                </Link>
               ))}
             </div>
           </section>
 
-          <section className="rounded-[20px] border border-white/[0.075] bg-[linear-gradient(180deg,rgba(10,18,34,0.88),rgba(5,9,20,0.98))] p-5">
-            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-violet-200/70">Délais</p>
-            <h2 className="mt-2 text-[22px] font-black tracking-[-0.035em] text-white">Réponse 24–48h</h2>
-            <p className="mt-2 text-[13px] leading-6 text-slate-400">
-              Les demandes billing, accès bloqué et bugs d’analyse sont priorisées. Les idées produit nourrissent la roadmap Viralynz.
-            </p>
+          <section className="rounded-[18px] border border-white/[0.065] bg-white/[0.032] p-4">
+            <div className="flex items-start gap-3">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[11px] border border-white/[0.08] bg-white/[0.045] text-cyan-100">
+                <Icon name="clock" />
+              </span>
+              <div>
+                <p className="text-[13px] font-black text-white">Historique support bientôt disponible</p>
+                <p className="mt-1 text-[12px] leading-5 text-slate-500">Les demandes envoyées seront regroupées ici quand le suivi ticket sera branché.</p>
+              </div>
+            </div>
           </section>
         </aside>
       </div>
