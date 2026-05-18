@@ -9,6 +9,7 @@ export interface HookGenerationInput {
   format?: VideoFormat;
   objective?: HookObjective;
   niche?: string;
+  hookMode?: 'text' | 'spoken';
   mode?: 'facecam_text' | 'text_only' | 'opening_3s' | 'repost_angle' | 'comment_bait' | 'watchtime';
   intensity?: number;
 }
@@ -204,10 +205,12 @@ function cameraForFormat(format: VideoFormat) {
 function makePackFromHook(hook: GeneratedHook, input: HookGenerationInput, index: number, source: HookPack['source']): HookPack {
   const format = normalizeFormat(input.format);
   const topic = compactTopic(input.context);
-  const noSpeech = format === 'sans_parole' || input.mode === 'text_only';
+  const noSpeech = input.hookMode === 'text' || format === 'sans_parole' || input.mode === 'text_only';
   const objective = objectiveFromStyle(hook.style, input.objective);
   const base = hook.score;
-  const screenText = hook.hook.length <= 44 ? hook.hook : hook.hook.slice(0, 44).trim();
+  const screenText = input.hookMode === 'spoken'
+    ? (hook.hook.length <= 36 ? hook.hook : hook.hook.slice(0, 36).trim())
+    : (hook.hook.length <= 44 ? hook.hook : hook.hook.slice(0, 44).trim());
   const spokenHook = noSpeech ? '' : hook.hook.charAt(0) + hook.hook.slice(1).toLowerCase();
   const titlePrefix = videoFormatLabels[format];
 
@@ -358,7 +361,7 @@ export function normalizeHookPacks(rawPacks: unknown, input: HookGenerationInput
         ...seed,
         id: typeof raw.id === 'string' && raw.id ? raw.id : `pack-ai-${Date.now()}-${index}`,
         title: typeof raw.title === 'string' && raw.title ? raw.title : seed.title,
-        spokenHook: normalizeFormat(input.format) === 'sans_parole' ? '' : spokenHook,
+        spokenHook: input.hookMode === 'text' || normalizeFormat(input.format) === 'sans_parole' ? '' : spokenHook,
         onScreenText,
         firstFrame,
         visualAction,

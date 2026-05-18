@@ -62,6 +62,10 @@ function normalizeMode(value: unknown): HookGenerationInput['mode'] {
     : 'opening_3s';
 }
 
+function normalizeHookMode(value: unknown): NonNullable<HookGenerationInput['hookMode']> {
+  return value === 'spoken' ? 'spoken' : 'text';
+}
+
 async function generateHookPacksWithAI(params: {
   context: string;
   scene: string;
@@ -71,11 +75,12 @@ async function generateHookPacksWithAI(params: {
   format: VideoFormat;
   objective: HookObjective;
   niche?: string;
+  hookMode?: HookGenerationInput['hookMode'];
   mode?: HookGenerationInput['mode'];
   intensity?: number;
   creatorMemoryContext?: string;
 }): Promise<HookPack[]> {
-  const { context, scene, person, tone, count, format, objective, niche, mode, intensity, creatorMemoryContext } = params;
+  const { context, scene, person, tone, count, format, objective, niche, hookMode, mode, intensity, creatorMemoryContext } = params;
 
   const prompt = `Tu es un créateur TikTok senior et un directeur créatif short-form.
 Génère ${count} HookPacks complets. Un HookPack n'est pas une phrase : c'est l'ouverture complète 0-3 secondes.
@@ -131,11 +136,15 @@ Structure JSON attendue :
     `Genere ${count} HookPacks TikTok 0-3s en JSON strict.`,
     `Contexte=${context.slice(0, 360)}`,
     `Format=${format} | niche=${niche || 'non precisee'} | objectif=${objective} | mode=${mode || 'opening_3s'} | intensite=${intensity ?? 7}/10`,
+    `HookMode=${hookMode || 'text'} (${hookMode === 'spoken' ? 'phrase orale naturelle facecam/voix off' : 'texte ecran court lisible en 1 seconde'})`,
     scene ? `Scene=${scene.slice(0, 140)}` : '',
     person ? `Personnage=${person.slice(0, 100)}` : '',
     `Ton=${tone.slice(0, 80)}`,
     creatorMemoryContext ? `\n${creatorMemoryContext}` : '',
     'Regles: court, humain, TikTok natif, pas corporate, pas de promesse impossible, pas de "decouvrez comment".',
+    hookMode === 'spoken'
+      ? 'Mode parle: spokenHook obligatoire, naturel a dire, avec ton, pause et texte ecran complementaire.'
+      : 'Mode textuel: onScreenText prioritaire, 8-12 mots max si possible, punch immediat, spokenHook optionnel.',
     creatorMemoryContext ? 'Utilise la memoire createur pour eviter les hooks generiques et renforcer les patterns deja observes.' : '',
     'Chaque item: title,style,format,objective,spokenHook,onScreenText,firstFrame,visualAction,cameraDirection,cutTiming,deliveryTone,soundCue,scriptOpening[4],whyItWorks,bestFor,risk,scores{overall,scrollStop,curiosity,emotion,clarity,comments,watchtime},aggression,difficulty.',
   ].filter(Boolean).join('\n');
@@ -212,8 +221,10 @@ export async function POST(request: NextRequest) {
     let format: VideoFormat = 'facecam';
     let objective: HookObjective = 'views';
     let niche = '';
+    let hookMode: NonNullable<HookGenerationInput['hookMode']> = 'text';
     let mode: HookGenerationInput['mode'] = 'opening_3s';
     let intensity = 7;
+    let useMemory = true;
 
     try {
       const body = await request.json();
@@ -222,6 +233,8 @@ export async function POST(request: NextRequest) {
       person = typeof body.person === 'string' ? body.person.trim() : '';
       tone = typeof body.tone === 'string' ? body.tone.trim() : 'direct';
       niche = typeof body.niche === 'string' ? body.niche.trim() : '';
+      hookMode = normalizeHookMode(body.hookMode);
+      useMemory = body.useMemory !== false;
       mode = normalizeMode(body.mode);
       intensity = typeof body.intensity === 'number' ? Math.min(Math.max(1, body.intensity), 10) : 7;
       format = normalizeFormat(body.format);
@@ -245,13 +258,13 @@ export async function POST(request: NextRequest) {
 
     if (count > remaining) count = remaining;
 
-    const input = { context, scene, person, tone, count, format, objective, niche, mode, intensity };
+    const input = { context, scene, person, tone, count, format, objective, niche, hookMode, mode, intensity };
     const hasOpenAI = !!process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'sk-your-key-here';
 
     let hookPacks: HookPack[] = [];
     if (hasOpenAI) {
       try {
-        hookPacks = await generateHookPacksWithAI({ ...input, creatorMemoryContext });
+        hookPacks = await generateHookPacksWithAI({ ...input, creatorMemoryContext: useMemory ? creatorMemoryContext : '' });
       } catch (err) {
         console.warn('[hooks/generate] OpenAI HookPacks failed, using fallback:', err instanceof Error ? err.message : err);
       }
