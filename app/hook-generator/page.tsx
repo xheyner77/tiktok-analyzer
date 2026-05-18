@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import GuestGate from '@/components/GuestGate';
@@ -118,6 +118,38 @@ const modeCopy = {
   },
 } as const;
 
+const heroBadges = ['Hook textuel', 'Hook parlé', '0-3s', 'Repost V2', 'Mémoire créateur'];
+
+const badHookExamples = [
+  {
+    bad: 'Aujourd’hui je vais vous expliquer comment améliorer vos vidéos.',
+    good: 'Tes vidéos ne flop pas à cause de l’idée. Elles flop à cause de l’ouverture.',
+  },
+  {
+    bad: 'Voici 3 conseils pour faire plus de vues.',
+    good: 'Si tes vues bloquent, c’est probablement à cause de ces 3 secondes.',
+  },
+  {
+    bad: 'Dans cette vidéo on va parler de TikTok.',
+    good: 'Tu perds le viewer avant même d’avoir montré la preuve.',
+  },
+];
+
+const previewDemo = {
+  text: {
+    hook: 'Ton idée n’est pas le problème.',
+    detail: 'Tes 3 premières secondes le sont.',
+    frame: 'Facecam serrée, regard caméra, texte déjà visible.',
+    cut: 'Cut vers la preuve avant 2.5s.',
+  },
+  spoken: {
+    hook: 'Tu crois que ton idée est mauvaise, mais le vrai problème c’est ton ouverture.',
+    detail: 'Ton calme, pause après “mauvaise”.',
+    frame: 'Facecam directe, pas d’intro, preuve prête au cut suivant.',
+    cut: 'Pause courte, puis cut sur exemple concret.',
+  },
+} as const;
+
 const labelClass = 'text-[10px] font-black uppercase tracking-[0.2em] text-slate-500';
 
 function formatLimit(limit: number) {
@@ -225,6 +257,77 @@ function SpokenPreview({ pack }: { pack: HookPack }) {
         <p className="mt-2 text-[15px] font-black text-white">{pack.onScreenText}</p>
       </div>
     </div>
+  );
+}
+
+function LivePreviewPanel({ hookMode, pack }: { hookMode: HookMode; pack: HookPack | null }) {
+  const demo = previewDemo[hookMode];
+
+  if (pack) {
+    return (
+      <section className="rounded-[24px] border border-white/[0.075] bg-[linear-gradient(180deg,rgba(10,18,34,0.94),rgba(5,9,20,0.99))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <Badge tone="cyan">Preview 0-3s</Badge>
+            <p className="mt-2 text-[18px] font-black tracking-[-0.035em] text-white">
+              {hookMode === 'text' ? 'Texte écran exploitable' : 'Ouverture facecam exploitable'}
+            </p>
+          </div>
+          <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[10px] font-black text-slate-300">Live</span>
+        </div>
+        {hookMode === 'text' ? <TextPreview pack={pack} /> : <SpokenPreview pack={pack} />}
+      </section>
+    );
+  }
+
+  return (
+    <section className="rounded-[24px] border border-white/[0.075] bg-[linear-gradient(180deg,rgba(10,18,34,0.94),rgba(5,9,20,0.99))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <Badge tone="cyan">Preview 0-3s</Badge>
+          <p className="mt-2 text-[18px] font-black tracking-[-0.035em] text-white">
+            {hookMode === 'text' ? 'Ce que le viewer lira' : 'Ce que le viewer entendra'}
+          </p>
+        </div>
+        <span className="rounded-full border border-cyan-300/14 bg-cyan-300/[0.08] px-2.5 py-1 text-[10px] font-black text-cyan-100">À remplir</span>
+      </div>
+
+      {hookMode === 'text' ? (
+        <div className="relative mt-4 aspect-[9/16] min-h-[300px] overflow-hidden rounded-[22px] border border-white/[0.08] bg-[radial-gradient(circle_at_50%_8%,rgba(34,211,238,0.16),transparent_34%),linear-gradient(180deg,#111827,#030712)] p-4">
+          <div className="absolute left-4 top-4 rounded-full border border-white/[0.12] bg-black/40 px-2.5 py-1 text-[10px] font-black text-white">0.0s → 3.0s</div>
+          <div className="absolute inset-x-4 top-[32%] rounded-[18px] bg-black/42 p-4 text-center backdrop-blur">
+            <p className="text-[28px] font-black leading-[1.02] tracking-[-0.04em] text-white">{demo.hook}</p>
+            <p className="mt-2 text-[13px] font-bold text-cyan-100">{demo.detail}</p>
+          </div>
+          <div className="absolute bottom-4 left-4 right-4 rounded-[15px] border border-white/[0.08] bg-white/[0.045] p-3">
+            <p className={labelClass}>Première frame</p>
+            <p className="mt-1 text-[12px] leading-5 text-slate-300">{demo.frame}</p>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-4 rounded-[22px] border border-white/[0.08] bg-[radial-gradient(circle_at_30%_0%,rgba(139,92,246,0.18),transparent_38%),linear-gradient(180deg,#111827,#030712)] p-4">
+          <div className="rounded-[18px] border border-cyan-300/14 bg-cyan-300/[0.055] p-4">
+            <p className={labelClass}>Phrase à dire</p>
+            <p className="mt-3 text-[23px] font-black leading-tight tracking-[-0.035em] text-white">“{demo.hook}”</p>
+            <p className="mt-3 text-[13px] font-semibold text-cyan-100">{demo.detail}</p>
+          </div>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-[15px] border border-white/[0.07] bg-white/[0.035] p-3">
+              <p className={labelClass}>Attitude</p>
+              <p className="mt-2 text-[13px] leading-5 text-slate-300">{demo.frame}</p>
+            </div>
+            <div className="rounded-[15px] border border-white/[0.07] bg-white/[0.035] p-3">
+              <p className={labelClass}>Premier cut</p>
+              <p className="mt-2 text-[13px] leading-5 text-slate-300">{demo.cut}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <p className="mt-3 text-[12px] leading-5 text-slate-500">
+        Ton hook apparaîtra ici avec le texte écran, la première frame, le timing et le cut recommandé.
+      </p>
+    </section>
   );
 }
 
@@ -440,41 +543,40 @@ export default function HookGeneratorPage() {
                 <Badge tone="slate">Scroll Stopper Zone</Badge>
                 <Badge tone="violet">0-3s</Badge>
               </div>
-              <h1 className="mt-5 max-w-5xl text-[38px] font-black leading-[0.96] tracking-[-0.065em] text-white sm:text-[58px] lg:text-[72px]">
-                Écris ce que le viewer lit. Ou ce qu’il doit entendre.
+              <h1 className="mt-5 max-w-4xl text-[34px] font-black leading-[0.96] tracking-[-0.065em] text-white sm:text-[50px] lg:text-[60px]">
+                Les 3 premières secondes décident du reste.
               </h1>
               <p className="mt-5 max-w-3xl text-[15px] leading-7 text-slate-300 sm:text-[17px]">
-                Choisis un hook textuel pour l’écran ou un hook parlé pour la facecam. Viralynz adapte l’angle, le ton, le rythme et la promesse.
+                Génère un hook à lire ou à dire, puis obtiens le texte écran, la première frame, le timing et le cut recommandé.
               </p>
-              <div className="mt-7 grid gap-2 sm:grid-cols-5">
-                {['Texte écran', 'Facecam', 'Voix off', 'Carousel', 'Repost V2'].map((item) => (
-                  <div key={item} className="rounded-[15px] border border-white/[0.075] bg-white/[0.04] px-3 py-3">
-                    <p className="text-[11px] font-black text-white">{item}</p>
-                    <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-600">Opening</p>
-                  </div>
+              <div className="mt-7 flex flex-wrap gap-2">
+                {heroBadges.map((item) => (
+                  <span key={item} className="rounded-full border border-white/[0.075] bg-white/[0.04] px-3 py-2 text-[11px] font-black text-slate-200">
+                    {item}
+                  </span>
                 ))}
               </div>
             </div>
           </div>
 
-          <aside className="rounded-[28px] border border-white/[0.075] bg-[linear-gradient(180deg,rgba(10,18,34,0.92),rgba(5,9,20,0.99))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.055)]">
-            <p className={labelClass}>Quota Hook Studio</p>
-            <div className="mt-4 flex items-end justify-between gap-4">
-              <div>
-                <p className="text-[36px] font-black tracking-[-0.06em] text-white">{used}<span className="text-base text-slate-600"> / {formatLimit(effectiveLimit)}</span></p>
-                <p className="mt-1 text-[12px] font-semibold text-slate-500">{Number.isFinite(remaining) ? `${remaining} hooks restants` : 'Hooks illimités'} · Plan {plan ?? 'invité'}</p>
+          <aside className="relative overflow-hidden rounded-[28px] border border-white/[0.075] bg-[linear-gradient(180deg,rgba(10,18,34,0.92),rgba(5,9,20,0.99))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.055)]">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_82%_0%,rgba(34,211,238,0.13),transparent_38%),radial-gradient(circle_at_16%_18%,rgba(168,85,247,0.14),transparent_34%)]" />
+            <div className="relative">
+              <Badge tone="violet">Avant / Après</Badge>
+              <p className="mt-4 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">Idée brute</p>
+              <p className="mt-2 text-[14px] font-semibold leading-6 text-slate-300">Ma vidéo TikTok flop alors que l’idée est bonne.</p>
+
+              <div className="mt-5 rounded-[18px] border border-rose-300/14 bg-rose-400/[0.06] p-4">
+                <p className={labelClass}>Mauvais hook</p>
+                <p className="mt-2 text-[18px] font-black leading-tight tracking-[-0.03em] text-slate-200">“Aujourd’hui je vais vous expliquer pourquoi...”</p>
               </div>
-              <Badge tone={remaining === 0 ? 'amber' : 'green'}>{plan === 'free' ? 'Verrouillé' : 'Actif'}</Badge>
-            </div>
-            <div className="mt-4">
-              <ProgressBar value={quotaProgress} />
-            </div>
-            <div className="mt-5 rounded-[16px] border border-violet-300/14 bg-violet-400/[0.075] p-4">
-              <p className="text-[13px] font-black text-white">Creator génère. Pro personnalise.</p>
-              <p className="mt-2 text-[12.5px] leading-5 text-slate-400">Pro adapte les hooks à ta mémoire créateur et débloque des reconstructions V2 plus contextuelles.</p>
-              <Link href="/dashboard/billing" className="mt-4 inline-flex min-h-[38px] items-center rounded-[11px] border border-white/[0.09] bg-white/[0.045] px-3 text-[12px] font-black text-white transition hover:bg-white/[0.075]">
-                Débloquer les hooks personnalisés
-              </Link>
+
+              <div className="mt-3 rounded-[18px] border border-cyan-300/18 bg-cyan-300/[0.08] p-4 shadow-[0_22px_70px_-52px_rgba(34,211,238,1)]">
+                <p className={labelClass}>Hook Viralynz</p>
+                <p className="mt-2 text-[24px] font-black leading-tight tracking-[-0.045em] text-white">“Ton idée n’est pas le problème. Tes 3 premières secondes le sont.”</p>
+              </div>
+
+              <p className="mt-4 text-[12px] leading-5 text-slate-500">Viralynz ne sort pas juste une phrase. Il prépare l’ouverture : tension, frame, rythme, cut.</p>
             </div>
           </aside>
         </section>
@@ -641,6 +743,8 @@ export default function HookGeneratorPage() {
           </div>
 
           <aside className="space-y-5 xl:sticky xl:top-[104px] xl:self-start">
+            <LivePreviewPanel hookMode={hookMode} pack={bestPack ?? null} />
+
             <section className="rounded-[24px] border border-white/[0.075] bg-[linear-gradient(180deg,rgba(10,18,34,0.94),rgba(5,9,20,0.99))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
               <Badge tone="cyan">Blueprint des 3 premières secondes</Badge>
               <h2 className="mt-3 text-[26px] font-black tracking-[-0.05em] text-white">{copy.title}</h2>
@@ -654,7 +758,43 @@ export default function HookGeneratorPage() {
                 ))}
               </div>
             </section>
+
+            <section className="rounded-[20px] border border-white/[0.075] bg-white/[0.035] p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className={labelClass}>Quota Hook Studio</p>
+                  <p className="mt-2 text-[24px] font-black tracking-[-0.05em] text-white">{used}<span className="text-sm text-slate-600"> / {formatLimit(effectiveLimit)}</span></p>
+                  <p className="mt-1 text-[12px] font-semibold text-slate-500">{Number.isFinite(remaining) ? `${remaining} hooks restants` : 'Hooks illimités'} · Plan {plan ?? 'invité'}</p>
+                </div>
+                <Badge tone={remaining === 0 ? 'amber' : 'green'}>{plan === 'free' ? 'Verrouillé' : 'Actif'}</Badge>
+              </div>
+              <div className="mt-3">
+                <ProgressBar value={quotaProgress} />
+              </div>
+            </section>
           </aside>
+        </section>
+
+        <section className="mt-6 rounded-[24px] border border-white/[0.075] bg-[linear-gradient(180deg,rgba(10,18,34,0.82),rgba(5,9,20,0.98))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.045)]">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <Badge tone="violet">Mauvais hook → Hook Viralynz</Badge>
+              <h2 className="mt-3 max-w-3xl text-[28px] font-black tracking-[-0.055em] text-white">Ne commence plus par expliquer. Commence par créer une tension.</h2>
+            </div>
+            <p className="max-w-sm text-[13px] leading-6 text-slate-500">La différence n’est pas cosmétique : elle change ce que le viewer comprend pendant les 3 premières secondes.</p>
+          </div>
+          <div className="mt-5 grid gap-3 lg:grid-cols-3">
+            {badHookExamples.map((example) => (
+              <article key={example.bad} className="rounded-[18px] border border-white/[0.07] bg-white/[0.035] p-4 transition hover:-translate-y-0.5 hover:border-cyan-200/18 hover:bg-white/[0.055]">
+                <p className={labelClass}>Mauvais</p>
+                <p className="mt-2 min-h-[48px] text-[14px] font-semibold leading-6 text-slate-500">“{example.bad}”</p>
+                <div className="mt-4 rounded-[15px] border border-cyan-300/14 bg-cyan-300/[0.065] p-3">
+                  <p className={labelClass}>Viralynz</p>
+                  <p className="mt-2 text-[16px] font-black leading-6 text-white">“{example.good}”</p>
+                </div>
+              </article>
+            ))}
+          </div>
         </section>
 
         <section className="mt-6 grid gap-4 md:grid-cols-2">
@@ -792,8 +932,8 @@ export default function HookGeneratorPage() {
                       <span className="rounded-xl border border-emerald-300/16 bg-emerald-300/[0.08] px-3 py-2 text-xs font-black text-emerald-100">
                         Enregistré dans l’historique
                       </span>
-                      <button onClick={handleGenerate} className="rounded-xl border border-white/[0.09] bg-white/[0.035] px-3 py-2 text-xs font-black text-slate-300">
-                        Générer une variation
+                      <button onClick={() => { setCount(3); window.setTimeout(() => void handleGenerate(), 0); }} className="rounded-xl border border-white/[0.09] bg-white/[0.035] px-3 py-2 text-xs font-black text-slate-300">
+                        Générer 3 variations
                       </button>
                       <Link href="/dashboard/rewrite" className="rounded-xl border border-violet-300/22 bg-violet-400/10 px-3 py-2 text-xs font-black text-violet-100">
                         Transformer en V2
