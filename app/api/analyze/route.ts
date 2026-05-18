@@ -26,6 +26,7 @@ import { OPENAI_CHAT_MODEL } from '@/lib/openai-models';
 import { listTikTokAccountsForUser } from '@/lib/tiktok-accounts';
 import type { VideoIntelligenceResult } from '@/lib/types';
 import { buildVideoAnalysisSnapshot, getCreatorMemoryForAnalysis, persistAnalysisSnapshotAndMemory } from '@/lib/creator-memory-store';
+import { buildCreatorMemoryContext, getCreatorMemory, learnCreatorMemoryFromAnalysis } from '@/lib/creator-memory';
 import { getCreatorMemoryLimit } from '@/lib/plan-limits';
 import { buildReconstructionIA as buildReconstructionIAOutput } from '@/lib/ai-reconstruction-engine';
 import { buildStructuredReconstruction } from '@/lib/reconstruction/engine';
@@ -381,7 +382,7 @@ function buildReconstructionIA(
 
 function getAnalysisEngineContext(
   body: Record<string, unknown>,
-  extra?: { durationSec?: number; caption?: string; transcript?: string; previousAnalyses?: AnalysisResult[]; videoIntelligence?: VideoIntelligenceResult }
+  extra?: { durationSec?: number; caption?: string; transcript?: string; previousAnalyses?: AnalysisResult[]; videoIntelligence?: VideoIntelligenceResult; creatorMemoryContext?: string }
 ): AnalysisEngineContext {
   return {
     objective: sanitizeShortString(body.objective, 40),
@@ -394,6 +395,7 @@ function getAnalysisEngineContext(
     transcript: extra?.transcript,
     videoIntelligence: extra?.videoIntelligence,
     previousAnalyses: extra?.previousAnalyses,
+    creatorMemoryContext: extra?.creatorMemoryContext,
   };
 }
 
@@ -1227,7 +1229,16 @@ async function postVisionAnalyze(
   const plan = effective;
   const reconstructionAllowed = dbUser ? canGenerateReconstruction(dbUser) : false;
   const reconstructionUsed = dbUser?.reconstructions_count ?? 0;
-  const creatorMemory = session ? await getCreatorMemoryForAnalysis(session.userId, plan) : null;
+  const [creatorMemory, creatorMemoryV2] = session
+    ? await Promise.all([
+        getCreatorMemoryForAnalysis(session.userId, plan),
+        getCreatorMemory(session.userId),
+      ])
+    : [null, null] as const;
+  const creatorMemoryPrompt = [
+    creatorMemory?.promptContext,
+    buildCreatorMemoryContext(creatorMemoryV2),
+  ].filter(Boolean).join('\n\n');
   const hasOpenAI =
     !!process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'sk-your-key-here';
 
@@ -1333,10 +1344,10 @@ async function postVisionAnalyze(
     fileName,
     observedMetrics: detectedObserved,
   });
-  const analysisContext = creatorMemory
+  const analysisContext = creatorMemoryPrompt
     ? {
         ...baseAnalysisContext,
-        promptContext: `${baseAnalysisContext.promptContext}\n\n${creatorMemory.promptContext}`,
+        promptContext: `${baseAnalysisContext.promptContext}\n\n${creatorMemoryPrompt}`,
       }
     : baseAnalysisContext;
   const costEstimate = estimateAnalysisCost({
@@ -1401,6 +1412,7 @@ async function postVisionAnalyze(
     transcript: videoIntelligence.transcript.text ?? transcript,
     videoIntelligence,
     previousAnalyses,
+    creatorMemoryContext: creatorMemoryPrompt,
   }), {
     plan,
     canGenerate: reconstructionAllowed,
@@ -1446,7 +1458,7 @@ async function postVisionAnalyze(
       result,
       duration: durationSec,
       transcript: videoIntelligence.transcript.text ?? transcript,
-      creatorMemoryUsed: creatorMemory?.summary,
+      creatorMemoryUsed: creatorMemoryV2?.profile_summary || creatorMemory?.summary,
     });
     await Promise.all([
       ...(result.reconstructionIA ? [incrementReconstructionsCount(session.userId)] : []),
@@ -1457,6 +1469,13 @@ async function postVisionAnalyze(
         videoUrl: persistUrl,
         result,
         snapshot,
+      }),
+      learnCreatorMemoryFromAnalysis({
+        userId: session.userId,
+        analysisId,
+        result,
+        transcript: videoIntelligence.transcript.text ?? transcript,
+        videoUrl: persistUrl,
       }),
     ]);
   }
@@ -1690,7 +1709,16 @@ export async function POST(request: NextRequest) {
     const plan = dbUser ? getEffectivePlan(dbUser) : 'free';
     const reconstructionAllowed = dbUser ? canGenerateReconstruction(dbUser) : false;
     const reconstructionUsed = dbUser?.reconstructions_count ?? 0;
-    const creatorMemory = session ? await getCreatorMemoryForAnalysis(session.userId, plan) : null;
+    const [creatorMemory, creatorMemoryV2] = session
+      ? await Promise.all([
+          getCreatorMemoryForAnalysis(session.userId, plan),
+          getCreatorMemory(session.userId),
+        ])
+      : [null, null] as const;
+    const creatorMemoryPrompt = [
+      creatorMemory?.promptContext,
+      buildCreatorMemoryContext(creatorMemoryV2),
+    ].filter(Boolean).join('\n\n');
     const useOpenAI =
       plan !== 'free' &&
       !!process.env.OPENAI_API_KEY &&
@@ -1709,9 +1737,9 @@ export async function POST(request: NextRequest) {
               caption: detected.caption,
               authorUsername: detected.authorUsername,
               durationSec: detected.durationSec,
-              memoryPrompt: creatorMemory?.promptContext,
+              memoryPrompt: creatorMemoryPrompt || undefined,
             }
-          : creatorMemory ? { memoryPrompt: creatorMemory.promptContext } : undefined);
+          : creatorMemoryPrompt ? { memoryPrompt: creatorMemoryPrompt } : undefined);
         console.log(`[analyze] OpenAI (${plan}) — viralityScore:`, result.viralityScore);
       } catch (aiErr) {
         console.error('[analyze] OpenAI failed, falling back to mock:', aiErr);
@@ -1743,10 +1771,10 @@ export async function POST(request: NextRequest) {
       fileName: url,
       observedMetrics,
     });
-    const analysisContext = creatorMemory
+    const analysisContext = creatorMemoryPrompt
       ? {
           ...baseAnalysisContext,
-          promptContext: `${baseAnalysisContext.promptContext}\n\n${creatorMemory.promptContext}`,
+          promptContext: `${baseAnalysisContext.promptContext}\n\n${creatorMemoryPrompt}`,
         }
       : baseAnalysisContext;
     const costEstimate = estimateAnalysisCost({
@@ -1765,6 +1793,7 @@ export async function POST(request: NextRequest) {
       transcript: videoIntelligence.transcript.text,
       videoIntelligence,
       previousAnalyses,
+      creatorMemoryContext: creatorMemoryPrompt,
     }), {
       plan,
       canGenerate: reconstructionAllowed,
@@ -1806,7 +1835,7 @@ export async function POST(request: NextRequest) {
         result,
         duration: detected?.durationSec,
         transcript: videoIntelligence.transcript.text,
-        creatorMemoryUsed: creatorMemory?.summary,
+        creatorMemoryUsed: creatorMemoryV2?.profile_summary || creatorMemory?.summary,
       });
       await Promise.all([
         ...(result.reconstructionIA ? [incrementReconstructionsCount(session.userId)] : []),
@@ -1817,6 +1846,13 @@ export async function POST(request: NextRequest) {
           videoUrl: url,
           result,
           snapshot,
+        }),
+        learnCreatorMemoryFromAnalysis({
+          userId: session.userId,
+          analysisId,
+          result,
+          transcript: videoIntelligence.transcript.text,
+          videoUrl: url,
         }),
       ]);
     }

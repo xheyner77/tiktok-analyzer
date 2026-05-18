@@ -35,6 +35,7 @@ export interface AnalysisEngineContext {
   transcript?: string;
   videoIntelligence?: VideoIntelligenceResult;
   previousAnalyses?: AnalysisResult[];
+  creatorMemoryContext?: string;
 }
 
 interface TranscriptSignals {

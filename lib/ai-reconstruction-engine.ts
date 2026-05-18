@@ -25,6 +25,7 @@ export interface ReconstructionPromptInput {
   dropsDetected: string[];
   currentStructure: string[];
   patternInterruptsDetected: string[];
+  creatorMemoryContext?: string;
 }
 
 function sanitizeShortString(value: unknown, max = 140): string | undefined {
@@ -206,6 +207,7 @@ export function buildReconstructionPromptInput(
       ?.filter((marker) => marker.type === 'tension' || marker.type === 'rewatch')
       .map((marker) => `${marker.time}: ${marker.label}`)
       .slice(0, 4) ?? [],
+    creatorMemoryContext: context?.creatorMemoryContext?.slice(0, 1800),
   };
 }
 
@@ -216,6 +218,7 @@ export function buildReconstructionPromptMessages(input: ReconstructionPromptInp
       'Tu ne donnes jamais de conseils generiques. Chaque changement doit citer un signal: timecode, score, drop, densite, rythme, CTA, niche ou objectif.',
       'Tu dois produire un JSON scalable avec optimizedStructure, alternativeHooks, ctaRecommendations, retentionFixes, cutsRecommended, patternInterrupts, recommendedOrder, whyThisStructureWorks et predictedImprovements.',
       'Les predictions sont toujours presentees comme Simulation IA, jamais comme garantie.',
+      input.creatorMemoryContext ? 'Utilise la memoire createur fournie pour adapter la V2 au style et aux erreurs recurrentes du createur.' : '',
     ].join('\n'),
     user: JSON.stringify(input, null, 2),
   };
@@ -266,6 +269,14 @@ function buildAlternativeHooks(result: AnalysisResult, audience: string, content
   ];
 }
 
+function memorySignal(context?: string) {
+  if (!context) return '';
+  const line = context
+    .split('\n')
+    .find((item) => /Erreurs frequentes|Patterns a renforcer|Prochains tests|A eviter/.test(item));
+  return line?.replace(/^-\s*/, '').slice(0, 150) ?? '';
+}
+
 function buildCtas(result: AnalysisResult, objective: string, ctaIssue: string) {
   const optimized = result.coachAnalysis?.optimizedCtas?.filter(Boolean) ?? [];
   if (optimized.length) {
@@ -310,6 +321,7 @@ export function buildReconstructionIA(
   const rhythmIssue = getRhythmIssue(result, dropRange);
   const ctaIssue = getCtaIssue(result);
   const signals = buildSignals(result, dropRange);
+  const memory = memorySignal(context?.creatorMemoryContext);
 
   const payoffEnd = Math.min(duration, hookScore < 65 ? 4 : 5);
   const contextEnd = Math.min(duration, payoffEnd + (duration > 28 ? 5 : 3));
@@ -325,7 +337,7 @@ export function buildReconstructionIA(
       'Stopper le scroll avant la decision de sortie',
       hookScore < 65
         ? `Remplacer l ouverture par la preuve ou la consequence visible. Signal utilise: ${openingIssue}`
-        : `Garder l intention du hook, mais condenser la phrase et afficher la promesse en texte ecran des 0:01.`,
+        : `Garder l intention du hook, mais condenser la phrase et afficher la promesse en texte ecran des 0:01.${memory ? ` Memoire createur: ${memory}.` : ''}`,
       'Simulation IA: moins de perte dans les 3 premieres secondes.',
       openingIssue,
       hookScore < 65 ? 'rewrite' : 'keep'
@@ -411,7 +423,14 @@ export function buildReconstructionIA(
 
   return {
     optimizedStructure,
-    alternativeHooks: buildAlternativeHooks(result, audience, contentType, input.objective, openingIssue, payoffIssue),
+    alternativeHooks: [
+      ...(memory ? [{
+        hook: 'Le probleme revient ici : ta preuve arrive apres la perte d attention.',
+        why: `Hook personnalise depuis la memoire createur: ${memory}`,
+        bestFor: `${contentType} avec objectif ${input.objective}.`,
+      }] : []),
+      ...buildAlternativeHooks(result, audience, contentType, input.objective, openingIssue, payoffIssue),
+    ].slice(0, 4),
     ctaRecommendations: buildCtas(result, input.objective, ctaIssue),
     retentionFixes,
     cutsRecommended: [
@@ -444,7 +463,7 @@ export function buildReconstructionIA(
     whyThisStructureWorks: {
       retentionLogic: `Le payoff est deplace avant ${formatTime(payoffEnd)} pour reduire la perte avant le drop ${dropRange}.`,
       viewerPsychology: `Pour ${audience}, la sequence preuve -> contexte -> correction demande moins d effort que contexte -> explication -> preuve.`,
-      changeJustification: `Les changements repondent aux signaux dominants: ${signals.slice(0, 3).map((signal) => signal.evidence).join(' ')}`,
+      changeJustification: `Les changements repondent aux signaux dominants: ${signals.slice(0, 3).map((signal) => signal.evidence).join(' ')}${memory ? ` Memoire createur utilisee: ${memory}` : ''}`,
     },
     predictedImprovements: {
       retentionPotential: clamp(predictedBase + retentionGain, 0, 96),

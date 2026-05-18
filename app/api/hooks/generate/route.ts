@@ -19,6 +19,7 @@ import {
   normalizeGeneratedHooks,
   normalizeHookPacks,
 } from '@/lib/hook-engine';
+import { buildCreatorMemoryContext, getCreatorMemory } from '@/lib/creator-memory';
 import type { HookGenerationInput } from '@/lib/hook-engine';
 import type { HookObjective, HookPack, VideoFormat } from '@/lib/types';
 
@@ -72,8 +73,9 @@ async function generateHookPacksWithAI(params: {
   niche?: string;
   mode?: HookGenerationInput['mode'];
   intensity?: number;
+  creatorMemoryContext?: string;
 }): Promise<HookPack[]> {
-  const { context, scene, person, tone, count, format, objective, niche, mode, intensity } = params;
+  const { context, scene, person, tone, count, format, objective, niche, mode, intensity, creatorMemoryContext } = params;
 
   const prompt = `Tu es un créateur TikTok senior et un directeur créatif short-form.
 Génère ${count} HookPacks complets. Un HookPack n'est pas une phrase : c'est l'ouverture complète 0-3 secondes.
@@ -132,7 +134,9 @@ Structure JSON attendue :
     scene ? `Scene=${scene.slice(0, 140)}` : '',
     person ? `Personnage=${person.slice(0, 100)}` : '',
     `Ton=${tone.slice(0, 80)}`,
+    creatorMemoryContext ? `\n${creatorMemoryContext}` : '',
     'Regles: court, humain, TikTok natif, pas corporate, pas de promesse impossible, pas de "decouvrez comment".',
+    creatorMemoryContext ? 'Utilise la memoire createur pour eviter les hooks generiques et renforcer les patterns deja observes.' : '',
     'Chaque item: title,style,format,objective,spokenHook,onScreenText,firstFrame,visualAction,cameraDirection,cutTiming,deliveryTone,soundCue,scriptOpening[4],whyItWorks,bestFor,risk,scores{overall,scrollStop,curiosity,emotion,clarity,comments,watchtime},aggression,difficulty.',
   ].filter(Boolean).join('\n');
   const costEstimate = estimateAnalysisCost({
@@ -177,6 +181,8 @@ export async function POST(request: NextRequest) {
 
     user = await checkAndResetMonthly(user);
     const tier = getEffectivePlan(user);
+    const creatorMemory = await getCreatorMemory(session.userId);
+    const creatorMemoryContext = buildCreatorMemoryContext(creatorMemory);
     const hookLimit = HOOK_LIMITS[tier] ?? 0;
 
     if (hookLimit === 0) {
@@ -245,7 +251,7 @@ export async function POST(request: NextRequest) {
     let hookPacks: HookPack[] = [];
     if (hasOpenAI) {
       try {
-        hookPacks = await generateHookPacksWithAI(input);
+        hookPacks = await generateHookPacksWithAI({ ...input, creatorMemoryContext });
       } catch (err) {
         console.warn('[hooks/generate] OpenAI HookPacks failed, using fallback:', err instanceof Error ? err.message : err);
       }
