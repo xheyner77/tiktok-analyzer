@@ -147,6 +147,13 @@ export interface TrendEvidenceItem {
   country: string;
 }
 
+export interface TrendEvidenceSummary {
+  sourceProvider: TrendProvider;
+  medianViews: number;
+  averageEngagementRate: number;
+  averageShareRate: number;
+}
+
 export interface TrendRecommendation {
   verdict: TrendVerdict;
   stage: TrendStage;
@@ -178,6 +185,7 @@ export interface TrendCluster {
   topSounds: string[];
   topExamples: TrendEvidenceItem[];
   evidenceItems: TrendEvidenceItem[];
+  evidenceSummary: TrendEvidenceSummary;
   scores: TrendScores;
   recommendation: TrendRecommendation;
   createdAt: string;

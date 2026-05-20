@@ -59,6 +59,20 @@ function evidenceFromSignal(signal: NormalizedTrendSignal): TrendEvidenceItem {
   };
 }
 
+function average(values: number[]): number {
+  const clean = values.filter(Number.isFinite);
+  if (clean.length === 0) return 0;
+  return Math.round((clean.reduce((sum, value) => sum + value, 0) / clean.length) * 10000) / 10000;
+}
+
+function median(values: number[]): number {
+  const clean = values.filter(Number.isFinite).sort((a, b) => a - b);
+  if (clean.length === 0) return 0;
+  const middle = Math.floor(clean.length / 2);
+  if (clean.length % 2) return clean[middle];
+  return Math.round((clean[middle - 1] + clean[middle]) / 2);
+}
+
 function groupKey(signal: NormalizedTrendSignal): string {
   const primaryNiche = signal.nicheHints[0] ?? 'general';
   const pattern = signal.detectedPattern === 'unknown' && signal.hashtags[0] ? `hashtag:${signal.hashtags[0]}` : signal.detectedPattern;
@@ -102,6 +116,12 @@ export function clusterTrendSignals(signals: NormalizedTrendSignal[], now = new 
       topSounds: countTop(group.map((signal) => signal.soundKey ?? '').filter(Boolean), 4),
       topExamples: evidenceItems.slice(0, 3),
       evidenceItems,
+      evidenceSummary: {
+        sourceProvider: group.some((signal) => signal.raw.provider === 'apify') ? 'apify' : group[0]?.raw.provider ?? 'demo',
+        medianViews: median(group.map((signal) => signal.views)),
+        averageEngagementRate: average(group.map((signal) => signal.engagementRate)),
+        averageShareRate: average(group.map((signal) => signal.shareRate)),
+      },
       scores: calculateTrendScores({
         signals: group,
         allSignals: signals,

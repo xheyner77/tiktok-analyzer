@@ -7,6 +7,7 @@ import type {
   TrendSourceStatus,
 } from '@/lib/trends/types';
 import { clusterTrendSignals } from '@/lib/trends/cluster';
+import { hasApifyTrendConfig, isTrendDemoMode } from '@/lib/trends/config';
 import { getDemoRawTrendItems } from '@/lib/trends/demo-data';
 import { formatRelativeTime } from '@/lib/trends/formatters';
 import { normalizeTrendItems } from '@/lib/trends/normalize';
@@ -15,17 +16,6 @@ type DbError = { message?: string; code?: string };
 
 function isMissingTable(error: DbError | null | undefined): boolean {
   return Boolean(error?.message?.includes('relation') || error?.code === '42P01');
-}
-
-function isDemoMode(): boolean {
-  return process.env.NEXT_PUBLIC_TRENDS_DEMO_MODE === 'true';
-}
-
-function hasApifyConfig(): boolean {
-  return Boolean(
-    process.env.APIFY_TOKEN &&
-      (process.env.APIFY_TIKTOK_TRENDS_ACTOR_ID || process.env.APIFY_TIKTOK_SEARCH_ACTOR_ID || process.env.APIFY_TIKTOK_HASHTAG_ACTOR_ID),
-  );
 }
 
 interface ClusterRow {
@@ -70,6 +60,12 @@ function toCluster(row: ClusterRow): TrendCluster {
     evidenceItems: Array.isArray((row.evidence as { evidenceItems?: unknown }).evidenceItems)
       ? ((row.evidence as { evidenceItems: TrendCluster['evidenceItems'] }).evidenceItems)
       : [],
+    evidenceSummary: ((row.evidence as { evidenceSummary?: TrendCluster['evidenceSummary'] }).evidenceSummary) ?? {
+      sourceProvider: 'apify',
+      medianViews: 0,
+      averageEngagementRate: 0,
+      averageShareRate: 0,
+    },
     scores: row.scores as TrendCluster['scores'],
     recommendation: row.recommendation as TrendCluster['recommendation'],
     createdAt: row.created_at ?? new Date().toISOString(),
@@ -81,17 +77,17 @@ export async function getTrendSourceStatus(): Promise<TrendSourceStatus> {
   const { count: rawCount, error: rawError } = await supabase.from('trend_raw_items').select('id', { count: 'exact', head: true });
   if (isMissingTable(rawError)) {
     return {
-      status: isDemoMode() ? 'demo' : 'not_configured',
-      label: isDemoMode() ? 'Mode demo' : 'Source non connectee',
-      detail: isDemoMode()
+      status: isTrendDemoMode() ? 'demo' : 'not_configured',
+      label: isTrendDemoMode() ? 'Mode demo' : 'Source non connectee',
+      detail: isTrendDemoMode()
         ? 'Le cockpit utilise un echantillon local signale comme demo.'
         : 'Applique la migration Supabase et configure APIFY_TOKEN pour scanner TikTok.',
-      provider: isDemoMode() ? 'demo' : 'none',
+      provider: isTrendDemoMode() ? 'demo' : 'none',
       lastScanAt: null,
       totalRawItems: 0,
       totalClusters: 0,
-      isDemoMode: isDemoMode(),
-      canScan: hasApifyConfig(),
+      isDemoMode: isTrendDemoMode(),
+      canScan: hasApifyTrendConfig(),
     };
   }
 
@@ -106,7 +102,7 @@ export async function getTrendSourceStatus(): Promise<TrendSourceStatus> {
   const lastScanAt = (lastJob as { finished_at?: string | null; started_at?: string | null } | null)?.finished_at ?? (lastJob as { started_at?: string | null } | null)?.started_at ?? null;
   const cacheMinutes = Number(process.env.TREND_SCAN_CACHE_MINUTES ?? 180);
   const isStale = lastScanAt ? Date.now() - new Date(lastScanAt).getTime() > cacheMinutes * 60000 : true;
-  const configured = hasApifyConfig();
+  const configured = hasApifyTrendConfig();
 
   return {
     status: !configured ? 'not_configured' : (rawCount ?? 0) === 0 ? 'empty' : isStale ? 'stale' : 'connected',
@@ -126,7 +122,11 @@ export async function getTrendSourceStatus(): Promise<TrendSourceStatus> {
 }
 
 export async function listTrendClusters(filters: TrendClusterFilters = {}): Promise<TrendCluster[]> {
-  if (isDemoMode() && !hasApifyConfig()) {
+  if (!isTrendDemoMode() && !hasApifyTrendConfig()) {
+    return [];
+  }
+
+  if (isTrendDemoMode() && !hasApifyTrendConfig()) {
     return clusterTrendSignals(normalizeTrendItems(getDemoRawTrendItems()));
   }
 
@@ -267,7 +267,7 @@ export async function saveTrendClusters(clusters: TrendCluster[]): Promise<numbe
     last_seen_at: cluster.lastSeenAt,
     top_hashtags: cluster.topHashtags,
     top_sounds: cluster.topSounds,
-    evidence: { topExamples: cluster.topExamples, evidenceItems: cluster.evidenceItems },
+    evidence: { topExamples: cluster.topExamples, evidenceItems: cluster.evidenceItems, evidenceSummary: cluster.evidenceSummary },
     scores: cluster.scores,
     recommendation: cluster.recommendation,
     updated_at: new Date().toISOString(),

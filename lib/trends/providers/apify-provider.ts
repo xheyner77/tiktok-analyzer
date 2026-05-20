@@ -1,4 +1,5 @@
 import type { TrendDataProvider, TrendProviderResult } from '@/lib/trends/providers/types';
+import { hasApifyTrendConfig } from '@/lib/trends/config';
 import type { RawTrendItem, TrendScanPayload, TrendSourceType } from '@/lib/trends/types';
 
 const APIFY_BASE_URL = 'https://api.apify.com/v2';
@@ -15,7 +16,7 @@ function env(name: string): string | null {
 }
 
 function actorPath(actorId: string): string {
-  return encodeURIComponent(actorId.replace('/', '~'));
+  return encodeURIComponent(actorId.trim().replace(/\//g, '~'));
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -31,6 +32,14 @@ function readString(record: Record<string, unknown>, keys: string[]): string | n
   return null;
 }
 
+function readRecord(record: Record<string, unknown>, keys: string[]): Record<string, unknown> {
+  for (const key of keys) {
+    const value = record[key];
+    if (value && typeof value === 'object' && !Array.isArray(value)) return value as Record<string, unknown>;
+  }
+  return {};
+}
+
 function readNumber(record: Record<string, unknown>, keys: string[]): number {
   for (const key of keys) {
     const value = record[key];
@@ -40,16 +49,32 @@ function readNumber(record: Record<string, unknown>, keys: string[]): number {
   return 0;
 }
 
+function flattenStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .flatMap((entry) => {
+        if (typeof entry === 'string' || typeof entry === 'number') return [String(entry)];
+        const record = asRecord(entry);
+        return [
+          readString(record, ['name', 'title', 'hashtagName', 'text', 'id']),
+        ].filter((item): item is string => Boolean(item));
+      })
+      .map((item) => item.replace(/^#/, '').trim())
+      .filter(Boolean);
+  }
+  if (typeof value === 'string' && value.trim()) {
+    return value
+      .split(/[,\s]+/)
+      .map((item) => item.replace(/^#/, '').trim())
+      .filter(Boolean);
+  }
+  return [];
+}
+
 function readArray(record: Record<string, unknown>, keys: string[]): string[] {
   for (const key of keys) {
-    const value = record[key];
-    if (Array.isArray(value)) return value.map(String).map((item) => item.replace(/^#/, '').trim()).filter(Boolean);
-    if (typeof value === 'string' && value.trim()) {
-      return value
-        .split(/[,\s]+/)
-        .map((item) => item.replace(/^#/, '').trim())
-        .filter(Boolean);
-    }
+    const parsed = flattenStringArray(record[key]);
+    if (parsed.length > 0) return parsed;
   }
   return [];
 }
@@ -60,27 +85,42 @@ function extractHashtags(record: Record<string, unknown>, caption: string): stri
   return Array.from(new Set([...explicit, ...fromCaption].map((tag) => tag.toLowerCase())));
 }
 
-function mapApifyItem(item: unknown, context: { country: string; language: string; query: string; sourceType: TrendSourceType }): RawTrendItem | null {
+type ApifyMapResult = { item: RawTrendItem | null; ignoredReason?: string };
+
+export function mapApifyItem(item: unknown, context: { country: string; language: string; query: string; sourceType: TrendSourceType }): ApifyMapResult {
   const record = asRecord(item);
-  const nestedStats = asRecord(record.stats);
-  const author = asRecord(record.authorMeta ?? record.author ?? record.user);
-  const music = asRecord(record.musicMeta ?? record.music ?? record.sound);
+  const nestedStats = readRecord(record, ['stats', 'statistics', 'metrics']);
+  const video = readRecord(record, ['video', 'videoMeta', 'videoData']);
+  const author = readRecord(record, ['authorMeta', 'author', 'user', 'authorInfo', 'creator']);
+  const music = readRecord(record, ['musicMeta', 'music', 'sound', 'musicInfo']);
 
   const providerItemId =
-    readString(record, ['id', 'videoId', 'awemeId', 'itemId']) ??
-    readString(record, ['webVideoUrl', 'url', 'shareUrl']);
-  if (!providerItemId) return null;
+    readString(record, ['id', 'videoId', 'awemeId', 'itemId', 'item_id']) ??
+    readString(video, ['id', 'videoId', 'awemeId']) ??
+    readString(record, ['webVideoUrl', 'url', 'shareUrl', 'videoUrl']);
+  if (!providerItemId) return { item: null, ignoredReason: 'missing_provider_item_id' };
 
-  const caption = readString(record, ['text', 'caption', 'desc', 'description', 'title']) ?? '';
+  const caption = readString(record, ['text', 'caption', 'desc', 'description', 'title']) ?? readString(video, ['title', 'description']) ?? '';
   const createdAt =
-    readString(record, ['createTimeISO', 'createdAt', 'createTime', 'timestamp']) ??
-    readString(record, ['publishedAt']);
+    readString(record, ['createTimeISO', 'createdAt', 'createTime', 'timestamp', 'publishedAt', 'postedAt']) ??
+    readString(video, ['createTimeISO', 'createdAt', 'createTime']);
+  const sourceUrl =
+    readString(record, ['webVideoUrl', 'url', 'shareUrl', 'videoUrl']) ??
+    readString(video, ['webVideoUrl', 'url', 'shareUrl', 'videoUrl', 'downloadAddr', 'playAddr']);
+  const views = readNumber(record, ['playCount', 'views', 'viewCount']) || readNumber(nestedStats, ['playCount', 'views', 'viewCount', 'play_count']);
+  const likes = readNumber(record, ['diggCount', 'likes', 'likeCount']) || readNumber(nestedStats, ['diggCount', 'likes', 'likeCount', 'digg_count']);
+  const comments = readNumber(record, ['commentCount', 'comments']) || readNumber(nestedStats, ['commentCount', 'comments', 'comment_count']);
+  const shares = readNumber(record, ['shareCount', 'shares']) || readNumber(nestedStats, ['shareCount', 'shares', 'share_count']);
 
-  return {
+  if (!caption && !sourceUrl && views === 0) {
+    return { item: null, ignoredReason: 'missing_caption_url_and_metrics' };
+  }
+
+  return { item: {
     id: `apify:${providerItemId}`,
     provider: 'apify',
     providerItemId,
-    sourceUrl: readString(record, ['webVideoUrl', 'url', 'shareUrl', 'videoUrl']),
+    sourceUrl,
     country: context.country,
     language: context.language,
     query: context.query,
@@ -90,26 +130,26 @@ function mapApifyItem(item: unknown, context: { country: string; language: strin
     soundId: readString(music, ['musicId', 'id', 'playUrl']),
     soundName: readString(music, ['musicName', 'name', 'title']),
     authorId: readString(author, ['id', 'userId', 'secUid', 'uid']),
-    authorUsername: readString(author, ['name', 'nickName', 'uniqueId', 'username']),
-    authorFollowers: readNumber(author, ['fans', 'followers', 'followerCount']) || null,
+    authorUsername: readString(author, ['name', 'nickName', 'nickname', 'uniqueId', 'username']),
+    authorFollowers: readNumber(author, ['fans', 'followers', 'followerCount', 'follower_count']) || null,
     createdAt,
     fetchedAt: new Date().toISOString(),
     metrics: {
-      views: readNumber(record, ['playCount', 'views', 'viewCount']) || readNumber(nestedStats, ['playCount', 'views']),
-      likes: readNumber(record, ['diggCount', 'likes', 'likeCount']) || readNumber(nestedStats, ['diggCount', 'likes']),
-      comments: readNumber(record, ['commentCount', 'comments']) || readNumber(nestedStats, ['commentCount', 'comments']),
-      shares: readNumber(record, ['shareCount', 'shares']) || readNumber(nestedStats, ['shareCount', 'shares']),
+      views,
+      likes,
+      comments,
+      shares,
       saves: readNumber(record, ['collectCount', 'saves']) || undefined,
     },
-    duration: readNumber(record, ['duration', 'videoDuration']) || null,
-    coverUrl: readString(record, ['coverUrl', 'thumbnail', 'imageUrl']),
+    duration: readNumber(record, ['duration', 'videoDuration']) || readNumber(video, ['duration']) || null,
+    coverUrl: readString(record, ['coverUrl', 'thumbnail', 'imageUrl']) ?? readString(video, ['cover', 'coverUrl', 'thumbnail', 'imageUrl']),
     rawPayload: record,
-  };
+  } };
 }
 
 export class ApifyTrendProvider implements TrendDataProvider {
   isConfigured(): boolean {
-    return Boolean(env('APIFY_TOKEN') && (env('APIFY_TIKTOK_TRENDS_ACTOR_ID') || env('APIFY_TIKTOK_SEARCH_ACTOR_ID') || env('APIFY_TIKTOK_HASHTAG_ACTOR_ID')));
+    return hasApifyTrendConfig();
   }
 
   async fetchItems(payload: TrendScanPayload): Promise<TrendProviderResult> {
@@ -128,6 +168,13 @@ export class ApifyTrendProvider implements TrendDataProvider {
     const maxItems = Number(process.env.TREND_SCAN_MAX_ITEMS ?? 100);
     const errors: string[] = [];
     const items: RawTrendItem[] = [];
+    const stats = {
+      actorsUsed: actors.map((actor) => actor.id),
+      itemsRetrieved: 0,
+      validItems: 0,
+      ignoredItems: 0,
+      ignoredReasons: {} as Record<string, number>,
+    };
 
     for (const actor of actors) {
       for (const country of payload.countries) {
@@ -154,17 +201,38 @@ export class ApifyTrendProvider implements TrendDataProvider {
 
             const data = (await response.json()) as unknown;
             const rows = Array.isArray(data) ? data : [];
-            rows
-              .map((row) =>
-                mapApifyItem(row, {
+            stats.itemsRetrieved += rows.length;
+            let validForRun = 0;
+            let ignoredForRun = 0;
+
+            rows.forEach((row) => {
+              const mapped = mapApifyItem(row, {
                   country,
                   language: process.env.TREND_SCAN_LANGUAGE ?? 'fr',
                   query,
                   sourceType: actor.sourceType,
-                }),
-              )
-              .filter((row): row is RawTrendItem => Boolean(row))
-              .forEach((row) => items.push(row));
+                });
+              if (mapped.item) {
+                validForRun += 1;
+                items.push(mapped.item);
+                return;
+              }
+              ignoredForRun += 1;
+              const reason = mapped.ignoredReason ?? 'unknown';
+              stats.ignoredReasons[reason] = (stats.ignoredReasons[reason] ?? 0) + 1;
+            });
+            stats.validItems += validForRun;
+            stats.ignoredItems += ignoredForRun;
+            console.info('[trends:apify] actor_run', {
+              actor: actor.id,
+              sourceType: actor.sourceType,
+              country,
+              query,
+              fetched: rows.length,
+              valid: validForRun,
+              ignored: ignoredForRun,
+              ignoredReasons: stats.ignoredReasons,
+            });
           } catch (error) {
             const message = error instanceof Error ? error.message : 'Erreur inconnue';
             errors.push(`Apify ${actor.sourceType} ${country}/${query}: ${message}`);
@@ -173,6 +241,14 @@ export class ApifyTrendProvider implements TrendDataProvider {
       }
     }
 
-    return { provider: 'apify', items, errors };
+    console.info('[trends:apify] scan_summary', {
+      actorsUsed: stats.actorsUsed,
+      itemsRetrieved: stats.itemsRetrieved,
+      validItems: stats.validItems,
+      ignoredItems: stats.ignoredItems,
+      ignoredReasons: stats.ignoredReasons,
+    });
+
+    return { provider: 'apify', items, errors, stats };
   }
 }

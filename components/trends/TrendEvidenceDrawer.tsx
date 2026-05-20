@@ -62,6 +62,12 @@ export function TrendEvidenceDrawer({
           <p className="mt-2 text-[12px] leading-5 text-slate-400">
             Hashtags : {cluster.topHashtags.slice(0, 4).map((tag) => `#${tag}`).join(' ') || '-'}
           </p>
+          <p className="mt-2 text-[12px] leading-5 text-slate-400">
+            Sons : {cluster.topSounds.slice(0, 3).join(', ') || '-'}
+          </p>
+          <p className="mt-2 text-[12px] leading-5 text-slate-400">
+            Vues medianes : {cluster.evidenceSummary.medianViews.toLocaleString('fr-FR')} - engagement moyen : {(cluster.evidenceSummary.averageEngagementRate * 100).toFixed(1)}% - share rate : {(cluster.evidenceSummary.averageShareRate * 100).toFixed(2)}%
+          </p>
         </div>
 
         <details className="mt-4 rounded-[16px] border border-white/[0.08] bg-white/[0.035] p-4" open>

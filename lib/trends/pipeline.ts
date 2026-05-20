@@ -2,6 +2,7 @@ import 'server-only';
 import { ApifyTrendProvider } from '@/lib/trends/providers/apify-provider';
 import { fetchUserTikTokSignals } from '@/lib/trends/providers/tiktok-display-provider';
 import { clusterTrendSignals } from '@/lib/trends/cluster';
+import { isTrendDemoMode } from '@/lib/trends/config';
 import { normalizeTrendItems } from '@/lib/trends/normalize';
 import {
   createTrendScanJob,
@@ -22,16 +23,12 @@ export interface TrendScanResult {
   source: 'apify' | 'demo';
 }
 
-function demoMode(): boolean {
-  return process.env.NEXT_PUBLIC_TRENDS_DEMO_MODE === 'true';
-}
-
 export async function runTrendScan(payload: TrendScanPayload, userId: string | null): Promise<TrendScanResult> {
   const provider = new ApifyTrendProvider();
   const sourceStatus = await getTrendSourceStatus();
 
   if (!provider.isConfigured()) {
-    if (!demoMode()) {
+    if (!isTrendDemoMode()) {
       throw new Error('Source Apify non configuree. Ajoute APIFY_TOKEN et au moins un actor TikTok.');
     }
     const demoItems = getDemoRawTrendItems();
