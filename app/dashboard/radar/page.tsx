@@ -1,7 +1,10 @@
 import { redirect } from 'next/navigation';
-import TrendRadarPageClient from '@/components/dashboard-v2/radar/TrendRadarPageClient';
-import { buildTrendRadarModel } from '@/lib/trends/trend-recommendations';
+import TrendCommandCenter from '@/components/trends/TrendCommandCenter';
+import { buildTrendOverview } from '@/lib/trends/recommendations';
+import { getTrendSourceStatus, listTrendClusters } from '@/lib/trends/repository';
 import { getSession } from '@/lib/session';
+import { getEffectivePlan, getUserById } from '@/lib/auth';
+import { getTikTokDashboardState } from '@/lib/tiktok-accounts';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,5 +15,20 @@ export default async function DashboardRadarPage() {
     redirect('/login?redirect=/dashboard/radar');
   }
 
-  return <TrendRadarPageClient model={buildTrendRadarModel()} />;
+  const user = await getUserById(session.userId);
+  const plan = user ? getEffectivePlan(user) : 'free';
+  const [sourceStatus, clusters, tiktok] = await Promise.all([
+    getTrendSourceStatus(),
+    listTrendClusters({ limit: 10 }),
+    getTikTokDashboardState(session.userId, plan),
+  ]);
+
+  const overview = buildTrendOverview({
+    clusters,
+    sourceStatus,
+    totalRawItems: sourceStatus.totalRawItems,
+    tiktokConnected: tiktok.active > 0,
+  });
+
+  return <TrendCommandCenter initialOverview={overview} />;
 }
