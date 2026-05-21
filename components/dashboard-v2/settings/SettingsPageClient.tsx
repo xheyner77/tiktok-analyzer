@@ -1,28 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { TikTokConnectionManager } from '@/components/dashboard-v2/TikTokConnectionManager';
 import type { AppPlan } from '@/lib/plans';
 
-type ToggleKey =
-  | 'compactDashboard'
-  | 'restoreLastTab'
-  | 'advancedAnimations'
-  | 'confirmImportantActions'
-  | 'focusAnalysis'
-  | 'creatorMemory'
-  | 'autoV2'
-  | 'hookAlternatives'
-  | 'ctaAlternatives'
-  | 'shortVersion'
-  | 'productNewsEmail'
-  | 'importantAlertsEmail'
-  | 'billingEmail'
-  | 'analysisDoneEmail'
-  | 'aiNewsEmail';
-
-type SettingsPreferenceState = Record<ToggleKey, boolean>;
+type PreferenceKey = 'premiumAnimations' | 'confirmSensitiveActions' | 'importantProductNotifications';
+type Preferences = Record<PreferenceKey, boolean>;
 
 type SettingsPageClientProps = {
   account: {
@@ -32,6 +17,8 @@ type SettingsPageClientProps = {
     planLabel: string;
     createdAt: string | null;
     subscriptionStatus: string | null;
+    quotaUsed: number;
+    quotaLimit: number | null;
   };
   tiktok: {
     connected: boolean;
@@ -42,43 +29,18 @@ type SettingsPageClientProps = {
     scopes: string[];
     hasAdvancedMetrics: boolean;
   };
-  memory: {
-    active: boolean;
-    summary: string;
-    sourceAnalysisCount: number;
-    updatedAt: string | null;
-    remembered: string[];
-  };
-  expertMode: {
-    exists: boolean;
-    enabled: boolean;
-    analysisDepth: string;
-    updatedAt: string | null;
-    weights: {
-      hook: number;
-      retention: number;
-      cta: number;
-      payoff: number;
-    };
-  };
 };
 
-const defaultPreferences: SettingsPreferenceState = {
-  compactDashboard: false,
-  restoreLastTab: true,
-  advancedAnimations: true,
-  confirmImportantActions: true,
-  focusAnalysis: false,
-  creatorMemory: true,
-  autoV2: false,
-  hookAlternatives: true,
-  ctaAlternatives: true,
-  shortVersion: false,
-  productNewsEmail: true,
-  importantAlertsEmail: true,
-  billingEmail: true,
-  analysisDoneEmail: false,
-  aiNewsEmail: true,
+type StoredPreferences = Partial<Preferences> & {
+  advancedAnimations?: boolean;
+  confirmImportantActions?: boolean;
+  importantAlertsEmail?: boolean;
+};
+
+const defaultPreferences: Preferences = {
+  premiumAnimations: true,
+  confirmSensitiveActions: true,
+  importantProductNotifications: true,
 };
 
 const preferenceStorageKey = 'viralynz.settings.preferences.v1';
@@ -90,192 +52,259 @@ function formatDate(value: string | null): string {
   return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
 }
 
-function initials(name: string, email: string): string {
-  const base = name.trim() || email.split('@')[0] || 'V';
-  return base.slice(0, 2).toUpperCase();
+function formatLimit(value: number | null): string {
+  if (typeof value !== 'number') return '—';
+  return Number.isFinite(value) ? String(value) : 'Illimité';
 }
 
-function statusLabel(status: string | null): string {
-  if (status === 'active') return 'Abonnement actif';
+function initials(name: string, email: string): string {
+  const source = name.trim() || email.split('@')[0] || 'VN';
+  return source.slice(0, 2).toUpperCase();
+}
+
+function accountStatusLabel(status: string | null): string {
+  if (status === 'active') return 'Compte actif';
   if (status === 'trialing') return 'Essai actif';
   if (status === 'canceled') return 'Abonnement annulé';
   if (status === 'past_due' || status === 'unpaid') return 'Paiement à vérifier';
   return 'Compte actif';
 }
 
-function safeScopes(scopes: string[]): string {
-  if (!scopes.length) return 'Profil basique';
-  return scopes.join(', ');
+function normalizePreferences(stored: StoredPreferences): Preferences {
+  return {
+    premiumAnimations: stored.premiumAnimations ?? stored.advancedAnimations ?? defaultPreferences.premiumAnimations,
+    confirmSensitiveActions: stored.confirmSensitiveActions ?? stored.confirmImportantActions ?? defaultPreferences.confirmSensitiveActions,
+    importantProductNotifications: stored.importantProductNotifications ?? stored.importantAlertsEmail ?? defaultPreferences.importantProductNotifications,
+  };
 }
 
-function SettingsSection({
+function activeScopes(scopes: string[]): string {
+  const cleaned = scopes.map((scope) => (scope === 'user.info.basic' ? 'user.info.basic' : scope.trim())).filter(Boolean);
+  return cleaned.length ? cleaned.join(', ') : 'user.info.basic';
+}
+
+function Badge({ children, tone = 'violet' }: { children: ReactNode; tone?: 'violet' | 'cyan' | 'green' | 'amber' | 'slate' | 'rose' }) {
+  const tones = {
+    violet: 'border-violet-300/18 bg-violet-400/10 text-violet-100',
+    cyan: 'border-cyan-300/18 bg-cyan-400/10 text-cyan-100',
+    green: 'border-emerald-300/18 bg-emerald-400/10 text-emerald-100',
+    amber: 'border-amber-300/18 bg-amber-400/10 text-amber-100',
+    slate: 'border-slate-300/14 bg-slate-400/10 text-slate-200',
+    rose: 'border-rose-300/18 bg-rose-400/10 text-rose-100',
+  };
+
+  return (
+    <span className={`inline-flex shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.13em] ${tones[tone]}`}>
+      {children}
+    </span>
+  );
+}
+
+function StatusDot({ tone }: { tone: 'green' | 'cyan' | 'slate' }) {
+  const colors = {
+    green: 'bg-emerald-300 shadow-[0_0_16px_rgba(110,231,183,0.72)]',
+    cyan: 'bg-cyan-300 shadow-[0_0_16px_rgba(34,211,238,0.58)]',
+    slate: 'bg-slate-500',
+  };
+  return <span className={`h-2 w-2 shrink-0 rounded-full ${colors[tone]}`} />;
+}
+
+function SectionCard({
   eyebrow,
   title,
   description,
   children,
+  className = '',
 }: {
   eyebrow: string;
   title: string;
-  description: string;
-  children: React.ReactNode;
+  description?: string;
+  children: ReactNode;
+  className?: string;
 }) {
   return (
-    <section className="rounded-[20px] border border-white/[0.075] bg-[linear-gradient(180deg,rgba(10,18,34,0.9),rgba(5,9,20,0.98))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_28px_96px_-72px_rgba(124,58,237,0.72)] sm:p-5">
-      <div className="mb-5">
-        <p className="text-[11px] font-black uppercase tracking-[0.22em] text-cyan-200/70">{eyebrow}</p>
-        <h2 className="mt-2 text-[22px] font-black tracking-[-0.035em] text-white sm:text-[26px]">{title}</h2>
-        <p className="mt-2 max-w-3xl text-[14px] leading-6 text-slate-400">{description}</p>
+    <section className={`rounded-[18px] border border-white/[0.075] bg-[linear-gradient(180deg,rgba(9,16,31,0.94),rgba(4,8,18,0.99))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_28px_94px_-76px_rgba(124,58,237,0.72)] sm:p-5 ${className}`}>
+      <div className="mb-4">
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-200/70">{eyebrow}</p>
+        <h2 className="mt-2 text-[20px] font-black tracking-[-0.035em] text-white sm:text-[23px]">{title}</h2>
+        {description ? <p className="mt-2 text-[13px] leading-6 text-slate-400">{description}</p> : null}
       </div>
       {children}
     </section>
   );
 }
 
-function Badge({ children, tone = 'violet' }: { children: React.ReactNode; tone?: 'violet' | 'cyan' | 'green' | 'amber' | 'slate' }) {
-  const tones = {
-    violet: 'border-violet-300/18 bg-violet-400/10 text-violet-100',
-    cyan: 'border-cyan-300/18 bg-cyan-400/10 text-cyan-100',
-    green: 'border-emerald-300/18 bg-emerald-400/10 text-emerald-100',
-    amber: 'border-amber-300/20 bg-amber-400/10 text-amber-100',
-    slate: 'border-slate-300/14 bg-slate-400/10 text-slate-200',
-  };
-  return <span className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-black ${tones[tone]}`}>{children}</span>;
-}
-
-function ToggleRow({
-  title,
-  description,
-  checked,
-  onChange,
-  badge,
-}: {
-  title: string;
-  description: string;
-  checked: boolean;
-  onChange: () => void;
-  badge?: string;
-}) {
+function FieldLine({ label, value }: { label: string; value: string }) {
   return (
-    <button
-      type="button"
-      onClick={onChange}
-      className="group flex w-full items-center justify-between gap-4 rounded-[14px] border border-white/[0.065] bg-white/[0.035] px-4 py-3 text-left transition hover:border-violet-300/18 hover:bg-white/[0.055]"
-    >
-      <span className="min-w-0">
-        <span className="flex flex-wrap items-center gap-2 text-[14px] font-black text-white">
-          {title}
-          {badge ? <span className="rounded-full bg-cyan-300/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-cyan-100">{badge}</span> : null}
-        </span>
-        <span className="mt-1 block text-[12.5px] leading-5 text-slate-400">{description}</span>
-      </span>
-      <span className={`relative h-7 w-12 shrink-0 rounded-full border transition ${checked ? 'border-violet-300/40 bg-violet-500/70 shadow-[0_0_24px_rgba(139,92,246,0.45)]' : 'border-white/10 bg-white/[0.055]'}`}>
-        <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-lg transition ${checked ? 'left-6' : 'left-1'}`} />
-      </span>
-    </button>
-  );
-}
-
-function SelectRow({ label, value, options, note }: { label: string; value: string; options: string[]; note: string }) {
-  return (
-    <label className="block rounded-[14px] border border-white/[0.065] bg-white/[0.035] px-4 py-3">
-      <span className="text-[14px] font-black text-white">{label}</span>
-      <select
-        value={value}
-        disabled
-        className="mt-3 h-11 w-full rounded-[10px] border border-white/[0.08] bg-[#070d1c] px-3 text-[13px] font-bold text-slate-200 outline-none"
-      >
-        {options.map((option) => <option key={option}>{option}</option>)}
-      </select>
-      <span className="mt-2 block text-[12px] leading-5 text-slate-500">{note}</span>
-    </label>
-  );
-}
-
-function SliderRow({ label, value, note }: { label: string; value: number; note: string }) {
-  return (
-    <div className="rounded-[14px] border border-white/[0.065] bg-white/[0.035] px-4 py-3">
-      <div className="flex items-center justify-between gap-4">
-        <p className="text-[14px] font-black text-white">{label}</p>
-        <span className="text-[12px] font-black text-violet-100">{value}%</span>
-      </div>
-      <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/[0.08]">
-        <div className="h-full rounded-full bg-[linear-gradient(90deg,#22d3ee,#8b5cf6,#e879f9)]" style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
-      </div>
-      <p className="mt-2 text-[12px] leading-5 text-slate-500">{note}</p>
+    <div className="min-w-0 rounded-[12px] border border-white/[0.065] bg-white/[0.035] px-3.5 py-3">
+      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">{label}</p>
+      <p className="mt-1 truncate text-[13px] font-bold text-slate-100">{value}</p>
     </div>
+  );
+}
+
+function ActionLink({
+  href,
+  children,
+  tone = 'default',
+  subtle = false,
+}: {
+  href: string;
+  children: ReactNode;
+  tone?: 'default' | 'primary' | 'danger';
+  subtle?: boolean;
+}) {
+  if (subtle) {
+    return <Link href={href} className="inline-flex min-h-[34px] items-center text-[12.5px] font-black text-slate-300 underline-offset-4 transition hover:text-white hover:underline">{children}</Link>;
+  }
+
+  const tones = {
+    default: 'border-white/[0.09] bg-white/[0.045] text-slate-100 hover:bg-white/[0.075]',
+    primary: 'border-violet-300/20 bg-[linear-gradient(135deg,#e879f9,#7c3aed_58%,#2563eb)] text-white shadow-[0_18px_44px_-24px_rgba(124,58,237,0.88)] hover:brightness-110',
+    danger: 'border-rose-300/16 bg-rose-400/[0.065] text-rose-100 hover:bg-rose-400/[0.10]',
+  };
+
+  return (
+    <Link href={href} className={`inline-flex min-h-[40px] items-center justify-center rounded-[10px] border px-4 text-center text-[12.5px] font-black transition ${tones[tone]}`}>
+      {children}
+    </Link>
   );
 }
 
 function ActionButton({
   children,
   onClick,
-  href,
   tone = 'default',
   disabled = false,
+  subtle = false,
 }: {
-  children: React.ReactNode;
-  onClick?: () => void;
-  href?: string;
+  children: ReactNode;
+  onClick: () => void;
   tone?: 'default' | 'primary' | 'danger';
   disabled?: boolean;
+  subtle?: boolean;
 }) {
-  const classes = {
-    default: 'border-white/[0.09] bg-white/[0.045] text-slate-100 hover:bg-white/[0.075]',
-    primary: 'border-violet-300/20 bg-[linear-gradient(135deg,#e879f9,#7c3aed)] text-white hover:brightness-110',
-    danger: 'border-rose-300/18 bg-rose-400/[0.08] text-rose-100 hover:bg-rose-400/[0.12]',
-  };
-  const className = `inline-flex min-h-[42px] items-center justify-center rounded-[10px] border px-4 text-[13px] font-black transition disabled:cursor-not-allowed disabled:opacity-50 ${classes[tone]}`;
-
-  if (href && !disabled) {
-    return <Link href={href} className={className}>{children}</Link>;
+  if (subtle) {
+    return (
+      <button type="button" onClick={onClick} disabled={disabled} className="inline-flex min-h-[34px] items-center text-left text-[12.5px] font-black text-slate-300 underline-offset-4 transition hover:text-white hover:underline disabled:cursor-not-allowed disabled:opacity-55">
+        {children}
+      </button>
+    );
   }
 
-  return <button type="button" onClick={onClick} disabled={disabled} className={className}>{children}</button>;
+  const tones = {
+    default: 'border-white/[0.09] bg-white/[0.045] text-slate-100 hover:bg-white/[0.075]',
+    primary: 'border-violet-300/20 bg-[linear-gradient(135deg,#e879f9,#7c3aed_58%,#2563eb)] text-white shadow-[0_18px_44px_-24px_rgba(124,58,237,0.88)] hover:brightness-110',
+    danger: 'border-rose-300/16 bg-rose-400/[0.065] text-rose-100 hover:bg-rose-400/[0.10]',
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`inline-flex min-h-[40px] items-center justify-center rounded-[10px] border px-4 text-center text-[12.5px] font-black transition disabled:cursor-not-allowed disabled:opacity-55 ${tones[tone]}`}
+    >
+      {children}
+    </button>
+  );
 }
 
-function IntegrationAvatar({ tiktok }: { tiktok: SettingsPageClientProps['tiktok'] }) {
+function PreferenceRow({
+  title,
+  description,
+  checked,
+  onChange,
+  value,
+}: {
+  title: string;
+  description: string;
+  checked?: boolean;
+  onChange?: () => void;
+  value?: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 border-b border-white/[0.06] px-1 py-3.5 last:border-b-0">
+      <div className="min-w-0">
+        <p className="text-[13.5px] font-black text-white">{title}</p>
+        <p className="mt-1 text-[12px] leading-5 text-slate-400">{description}</p>
+      </div>
+      {value ? (
+        <span className="shrink-0 rounded-[9px] border border-white/[0.08] bg-white/[0.045] px-3 py-2 text-[12px] font-black text-slate-100">{value}</span>
+      ) : (
+        <button
+          type="button"
+          onClick={onChange}
+          className="relative h-7 w-12 shrink-0 rounded-full border border-violet-300/30 bg-violet-500/60 shadow-[0_0_22px_rgba(139,92,246,0.28)] transition data-[checked=false]:border-white/10 data-[checked=false]:bg-white/[0.055]"
+          data-checked={checked ? 'true' : 'false'}
+          aria-pressed={checked}
+        >
+          <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-lg transition ${checked ? 'left-6' : 'left-1'}`} />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function TikTokAvatar({ tiktok }: { tiktok: SettingsPageClientProps['tiktok'] }) {
   if (tiktok.avatarUrl) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={tiktok.avatarUrl} alt="" className="h-14 w-14 rounded-full border border-white/12 object-cover" />
+      <img src={tiktok.avatarUrl} alt="" className="h-14 w-14 rounded-[16px] border border-white/12 object-cover" />
     );
   }
+
   return (
-    <div className="flex h-14 w-14 items-center justify-center rounded-full border border-cyan-200/18 bg-[radial-gradient(circle_at_30%_20%,rgba(34,211,238,0.35),rgba(139,92,246,0.22),rgba(2,6,17,0.95))] text-[22px] font-black text-white">
+    <div className="grid h-14 w-14 shrink-0 place-items-center rounded-[16px] border border-cyan-200/18 bg-[radial-gradient(circle_at_30%_20%,rgba(34,211,238,0.32),rgba(139,92,246,0.2),rgba(2,6,17,0.96))] text-[22px] font-black text-white">
       ♪
     </div>
   );
 }
 
-export default function SettingsPageClient({ account, tiktok, memory, expertMode }: SettingsPageClientProps) {
-  const [preferences, setPreferences] = useState<SettingsPreferenceState>(defaultPreferences);
+function EngineItem({ title, copy, badge, tone }: { title: string; copy: string; badge: string; tone: 'violet' | 'green' | 'cyan' }) {
+  return (
+    <div className="rounded-[14px] border border-white/[0.07] bg-black/15 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="text-[14px] font-black text-white">{title}</h3>
+        <Badge tone={tone}>{badge}</Badge>
+      </div>
+      <p className="mt-2 text-[12px] leading-5 text-slate-400">{copy}</p>
+    </div>
+  );
+}
+
+export default function SettingsPageClient({ account, tiktok }: SettingsPageClientProps) {
+  const [preferences, setPreferences] = useState<Preferences>(defaultPreferences);
   const [message, setMessage] = useState<string | null>(null);
   const [busyAction, setBusyAction] = useState<string | null>(null);
-  const [confirmAction, setConfirmAction] = useState<'disconnectTikTok' | null>(null);
+  const [confirmAction, setConfirmAction] = useState<'disconnectTikTok' | 'resetPreferences' | null>(null);
+  const [tiktokManagerOpen, setTikTokManagerOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     try {
       const stored = window.localStorage.getItem(preferenceStorageKey);
       if (!stored) return;
-      const parsed = JSON.parse(stored) as Partial<SettingsPreferenceState>;
-      setPreferences({ ...defaultPreferences, ...parsed });
+      const parsed = JSON.parse(stored) as StoredPreferences;
+      setPreferences(normalizePreferences(parsed));
     } catch {
       setPreferences(defaultPreferences);
     }
   }, []);
 
-  function updatePreference(key: ToggleKey) {
-    const next = { ...preferences, [key]: !preferences[key] };
+  function savePreferences(next: Preferences, successMessage = 'Préférences enregistrées sur cet appareil.') {
     setPreferences(next);
     window.localStorage.setItem(preferenceStorageKey, JSON.stringify(next));
-    setMessage('Préférences enregistrées sur cet appareil.');
+    setMessage(successMessage);
+  }
+
+  function updatePreference(key: PreferenceKey) {
+    savePreferences({ ...preferences, [key]: !preferences[key] });
   }
 
   function resetLocalPreferences() {
-    setPreferences(defaultPreferences);
-    window.localStorage.setItem(preferenceStorageKey, JSON.stringify(defaultPreferences));
-    setMessage('Préférences locales réinitialisées.');
+    setConfirmAction(null);
+    savePreferences(defaultPreferences, 'Préférences réinitialisées sur cet appareil.');
   }
 
   async function sendPasswordReset() {
@@ -302,7 +331,10 @@ export default function SettingsPageClient({ account, tiktok, memory, expertMode
     setBusyAction('tiktok');
     setMessage(null);
     try {
-      const response = await fetch('/api/tiktok/disconnect', { method: 'POST' });
+      const response = await fetch('/api/tiktok/disconnect', {
+        method: 'POST',
+        headers: { Accept: 'application/json' },
+      });
       if (!response.ok) throw new Error('Impossible de déconnecter TikTok pour le moment.');
       setMessage('TikTok déconnecté.');
       router.refresh();
@@ -319,314 +351,274 @@ export default function SettingsPageClient({ account, tiktok, memory, expertMode
     window.location.href = '/login';
   }
 
-  const rememberedItems = useMemo(() => (
-    memory.remembered.length ? memory.remembered : [
-      'Hooks et angles récurrents',
-      'Drops d’attention détectés',
-      'CTA et patterns de repost',
-    ]
-  ), [memory.remembered]);
-
-  const tiktokName = tiktok.displayName?.trim() || 'Compte TikTok';
+  const tiktokName = tiktok.connected ? tiktok.displayName?.trim() || 'Compte TikTok' : 'TikTok non connecté';
+  const tiktokStatus = tiktok.connected ? 'Connecté' : 'Non connecté';
 
   return (
-    <section className="mx-auto w-full max-w-[1500px] pb-12 pt-4 text-white">
-      <div className="relative overflow-hidden rounded-[22px] border border-white/[0.075] bg-[linear-gradient(135deg,rgba(15,23,42,0.92),rgba(5,10,24,0.98)_56%,rgba(20,11,42,0.96))] p-5 shadow-[0_34px_110px_-72px_rgba(124,58,237,0.95),inset_0_1px_0_rgba(255,255,255,0.07)] sm:p-7">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_12%,rgba(34,211,238,0.15),transparent_36%),radial-gradient(circle_at_8%_0%,rgba(168,85,247,0.22),transparent_34%)]" />
-        <div className="relative grid gap-7 lg:grid-cols-[minmax(0,1fr)_380px]">
-          <div>
-            <span className="inline-flex rounded-full border border-cyan-200/18 bg-cyan-300/10 px-3 py-1 text-[11px] font-black uppercase tracking-[0.22em] text-cyan-100">
-              SETTINGS
-            </span>
-            <h1 className="mt-5 text-[36px] font-black tracking-[-0.055em] text-white sm:text-[50px]">Paramètres</h1>
-            <p className="mt-3 max-w-2xl text-[15px] leading-7 text-slate-300">
-              Gère ton compte, tes préférences et le comportement du moteur Viralynz.
+    <section className="mx-auto w-full max-w-[1480px] pb-10 pt-4 text-white">
+      <div className="relative overflow-hidden rounded-[24px] border border-white/[0.08] bg-[linear-gradient(135deg,rgba(13,21,39,0.96),rgba(4,8,19,0.99)_58%,rgba(20,11,42,0.96))] p-5 shadow-[0_34px_120px_-76px_rgba(124,58,237,0.96),inset_0_1px_0_rgba(255,255,255,0.075)] sm:p-6">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_82%_12%,rgba(34,211,238,0.15),transparent_34%),radial-gradient(circle_at_9%_0%,rgba(168,85,247,0.21),transparent_34%)]" />
+        <div className="relative grid gap-5 lg:grid-cols-[minmax(0,1fr)_390px] lg:items-end">
+          <div className="min-w-0">
+            <Badge tone="cyan">Control Center</Badge>
+            <h1 className="mt-4 text-[34px] font-black tracking-[-0.055em] text-white sm:text-[48px]">Paramètres</h1>
+            <p className="mt-3 max-w-2xl text-[14px] leading-7 text-slate-300 sm:text-[15px]">
+              Contrôle ton compte, tes connexions et les préférences qui influencent l’expérience Viralynz.
             </p>
           </div>
-          <div className="rounded-[18px] border border-white/[0.09] bg-white/[0.045] p-5">
-            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">État produit</p>
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <div className="rounded-[12px] border border-white/[0.065] bg-black/15 p-3">
-                <p className="text-[11px] text-slate-500">Plan</p>
-                <p className="mt-1 text-[15px] font-black text-white">{account.planLabel}</p>
+
+          <aside className="rounded-[18px] border border-white/[0.09] bg-white/[0.045] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_20px_70px_-58px_rgba(34,211,238,0.7)]">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">État du workspace</p>
+            <div className="mt-3 grid grid-cols-2 gap-2.5">
+              <FieldLine label="Plan" value={account.planLabel} />
+              <div className="min-w-0 rounded-[12px] border border-white/[0.065] bg-white/[0.035] px-3.5 py-3">
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">TikTok</p>
+                <p className="mt-1 flex items-center gap-2 text-[13px] font-bold text-slate-100">
+                  <StatusDot tone={tiktok.connected ? 'green' : 'slate'} />
+                  {tiktokStatus}
+                </p>
               </div>
-              <div className="rounded-[12px] border border-white/[0.065] bg-black/15 p-3">
-                <p className="text-[11px] text-slate-500">TikTok</p>
-                <p className="mt-1 text-[15px] font-black text-white">{tiktok.connected ? 'Connecté' : 'Non connecté'}</p>
-              </div>
-              <div className="rounded-[12px] border border-white/[0.065] bg-black/15 p-3">
-                <p className="text-[11px] text-slate-500">Mémoire</p>
-                <p className="mt-1 text-[15px] font-black text-white">{memory.active ? 'Active' : 'En attente'}</p>
-              </div>
-              <div className="rounded-[12px] border border-white/[0.065] bg-black/15 p-3">
-                <p className="text-[11px] text-slate-500">Expert</p>
-                <p className="mt-1 text-[15px] font-black text-white">{expertMode.enabled ? 'Actif' : 'Préparé'}</p>
+              <FieldLine label="Analyses" value={`${account.quotaUsed} / ${formatLimit(account.quotaLimit)}`} />
+              <div className="min-w-0 rounded-[12px] border border-cyan-200/[0.10] bg-cyan-300/[0.045] px-3.5 py-3">
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-100/60">Moteur</p>
+                <p className="mt-1 flex items-center gap-2 text-[13px] font-bold text-cyan-50">
+                  <StatusDot tone="cyan" />
+                  Prêt à apprendre
+                </p>
               </div>
             </div>
-          </div>
+          </aside>
         </div>
       </div>
 
       {message ? (
-        <div className="mt-4 rounded-[14px] border border-cyan-200/[0.12] bg-cyan-300/[0.06] px-4 py-3 text-[13px] font-semibold text-cyan-50">
+        <div className="mt-4 rounded-[13px] border border-cyan-200/[0.12] bg-cyan-300/[0.06] px-4 py-3 text-[13px] font-semibold text-cyan-50">
           {message}
         </div>
       ) : null}
 
-      <div className="mt-6 grid gap-5 xl:grid-cols-[minmax(0,1fr)_430px]">
-        <div className="space-y-5">
-          <SettingsSection
-            eyebrow="Compte"
-            title="Profil & compte"
-            description="Les informations affichées viennent du profil Viralynz et de la session active."
-          >
-            <div className="rounded-[18px] border border-white/[0.075] bg-white/[0.035] p-4 sm:p-5">
-              <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-                <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border border-violet-300/18 bg-[radial-gradient(circle_at_30%_20%,rgba(232,121,249,0.38),rgba(124,58,237,0.18),rgba(3,7,18,0.98))] text-[26px] font-black text-white shadow-[0_0_36px_rgba(124,58,237,0.24)]">
-                  {initials(account.name, account.email)}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="truncate text-[24px] font-black tracking-[-0.04em] text-white">{account.name}</h2>
-                    <Badge>{account.planLabel}</Badge>
-                    <Badge tone="green">{statusLabel(account.subscriptionStatus)}</Badge>
-                  </div>
-                  <p className="mt-1 truncate text-[14px] text-slate-400">{account.email}</p>
-                  <p className="mt-2 text-[12px] text-slate-500">Inscription: {formatDate(account.createdAt)}</p>
-                </div>
+      <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_410px]">
+        <SectionCard
+          eyebrow="Compte"
+          title="Identité du compte"
+          description="Ton accès Viralynz, ton email et le plan qui contrôle tes quotas."
+          className="xl:col-start-1 xl:row-start-1"
+        >
+          <div className="rounded-[16px] border border-white/[0.065] bg-white/[0.032] p-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="grid h-16 w-16 shrink-0 place-items-center rounded-full border border-violet-300/18 bg-[radial-gradient(circle_at_30%_20%,rgba(232,121,249,0.36),rgba(124,58,237,0.18),rgba(3,7,18,0.98))] text-[22px] font-black text-white shadow-[0_0_34px_rgba(124,58,237,0.22)]">
+                {initials(account.name, account.email)}
               </div>
-              <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <ActionButton href="/dashboard/support">Modifier le profil</ActionButton>
-                <ActionButton onClick={() => void sendPasswordReset()} disabled={busyAction === 'password'}>
-                  {busyAction === 'password' ? 'Envoi...' : 'Changer le mot de passe'}
-                </ActionButton>
-                <ActionButton href="/dashboard/billing">Gérer mon abonnement</ActionButton>
-                <ActionButton href="/dashboard/support">Ouvrir le support</ActionButton>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="truncate text-[20px] font-black tracking-[-0.035em] text-white">{account.name || 'Créateur Viralynz'}</h3>
+                  <Badge>{account.planLabel}</Badge>
+                  <Badge tone="green">{accountStatusLabel(account.subscriptionStatus)}</Badge>
+                </div>
+                <p className="mt-1 truncate text-[13px] text-slate-400">{account.email}</p>
+                <p className="mt-2 text-[12px] text-slate-500">Inscription : {formatDate(account.createdAt)}</p>
+              </div>
+              <ActionLink href="/dashboard/billing" tone="primary">Gérer mon abonnement</ActionLink>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 border-t border-white/[0.06] pt-3">
+              <ActionButton onClick={() => void sendPasswordReset()} disabled={busyAction === 'password'} subtle>
+                {busyAction === 'password' ? 'Envoi...' : 'Changer le mot de passe'}
+              </ActionButton>
+              <ActionLink href="/account" subtle>Voir mon compte</ActionLink>
+            </div>
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          eyebrow="Connexion"
+          title="Connexion TikTok"
+          description="TikTok est relié. Les métriques avancées arriveront après validation."
+          className="xl:col-start-2 xl:row-start-1"
+        >
+          <div className="rounded-[16px] border border-white/[0.065] bg-white/[0.032] p-4">
+            <div className="flex items-center gap-3">
+              <TikTokAvatar tiktok={tiktok} />
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="truncate text-[17px] font-black text-white">{tiktokName}</h3>
+                  <Badge tone={tiktok.connected ? 'green' : 'slate'}>{tiktok.connected ? 'Connecté' : 'Non connecté'}</Badge>
+                  {tiktok.connected && tiktok.modeLabel ? <Badge tone="amber">{tiktok.modeLabel}</Badge> : null}
+                </div>
+                <p className="mt-1 text-[12px] text-slate-500">Permission active : {activeScopes(tiktok.scopes)}</p>
               </div>
             </div>
-          </SettingsSection>
 
-          <SettingsSection
-            eyebrow="Préférences"
-            title="Préférences produit"
-            description="Ajuste les préférences qui influencent ton expérience produit. Elles sont enregistrées localement sur cet appareil pour l’instant."
-          >
-            <div className="grid gap-3 lg:grid-cols-2">
-              <SelectRow label="Langue interface" value="Français" options={['Français', 'English']} note="Le français est actif. L’anglais est prévu pour une prochaine version." />
-              <SelectRow label="Format date / heure" value="France — 24h" options={['France — 24h', 'International — 12h']} note="Format affiché selon l’interface actuelle." />
-              <ToggleRow title="Affichage compact du dashboard" description="Réduit la densité visuelle des sections longues." checked={preferences.compactDashboard} onChange={() => updatePreference('compactDashboard')} />
-              <ToggleRow title="Ouvrir le dernier onglet actif" description="Prépare la reprise de contexte dans les pages dashboard." checked={preferences.restoreLastTab} onChange={() => updatePreference('restoreLastTab')} />
-              <ToggleRow title="Animations avancées" description="Garde les transitions premium quand ton appareil le permet." checked={preferences.advancedAnimations} onChange={() => updatePreference('advancedAnimations')} />
-              <ToggleRow title="Confirmation avant actions importantes" description="Protège les actions sensibles comme déconnexion ou réinitialisation." checked={preferences.confirmImportantActions} onChange={() => updatePreference('confirmImportantActions')} />
-              <ToggleRow title="Mode focus analyse" description="Réduit les distractions autour du module d’analyse vidéo." checked={preferences.focusAnalysis} onChange={() => updatePreference('focusAnalysis')} />
-            </div>
-          </SettingsSection>
+            <p className="mt-4 text-[13px] leading-6 text-slate-300">
+              Ton compte TikTok est relié à Viralynz. Les données de profil sont actives, les métriques avancées arriveront après validation TikTok.
+            </p>
 
-          <SettingsSection
-            eyebrow="Moteur Viralynz"
-            title="Réglages du moteur Viralynz"
-            description="Contrôle comment Viralynz apprend de tes analyses et prépare les futures préférences d’analyse."
-          >
-            <div className="grid gap-4">
-              <div className="rounded-[18px] border border-white/[0.075] bg-white/[0.035] p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h3 className="text-[18px] font-black text-white">Mémoire créateur</h3>
-                    <p className="mt-2 max-w-2xl text-[13px] leading-6 text-slate-400">
-                      Viralynz retient les hooks, erreurs récurrentes, CTA, drops d’attention et patterns utiles pour éviter les conseils génériques.
-                    </p>
-                  </div>
-                  <Badge tone={memory.active ? 'green' : 'slate'}>{memory.active ? 'Actif' : 'En apprentissage'}</Badge>
-                </div>
-                <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
-                  <div className="rounded-[14px] border border-white/[0.065] bg-black/15 p-4">
-                    <p className="text-[13px] leading-6 text-slate-300">{memory.summary || 'Analyse une vidéo pour construire une mémoire créateur exploitable.'}</p>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {rememberedItems.slice(0, 5).map((item) => <Badge key={item} tone="cyan">{item}</Badge>)}
-                    </div>
-                  </div>
-                  <div className="rounded-[14px] border border-white/[0.065] bg-black/15 p-4">
-                    <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-500">Analyses utilisées</p>
-                    <p className="mt-2 text-[28px] font-black text-white">{memory.sourceAnalysisCount}</p>
-                    <p className="mt-2 text-[12px] leading-5 text-slate-500">Dernière mise à jour: {formatDate(memory.updatedAt)}</p>
-                  </div>
-                </div>
-                <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                  <ToggleRow title="Mémoire active" description="Préférence locale; le moteur continue d’utiliser la mémoire serveur disponible." checked={preferences.creatorMemory} onChange={() => updatePreference('creatorMemory')} badge="local" />
-                  <ActionButton href="/dashboard">Gérer depuis le dashboard</ActionButton>
-                  <ActionButton disabled>Réinitialiser la mémoire</ActionButton>
-                </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+              <div className="rounded-[13px] border border-emerald-300/[0.12] bg-emerald-400/[0.055] p-3">
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-100/70">Disponible maintenant</p>
+                <p className="mt-2 text-[12px] leading-5 text-emerald-50/80">Profil TikTok · Avatar · Nom du compte</p>
               </div>
-
-              <div className="grid gap-4 lg:grid-cols-2">
-                <div className="rounded-[18px] border border-white/[0.075] bg-white/[0.035] p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="text-[18px] font-black text-white">Expert Mode</h3>
-                      <p className="mt-2 text-[13px] leading-6 text-slate-400">Contrôle plus fin du comportement du moteur d’analyse.</p>
-                    </div>
-                    <Badge tone={expertMode.exists ? 'cyan' : 'amber'}>{expertMode.exists ? 'Préférences lues' : 'Bientôt disponible'}</Badge>
-                  </div>
-                  <div className="mt-4 grid gap-3">
-                    <SliderRow label="Poids du hook" value={expertMode.weights.hook} note="Lecture des réglages serveur si disponibles. Modification UI à venir." />
-                    <SliderRow label="Poids de la rétention" value={expertMode.weights.retention} note="La rétention reste centrale dans le diagnostic Viralynz." />
-                    <SliderRow label="Poids du CTA" value={expertMode.weights.cta} note="Contrôle prévu pour ajuster les décisions orientées conversion." />
-                    <SliderRow label="Poids du payoff" value={expertMode.weights.payoff} note="Prépare la pondération des moments de preuve et révélation." />
-                    <SelectRow label="Priorité moteur" value="Repost" options={['Repost', 'Clarté', 'Conversion', 'Viral']} note={`Mode actuel: ${expertMode.analysisDepth || 'standard'}. Édition bientôt disponible.`} />
-                  </div>
-                </div>
-
-                <div className="rounded-[18px] border border-white/[0.075] bg-white/[0.035] p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="text-[18px] font-black text-white">Recommandations V2</h3>
-                      <p className="mt-2 text-[13px] leading-6 text-slate-400">Prépare la façon dont Viralynz transforme un diagnostic en version corrigée.</p>
-                    </div>
-                    <Badge tone="violet">Local</Badge>
-                  </div>
-                  <div className="mt-4 grid gap-3">
-                    <ToggleRow title="Autoriser V2 automatique" description="Prépare une V2 dès qu’une analyse est suffisamment complète." checked={preferences.autoV2} onChange={() => updatePreference('autoV2')} />
-                    <ToggleRow title="Proposer hooks alternatifs" description="Génère plusieurs angles de hook quand le sujet manque de tension." checked={preferences.hookAlternatives} onChange={() => updatePreference('hookAlternatives')} />
-                    <ToggleRow title="Proposer CTA alternatifs" description="Prépare plusieurs appels à l’action selon le format." checked={preferences.ctaAlternatives} onChange={() => updatePreference('ctaAlternatives')} />
-                    <ToggleRow title="Proposer version courte" description="Priorise une V2 plus tendue quand l’intro dilue le payoff." checked={preferences.shortVersion} onChange={() => updatePreference('shortVersion')} />
-                  </div>
-                </div>
+              <div className="rounded-[13px] border border-cyan-300/[0.12] bg-cyan-400/[0.045] p-3">
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-100/70">En attente de validation</p>
+                <p className="mt-2 text-[12px] leading-5 text-cyan-50/80">Vidéos · Stats · Performances</p>
               </div>
             </div>
-          </SettingsSection>
-        </div>
 
-        <aside className="space-y-5">
-          <SettingsSection
-            eyebrow="Connexions"
-            title="Connexions & intégrations"
-            description="Gère les comptes qui enrichissent ton dashboard Viralynz."
-          >
-            <div className="rounded-[18px] border border-white/[0.075] bg-white/[0.035] p-4">
-              <div className="flex items-center gap-4">
-                <IntegrationAvatar tiktok={tiktok} />
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="truncate text-[18px] font-black text-white">{tiktok.connected ? tiktokName : 'TikTok non connecté'}</h3>
-                    <Badge tone={tiktok.connected ? 'green' : 'slate'}>{tiktok.connected ? 'Compte relié' : 'Non connecté'}</Badge>
-                    {tiktok.connected ? <Badge tone="cyan">{tiktok.modeLabel}</Badge> : null}
-                  </div>
-                  <p className="mt-1 text-[12px] text-slate-500">Dernière connexion: {formatDate(tiktok.connectedAt)}</p>
-                </div>
-              </div>
-              <div className="mt-4 grid gap-3">
-                <div className="rounded-[14px] border border-white/[0.065] bg-black/15 p-4">
-                  <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-500">Permissions actuelles</p>
-                  <p className="mt-2 text-[13px] font-semibold text-white">{safeScopes(tiktok.scopes)}</p>
-                  <p className="mt-2 text-[12px] leading-5 text-slate-400">
-                    {tiktok.hasAdvancedMetrics
-                      ? 'Les permissions avancées permettent de synchroniser plus de données TikTok.'
-                      : 'Le compte est relié, mais seules les données de profil sont autorisées pour l’instant.'}
-                  </p>
-                </div>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <ActionButton href="/api/tiktok/connect" tone="primary">{tiktok.connected ? 'Reconnecter' : 'Connecter TikTok'}</ActionButton>
-                  <ActionButton onClick={() => setConfirmAction('disconnectTikTok')} disabled={!tiktok.connected || busyAction === 'tiktok'} tone="danger">
-                    {busyAction === 'tiktok' ? 'Déconnexion...' : 'Déconnecter'}
-                  </ActionButton>
-                </div>
-              </div>
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              {tiktok.connected ? (
+                <ActionButton onClick={() => setTikTokManagerOpen(true)}>Gérer</ActionButton>
+              ) : (
+                <ActionLink href="/api/tiktok/connect" tone="primary">Connecter</ActionLink>
+              )}
+              <ActionButton
+                onClick={() => {
+                  if (preferences.confirmSensitiveActions) setConfirmAction('disconnectTikTok');
+                  else void disconnectTikTok();
+                }}
+                disabled={!tiktok.connected || busyAction === 'tiktok'}
+                tone="danger"
+              >
+                {busyAction === 'tiktok' ? 'Déconnexion...' : 'Déconnecter'}
+              </ActionButton>
             </div>
-          </SettingsSection>
+          </div>
+        </SectionCard>
 
-          <SettingsSection
-            eyebrow="Sécurité"
-            title="Sécurité & notifications"
-            description="Contrôle les accès et les emails importants."
-          >
-            <div className="space-y-4">
-              <div className="rounded-[16px] border border-white/[0.075] bg-white/[0.035] p-4">
-                <h3 className="text-[16px] font-black text-white">Connexion</h3>
-                <p className="mt-2 text-[13px] leading-6 text-slate-400">Email de connexion: <span className="font-semibold text-slate-200">{account.email}</span></p>
-                <div className="mt-4 grid gap-2">
-                  <ActionButton onClick={() => void sendPasswordReset()} disabled={busyAction === 'password'}>Changer le mot de passe</ActionButton>
-                  <ActionButton disabled>Déconnecter tous les appareils</ActionButton>
-                </div>
-              </div>
-              <div className="grid gap-3">
-                <ToggleRow title="Nouveautés produit" description="Recevoir les changements importants de Viralynz." checked={preferences.productNewsEmail} onChange={() => updatePreference('productNewsEmail')} badge="local" />
-                <ToggleRow title="Alertes importantes" description="Recevoir les alertes qui touchent l’accès ou la sécurité." checked={preferences.importantAlertsEmail} onChange={() => updatePreference('importantAlertsEmail')} badge="local" />
-                <ToggleRow title="Billing / facturation" description="Conserver les emails liés au plan et aux paiements." checked={preferences.billingEmail} onChange={() => updatePreference('billingEmail')} badge="local" />
-                <ToggleRow title="Analyse terminée" description="Préférence prête pour les traitements asynchrones." checked={preferences.analysisDoneEmail} onChange={() => updatePreference('analysisDoneEmail')} badge="local" />
-                <ToggleRow title="Nouveautés IA" description="Recevoir les annonces liées au moteur Viralynz." checked={preferences.aiNewsEmail} onChange={() => updatePreference('aiNewsEmail')} badge="local" />
-              </div>
-            </div>
-          </SettingsSection>
+        <SectionCard
+          eyebrow="Préférences"
+          title="Préférences essentielles"
+          description="Les préférences restent simples : uniquement ce qui change vraiment ton usage."
+          className="xl:col-start-1 xl:row-start-2"
+        >
+          <div className="rounded-[16px] border border-white/[0.065] bg-white/[0.026] px-3 sm:px-4">
+            <PreferenceRow title="Langue" description="Interface et textes produit." value="Français" />
+            <PreferenceRow
+              title="Animations premium"
+              description="Garde les transitions subtiles de l’interface."
+              checked={preferences.premiumAnimations}
+              onChange={() => updatePreference('premiumAnimations')}
+            />
+            <PreferenceRow
+              title="Confirmation actions sensibles"
+              description="Demande une validation avant déconnexion ou réinitialisation."
+              checked={preferences.confirmSensitiveActions}
+              onChange={() => updatePreference('confirmSensitiveActions')}
+            />
+            <PreferenceRow
+              title="Notifications produit importantes"
+              description="Alertes liées au compte, au plan et aux changements majeurs."
+              checked={preferences.importantProductNotifications}
+              onChange={() => updatePreference('importantProductNotifications')}
+            />
+          </div>
+          <p className="mt-3 text-[12px] font-semibold text-slate-500">Enregistré sur cet appareil.</p>
+        </SectionCard>
 
-          <SettingsSection
-            eyebrow="Support"
-            title="Support / zone sensible"
-            description="Actions utiles et opérations qui méritent confirmation."
-          >
-            <div className="grid gap-3">
-              <ActionButton href="/dashboard/support">Contacter le support</ActionButton>
-              <ActionButton href="/dashboard/updates">Voir la documentation</ActionButton>
-              <ActionButton href="/dashboard/support">Envoyer un feedback</ActionButton>
-              <ActionButton href="/dashboard/support">Signaler un bug</ActionButton>
+        <SectionCard
+          eyebrow="Sécurité"
+          title="Sécurité & support"
+          description="Actions utiles, sans transformer la page en panneau d’administration."
+          className="xl:col-start-2 xl:row-start-2"
+        >
+          <div className="grid gap-2">
+            <ActionButton onClick={() => void sendPasswordReset()} disabled={busyAction === 'password'}>
+              Changer le mot de passe
+            </ActionButton>
+            <ActionLink href="/dashboard/support">Contacter le support</ActionLink>
+            <ActionLink href="/dashboard/support">Signaler un bug</ActionLink>
+            <ActionButton onClick={() => void logout()} disabled={busyAction === 'logout'}>
+              {busyAction === 'logout' ? 'Déconnexion...' : 'Se déconnecter'}
+            </ActionButton>
+          </div>
+
+          <div className="mt-4 rounded-[14px] border border-white/[0.07] bg-black/15 p-3">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Zone sensible</p>
+            <div className="mt-2 grid gap-1">
+              <ActionButton
+                onClick={() => {
+                  if (preferences.confirmSensitiveActions) setConfirmAction('disconnectTikTok');
+                  else void disconnectTikTok();
+                }}
+                disabled={!tiktok.connected || busyAction === 'tiktok'}
+                subtle
+              >
+                Déconnecter TikTok
+              </ActionButton>
+              <ActionButton
+                onClick={() => {
+                  if (preferences.confirmSensitiveActions) setConfirmAction('resetPreferences');
+                  else resetLocalPreferences();
+                }}
+                subtle
+              >
+                Réinitialiser mes préférences
+              </ActionButton>
+              <ActionLink href="/dashboard/support" subtle>Demander la suppression du compte</ActionLink>
             </div>
-            <div className="mt-5 rounded-[16px] border border-rose-300/[0.12] bg-rose-400/[0.045] p-4">
-              <h3 className="text-[16px] font-black text-rose-50">Zone sensible</h3>
-              <p className="mt-2 text-[12.5px] leading-5 text-rose-100/70">Ces actions ne suppriment jamais tes analyses sans confirmation explicite.</p>
-              <div className="mt-4 grid gap-2">
-                <ActionButton onClick={() => setConfirmAction('disconnectTikTok')} disabled={!tiktok.connected || busyAction === 'tiktok'} tone="danger">Déconnecter TikTok</ActionButton>
-                <ActionButton onClick={resetLocalPreferences} tone="danger">Réinitialiser mes préférences</ActionButton>
-                <ActionButton disabled tone="danger">Réinitialiser la mémoire créateur</ActionButton>
-                <ActionButton disabled tone="danger">Supprimer mon compte</ActionButton>
-                <ActionButton onClick={() => void logout()} disabled={busyAction === 'logout'} tone="danger">
-                  {busyAction === 'logout' ? 'Déconnexion...' : 'Se déconnecter'}
-                </ActionButton>
-              </div>
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          eyebrow="Moteur"
+          title="Moteur Viralynz"
+          description="Le moteur apprend de tes analyses, pas de données inventées."
+          className="xl:col-start-1 xl:row-start-3"
+        >
+          <div className="rounded-[17px] border border-violet-300/[0.12] bg-[linear-gradient(135deg,rgba(124,58,237,0.11),rgba(34,211,238,0.055),rgba(255,255,255,0.025))] p-4">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <p className="max-w-2xl text-[13px] leading-6 text-slate-300">
+                Viralynz apprend de tes analyses pour repérer les patterns qui reviennent : hooks faibles, drops, CTA vagues et structures à republier.
+              </p>
+              <ActionLink href="/dashboard/analyze" tone="primary">Analyser une vidéo</ActionLink>
             </div>
-          </SettingsSection>
-        </aside>
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <EngineItem title="Mémoire créateur" copy="Se construit après tes premières analyses." badge="En préparation" tone="violet" />
+              <EngineItem title="Recommandations V2" copy="Actives dès qu’une analyse est terminée." badge="Prêt" tone="green" />
+              <EngineItem title="Expert Mode" copy="Réglages avancés du diagnostic." badge="Bientôt" tone="cyan" />
+            </div>
+          </div>
+        </SectionCard>
       </div>
 
-      {confirmAction === 'disconnectTikTok' ? (
+      <TikTokConnectionManager
+        open={tiktokManagerOpen}
+        connection={tiktok}
+        onClose={() => setTikTokManagerOpen(false)}
+        onDisconnected={() => {
+          setTikTokManagerOpen(false);
+          setMessage('TikTok déconnecté.');
+          router.refresh();
+        }}
+      />
+
+      {confirmAction ? (
         <div className="fixed inset-0 z-[320] flex items-center justify-center bg-slate-950/72 px-4 backdrop-blur-xl">
           <div
             role="dialog"
             aria-modal="true"
-            aria-labelledby="settings-disconnect-tiktok-title"
-            className="w-full max-w-[460px] overflow-hidden rounded-[22px] border border-rose-200/[0.14] bg-[linear-gradient(145deg,rgba(15,23,42,0.98),rgba(7,10,22,0.99))] p-5 shadow-[0_34px_120px_-58px_rgba(244,63,94,0.55),inset_0_1px_0_rgba(255,255,255,0.08)]"
+            aria-labelledby="settings-confirm-title"
+            className="w-full max-w-[430px] overflow-hidden rounded-[20px] border border-white/[0.11] bg-[linear-gradient(145deg,rgba(15,23,42,0.98),rgba(7,10,22,0.99))] p-5 shadow-[0_34px_120px_-58px_rgba(124,58,237,0.65),inset_0_1px_0_rgba(255,255,255,0.08)]"
           >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-[11px] font-black uppercase tracking-[0.22em] text-rose-100/70">Connexion TikTok</p>
-                <h3 id="settings-disconnect-tiktok-title" className="mt-3 text-[24px] font-black tracking-[-0.04em] text-white">Déconnecter TikTok ?</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setConfirmAction(null)}
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.045] text-slate-300 transition hover:bg-white/[0.08]"
-                aria-label="Fermer la confirmation"
-              >
-                ×
-              </button>
-            </div>
-            <p className="mt-4 text-[14px] leading-6 text-slate-300">
-              Ton compte TikTok ne sera plus relié à Viralynz. Tes analyses déjà créées restent disponibles, mais les futures données TikTok ne seront plus associées à ce compte.
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-rose-100/70">Confirmation</p>
+            <h3 id="settings-confirm-title" className="mt-3 text-[23px] font-black tracking-[-0.04em] text-white">
+              {confirmAction === 'disconnectTikTok' ? 'Déconnecter TikTok ?' : 'Réinitialiser les préférences ?'}
+            </h3>
+            <p className="mt-3 text-[13px] leading-6 text-slate-300">
+              {confirmAction === 'disconnectTikTok'
+                ? 'Tes analyses restent disponibles. Seule la connexion au compte TikTok sera retirée.'
+                : 'Les préférences locales de cet appareil reviendront aux valeurs par défaut.'}
             </p>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <button
-                type="button"
-                onClick={() => setConfirmAction(null)}
-                className="min-h-[44px] rounded-[10px] border border-white/[0.09] bg-white/[0.045] px-4 text-[13px] font-black text-white transition hover:bg-white/[0.08]"
-              >
-                Annuler
-              </button>
-              <button
-                type="button"
-                onClick={() => void disconnectTikTok()}
+            <div className="mt-5 grid gap-2 sm:grid-cols-2">
+              <ActionButton onClick={() => setConfirmAction(null)}>Annuler</ActionButton>
+              <ActionButton
+                onClick={() => {
+                  if (confirmAction === 'disconnectTikTok') void disconnectTikTok();
+                  else resetLocalPreferences();
+                }}
+                tone="danger"
                 disabled={busyAction === 'tiktok'}
-                className="min-h-[44px] rounded-[10px] border border-rose-300/18 bg-rose-400/[0.10] px-4 text-[13px] font-black text-rose-50 transition hover:bg-rose-400/[0.16] disabled:cursor-not-allowed disabled:opacity-55"
               >
-                {busyAction === 'tiktok' ? 'Déconnexion...' : 'Déconnecter'}
-              </button>
+                Confirmer
+              </ActionButton>
             </div>
           </div>
         </div>

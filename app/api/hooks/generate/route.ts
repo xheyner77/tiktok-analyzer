@@ -19,7 +19,7 @@ import {
   normalizeGeneratedHooks,
   normalizeHookPacks,
 } from '@/lib/hook-engine';
-import { buildCreatorMemoryContext, getCreatorMemory } from '@/lib/creator-memory';
+import { getMemoryContextForUser } from '@/lib/memory/memory-context';
 import type { HookGenerationInput } from '@/lib/hook-engine';
 import type { HookObjective, HookPack, VideoFormat } from '@/lib/types';
 
@@ -190,8 +190,6 @@ export async function POST(request: NextRequest) {
 
     user = await checkAndResetMonthly(user);
     const tier = getEffectivePlan(user);
-    const creatorMemory = await getCreatorMemory(session.userId);
-    const creatorMemoryContext = buildCreatorMemoryContext(creatorMemory);
     const hookLimit = HOOK_LIMITS[tier] ?? 0;
 
     if (hookLimit === 0) {
@@ -259,6 +257,15 @@ export async function POST(request: NextRequest) {
     if (count > remaining) count = remaining;
 
     const input = { context, scene, person, tone, count, format, objective, niche, hookMode, mode, intensity };
+    const creatorMemory = useMemory
+      ? await getMemoryContextForUser({
+          userId: session.userId,
+          plan: tier,
+          task: 'generate_hook',
+          query: [context, niche, objective, format].filter(Boolean).join(' '),
+        })
+      : null;
+    const creatorMemoryContext = creatorMemory?.enabled ? creatorMemory.prompt : '';
     const hasOpenAI = !!process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'sk-your-key-here';
 
     let hookPacks: HookPack[] = [];

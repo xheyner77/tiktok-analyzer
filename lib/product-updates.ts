@@ -135,11 +135,11 @@ export const productUpdates: ProductUpdate[] = [
     ],
   },
   {
-    id: 'v2-2-creator-workspace',
+    id: 'v2-2-Starter-workspace',
     version: 'v2.2',
     date: '16 mai 2026',
     isoDate: '2026-05-16',
-    title: 'Creator Workspace consolidé',
+    title: 'Starter Workspace consolidé',
     summary:
       'Les sections Hooks, Rewrite, Publication, Radar et Bibliothèque sont structurées dans l’app dashboard.',
     category: 'Dashboard',
@@ -158,12 +158,12 @@ export const productUpdates: ProductUpdate[] = [
     isoDate: '2026-05-16',
     title: 'Plans, quotas et Stripe alignés',
     summary:
-      'Les plans Free, Creator, Pro et Scale sont mieux reliés aux quotas et aux modules accessibles.',
+      'Les plans Free, Starter, Pro et Lifetime sont mieux reliés aux quotas et aux modules accessibles.',
     category: 'Billing',
     status: 'Livré',
     tags: ['Billing', 'Dashboard', 'TikTok Sync'],
     bullets: [
-      'Creator autorise un compte TikTok, Pro et Scale gardent une trajectoire d’upgrade claire.',
+      'Starter autorise un compte TikTok, Pro et Lifetime gardent une trajectoire d’upgrade claire.',
       'États d’abonnement annulé ou absent affichés sans bloquer brutalement l’accès legacy.',
       'Pages billing reliées aux routes Stripe existantes sans exposer d’identifiants sensibles.',
     ],
@@ -196,7 +196,7 @@ export const upcomingProductUpdates: RoadmapUpdate[] = [
     status: 'En préparation',
   },
   {
-    id: 'creator-resource-center',
+    id: 'Starter-resource-center',
     title: 'Centre de ressources créateur',
     description:
       'Regrouper guides, exemples de V2 et méthodes de lecture des diagnostics Viralynz.',

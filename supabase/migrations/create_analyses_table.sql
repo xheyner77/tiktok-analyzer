@@ -7,7 +7,7 @@ create table if not exists public.analyses (
   result      jsonb       not null,
   reconstruction jsonb,
   reconstruction_created_at timestamptz,
-  reconstruction_plan_used text check (reconstruction_plan_used in ('pro', 'scale')),
+  reconstruction_plan_used text check (reconstruction_plan_used in ('pro', 'lifetime', 'scale')),
   created_at  timestamptz not null default now()
 );
 

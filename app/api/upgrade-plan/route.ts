@@ -12,7 +12,7 @@ function getStripe(): Stripe {
 
 /**
  * Vérifie côté serveur que le Checkout Session est payé et appartient à l’utilisateur.
- * **Ne modifie pas le plan en base** : seul le webhook `checkout.session.completed` (signé Stripe) applique creator/pro/scale.
+ * **Ne modifie pas le plan en base** : seul le webhook `checkout.session.completed` (signé Stripe) applique Starter/Pro/Lifetime.
  */
 export async function POST(request: NextRequest) {
   const skBlock = blockTestStripeSecretInProduction();
@@ -47,9 +47,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Session Stripe introuvable.' }, { status: 400 });
     }
 
-    if (checkoutSession.mode !== 'subscription') {
-      console.error('[upgrade-plan] Session is not subscription mode:', checkoutSession.id);
-      return NextResponse.json({ error: 'Session invalide (pas un abonnement).' }, { status: 400 });
+    const expectedMode = plan === 'scale' ? 'payment' : 'subscription';
+    if (checkoutSession.mode !== expectedMode) {
+      console.error('[upgrade-plan] Session mode mismatch:', checkoutSession.id, checkoutSession.mode, expectedMode);
+      return NextResponse.json({ error: 'Session Stripe incohérente.' }, { status: 400 });
     }
 
     if (checkoutSession.payment_status !== 'paid') {

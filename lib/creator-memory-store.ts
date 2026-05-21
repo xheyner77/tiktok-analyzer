@@ -1630,7 +1630,7 @@ async function persistProprietaryEngineRows(
           title: 'Hooks a comparer',
           variants: executionHookVariants.slice(0, 4).map((variant) => variant.content),
           test_suggestion: 'Tester direct vs preuve sur le prochain repost.',
-          save_reason: 'Alimente Hook Vault et Creator Memory.',
+          save_reason: 'Alimente Hook Vault et mémoire créateur.',
           updated_at: new Date().toISOString(),
         },
         {
@@ -1732,7 +1732,7 @@ async function persistProprietaryEngineRows(
           }
         : {
             archetype_key: 'tension_creator',
-            label: 'Tension Creator',
+            label: 'Tension créateur',
             description: 'Tu gagnes quand la video pose un conflit net des la premiere phrase.',
             recommendation_style: 'Tester hooks contradiction, erreur cachee et choix A/B.',
             benchmark_lens: 'Comparer par intensite du conflit et vitesse de comprehension.',

@@ -126,18 +126,18 @@ export default function PremiumGate({ onReset }: PremiumGateProps) {
           </div>
 
           <Link
-            href="/pricing"
+            href="/dashboard/billing"
             className="block w-full rounded-xl py-3 text-sm font-semibold text-white text-center bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:opacity-90 active:scale-[0.99] transition-all shadow-lg shadow-vn-fuchsia/20"
           >
             Choisir Pro →
           </Link>
         </div>
 
-        {/* ── Scale ──────────────────────────────────────────────── */}
+        {/* Lifetime */}
         <div className="rounded-2xl border border-vn-violet/25 bg-gradient-to-b from-vn-violet/[0.07] to-transparent p-5">
           <div className="mb-4">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-vn-glow uppercase tracking-widest">Scale</span>
+              <span className="text-xs font-semibold text-vn-glow uppercase tracking-widest">Lifetime</span>
               <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-vn-violet/15 text-vn-glow border border-vn-violet/25 whitespace-nowrap">
                 Créateurs sérieux
               </span>
@@ -145,9 +145,9 @@ export default function PremiumGate({ onReset }: PremiumGateProps) {
             <div className="flex items-end gap-1">
               <span className="text-3xl font-bold text-white">{DISPLAY_CATALOG_SCALE_EUR}</span>
               <span className="text-base font-semibold text-gray-300 mb-0.5">€</span>
-              <span className="text-sm text-gray-400 mb-1">/mois</span>
+              <span className="text-sm text-gray-400 mb-1">une seule fois</span>
             </div>
-            <p className="text-xs text-green-400 mt-1 font-medium">Annulable à tout moment</p>
+            <p className="text-xs text-green-400 mt-1 font-medium">Paiement unique</p>
           </div>
 
           <div className="space-y-2.5 mb-5">
@@ -160,10 +160,10 @@ export default function PremiumGate({ onReset }: PremiumGateProps) {
           </div>
 
           <Link
-            href="/pricing"
+            href="/dashboard/billing"
             className="block w-full rounded-xl py-3 text-sm font-semibold text-vn-glow text-center bg-vn-violet/10 border border-vn-violet/30 hover:bg-vn-violet/20 hover:border-vn-violet/50 active:scale-[0.99] transition-all"
           >
-            Choisir Scale →
+            Choisir Lifetime →
           </Link>
         </div>
 

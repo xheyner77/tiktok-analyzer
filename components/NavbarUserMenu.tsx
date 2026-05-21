@@ -10,15 +10,19 @@ type UpgradePlan = 'creator' | 'pro' | 'scale';
 
 const PLAN_LABELS: Record<Plan, string> = {
   free:  'Plan Free',
-  creator: 'Plan Creator',
+  starter: 'Plan Starter',
+  creator: 'Plan Starter',
   pro:   'Plan Pro',
-  scale: 'Plan Scale',
+  lifetime: 'Plan Lifetime',
+  scale: 'Plan Lifetime',
 };
 
 const PLAN_COLORS: Record<Plan, string> = {
   free:  'bg-[#1a1a1a] text-gray-500',
+  starter: 'bg-vn-fuchsia/10 text-vn-fuchsia border border-vn-fuchsia/20',
   creator: 'bg-vn-fuchsia/10 text-vn-fuchsia border border-vn-fuchsia/20',
   pro:   'bg-cyan-300/10 text-cyan-200 border border-cyan-300/20',
+  lifetime: 'bg-vn-violet/15 text-vn-glow border border-vn-violet/25',
   scale: 'bg-vn-violet/15 text-vn-glow border border-vn-violet/25',
 };
 
@@ -37,7 +41,7 @@ export default function NavbarUserMenu({ email, plan }: NavbarUserMenuProps) {
   const initials = email.slice(0, 2).toUpperCase();
   const upgradeTarget: UpgradePlan | null = plan === 'free' ? 'creator' : plan === 'creator' ? 'pro' : plan === 'pro' ? 'scale' : null;
   const upgradeLabel = upgradeTarget
-    ? `Passer à ${upgradeTarget === 'creator' ? 'Creator' : upgradeTarget === 'pro' ? 'Pro' : 'Scale'}`
+    ? `Passer à ${upgradeTarget === 'creator' ? 'Starter' : upgradeTarget === 'pro' ? 'Pro' : 'Lifetime'}`
     : null;
 
   const handleLogout = async () => {
@@ -65,7 +69,7 @@ export default function NavbarUserMenu({ email, plan }: NavbarUserMenuProps) {
       });
 
       if (res.status === 401) {
-        router.push('/login?redirect=/#pricing');
+        router.push('/login?redirect=/dashboard/billing');
         return;
       }
 

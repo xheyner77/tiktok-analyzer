@@ -246,7 +246,7 @@ export async function extractTranscriptFromVideo(input: {
       available: false,
       confidence: 0,
       source: 'none',
-      limitations: ['Transcription audio réservée aux plans Pro et Scale.'],
+      limitations: ['Transcription audio réservée aux plans Pro et Lifetime.'],
     };
   }
 

@@ -1,5 +1,5 @@
 export const productPositioningEngine = {
-  primaryCategory: 'AI Creator OS',
+  primaryCategory: 'OS créateur IA',
   alternatives: ['Repost Intelligence System', 'Content Optimization Platform', 'Short-form Intelligence Engine'],
   notThis: ['TikTok analyzer', 'simple hook generator', 'generic AI wrapper'],
   premiumCopy: [

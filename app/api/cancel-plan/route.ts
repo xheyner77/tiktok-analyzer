@@ -38,6 +38,13 @@ export async function POST() {
       return NextResponse.json({ error: 'Tu es déjà sur le plan Free.', code: 'ALREADY_FREE' }, { status: 400 });
     }
 
+    if (currentUser.plan === 'scale' && !currentUser.stripe_subscription_id) {
+      return NextResponse.json(
+        { error: 'Lifetime est un accès à vie et ne peut pas être annulé comme un abonnement mensuel.', code: 'LIFETIME_ACCESS' },
+        { status: 400 }
+      );
+    }
+
     // Abonnement Stripe : résiliation en fin de période (accès jusqu’à la date de facturation)
     if (currentUser.stripe_subscription_id) {
       try {

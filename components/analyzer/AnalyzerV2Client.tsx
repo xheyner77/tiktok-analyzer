@@ -709,7 +709,7 @@ function PremiumTeaserBand() {
             Debloque la timeline complete, tous les drops detectes, les hooks reecrits et la structure prete a remonter.
           </p>
         </div>
-        <Link href="/pricing" className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-white/[0.12] bg-white/[0.075] px-4 text-sm font-black text-white transition hover:bg-white/[0.1]">
+        <Link href="/dashboard/billing" className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-white/[0.12] bg-white/[0.075] px-4 text-sm font-black text-white transition hover:bg-white/[0.1]">
           Voir Pro
         </Link>
       </div>
@@ -760,7 +760,7 @@ function buildReconstructionTimeline(repost: RepostVersion, reconstruction?: Rec
 
 function ReconstructionPaywall({ plan }: { plan?: AppPlan }) {
   const isCreator = plan === 'creator';
-  const badge = isCreator ? 'Plan Creator' : 'Preview Pro';
+  const badge = isCreator ? 'Plan Starter' : 'Preview Pro';
   return (
     <SectionCard title="Structure optimisée" eyebrow="Reconstruction IA">
       <div className="relative overflow-hidden rounded-3xl border border-vn-fuchsia/22 bg-[radial-gradient(circle_at_12%_0%,rgba(232,121,249,0.16),transparent_35%),radial-gradient(circle_at_88%_15%,rgba(34,211,238,0.12),transparent_32%),linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.02))] p-4 shadow-[0_28px_110px_-76px_rgba(168,85,247,0.95)] sm:p-6">
@@ -774,11 +774,11 @@ function ReconstructionPaywall({ plan }: { plan?: AppPlan }) {
             <h3 className="mt-4 text-2xl font-black leading-tight text-white sm:text-3xl">Générer une structure optimisée</h3>
             <p className="mt-3 text-sm leading-6 text-gray-400">
               {isCreator
-                ? 'Creator garde le diagnostic. La Reconstruction IA débloque la nouvelle structure, les hooks alternatifs, les cuts recommandés et le plan seconde par seconde.'
+                ? 'Starter garde le diagnostic. La Reconstruction IA débloque la nouvelle structure, les hooks alternatifs, les cuts recommandés et le plan seconde par seconde.'
                 : 'Connecte-toi ou passe en Pro pour transformer le diagnostic en plan de remontage complet.'}
             </p>
             <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-              <Link href="/pricing" className="inline-flex min-h-[46px] items-center justify-center rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo px-5 text-sm font-black text-white shadow-[0_18px_65px_-34px_rgba(232,121,249,0.95)] transition hover:brightness-110">
+              <Link href="/dashboard/billing" className="inline-flex min-h-[46px] items-center justify-center rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo px-5 text-sm font-black text-white shadow-[0_18px_65px_-34px_rgba(232,121,249,0.95)] transition hover:brightness-110">
                 Debloquer la reconstruction IA
               </Link>
               <Link href="/dashboard" className="inline-flex min-h-[46px] items-center justify-center rounded-xl border border-white/[0.09] bg-white/[0.045] px-5 text-sm font-black text-white transition hover:bg-white/[0.07]">
@@ -794,7 +794,7 @@ function ReconstructionPaywall({ plan }: { plan?: AppPlan }) {
                 ['0:00', 'Hook visuel', 'verrouillé'],
                 ['0:03', 'Preuve avancée', 'Pro'],
                 ['0:07', 'Cut prioritaire', 'Pro'],
-                ['0:12', 'CTA optimisé', 'Scale'],
+                ['0:12', 'CTA optimisé', 'Lifetime'],
               ].map(([time, label, badge], index) => (
                 <motion.div
                   key={label}
@@ -937,7 +937,7 @@ function ReconstructionIASection({ result, repost, plan }: { result: AnalyzerRes
               <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-100/80">CTA optimisé</p>
               <p className="mt-2 text-sm font-black leading-6 text-white">{reconstruction?.ctaRecommendations?.[0]?.cta ?? repost.cta}</p>
               {reconstruction?.ctaRecommendations?.[0]?.why && <p className="mt-2 text-xs leading-5 text-gray-400">{reconstruction.ctaRecommendations[0].why}</p>}
-              {scaleOnly && <p className="mt-3 rounded-xl border border-white/[0.07] bg-black/20 px-3 py-2 text-xs font-bold text-cyan-100">Scale : variantes CTA + multi-structures pour comparer plusieurs comptes.</p>}
+              {scaleOnly && <p className="mt-3 rounded-xl border border-white/[0.07] bg-black/20 px-3 py-2 text-xs font-bold text-cyan-100">Lifetime : variantes CTA + multi-structures pour comparer plusieurs comptes.</p>}
             </motion.div>
             {reconstruction?.retentionFixes?.length ? (
               <CollapsibleInsight title="Fixes retention" defaultOpen>
@@ -1977,7 +1977,7 @@ export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientP
                 <p className="mt-3 text-xs leading-relaxed text-gray-500">
                   {reconstructionLimit > 0
                     ? 'Reset mensuel avec ton abonnement. Une reconstruction est comptee quand la structure optimisee complete est generee.'
-                    : 'La Reconstruction IA est disponible avec Pro et Scale.'}
+                    : 'La Reconstruction IA est disponible avec Pro et Lifetime.'}
                 </p>
               </div>
             )}

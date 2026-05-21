@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
 import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion';
 import Link from 'next/link';
-import CheckoutButton from '@/components/CheckoutButton';
 import PremiumFeaturesSection from '@/components/landing/FeaturesSection';
 import PremiumHowItWorksSection from '@/components/landing/HowItWorksSection';
 
@@ -99,6 +98,88 @@ const knownTikTokCreators = [
   ['Créatrice food', 'https://i.pravatar.cc/96?img=22'],
 ];
 
+type RoadmapStatus = 'available' | 'soon' | 'future';
+type RoadmapIconName = 'play' | 'reels' | 'shorts' | 'spark';
+
+const roadmapSteps: Array<{
+  label: string;
+  title: string;
+  description: string;
+  features: string[];
+  status: RoadmapStatus;
+  icon: RoadmapIconName;
+}> = [
+  {
+    label: 'Disponible maintenant',
+    title: 'Analyse TikTok',
+    description: 'Upload ta vidéo, comprends pourquoi elle décroche et obtiens une version plus forte à reposter.',
+    features: ['Analyse du hook', 'Score de viralité', 'Diagnostic rythme / rétention', 'Version à reposter'],
+    status: 'available',
+    icon: 'play',
+  },
+  {
+    label: 'Bientôt',
+    title: 'Instagram Reels',
+    description: 'Analyse tes Reels avec les mêmes critères : accroche, rythme, clarté, potentiel de rétention et CTA.',
+    features: ['Analyse Reels', 'Hooks adaptés Instagram', 'Recommandations format court', 'Comparaison TikTok / Reels'],
+    status: 'soon',
+    icon: 'reels',
+  },
+  {
+    label: 'Bientôt',
+    title: 'YouTube Shorts',
+    description: 'Comprends pourquoi tes Shorts ne retiennent pas l’attention et transforme tes idées en formats plus puissants.',
+    features: ['Analyse Shorts', 'Rétention des premières secondes', 'Optimisation titre / structure', 'Repost strategy'],
+    status: 'soon',
+    icon: 'shorts',
+  },
+  {
+    label: 'Plus tard',
+    title: 'Assistant de croissance multi-canal',
+    description: 'Un espace pour suivre tes contenus, comparer tes performances et savoir quoi reposter, quoi améliorer et quoi abandonner.',
+    features: ['Historique multi-plateformes', 'Recommandations personnalisées', 'Bibliothèque de contenus gagnants', 'Plan d’action IA'],
+    status: 'future',
+    icon: 'spark',
+  },
+];
+
+const roadmapStatusStyles: Record<
+  RoadmapStatus,
+  {
+    card: string;
+    badge: string;
+    icon: string;
+    dot: string;
+    state: string;
+    stateLabel: string;
+  }
+> = {
+  available: {
+    card: 'border-cyan-300/30 bg-[linear-gradient(145deg,rgba(34,211,238,0.12),rgba(99,102,241,0.06),rgba(8,9,13,0.92))] shadow-[0_26px_95px_-70px_rgba(34,211,238,0.9)]',
+    badge: 'border-cyan-300/25 bg-cyan-300/10 text-cyan-100',
+    icon: 'border-cyan-300/30 bg-cyan-300/10 text-cyan-200 shadow-[0_0_30px_-14px_rgba(34,211,238,0.9)]',
+    dot: 'bg-cyan-300 shadow-[0_0_18px_rgba(34,211,238,0.85)]',
+    state: 'border-cyan-300/25 bg-cyan-300/10 text-cyan-100',
+    stateLabel: 'Actif',
+  },
+  soon: {
+    card: 'border-vn-fuchsia/25 bg-[linear-gradient(145deg,rgba(232,121,249,0.1),rgba(59,130,246,0.055),rgba(8,9,13,0.92))] shadow-[0_26px_95px_-72px_rgba(168,85,247,0.86)]',
+    badge: 'border-vn-fuchsia/25 bg-vn-fuchsia/10 text-fuchsia-100',
+    icon: 'border-vn-fuchsia/30 bg-vn-fuchsia/10 text-fuchsia-200 shadow-[0_0_30px_-14px_rgba(232,121,249,0.86)]',
+    dot: 'bg-vn-fuchsia shadow-[0_0_18px_rgba(232,121,249,0.75)]',
+    state: 'border-vn-fuchsia/20 bg-vn-fuchsia/[0.08] text-fuchsia-100/85',
+    stateLabel: 'Coming soon',
+  },
+  future: {
+    card: 'border-indigo-300/20 bg-[linear-gradient(145deg,rgba(99,102,241,0.11),rgba(34,211,238,0.035),rgba(8,9,13,0.92))] shadow-[0_26px_95px_-72px_rgba(99,102,241,0.8)]',
+    badge: 'border-indigo-300/20 bg-indigo-300/10 text-indigo-100',
+    icon: 'border-indigo-300/25 bg-indigo-300/10 text-indigo-100 shadow-[0_0_30px_-14px_rgba(99,102,241,0.8)]',
+    dot: 'bg-indigo-300 shadow-[0_0_18px_rgba(129,140,248,0.7)]',
+    state: 'border-indigo-300/20 bg-indigo-300/10 text-indigo-100/85',
+    stateLabel: 'Future',
+  },
+};
+
 const testimonials = [
   ['Lina', 'Viralynz a repéré que mon payoff arrivait après 6 secondes. J’ai avancé la preuve en première frame.', 'watch time amélioré'],
   ['Nolan', 'Je pensais manquer d’idées. En fait, mes hooks donnaient le contexte avant la tension.', '3 structures sauvées'],
@@ -163,15 +244,15 @@ const plans = [
     bullets: ['3 analyses', 'Verdict clair', 'Hook corrigé'],
   },
   {
-    name: 'Creator',
-    price: '9,99€/mois',
+    name: 'Starter',
+    price: '10€/mois',
     body: 'Pour transformer tes flops en structures à retester.',
     bullets: ['50 analyses/mois', '150 hooks/mois', 'Plan de remontage'],
     featured: true,
   },
   {
     name: 'Pro',
-    price: '29,99€/mois',
+    price: '29€/mois',
     body: 'Pour suivre tes hooks, angles et structures comme un système.',
     bullets: ['200 analyses/mois', '500 hooks/mois', 'Patterns de rétention'],
   },
@@ -278,6 +359,140 @@ function CreatorProofBadge() {
   );
 }
 
+function RoadmapStepIcon({ icon, className }: { icon: RoadmapIconName; className?: string }) {
+  if (icon === 'play') {
+    return (
+      <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
+        <path d="M8.5 6.75v10.5L17 12 8.5 6.75Z" fill="currentColor" />
+        <rect x="4" y="4" width="16" height="16" rx="5" stroke="currentColor" strokeWidth="1.8" />
+      </svg>
+    );
+  }
+
+  if (icon === 'reels') {
+    return (
+      <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
+        <rect x="4" y="5" width="16" height="14" rx="4" stroke="currentColor" strokeWidth="1.8" />
+        <path d="M8 5 11 10M13 5l3 5M5 10h14M10 13.3v3.4l3.2-1.7-3.2-1.7Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+
+  if (icon === 'shorts') {
+    return (
+      <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
+        <rect x="7" y="3.5" width="10" height="17" rx="3.4" stroke="currentColor" strokeWidth="1.8" />
+        <path d="M11 9.2v5.6l4-2.8-4-2.8Z" fill="currentColor" />
+        <path d="M10.5 17h3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M12 3.5 13.55 8l4.7.35-3.6 3.05 1.1 4.6L12 13.55 8.25 16l1.1-4.6-3.6-3.05L10.45 8 12 3.5Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M19 15.5v3.25M17.35 17.12h3.3M5 14.5v2.5M3.75 15.75h2.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function RoadmapSection() {
+  return (
+    <MotionSection className={`${shell} relative py-6 sm:py-14`}>
+      <div className="relative overflow-hidden rounded-[1.35rem] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.018))] px-3.5 py-7 shadow-[0_34px_120px_-82px_rgba(99,102,241,0.9)] sm:rounded-[1.8rem] sm:px-6 sm:py-10 lg:px-8">
+        <div className="pointer-events-none absolute inset-0" aria-hidden>
+          <div className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/45 to-transparent" />
+          <div className="absolute left-1/2 top-0 h-52 w-[34rem] -translate-x-1/2 rounded-full bg-vn-fuchsia/10 blur-3xl" />
+          <div className="absolute bottom-0 right-0 h-52 w-72 rounded-full bg-cyan-300/[0.08] blur-3xl" />
+        </div>
+
+        <div className="relative mx-auto max-w-3xl text-center">
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300/80">Roadmap</p>
+          <h2 className="mt-3 text-[1.85rem] font-black leading-[1.02] tracking-tight text-white sm:text-5xl">
+            Une roadmap pensée pour les créateurs multi-plateformes
+          </h2>
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-gray-400 sm:text-base sm:leading-7">
+            Viralynz commence avec TikTok, puis s’étendra aux formats courts qui comptent vraiment : Reels, Shorts et analyse de contenu multi-canal.
+          </p>
+        </div>
+
+        <div className="relative mt-7 sm:mt-10">
+          <div className="pointer-events-none absolute left-[10%] right-[10%] top-10 hidden h-px bg-gradient-to-r from-cyan-300/0 via-cyan-300/30 to-vn-fuchsia/0 xl:block" aria-hidden />
+          <div className="grid gap-3.5 md:grid-cols-2 xl:grid-cols-4">
+            {roadmapSteps.map((step, index) => {
+              const styles = roadmapStatusStyles[step.status];
+              return (
+                <motion.article
+                  key={step.title}
+                  whileHover={cardHover}
+                  className={`relative flex min-h-[25rem] flex-col overflow-hidden rounded-2xl border p-4 transition duration-500 sm:p-5 ${styles.card}`}
+                >
+                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/35 to-transparent" aria-hidden />
+                  <div className="relative z-10 flex items-start justify-between gap-3">
+                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${styles.icon}`}>
+                      <RoadmapStepIcon icon={step.icon} className="h-5 w-5" />
+                    </div>
+                    <span className={`rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] ${styles.badge}`}>
+                      {step.label}
+                    </span>
+                  </div>
+
+                  <div className="relative z-10 mt-5">
+                    <div className="flex items-center gap-2">
+                      <span className={`h-2 w-2 rounded-full ${styles.dot}`} aria-hidden />
+                      <span className="text-[11px] font-black uppercase tracking-[0.18em] text-gray-500">Étape {index + 1}</span>
+                    </div>
+                    <h3 className="mt-2 text-xl font-black leading-tight tracking-tight text-white">{step.title}</h3>
+                    <p className="mt-3 text-[13px] leading-5 text-gray-400">{step.description}</p>
+                  </div>
+
+                  <ul className="relative z-10 mt-5 space-y-2.5">
+                    {step.features.map((feature) => (
+                      <li key={feature} className="flex gap-2.5 text-[13px] font-semibold leading-5 text-gray-300">
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-300/75 shadow-[0_0_14px_rgba(34,211,238,0.45)]" aria-hidden />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="relative z-10 mt-auto pt-6">
+                    <span className={`inline-flex rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.13em] ${styles.state}`}>
+                      {styles.stateLabel}
+                    </span>
+                  </div>
+                </motion.article>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="relative mt-5 overflow-hidden rounded-2xl border border-white/[0.09] bg-[#090a10]/80 p-4 text-center shadow-[0_24px_80px_-64px_rgba(34,211,238,0.75)] sm:mt-7 sm:p-6">
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-vn-fuchsia/55 to-transparent" aria-hidden />
+          <h3 className="text-xl font-black tracking-tight text-white sm:text-2xl">Commence avec TikTok. Prépare la suite.</h3>
+          <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-gray-400">
+            Analyse tes vidéos dès maintenant et construis une méthode qui pourra bientôt s’appliquer à tous tes formats courts.
+          </p>
+          <div className="mt-5 flex flex-col items-center justify-center gap-2.5 sm:flex-row">
+            <Link
+              href="/signup"
+              className="group inline-flex min-h-[48px] w-full max-w-[20rem] items-center justify-center gap-2 rounded-xl border border-vn-fuchsia/35 bg-gradient-to-r from-vn-fuchsia to-vn-indigo px-5 text-sm font-black text-white shadow-[0_18px_70px_-42px_rgba(232,121,249,0.88)] transition duration-500 ease-out hover:-translate-y-0.5 hover:brightness-110 active:scale-[0.99] sm:w-auto sm:px-6"
+            >
+              Analyser ma première vidéo
+              <ArrowIcon className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+            </Link>
+            <Link
+              href="#features"
+              className="inline-flex min-h-[48px] w-full max-w-[20rem] items-center justify-center rounded-xl border border-white/10 bg-white/[0.035] px-5 text-sm font-black text-gray-200 transition duration-300 hover:border-cyan-300/25 hover:bg-cyan-300/[0.08] hover:text-white sm:w-auto sm:px-6"
+            >
+              Voir les fonctionnalités
+            </Link>
+          </div>
+        </div>
+      </div>
+    </MotionSection>
+  );
+}
+
 export default function HomeLanding() {
   return (
     <main className="relative overflow-x-hidden bg-vn-bg text-white">
@@ -379,6 +594,7 @@ export default function HomeLanding() {
 
       <PremiumHowItWorksSection />
 
+      <RoadmapSection />
 
       <MotionSection className={`${shell} relative py-4 sm:py-12`}>
         <div className="mx-auto max-w-4xl rounded-[1.25rem] border border-white/[0.09] bg-[#090a10]/90 p-3.5 shadow-[0_28px_90px_-60px_rgba(34,211,238,0.45)] sm:rounded-[1.75rem] sm:p-7">
@@ -452,8 +668,6 @@ export default function HomeLanding() {
         </div>
       </MotionSection>
 
-      <PricingSection />
-
       <ReviewsSection />
 
       <FAQSection />
@@ -479,7 +693,174 @@ export default function HomeLanding() {
           </div>
         </div>
       </MotionSection>
+
+      <MobileAppComingSoonSection />
     </main>
+  );
+}
+
+const fakeQrModules = 29;
+const fakeQrQuietZone = 4;
+const fakeQrViewBox = fakeQrModules + fakeQrQuietZone * 2;
+
+function isQrFinderModule(row: number, col: number, startRow: number, startCol: number): boolean {
+  const localRow = row - startRow;
+  const localCol = col - startCol;
+  if (localRow < 0 || localRow > 6 || localCol < 0 || localCol > 6) return false;
+
+  const isOuterRing = localRow === 0 || localRow === 6 || localCol === 0 || localCol === 6;
+  const isCenter = localRow >= 2 && localRow <= 4 && localCol >= 2 && localCol <= 4;
+  return isOuterRing || isCenter;
+}
+
+function isQrReservedFinderZone(row: number, col: number, startRow: number, startCol: number): boolean {
+  return row >= startRow - 1 && row <= startRow + 7 && col >= startCol - 1 && col <= startCol + 7;
+}
+
+function isQrAlignmentModule(row: number, col: number): boolean {
+  const localRow = row - 20;
+  const localCol = col - 20;
+  if (localRow < 0 || localRow > 4 || localCol < 0 || localCol > 4) return false;
+  const isOuterRing = localRow === 0 || localRow === 4 || localCol === 0 || localCol === 4;
+  const isCenter = localRow === 2 && localCol === 2;
+  return isOuterRing || isCenter;
+}
+
+function isFakeQrDarkCell(row: number, col: number): boolean {
+  if (
+    isQrFinderModule(row, col, 0, 0) ||
+    isQrFinderModule(row, col, 0, fakeQrModules - 7) ||
+    isQrFinderModule(row, col, fakeQrModules - 7, 0)
+  ) {
+    return true;
+  }
+
+  if (
+    isQrReservedFinderZone(row, col, 0, 0) ||
+    isQrReservedFinderZone(row, col, 0, fakeQrModules - 7) ||
+    isQrReservedFinderZone(row, col, fakeQrModules - 7, 0)
+  ) {
+    return false;
+  }
+
+  if ((row === 6 || col === 6) && row > 7 && col > 7 && row < fakeQrModules - 7 && col < fakeQrModules - 7) {
+    return (row + col) % 2 === 0;
+  }
+
+  if (isQrAlignmentModule(row, col)) return true;
+
+  const hash = (row * 17 + col * 31 + row * col * 3 + Math.floor(row / 2) * 11) % 23;
+  return hash < 10 || (row % 5 === 0 && col % 3 === 1) || (col % 7 === 2 && row % 4 !== 0);
+}
+
+function FakeQrCode() {
+  const reduceMotion = useReducedMotion();
+  const darkCells = Array.from({ length: fakeQrModules * fakeQrModules }, (_, index) => {
+    const row = Math.floor(index / fakeQrModules);
+    const col = index % fakeQrModules;
+    return isFakeQrDarkCell(row, col) ? [row + fakeQrQuietZone, col + fakeQrQuietZone] : null;
+  }).filter((cell): cell is number[] => Boolean(cell));
+
+  return (
+    <motion.div
+      animate={reduceMotion ? undefined : { y: [0, -7, 0], rotate: [-0.25, 0.3, -0.25] }}
+      transition={reduceMotion ? undefined : { duration: 5.2, repeat: Infinity, ease: 'easeInOut' }}
+      className="relative mx-auto flex h-[10.75rem] w-[10.75rem] items-center justify-center rounded-[1.45rem] bg-white p-3 shadow-[0_0_0_1px_rgba(255,255,255,0.96)_inset,0_22px_64px_-34px_rgba(255,255,255,0.72)] sm:h-[12rem] sm:w-[12rem]"
+    >
+      <div className="relative h-full w-full overflow-hidden rounded-[1rem] bg-white">
+        <svg
+          className="h-full w-full"
+          viewBox={`0 0 ${fakeQrViewBox} ${fakeQrViewBox}`}
+          shapeRendering="crispEdges"
+          aria-hidden
+        >
+          <rect width={fakeQrViewBox} height={fakeQrViewBox} fill="white" />
+          {darkCells.map(([y, x]) => (
+            <rect key={`${x}-${y}`} x={x} y={y} width="1" height="1" fill="#111111" />
+          ))}
+        </svg>
+        <div className="pointer-events-none absolute inset-0 rounded-[1rem] ring-1 ring-black/10" aria-hidden />
+      </div>
+    </motion.div>
+  );
+}
+
+function GooglePlayBadge() {
+  return (
+    <div className="inline-flex h-11 min-w-[10.4rem] select-none items-center justify-center gap-3 rounded-lg border border-white/14 bg-white/[0.94] px-4 text-[#0f172a] shadow-[0_12px_36px_-24px_rgba(255,255,255,0.65)]">
+      <svg className="h-5 w-5 shrink-0" viewBox="0 0 28 31" aria-hidden>
+        <defs>
+          <linearGradient id="play-cyan" x1="1.6" y1="2.1" x2="16" y2="16" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#22d3ee" />
+            <stop offset="1" stopColor="#06b6d4" />
+          </linearGradient>
+          <linearGradient id="play-green" x1="3" y1="28.9" x2="16" y2="16" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#34d399" />
+            <stop offset="1" stopColor="#22c55e" />
+          </linearGradient>
+          <linearGradient id="play-yellow" x1="16" y1="16" x2="27" y2="10" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#facc15" />
+            <stop offset="1" stopColor="#f97316" />
+          </linearGradient>
+          <linearGradient id="play-pink" x1="16" y1="16" x2="27" y2="22" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#fb7185" />
+            <stop offset="1" stopColor="#a855f7" />
+          </linearGradient>
+        </defs>
+        <path d="M2.7 2.2C2.28 2.56 2 3.2 2 4.04v22.92c0 .84.28 1.48.7 1.84l13.7-13.3L2.7 2.2Z" fill="url(#play-cyan)" />
+        <path d="m16.4 15.5 4.05-3.93L5.35 2.9C4.2 2.24 3.25 1.98 2.7 2.2l13.7 13.3Z" fill="url(#play-green)" />
+        <path d="m16.4 15.5 4.05 3.93 4.95-2.84c1.48-.86 1.48-2.32 0-3.18l-4.95-2.84-4.05 3.93Z" fill="url(#play-yellow)" />
+        <path d="M2.7 28.8c.55.22 1.5-.04 2.65-.7l15.1-8.67-4.05-3.93L2.7 28.8Z" fill="url(#play-pink)" />
+      </svg>
+      <span className="text-sm font-black leading-none">Google Play</span>
+    </div>
+  );
+}
+
+function AppStoreBadge() {
+  return (
+    <div className="inline-flex h-11 min-w-[10.4rem] select-none items-center justify-center gap-3 rounded-lg border border-white/14 bg-black/90 px-4 text-white shadow-[0_12px_36px_-24px_rgba(255,255,255,0.45)]">
+      <svg className="h-5 w-5 shrink-0" viewBox="0 0 28 32" fill="currentColor" aria-hidden>
+        <path d="M18.48 1.9c.08 1.34-.39 2.62-1.36 3.72-.93 1.05-2.4 1.86-3.74 1.75-.15-1.28.5-2.68 1.38-3.7.98-1.12 2.65-1.98 3.72-1.77Z" />
+        <path d="M23.9 22.68c-.6 1.36-.9 1.96-1.68 3.18-1.08 1.68-2.6 3.78-4.5 3.8-1.69.02-2.13-1.1-4.42-1.08-2.3.02-2.78 1.1-4.46 1.08-1.9-.02-3.35-1.9-4.43-3.58C1.4 21.42 1.1 15.98 2.96 13.06c1.32-2.08 3.4-3.3 5.36-3.32 2-.02 3.24 1.1 4.9 1.1 1.6 0 2.58-1.1 4.9-1.1 1.74.02 3.6.96 4.92 2.6-4.3 2.36-3.6 8.5.86 10.34Z" />
+      </svg>
+      <span className="text-sm font-black leading-none">App Store</span>
+    </div>
+  );
+}
+
+function MobileAppComingSoonSection() {
+  return (
+    <MotionSection className={`${shell} relative pb-7 pt-2 sm:pb-10 sm:pt-0`}>
+      <div className="relative overflow-hidden rounded-[1.6rem] border border-white/[0.09] bg-[#05070d] shadow-[0_34px_150px_-90px_rgba(34,211,238,0.9)] sm:rounded-[2rem]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_8%_50%,rgba(34,211,238,0.22),transparent_32%),radial-gradient(circle_at_19%_46%,rgba(232,121,249,0.22),transparent_30%),radial-gradient(circle_at_80%_8%,rgba(99,102,241,0.22),transparent_34%),linear-gradient(90deg,rgba(255,255,255,0.055),rgba(255,255,255,0.018)_34%,rgba(3,3,8,0.78))]" aria-hidden />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:34px_34px] opacity-20" aria-hidden />
+        <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-cyan-200/55 to-transparent" aria-hidden />
+
+        <div className="relative grid gap-6 px-4 py-7 sm:px-8 sm:py-9 lg:grid-cols-[17.5rem_1fr] lg:items-center lg:gap-10 lg:px-10">
+          <div className="relative mx-auto w-full max-w-[17rem] lg:max-w-none">
+            <div className="absolute -inset-4 rounded-[2rem] bg-[radial-gradient(circle,rgba(34,211,238,0.46),transparent_62%)] blur-xl" aria-hidden />
+            <div className="absolute -inset-3 rounded-[2rem] bg-vn-fuchsia/20 blur-2xl" aria-hidden />
+            <div className="relative rounded-[1.7rem] border border-white/[0.1] bg-white/[0.055] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_28px_90px_-54px_rgba(34,211,238,0.95)] backdrop-blur-xl">
+              <FakeQrCode />
+            </div>
+          </div>
+
+          <div className="text-center lg:text-left">
+            <h2 className="text-[2rem] font-black uppercase leading-[0.95] tracking-tight text-white sm:text-[3.35rem] lg:text-[4rem]">
+              L&rsquo;application arrive <span className={titleGradient}>bient&ocirc;t</span>
+            </h2>
+            <p className="mx-auto mt-3 max-w-2xl text-sm font-semibold leading-6 text-gray-400 sm:text-base lg:mx-0">
+              Viralynz sera bient&ocirc;t disponible sur mobile. Scanne le code quand l&rsquo;acc&egrave;s ouvrira et garde ton coach de repost dans la poche.
+            </p>
+            <div className="mt-5 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
+              <GooglePlayBadge />
+              <AppStoreBadge />
+            </div>
+          </div>
+        </div>
+      </div>
+    </MotionSection>
   );
 }
 
@@ -678,7 +1059,7 @@ function ReconstructionFeatureSection() {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-cyan-100">
               <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_16px_rgba(34,211,238,0.95)]" />
-              Pro + Scale
+              Pro + Lifetime
             </div>
             <p className="mt-3 text-sm leading-6 text-gray-400 sm:text-base sm:leading-7">
               Ta video perd l'attention. Viralynz detecte exactement ou. L'IA reconstruit une meilleure structure, puis tu remontes une version optimisee avec tes propres images.
@@ -833,7 +1214,7 @@ function GrowthEngineSection() {
   ];
 
   return (
-    <section id="pricing" className={`${shell} relative py-7 sm:py-14 scroll-mt-24`}>
+    <section id="reconstruction" className={`${shell} relative py-7 sm:py-14 scroll-mt-24`}>
       <div className="mx-auto max-w-5xl rounded-[1.35rem] border border-white/[0.1] bg-[#08090e] p-4 shadow-[0_30px_120px_-82px_rgba(59,130,246,0.75)] sm:rounded-[1.75rem] sm:p-7">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-2xl font-black leading-tight tracking-tight text-white sm:text-4xl">
@@ -2162,489 +2543,6 @@ function SocialProofBand() {
               <p className="mt-1 text-xs leading-5 text-gray-500">{body}</p>
             </div>
           ))}
-        </div>
-      </div>
-    </MotionSection>
-  );
-}
-
-type PricingIconName =
-  | 'brain'
-  | 'repost'
-  | 'hooks'
-  | 'cut'
-  | 'rocket'
-  | 'history'
-  | 'chart'
-  | 'volume'
-  | 'system'
-  | 'patterns'
-  | 'priority'
-  | 'support'
-  | 'spark';
-
-function PricingFeatureIcon({ name, className = 'h-4 w-4' }: { name: PricingIconName; className?: string }) {
-  const common = {
-    className,
-    viewBox: '0 0 24 24',
-    fill: 'none',
-    stroke: 'currentColor',
-    strokeWidth: 2,
-    strokeLinecap: 'round' as const,
-    strokeLinejoin: 'round' as const,
-    'aria-hidden': true,
-  };
-
-  switch (name) {
-    case 'brain':
-      return (
-        <svg {...common}>
-          <path d="M8 8.5a3 3 0 0 1 4-2.83 3 3 0 0 1 4 2.83" />
-          <path d="M7.2 10.5a3 3 0 0 0 .8 5.8V18a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-1.7a3 3 0 0 0 .8-5.8" />
-          <path d="M12 5.7V20" />
-          <path d="M9 13h6" />
-        </svg>
-      );
-    case 'repost':
-      return (
-        <svg {...common}>
-          <path d="M7 7h9a4 4 0 0 1 4 4v1" />
-          <path d="M17 4l3 3-3 3" />
-          <path d="M17 17H8a4 4 0 0 1-4-4v-1" />
-          <path d="M7 20l-3-3 3-3" />
-        </svg>
-      );
-    case 'hooks':
-      return (
-        <svg {...common}>
-          <path d="M12 4v9.5a3.5 3.5 0 1 1-3.5-3.5" />
-          <path d="M12 4h4" />
-          <path d="M16 4v4" />
-          <path d="M12 8h4" />
-        </svg>
-      );
-    case 'cut':
-      return (
-        <svg {...common}>
-          <circle cx="6" cy="7" r="2" />
-          <circle cx="6" cy="17" r="2" />
-          <path d="M8 8.5 19 18" />
-          <path d="M8 15.5 19 6" />
-        </svg>
-      );
-    case 'rocket':
-      return (
-        <svg {...common}>
-          <path d="M13.5 4.5c2.4-.9 4.6-.8 6 0 .8 1.4.9 3.6 0 6L13 17l-6-6 6.5-6.5Z" />
-          <path d="M9 15l-1 4-3-3 4-1Z" />
-          <path d="M15.5 8.5h.01" />
-        </svg>
-      );
-    case 'history':
-      return (
-        <svg {...common}>
-          <path d="M4 12a8 8 0 1 0 2.35-5.65" />
-          <path d="M4 5v5h5" />
-          <path d="M12 8v4l3 2" />
-        </svg>
-      );
-    case 'chart':
-      return (
-        <svg {...common}>
-          <path d="M4 19V5" />
-          <path d="M4 19h16" />
-          <path d="M8 15l3-4 3 2 4-6" />
-          <path d="M18 7h-3" />
-        </svg>
-      );
-    case 'volume':
-      return (
-        <svg {...common}>
-          <path d="M4 14v-4" />
-          <path d="M8 17V7" />
-          <path d="M12 20V4" />
-          <path d="M16 17V7" />
-          <path d="M20 14v-4" />
-        </svg>
-      );
-    case 'system':
-      return (
-        <svg {...common}>
-          <rect x="4" y="4" width="6" height="6" rx="1.5" />
-          <rect x="14" y="4" width="6" height="6" rx="1.5" />
-          <rect x="4" y="14" width="6" height="6" rx="1.5" />
-          <rect x="14" y="14" width="6" height="6" rx="1.5" />
-        </svg>
-      );
-    case 'patterns':
-      return (
-        <svg {...common}>
-          <path d="M5 8h14" />
-          <path d="M5 16h14" />
-          <path d="M8 5v14" />
-          <path d="M16 5v14" />
-        </svg>
-      );
-    case 'priority':
-      return (
-        <svg {...common}>
-          <path d="M12 3l2.4 5.2L20 9l-4 4.1.95 5.8L12 16.1 7.05 19 8 13.1 4 9l5.6-.8L12 3Z" />
-        </svg>
-      );
-    case 'support':
-      return (
-        <svg {...common}>
-          <path d="M4 12a8 8 0 0 1 16 0" />
-          <path d="M5 12h3v5H5a2 2 0 0 1-2-2v-1a2 2 0 0 1 2-2Z" />
-          <path d="M19 12h-3v5h3a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2Z" />
-          <path d="M16 17c0 2-1.5 3-4 3" />
-        </svg>
-      );
-    case 'spark':
-    default:
-      return (
-        <svg {...common}>
-          <path d="M12 3l1.6 5 5.4 1-5.4 1L12 15l-1.6-5L5 9l5.4-1L12 3Z" />
-          <path d="M18 15l.8 2.4 2.2.6-2.2.6L18 21l-.8-2.4-2.2-.6 2.2-.6L18 15Z" />
-        </svg>
-      );
-  }
-}
-
-function getIncludedIcon(item: string): PricingIconName {
-  const normalized = item.toLowerCase();
-
-  if (normalized.includes('diagnostic')) return 'brain';
-  if (normalized.includes('repost')) return 'repost';
-  if (normalized.includes('hook')) return 'hooks';
-  if (normalized.includes('cut') || normalized.includes('montage')) return 'cut';
-  if (normalized.includes('version corrig')) return 'rocket';
-  if (normalized.includes('historique')) return 'history';
-  if (normalized.includes('insights')) return 'chart';
-  if (normalized.includes('volume')) return 'volume';
-  if (normalized.includes('syst')) return 'system';
-  if (normalized.includes('patterns') || normalized.includes('nombreux formats')) return 'patterns';
-  if (normalized.includes('id') || normalized.includes('priorisation')) return 'priority';
-  if (normalized.includes('support')) return 'support';
-  if (normalized.includes('biblioth')) return 'hooks';
-
-  return 'spark';
-}
-
-function getAccessIcon(item: string): PricingIconName {
-  const normalized = item.toLowerCase();
-
-  if (normalized.includes('analyse')) return 'brain';
-  if (normalized.includes('diagnostic')) return 'brain';
-  if (normalized.includes('hook')) return 'hooks';
-  if (normalized.includes('drop') || normalized.includes('cut')) return 'cut';
-  if (normalized.includes('repost') || normalized.includes('test')) return 'repost';
-  if (normalized.includes('insights')) return 'chart';
-  if (normalized.includes('compte')) return 'system';
-  if (normalized.includes('équipe')) return 'support';
-  if (normalized.includes('syst')) return 'system';
-
-  return 'spark';
-}
-
-function getCreatorPromoTimeLeft() {
-  const deadline = new Date('2026-05-31T23:59:59+02:00').getTime();
-  const distance = Math.max(0, deadline - Date.now());
-  const days = Math.floor(distance / 86_400_000);
-  const hours = Math.floor((distance % 86_400_000) / 3_600_000);
-  const minutes = Math.floor((distance % 3_600_000) / 60_000);
-  const seconds = Math.floor((distance % 60_000) / 1000);
-
-  return { days, hours, minutes, seconds };
-}
-
-function CreatorPromoCountdown() {
-  const [timeLeft, setTimeLeft] = useState<ReturnType<typeof getCreatorPromoTimeLeft> | null>(null);
-
-  useEffect(() => {
-    setTimeLeft(getCreatorPromoTimeLeft());
-    const timer = window.setInterval(() => setTimeLeft(getCreatorPromoTimeLeft()), 1000);
-    return () => window.clearInterval(timer);
-  }, []);
-
-  const parts = [
-    ['jours', timeLeft?.days],
-    ['heures', timeLeft?.hours],
-    ['min', timeLeft?.minutes],
-    ['sec', timeLeft?.seconds],
-  ];
-
-  return (
-    <div className="relative mt-4 rounded-xl border border-white/[0.09] bg-white/[0.025] px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.045)]">
-      <div className="grid gap-2 xl:grid-cols-[1fr_auto] xl:items-center xl:gap-3">
-        <div className="min-w-0 text-center xl:text-left">
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-fuchsia-100/80">Offre limit&eacute;e</p>
-          <p className="mt-0.5 text-[11px] font-semibold text-gray-500">Tarif bloqu&eacute; jusqu'au 31 mai</p>
-        </div>
-        <div className="grid grid-cols-4 overflow-hidden rounded-lg border border-white/[0.08] bg-black/20">
-          {parts.map(([label, value]) => (
-            <div key={label} className="min-w-[2.55rem] border-r border-white/[0.07] px-1.5 py-1.5 text-center last:border-r-0">
-              <p className="text-sm font-black leading-none text-white">
-                {typeof value === 'number' ? String(value).padStart(2, '0') : '--'}
-              </p>
-              <p className="mt-0.5 text-[7px] font-black uppercase tracking-[0.08em] text-gray-500">{label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function PricingSection() {
-  const [annualBilling, setAnnualBilling] = useState<Record<string, boolean>>({
-    Pro: false,
-    Scale: false,
-  });
-
-  const pricingCards = [
-    {
-      name: 'Creator',
-      audience: 'Comprendre pourquoi les vidéos décrochent.',
-      description: 'Pour voir clairement ce qui casse la rétention : hook trop lent, drop principal, secondes faibles et corrections prioritaires.',
-      oldPrice: '14,99€',
-      price: '7,99€',
-      note: 'Diagnostic mensuel, sans reconstruction IA',
-      cta: 'Diagnostiquer mes vidéos',
-      stripePlan: 'creator',
-      highlight: true,
-      badge: 'DIAGNOSTIC ESSENTIEL',
-      microBadge: 'Plan limité',
-      quotas: ['30 analyses/mois', '150 hooks/mois', '1 compte TikTok', '0 reconstruction IA'],
-      access: ['Diagnostic vidéo', 'Hook + rétention', 'Drops visibles', 'Priorités de correction'],
-      includedTitle: 'Ce que tu comprends :',
-      included: [
-        'Montre les secondes qui cassent la rétention',
-        'Repère le hook qui explique avant de retenir',
-        'Identifie le drop principal et ce qui le provoque',
-        'Donne les corrections à faire avant de remonter',
-        'Classe les priorités pour ne pas tout refaire',
-        'Garde une lecture simple de ton historique',
-        'Te dit quand une vidéo mérite une vraie reconstruction',
-      ],
-    },
-    {
-      name: 'Pro',
-      audience: 'Reconstruire et republier des vidéos plus retenantes.',
-      description: 'Le plan principal pour passer du diagnostic à une nouvelle version : hooks, CTA, structure seconde par seconde et workflow repost TikTok.',
-      price: '29,99€',
-      annualOldPrice: '29,99€',
-      annualPrice: '20,99€',
-      annualTotal: '251,88€',
-      note: 'Reconstruction + publishing TikTok en beta',
-      cta: 'Reconstruire mes vidéos',
-      stripePlan: 'pro',
-      highlight: false,
-      badge: 'PLAN PRINCIPAL',
-      microBadge: 'Plan principal',
-      quotas: ['150 analyses/mois', '500 hooks/mois', '30 reconstructions/mois', '3 comptes TikTok'],
-      annualQuotas: ['1800 analyses/an', '6000 hooks/an', '360 reconstructions/an', '3 comptes TikTok'],
-      access: ['Reconstruction IA', 'Hooks alternatifs', 'CTA optimisés', 'Programmation TikTok beta'],
-      includedTitle: 'Ce que tu reconstruis :',
-      included: [
-        'Prépare une nouvelle version prête à republier',
-        'Réécrit les hooks trop lents en angles plus directs',
-        'Réordonne les séquences pour garder la preuve plus tôt',
-        'Liste les moments à couper, avancer ou resserrer',
-        'Construit un plan seconde par seconde pour le remontage',
-        'Optimise le CTA selon le drop principal',
-        'Ajoute un workflow repost avec programmation TikTok en beta',
-      ],
-    },
-    {
-      name: 'Scale',
-      audience: 'Piloter plusieurs comptes et systèmes de contenu.',
-      description: 'Pour gérer plus de volume sans perdre le fil : variantes, historique, comptes TikTok multiples et publishing avancé en accès anticipé.',
-      price: '79,99€',
-      annualOldPrice: '79,99€',
-      annualPrice: '55,99€',
-      annualTotal: '671,88€',
-      note: 'Volume premium + publishing avancé en accès anticipé',
-      cta: 'Piloter plusieurs comptes',
-      stripePlan: 'scale',
-      highlight: false,
-      badge: 'VOLUME & MULTI-COMPTES',
-      microBadge: 'Plan premium',
-      quotas: ['Analyses fair-use élevées', 'Hooks fair-use élevés', '150 reconstructions/mois', '8 comptes TikTok'],
-      annualQuotas: ['Analyses fair-use élevées', 'Hooks fair-use élevés', '1800 reconstructions/an', '8 comptes TikTok'],
-      access: ['Multi-comptes', 'Variantes de repost', 'Mémoire cross-account', 'Publication avancée'],
-      includedTitle: 'Pour piloter plusieurs comptes :',
-      included: [
-        'Génère plusieurs variantes de reconstruction par vidéo',
-        'Organise les hooks et CTA par compte ou format',
-        'Centralise l’historique des versions retravaillées',
-        'Garde une mémoire des patterns qui reviennent par compte',
-        'Prépare la publication avancée pour plusieurs comptes TikTok',
-        'Aide à prioriser quelles vidéos reconstruire en premier',
-        'Donne une lecture claire du volume sans promettre de faux analytics',
-      ],
-    },
-  ];
-
-  return (
-    <MotionSection id="tarifs" className={`${shell} relative py-7 sm:py-14 scroll-mt-24`}>
-      <div className="mx-auto max-w-7xl">
-        <span id="pricing" className="block scroll-mt-24" aria-hidden />
-        <div className="mb-5 text-center sm:mb-8">
-          <h2 className="text-2xl font-black tracking-tight text-white sm:text-5xl">Choisis ton niveau <TitleAccent>Viralynz</TitleAccent></h2>
-          <p className="mx-auto mt-2 max-w-xl text-[13px] leading-5 text-gray-400 sm:mt-3 sm:text-base sm:leading-6">
-            Creator diagnostique les pertes de rétention. Pro reconstruit la vidéo et prépare le repost TikTok. Scale organise le volume, les variantes et les comptes multiples.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-5 xl:gap-7">
-          {pricingCards.map((plan) => {
-            const isAnnual = Boolean(plan.annualPrice && annualBilling[plan.name]);
-            const displayedOldPrice = (isAnnual ? ('annualOldPrice' in plan ? plan.annualOldPrice : undefined) : ('oldPrice' in plan ? plan.oldPrice : undefined)) as string | undefined;
-            const displayedPrice = isAnnual ? plan.annualPrice : plan.price;
-            const displayedQuotas = (isAnnual ? plan.annualQuotas : plan.quotas) ?? plan.quotas;
-            const isCreator = plan.name === 'Creator';
-            const isPro = plan.name === 'Pro';
-            const isScale = plan.name === 'Scale';
-            const cardChrome = isCreator
-              ? 'border-vn-fuchsia/45 bg-[radial-gradient(circle_at_18%_0%,rgba(232,121,249,0.18),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.012))] ring-1 ring-vn-fuchsia/25 shadow-[0_34px_120px_-74px_rgba(232,121,249,0.95)]'
-              : isPro
-                ? 'border-cyan-300/24 bg-[radial-gradient(circle_at_88%_0%,rgba(34,211,238,0.18),transparent_32%),radial-gradient(circle_at_12%_12%,rgba(168,85,247,0.14),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.052),rgba(255,255,255,0.012))] shadow-[0_34px_120px_-78px_rgba(34,211,238,0.85)]'
-                : 'border-violet-300/28 bg-[radial-gradient(circle_at_50%_0%,rgba(139,92,246,0.24),transparent_38%),radial-gradient(circle_at_88%_18%,rgba(236,72,153,0.12),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.014))] shadow-[0_38px_130px_-78px_rgba(168,85,247,0.95)]';
-            const ctaChrome = isCreator
-              ? 'border border-vn-fuchsia/45 bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white shadow-[0_22px_65px_-36px_rgba(232,121,249,0.95)] hover:brightness-110'
-              : isPro
-                ? 'border border-cyan-200/30 bg-gradient-to-r from-cyan-300 to-vn-indigo text-[#050508] shadow-[0_22px_70px_-38px_rgba(34,211,238,0.95)] hover:brightness-110'
-                : 'border border-violet-200/30 bg-gradient-to-r from-violet-300 via-vn-fuchsia to-cyan-300 text-[#050508] shadow-[0_22px_75px_-36px_rgba(168,85,247,0.95)] hover:brightness-110';
-            const pillChrome = isPro
-              ? 'border-cyan-300/30 bg-cyan-300/10 text-cyan-100'
-              : isScale
-                ? 'border-violet-300/35 bg-violet-300/10 text-violet-100'
-                : 'border-vn-fuchsia/35 bg-vn-fuchsia/10 text-fuchsia-100';
-            const cardLayout = isScale
-              ? 'md:col-span-2 md:mx-auto md:w-[calc((100%-1rem)/2)] lg:col-span-1 lg:w-auto'
-              : '';
-
-            return (
-            <motion.article
-              key={plan.name}
-              whileHover={cardHover}
-              className={`group relative overflow-hidden rounded-[1.25rem] border px-4 py-5 text-left transition duration-500 ease-out hover:border-white/25 sm:rounded-[1.35rem] sm:px-6 sm:py-7 xl:px-7 ${cardLayout} ${cardChrome}`}
-            >
-              <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-white/55 to-transparent" aria-hidden />
-              <div className="pointer-events-none absolute -right-16 -top-16 h-36 w-36 rounded-full bg-white/[0.045] blur-2xl transition duration-500 group-hover:bg-white/[0.07]" aria-hidden />
-              {plan.badge ? (
-                <div className={`relative z-10 mb-4 inline-flex max-w-full rounded-full px-3 py-1.5 text-[10px] font-black uppercase leading-4 shadow-[0_18px_55px_-28px_rgba(232,121,249,0.95)] sm:px-4 sm:py-2 sm:text-[11px] ${
-                  isPro
-                    ? 'bg-gradient-to-r from-cyan-300 to-vn-indigo text-[#050508]'
-                    : isScale
-                      ? 'bg-gradient-to-r from-violet-300 via-vn-fuchsia to-cyan-300 text-[#050508]'
-                      : 'bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white'
-                }`}>
-                  {plan.badge}
-                </div>
-              ) : null}
-
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2.5">
-                    <h3 className="text-2xl font-black text-white">{plan.name}</h3>
-                    {isCreator || isPro || isScale ? (
-                      <span className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.08em] ${
-                        isCreator
-                          ? 'bg-white/[0.045] text-fuchsia-100 ring-1 ring-vn-fuchsia/20'
-                          : isPro
-                            ? 'bg-cyan-300/10 text-cyan-100 ring-1 ring-cyan-300/20'
-                            : 'bg-violet-300/10 text-violet-100 ring-1 ring-violet-300/20'
-                      }`}>
-                        {plan.microBadge}
-                      </span>
-                    ) : null}
-                  </div>
-                  <p className="mt-3 text-sm font-bold text-white">{plan.audience}</p>
-                  <p className="mt-1 text-xs leading-5 text-gray-400">{plan.description}</p>
-                </div>
-                {plan.annualPrice ? (
-                  <button
-                    type="button"
-                    aria-pressed={isAnnual}
-                    onClick={() => setAnnualBilling((current) => ({ ...current, [plan.name]: !current[plan.name] }))}
-                    className={`shrink-0 flex items-center gap-2 text-[11px] font-bold uppercase transition hover:text-white ${isPro ? 'text-cyan-100' : 'text-violet-100'}`}
-                  >
-                    Annuel
-                    <span className={`relative h-6 w-11 rounded-full transition ${isAnnual ? 'bg-white' : 'bg-white/10'}`}>
-                      <span className={`absolute top-1 h-4 w-4 rounded-full transition ${isAnnual ? 'right-1 bg-[#08090d]' : 'left-1 bg-white/25'}`} />
-                    </span>
-                  </button>
-                ) : null}
-              </div>
-
-              <div className="mt-5 sm:mt-7">
-                <div className="flex flex-wrap items-end gap-x-2 gap-y-0.5">
-                  {displayedOldPrice ? <span className="pb-1 text-lg font-black text-gray-500 line-through sm:text-xl xl:text-2xl">{displayedOldPrice}</span> : null}
-                  <span className="text-4xl font-black tracking-tight text-white xl:text-5xl">{displayedPrice}</span>
-                  <span className="pb-2 text-xs font-bold leading-4 text-gray-300">/mois</span>
-                </div>
-                {isAnnual && plan.annualTotal ? (
-                  <p className="mt-2 text-xs font-semibold text-gray-400">
-                    Facturé aujourd’hui : {plan.annualTotal}
-                  </p>
-                ) : (
-                  <p className="mt-2 text-xs font-semibold text-gray-400">{plan.note}</p>
-                )}
-              </div>
-
-              {isCreator ? <CreatorPromoCountdown /> : null}
-
-              <CheckoutButton
-                plan={plan.stripePlan as 'creator' | 'pro' | 'scale'}
-                interval={isAnnual ? 'year' : 'month'}
-                className={`group mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg px-5 text-sm font-black transition duration-500 ease-out hover:-translate-y-0.5 hover:scale-[1.01] active:scale-[0.99] sm:mt-5 sm:min-h-[48px] ${ctaChrome}`}
-              >
-                {plan.cta}
-                <ArrowIcon className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
-              </CheckoutButton>
-
-              <div className="my-5 h-px bg-white/[0.09] sm:my-7" />
-
-              <div className="grid grid-cols-2 gap-2">
-                {displayedQuotas.map((quota) => (
-                  <span key={quota} className={`flex min-h-[2.6rem] items-center justify-center rounded-2xl border px-2 py-1.5 text-center text-[11px] font-black leading-[1.15] sm:text-[12px] xl:px-3 xl:text-[13px] ${pillChrome}`}>
-                    {quota}
-                  </span>
-                ))}
-              </div>
-
-              <div className="mt-5 sm:mt-6">
-                <p className="mb-3 text-base font-black text-white">Ce que tu débloques</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {plan.access.map((item) => (
-                    <span key={item} className="inline-flex min-h-[2.75rem] items-center justify-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.025] px-2 py-1.5 text-center text-[11px] font-black leading-[1.18] text-white xl:gap-2 xl:px-3 xl:text-[13px]">
-                      <PricingFeatureIcon name={getAccessIcon(item)} className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="my-5 h-px bg-white/[0.09] sm:my-7" />
-
-              <div>
-                <p className="mb-3 text-sm font-black text-white sm:mb-4 sm:text-base">{plan.includedTitle}</p>
-                <ul className="space-y-2.5 sm:space-y-3.5">
-                  {plan.included.map((item) => (
-                    <li key={item} className="flex items-start gap-3 text-[13px] font-bold leading-5 text-white">
-                      <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.35)]">
-                        <PricingFeatureIcon name={getIncludedIcon(item)} className="h-4 w-4" />
-                      </span>
-                      <span className="text-left">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </motion.article>
-            );
-          })}
         </div>
       </div>
     </MotionSection>

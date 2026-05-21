@@ -11,7 +11,7 @@ export const maxDuration = 30;
  * Returns: { transcript: string }
  *
  * Uses OpenAI Whisper to transcribe the audio track of the uploaded video.
- * Limited to Pro / Scale plans (same auth gate as vision analysis).
+ * Limited to Pro / Lifetime plans (same auth gate as vision analysis).
  * Max audio size: 25 MB (Whisper API limit).
  */
 export async function POST(request: NextRequest) {

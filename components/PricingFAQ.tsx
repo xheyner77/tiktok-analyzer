@@ -17,7 +17,7 @@ const faqs = [
   },
   {
     q: 'À quoi sert le générateur de hooks ?',
-    a: "C'est inclus dans les plans Creator, Pro et Scale. Il transforme un angle ou un hook faible en variantes testables basées sur ta niche, ton format et ta mémoire créateur.",
+    a: "C'est inclus dans les plans Starter, Pro et Lifetime. Il transforme un angle ou un hook faible en variantes testables basées sur ta niche, ton format et ta mémoire créateur.",
   },
   {
     q: "Est-ce seulement pour TikTok ?",
@@ -32,8 +32,8 @@ const faqs = [
     a: "Non. Viralynz est conçu pour les créateurs, pas les techniciens. Les analyses sont formulées en langage clair, avec des actions concrètes à appliquer même sans formation technique.",
   },
   {
-    q: 'Puis-je passer de Pro à Scale ?',
-    a: "Oui, la mise à niveau de Pro vers Scale est disponible depuis ton tableau de bord. La différence de prix est proratisée selon ta période de facturation.",
+    q: 'Puis-je passer de Pro à Lifetime ?',
+    a: "Oui, Lifetime se débloque depuis ton tableau de bord avec un paiement unique.",
   },
 ];
 

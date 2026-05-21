@@ -180,6 +180,43 @@ export interface QuotaReservation {
   limit: number;
 }
 
+async function reserveAnalysisQuotaFallback(user: UserProfile, limit: number): Promise<QuotaReservation> {
+  const { data: freshRow, error: readError } = await supabase
+    .from('users')
+    .select('analyses_count')
+    .eq('id', user.id)
+    .single();
+
+  if (readError || !freshRow) {
+    console.error('[reserveAnalysisQuotaFallback] Read failed:', readError?.message);
+    return { allowed: false, used: user.analyses_count, limit };
+  }
+
+  const current = (freshRow as { analyses_count?: number }).analyses_count ?? user.analyses_count;
+  if (current >= limit) {
+    return { allowed: false, used: current, limit };
+  }
+
+  const { data: updatedRow, error: updateError } = await supabase
+    .from('users')
+    .update({ analyses_count: current + 1 })
+    .eq('id', user.id)
+    .eq('analyses_count', current)
+    .select('analyses_count')
+    .single();
+
+  if (updateError || !updatedRow) {
+    console.error('[reserveAnalysisQuotaFallback] Update failed:', updateError?.message);
+    return { allowed: false, used: current, limit };
+  }
+
+  return {
+    allowed: true,
+    used: (updatedRow as { analyses_count?: number }).analyses_count ?? current + 1,
+    limit,
+  };
+}
+
 export async function reserveAnalysisQuota(user: UserProfile): Promise<QuotaReservation> {
   const tier = getEffectivePlan(user);
   const limit = PLAN_LIMITS[tier] ?? PLAN_LIMITS.free;
@@ -191,19 +228,24 @@ export async function reserveAnalysisQuota(user: UserProfile): Promise<QuotaRese
 
   const { data, error } = await supabase.rpc('reserve_analysis_quota', {
     p_user_id: user.id,
-    p_limit: limit,
+    p_amount: 1,
   });
 
   if (error) {
     console.error('[reserveAnalysisQuota] RPC failed:', error.message);
-    return { allowed: false, used: user.analyses_count, limit };
+    console.warn('[reserveAnalysisQuota] using temporary server fallback after quota RPC failure', {
+      userId: user.id,
+      plan: tier,
+      limit,
+    });
+    return reserveAnalysisQuotaFallback(user, limit);
   }
 
   const row = Array.isArray(data) ? data[0] : data;
   return {
     allowed: Boolean(row?.allowed),
     used: typeof row?.used === 'number' ? row.used : user.analyses_count,
-    limit,
+    limit: typeof row?.limit_value === 'number' ? row.limit_value : limit,
   };
 }
 

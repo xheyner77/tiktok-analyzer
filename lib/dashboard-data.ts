@@ -139,9 +139,11 @@ const FALLBACK_RECOMMENDATIONS: DashboardRecommendation[] = [
 
 const PLAN_LABELS: Record<Plan, string> = {
   free: 'Free',
-  creator: 'Creator',
+  starter: 'Starter',
+  creator: 'Starter',
   pro: 'Pro',
-  scale: 'Scale',
+  lifetime: 'Lifetime',
+  scale: 'Lifetime',
 };
 
 type DashboardAnalysisRow = Pick<AnalysisRow, 'id' | 'user_id' | 'video_url' | 'result' | 'created_at'>;

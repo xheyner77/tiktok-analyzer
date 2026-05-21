@@ -263,6 +263,6 @@ export function buildExpertModeState(input: {
     ],
     summary: available
       ? `${triggeredRules} regle${triggeredRules > 1 ? 's' : ''} expert declenchee${triggeredRules > 1 ? 's' : ''}. Le moteur peut etre ajuste par poids, benchmarks et rules.`
-      : 'Expert Mode reste visible en preview, avec activation complete en Pro et Scale.',
+      : 'Expert Mode reste visible en preview, avec activation complete en Pro et Lifetime.',
   };
 }

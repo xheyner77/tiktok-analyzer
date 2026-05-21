@@ -65,7 +65,7 @@ export default function CGUPage() {
           </Section>
 
           <Section title="6. Quotas et abonnements">
-            <p>Le service est disponible selon différents plans tarifaires (Creator, Pro, Scale) détaillés sur la <Link href="/pricing" className="text-vn-fuchsia hover:underline">page Tarifs</Link>. Les quotas (analyses, hooks) sont réinitialisés chaque mois calendaire.</p>
+            <p>Le service est disponible selon différents plans tarifaires (Starter, Pro, Lifetime) détaillés dans l’espace abonnement du dashboard. Les quotas des plans mensuels sont réinitialisés chaque mois calendaire.</p>
             <p>Les quotas non utilisés ne sont pas reportés au mois suivant. L’essai gratuit offre un accès limité à 3 analyses à vie.</p>
           </Section>
 

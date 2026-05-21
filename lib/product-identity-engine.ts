@@ -197,7 +197,7 @@ function buildArchetype(contentOS: ContentOperatingSystem, workspace: ContentWor
     },
     {
       key: 'tension_creator',
-      label: 'Tension Creator',
+      label: 'Tension créateur',
       description: 'Tu gagnes quand la video pose un conflit net des la premiere phrase.',
       dominantSignals: ['Tension', 'Contraste', contentOS.creatorDNA.weaknesses[0] ?? 'Intro a durcir'],
       recommendationStyle: 'Tester hooks contradiction, erreur cachee et choix A/B.',

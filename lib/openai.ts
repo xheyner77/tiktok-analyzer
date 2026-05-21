@@ -74,7 +74,7 @@ function systemPrompt(): string {
 
 function buildPrompt(
   videoUrl: string,
-  plan: 'pro' | 'scale',
+  plan: 'pro' | 'lifetime',
   observedMetrics?: { views?: number; likes?: number; comments?: number; shares?: number },
   videoContext?: { caption?: string; authorUsername?: string; durationSec?: number; memoryPrompt?: string }
 ): string {
@@ -311,7 +311,7 @@ function buildVisionUserContent(
   observedMetrics?: { views?: number; likes?: number; comments?: number; shares?: number },
   meta?: { durationSec?: number; tiktokUrl?: string; fileName?: string; transcript?: string; analysisContext?: CompactAnalysisContext }
 ): string {
-  const isScale = plan === 'scale';
+  const isScale = plan === 'lifetime';
   const isFree = plan === 'free';
   const tipsCount = isScale ? 10 : 5;
   const depth = isScale
@@ -433,7 +433,7 @@ export async function analyzeWithOpenAIVision(
   ];
 
   // More tokens for richer analysis, lower temp for consistency
-  const maxOut = plan === 'scale' ? 3200 : plan === 'free' ? 1900 : 2400;
+  const maxOut = plan === 'lifetime' ? 3200 : plan === 'free' ? 1900 : 2400;
 
   const createParams = {
     model: OPENAI_CHAT_MODEL,
@@ -551,14 +551,14 @@ export function mapOpenAIVisionError(e: unknown): { message: string; status: num
 
 export async function analyzeWithOpenAI(
   videoUrl: string,
-  plan: Extract<Plan, 'pro' | 'scale'>,
+  plan: Extract<Plan, 'pro' | 'lifetime'>,
   observedMetrics?: { views?: number; likes?: number; comments?: number; shares?: number },
   videoContext?: { caption?: string; authorUsername?: string; durationSec?: number; memoryPrompt?: string }
 ): Promise<AnalysisResult> {
   const response = await client.chat.completions.create({
     model: OPENAI_CHAT_MODEL,
     temperature: 0.3,   // was 0.45 — lower = plus coherent, ancre dans les donnees
-    max_tokens: plan === 'scale' ? 3200 : 2200,  // plus de place pour une analyse riche
+    max_tokens: plan === 'lifetime' ? 3200 : 2200,  // plus de place pour une analyse riche
     response_format: { type: 'json_object' as const },  // force JSON propre
     messages: [
       { role: 'system', content: systemPrompt() },

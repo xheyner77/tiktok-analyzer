@@ -28,7 +28,7 @@ export default function CheckoutButton({ plan, interval = 'month', className, ch
       });
 
       if (res.status === 401) {
-        router.push('/login?redirect=/pricing');
+        router.push('/login?redirect=/dashboard/billing');
         return;
       }
 

@@ -19,7 +19,7 @@ export function ReconstructionPaywall({ plan, access }: { plan?: AppPlan; access
         <div>
           <div className="inline-flex items-center gap-2 rounded-full border border-vn-fuchsia/25 bg-vn-fuchsia/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-fuchsia-100">
             <span className="h-1.5 w-1.5 rounded-full bg-fuchsia-300 shadow-[0_0_16px_rgba(232,121,249,0.9)]" />
-            {isQuotaExceeded ? 'Quota mensuel' : isCreator ? 'Creator preview' : 'Preview verrouillee'}
+            {isQuotaExceeded ? 'Quota mensuel' : isCreator ? 'Starter preview' : 'Preview verrouillee'}
           </div>
           <h3 className="mt-4 text-2xl font-black leading-tight text-white sm:text-3xl">
             {isQuotaExceeded ? 'Reconstruction IA en pause' : 'Reconstruction IA verrouillee'}
@@ -28,7 +28,7 @@ export function ReconstructionPaywall({ plan, access }: { plan?: AppPlan; access
             {isQuotaExceeded
               ? 'Tu as utilise toutes tes reconstructions IA ce mois-ci. Tes analyses restent disponibles, et le quota se remettra a zero au reset mensuel.'
               : isCreator
-              ? 'Creator montre le diagnostic. Pro debloque la timeline reconstruite, les hooks caches, les cuts et les CTA optimises.'
+              ? 'Starter montre le diagnostic. Pro debloque la timeline reconstruite, les hooks caches, les cuts et les CTA optimises.'
               : 'Passe en Pro pour transformer le diagnostic en structure precise a remonter, sans generation video ni montage automatique.'}
           </p>
           {quota ? (
@@ -46,7 +46,7 @@ export function ReconstructionPaywall({ plan, access }: { plan?: AppPlan; access
             </div>
           ) : null}
           <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-            <Link href="/pricing" className="inline-flex min-h-[46px] items-center justify-center rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo px-5 text-sm font-black text-white shadow-[0_18px_65px_-34px_rgba(232,121,249,0.95)] transition hover:brightness-110">
+            <Link href="/dashboard/billing" className="inline-flex min-h-[46px] items-center justify-center rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo px-5 text-sm font-black text-white shadow-[0_18px_65px_-34px_rgba(232,121,249,0.95)] transition hover:brightness-110">
               ✨ Debloquer Reconstruction IA
             </Link>
             <Link href="/dashboard" className="inline-flex min-h-[46px] items-center justify-center rounded-xl border border-white/[0.09] bg-white/[0.045] px-5 text-sm font-black text-white transition hover:bg-white/[0.07]">

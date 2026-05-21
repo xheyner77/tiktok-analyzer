@@ -112,7 +112,7 @@ export default function ImprovementTips({ improvements, plan }: ImprovementTipsP
               <div className="relative group">
                 <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-vn-fuchsia/40 to-vn-indigo/40 opacity-60 blur-md group-hover:opacity-90 transition-all duration-300" aria-hidden />
                 <Link
-                  href="/pricing"
+                  href="/dashboard/billing"
                   className="relative inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:brightness-110 transition-all shadow-[0_4px_20px_-4px_rgba(232,121,249,0.5)]"
                 >
                   Débloquer tous les conseils →

@@ -207,7 +207,7 @@ export interface ReconstructionIAOutput {
   };
   aiReasoning?: string[];
   createdAt?: string;
-  planUsed?: 'pro' | 'scale';
+  planUsed?: 'pro' | 'lifetime' | 'scale';
   scaleVariants?: {
     name: string;
     optimizedStructure: OptimizedStructureStep[];
@@ -240,7 +240,7 @@ export interface ReconstructionQuotaState {
 
 export interface ReconstructionAccessState {
   status: 'available' | 'locked' | 'quota_exceeded' | 'empty' | 'error';
-  plan: 'free' | 'creator' | 'pro' | 'scale';
+  plan: 'free' | 'starter' | 'pro' | 'lifetime' | 'creator' | 'scale';
   quota: ReconstructionQuotaState;
   message?: string;
 }

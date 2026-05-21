@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import type { DashboardData, DashboardInsight, DashboardRecommendation, DashboardTopVideo } from '@/lib/dashboard-data';
 import TikTokConnectModal from '@/components/dashboard-v2/TikTokConnectModal';
@@ -55,18 +56,16 @@ const insightStyleByType: Record<DashboardInsight['type'], { color: string; icon
   engagement: { color: '#14b8a6', icon: 'message' },
 };
 
-const NAV_ITEMS: { label: string; href: string; icon: IconName; badge?: string }[] = [
-  { label: "Vue d'ensemble", href: '/dashboard', icon: 'home' },
-  { label: 'Analyses', href: '/dashboard/analyze', icon: 'analysis' },
-  { label: 'Insights IA', href: '/dashboard/insights', icon: 'insights' },
+type NavItem = { label: string; href: string; icon: IconName; badge?: string; freeOnly?: boolean };
+
+const NAV_ITEMS: NavItem[] = [
+  { label: 'Vue d’ensemble', href: '/dashboard', icon: 'home' },
+  { label: 'Analyser', href: '/dashboard/analyze', icon: 'analysis' },
+  { label: 'Mémoire IA', href: '/dashboard/insights', icon: 'insights' },
   { label: 'Générateur de hooks', href: '/dashboard/hooks', icon: 'pen' },
-  { label: 'Publication', href: '/dashboard/share', icon: 'share' },
-  { label: 'Radar tendances', href: '/dashboard/radar', icon: 'radar', badge: 'Nouveau' },
+  { label: 'Radar tendances', href: '/dashboard/radar', icon: 'radar' },
   { label: 'Bibliothèque contenu', href: '/dashboard/library', icon: 'folder' },
-  { label: 'Concurrents', href: '/dashboard/competitors', icon: 'users' },
-  { label: 'Nouveautés', href: '/dashboard/updates', icon: 'rocket' },
-  { label: 'Support / Contact', href: '/dashboard/support', icon: 'message' },
-  { label: 'Paramètres', href: '/dashboard/settings', icon: 'settings' },
+  { label: 'Pricing', href: '/dashboard/billing', icon: 'crown', freeOnly: true },
 ];
 
 function Icon({ name, className = 'h-4 w-4' }: { name: IconName; className?: string }) {
@@ -114,19 +113,26 @@ function Icon({ name, className = 'h-4 w-4' }: { name: IconName; className?: str
 
 function LogoMark({ small = false }: { small?: boolean }) {
   return (
-    <div className={`${small ? 'h-8 w-8 rounded-[9px]' : 'h-10 w-10 rounded-[11px]'} relative flex shrink-0 items-center justify-center overflow-hidden border border-[#9b5cff]/35 bg-[radial-gradient(circle_at_30%_20%,rgba(244,114,255,0.42),rgba(88,50,178,0.16)_48%,rgba(10,14,32,0.96)_100%)] shadow-[0_0_26px_rgba(154,92,255,0.34),inset_0_1px_0_rgba(255,255,255,0.18)]`}>
-      <span className={`${small ? 'text-[24px]' : 'text-[30px]'} font-black leading-none text-white drop-shadow-[0_0_12px_rgba(232,121,249,0.82)]`}>V</span>
-      <span className="absolute bottom-1 left-1/2 h-[3px] w-5 -translate-x-1/2 rounded-full bg-fuchsia-300/70 blur-[4px]" />
+    <div className={`${small ? 'h-8 w-8 rounded-[9px]' : 'h-10 w-10 rounded-[11px]'} relative shrink-0 overflow-hidden border border-[#9b5cff]/25 bg-[#050816] shadow-[0_0_24px_rgba(124,58,237,0.28),inset_0_1px_0_rgba(255,255,255,0.1)]`}>
+      <Image
+        src="/viralynz-logo-1024.png"
+        alt=""
+        fill
+        sizes={small ? '32px' : '40px'}
+        className="object-cover"
+        priority
+      />
     </div>
   );
 }
 
-function DashboardNav({ onSelect }: { onSelect?: () => void }) {
+function DashboardNav({ user, onSelect }: { user: DashboardData['user']; onSelect?: () => void }) {
   const pathname = usePathname();
+  const items = NAV_ITEMS.filter((item) => !item.freeOnly || user.plan === 'free');
 
   return (
     <nav className="space-y-1.5">
-      {NAV_ITEMS.map((item) => {
+      {items.map((item) => {
         const active = item.href === '/dashboard'
           ? pathname === '/dashboard'
           : pathname === item.href || pathname?.startsWith(`${item.href}/`);
@@ -142,7 +148,7 @@ function DashboardNav({ onSelect }: { onSelect?: () => void }) {
           }`}
           onClick={onSelect}
         >
-          <Icon name={item.icon} className={`h-[18px] w-[18px] ${active ? 'text-white' : 'text-slate-300/86 group-hover:text-violet-200'}`} />
+          <Icon name={item.icon} className={`h-[18px] w-[18px] ${active ? 'text-white' : item.freeOnly ? 'text-violet-200/90 group-hover:text-violet-100' : 'text-slate-300/86 group-hover:text-violet-200'}`} />
           <span className="min-w-0 flex-1 truncate">{item.label}</span>
           {item.badge && <span className="rounded-[5px] bg-[#4c1d95] px-2 py-0.5 text-[10px] font-bold text-violet-100">{item.badge}</span>}
         </Link>
@@ -285,22 +291,36 @@ function ProfileCard({ user, tiktokConnection }: { user: DashboardData['user']; 
   );
 }
 
+function SidebarSupportButton({ onSelect }: { onSelect?: () => void }) {
+  return (
+    <Link
+      href="/dashboard/support"
+      onClick={onSelect}
+      className="group flex h-[40px] w-full items-center gap-2.5 rounded-[9px] border border-white/[0.075] bg-white/[0.026] px-3 text-[12px] font-bold text-slate-300 transition hover:border-cyan-200/18 hover:bg-white/[0.05] hover:text-white focus:outline-none focus:ring-2 focus:ring-cyan-200/20"
+    >
+      <Icon name="message" className="h-4 w-4 text-cyan-100/58 transition group-hover:text-cyan-100/86" />
+      <span className="min-w-0 flex-1 truncate">Support</span>
+      <Icon name="chevron" className="h-3.5 w-3.5 text-slate-500 transition group-hover:text-slate-300" />
+    </Link>
+  );
+}
+
 function Sidebar({ user, tiktokConnection }: { user: DashboardData['user']; tiktokConnection: DashboardData['tiktokConnection'] }) {
   return (
     <aside data-dashboard-sidebar="desktop" className="fixed inset-y-0 left-0 z-20 hidden w-[260px] flex-col border-r border-white/[0.065] bg-[linear-gradient(180deg,rgba(3,8,20,0.985),rgba(2,5,12,0.998))] shadow-[28px_0_90px_-46px_rgba(109,40,217,0.68)] min-[1280px]:flex">
       <div className="flex h-[76px] items-center gap-3 px-6">
-        <div className="text-[38px] font-black leading-none text-[#8b5cff] drop-shadow-[0_0_18px_rgba(124,58,237,0.75)]">ϟ</div>
+        <LogoMark />
         <div className="text-[24px] font-black tracking-[-0.04em] text-white">Viralynz</div>
-        <span className="ml-auto rounded-[6px] bg-[#6d28d9] px-2 py-1 text-[11px] font-black text-white shadow-[0_0_22px_rgba(124,58,237,0.55)]">{user.planLabel}</span>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4 pt-1">
-        <DashboardNav />
+        <DashboardNav user={user} />
       </div>
 
       <div className="space-y-4 px-5 pb-6 pt-2">
         <PlanUsageCard user={user} />
         <ProfileCard user={user} tiktokConnection={tiktokConnection} />
+        <SidebarSupportButton />
       </div>
     </aside>
   );
@@ -356,6 +376,11 @@ const pageHeaderCopy: Array<{ match: (pathname: string | null) => boolean; title
     match: (pathname) => pathname === '/dashboard/analyze',
     title: () => 'Analyser une vidéo',
     subtitle: 'Importe une vidéo et lance un diagnostic.',
+  },
+  {
+    match: (pathname) => pathname === '/dashboard/insights',
+    title: () => 'Mémoire IA',
+    subtitle: 'Viralynz apprend ton style à chaque analyse.',
   },
   {
     match: (pathname) => pathname === '/dashboard/settings',
@@ -488,7 +513,6 @@ function MobileDashboardHeader({
           <LogoMark small />
           <div className="min-w-0">
             <div className="truncate text-[18px] font-black tracking-[-0.035em] text-white">Viralynz</div>
-            <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-violet-200/75">Plan {user.planLabel}</div>
           </div>
         </div>
         <Link href="/dashboard/analyze" aria-label="Nouvelle analyse" className={`grid h-10 w-10 shrink-0 place-items-center ${primaryButton}`}>
@@ -541,7 +565,7 @@ function MobileDrawer({
         </div>
 
         <div className="mt-6">
-          <DashboardNav onSelect={onClose} />
+          <DashboardNav user={user} onSelect={onClose} />
         </div>
 
         <div className="mt-6 grid gap-3">
@@ -561,6 +585,7 @@ function MobileDrawer({
         <div className="mt-6 space-y-4">
           <PlanUsageCard user={user} />
           <ProfileCard user={user} tiktokConnection={tiktokConnection} />
+          <SidebarSupportButton onSelect={onClose} />
         </div>
       </aside>
     </div>
@@ -707,9 +732,9 @@ function OpportunityCard({ metrics, className = '' }: { metrics: DashboardData['
 function KpiGrid({ metrics, states }: { metrics: DashboardData['metrics']; states: DashboardData['states'] }) {
   const kpis = buildKpis(metrics, states);
   return (
-    <section data-dashboard-kpi-grid="true" className="mt-4 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 lg:grid-cols-3 min-[1280px]:grid-cols-[repeat(4,minmax(0,1fr))_minmax(200px,0.95fr)] min-[1440px]:grid-cols-[repeat(4,minmax(0,1fr))_minmax(250px,1.05fr)] min-[1680px]:grid-cols-[repeat(4,minmax(0,1fr))_minmax(330px,1.22fr)] min-[1680px]:gap-4">
+    <section data-dashboard-kpi-grid="true" className="mt-4 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 lg:grid-cols-3 min-[1280px]:grid-cols-4 min-[1600px]:grid-cols-[repeat(4,minmax(0,1fr))_minmax(280px,1.08fr)] min-[1680px]:gap-4">
       {kpis.map((item) => <StatCard key={item.label} item={item} />)}
-      <OpportunityCard metrics={metrics} className="min-[420px]:col-span-2 lg:col-span-1 min-[1280px]:col-span-1 min-[1680px]:col-span-1" />
+      <OpportunityCard metrics={metrics} className="min-[420px]:col-span-2 lg:col-span-1 min-[1280px]:col-span-2 min-[1600px]:col-span-1" />
     </section>
   );
 }
@@ -947,13 +972,13 @@ function InsightsIACard({
       <div className="pointer-events-none absolute inset-0 opacity-55 [background-image:radial-gradient(circle_at_88%_14%,rgba(124,58,237,.24),transparent_23%),linear-gradient(rgba(139,92,246,.13)_1px,transparent_1px),linear-gradient(90deg,rgba(139,92,246,.13)_1px,transparent_1px)] [background-size:100%_100%,36px_36px,36px_36px]" />
       <div className="relative flex h-full flex-col">
         <div className="flex items-center gap-2">
-          <h2 className="text-[17px] font-semibold text-white">Insights IA</h2>
+          <h2 className="text-[17px] font-semibold text-white">Mémoire IA</h2>
           <span className="rounded-[5px] bg-[#4c1d95] px-2.5 py-0.5 text-[11px] font-bold text-violet-100">Nouveau</span>
         </div>
         {!states.hasRealInsights ? (
           <div className="mt-5 min-h-[260px] flex-1 sm:min-h-0">
             <EmptyState
-              title={states.hasTikTokConnection ? 'Compte connecté. Analyse une vidéo pour débloquer tes insights.' : 'Analyse ta première vidéo pour débloquer tes insights IA.'}
+              title={states.hasTikTokConnection ? 'Compte connecté. Analyse une vidéo pour débloquer ta mémoire.' : 'Analyse ta première vidéo pour débloquer ta Mémoire IA.'}
               message={states.hasTikTokConnection ? 'TikTok est relié. Viralynz attend une vraie vidéo avant d’afficher des décisions de montage.' : 'Aucun score de hook, rétention ou engagement ne sera affiché tant qu’il ne vient pas d’une vraie analyse.'}
               cta="Analyser une vidéo"
               href="/dashboard/analyze"
@@ -1164,29 +1189,29 @@ function RecommendationsSection({
     <section className={`${shellCard} min-h-[176px] p-4`}>
       <div className="pointer-events-none absolute inset-y-0 left-0 w-[470px] bg-[radial-gradient(circle_at_18%_40%,rgba(124,58,237,0.22),transparent_46%)]" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(232,121,249,0.42),transparent)]" />
-      <div className="flex h-full flex-col gap-4 min-[1180px]:flex-row min-[1180px]:items-center min-[1180px]:gap-5">
-        <div className="hidden min-[1180px]:block">
+      <div className="flex h-full flex-col gap-4 min-[1600px]:flex-row min-[1600px]:items-center min-[1600px]:gap-5">
+        <div className="hidden min-[1600px]:block">
           <BotMascot />
         </div>
-        <div className="relative w-full shrink-0 min-[1180px]:w-[226px]">
+        <div className="relative w-full shrink-0 min-[1600px]:w-[226px]">
           <div className="flex items-center gap-2">
             <h2 className="text-[20px] font-semibold tracking-[-0.02em] text-white">Recommandations</h2>
             <Icon name="info" className="h-[13px] w-[13px] text-slate-400" />
           </div>
-          <p className="mt-2 text-[13.5px] leading-[1.45] text-slate-300 min-[1180px]:mt-3">{context}</p>
+          <p className="mt-2 max-w-[620px] text-[13.5px] leading-[1.45] text-slate-300 min-[1600px]:mt-3">{context}</p>
         </div>
-        <div className="relative grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2 min-[1180px]:grid-cols-4 min-[1180px]:gap-3.5">
+        <div className="relative grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2 min-[1180px]:grid-cols-4 min-[1180px]:gap-3.5 min-[1280px]:grid-cols-2 min-[1600px]:grid-cols-4">
           {recommendations.map((item, index) => {
             const style = recommendationStyles[index] ?? recommendationStyles[0];
             return (
-            <div key={item.title} className={`${softPanel} flex min-h-[136px] flex-col border-white/[0.095] bg-white/[0.048] p-3.5 min-[1180px]:h-[144px]`}>
+            <div key={item.title} className={`${softPanel} flex min-h-[136px] min-w-0 flex-col border-white/[0.095] bg-white/[0.048] p-3.5 min-[1600px]:h-[144px]`}>
               <div className="flex items-center gap-2.5">
                 <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-[9px] bg-gradient-to-br ${style.tone} text-white shadow-[0_12px_28px_-14px_rgba(124,58,237,0.88)]`}>
                   <Icon name={style.icon} className="h-4 w-4" />
                 </span>
-                <div className="min-w-0 text-[13.5px] font-bold leading-tight text-white">{item.title}</div>
+                <div className="min-w-0 break-words text-[13.5px] font-bold leading-tight text-white">{item.title}</div>
               </div>
-              <p className={`mt-2.5 flex-1 text-[12.05px] leading-[1.38] ${item.locked ? 'text-slate-500' : 'text-slate-300/92'}`}>{item.description}</p>
+              <p className={`mt-2.5 flex-1 break-words text-[12.05px] leading-[1.38] ${item.locked ? 'text-slate-500' : 'text-slate-300/92'}`}>{item.description}</p>
               {item.locked || !states.hasAnalyses ? (
               <Link href="/dashboard/analyze" className="mt-2 flex h-[30px] w-full items-center justify-center rounded-[8px] border border-white/[0.08] bg-white/[0.05] text-[11.85px] font-bold text-slate-300 transition hover:bg-white/[0.08] hover:text-white">
                   Analyser une vidéo
@@ -1256,9 +1281,9 @@ function DashboardV2Client({ dashboard, children }: { dashboard: DashboardData; 
       data-tiktok-connected={visibleStates.hasTikTokConnection ? 'true' : 'false'}
       data-has-analyses={dashboard.states.hasAnalyses ? 'true' : 'false'}
       data-dashboard-v2-root="true"
-      className="fixed inset-0 z-[100] overflow-y-auto overflow-x-hidden bg-[#020611] font-sans text-white antialiased"
+      className="fixed inset-0 z-[100] overflow-y-auto overflow-x-hidden bg-[#020611] font-sans text-white antialiased min-[1280px]:overflow-hidden"
     >
-      <div className="relative min-h-screen w-full min-w-0 overflow-x-hidden bg-[radial-gradient(ellipse_75%_52%_at_51%_-18%,rgba(56,189,248,0.08),transparent_58%),radial-gradient(ellipse_58%_44%_at_92%_8%,rgba(124,58,237,0.18),transparent_58%),linear-gradient(180deg,#020611_0%,#030711_100%)]">
+      <div className="relative min-h-screen w-full min-w-0 overflow-x-hidden bg-[radial-gradient(ellipse_75%_52%_at_51%_-18%,rgba(56,189,248,0.08),transparent_58%),radial-gradient(ellipse_58%_44%_at_92%_8%,rgba(124,58,237,0.18),transparent_58%),linear-gradient(180deg,#020611_0%,#030711_100%)] min-[1280px]:h-screen min-[1280px]:min-h-0">
         <div className="pointer-events-none absolute inset-0 opacity-[0.018] [background-image:linear-gradient(rgba(255,255,255,.75)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.75)_1px,transparent_1px)] [background-size:42px_42px]" />
         <div className="pointer-events-none absolute left-[260px] top-0 hidden h-full w-px bg-white/[0.02] min-[1280px]:block" />
         <MobileDashboardHeader user={dashboard.user} onMenuOpen={() => setDrawerOpen(true)} />
@@ -1290,29 +1315,29 @@ function DashboardV2Client({ dashboard, children }: { dashboard: DashboardData; 
           </div>
         )}
 
-        <div data-dashboard-main-area="true" className="relative min-w-0 min-[1280px]:ml-[260px] min-[1280px]:w-[calc(100%-260px)]">
-          <div data-dashboard-topbar="true" className="sticky top-0 z-50 hidden border-b border-white/[0.075] bg-[linear-gradient(180deg,rgba(3,8,20,0.94),rgba(4,9,20,0.88))] px-6 shadow-[0_22px_70px_-58px_rgba(15,23,42,0.95),inset_0_1px_0_rgba(255,255,255,0.045)] backdrop-blur-xl min-[1280px]:block min-[1440px]:px-8 min-[1680px]:px-9">
+        <div data-dashboard-main-area="true" className="relative min-w-0 min-[1280px]:ml-[260px] min-[1280px]:flex min-[1280px]:h-screen min-[1280px]:w-[calc(100%-260px)] min-[1280px]:flex-col">
+          <div data-dashboard-topbar="global" className="relative z-50 hidden shrink-0 border-b border-white/[0.075] bg-[linear-gradient(180deg,rgba(3,8,20,0.94),rgba(4,9,20,0.88))] px-6 shadow-[0_22px_70px_-58px_rgba(15,23,42,0.95),inset_0_1px_0_rgba(255,255,255,0.045)] backdrop-blur-xl min-[1280px]:block min-[1440px]:px-8 min-[1680px]:px-9">
             <DashboardTopBar user={dashboard.user} states={visibleStates} tiktokConnection={visibleTikTokConnection} onManageTikTok={() => setManagerOpen(true)} pathname={pathname} />
           </div>
 
-          <div data-dashboard-content="true" className="relative mx-auto w-full min-w-0 max-w-[1180px] px-4 pb-8 pt-5 sm:px-5 md:px-6 lg:px-8 min-[1280px]:mx-0 min-[1280px]:max-w-none min-[1280px]:px-6 min-[1280px]:pb-8 min-[1280px]:pt-5 min-[1440px]:px-8 min-[1680px]:px-9">
+          <div data-dashboard-content="true" className="relative mx-auto w-full min-w-0 max-w-[1180px] px-4 pb-8 pt-5 sm:px-5 md:px-6 lg:px-8 min-[1280px]:mx-0 min-[1280px]:max-w-none min-[1280px]:flex-1 min-[1280px]:overflow-y-auto min-[1280px]:overscroll-contain min-[1280px]:px-6 min-[1280px]:pb-8 min-[1280px]:pt-5 min-[1440px]:px-8 min-[1680px]:px-9">
             {showOverview ? (
               <>
                 <ResponsiveIntro user={dashboard.user} states={visibleStates} tiktokConnection={visibleTikTokConnection} />
                 <KpiGrid metrics={dashboard.metrics} states={visibleStates} />
 
-              <section data-dashboard-main-grid="true" className="mt-3.5 grid grid-cols-1 gap-3.5 min-[1280px]:grid-cols-[minmax(0,1fr)_320px] min-[1440px]:grid-cols-[minmax(0,1fr)_390px] min-[1680px]:grid-cols-[minmax(0,1fr)_430px]">
+              <section data-dashboard-main-grid="true" className="mt-3.5 grid grid-cols-1 gap-3.5 min-[1600px]:grid-cols-[minmax(0,1fr)_390px] min-[1680px]:grid-cols-[minmax(0,1fr)_430px]">
                 <div className="min-w-0 space-y-3.5">
                   <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 min-[1680px]:grid-cols-[minmax(0,1fr)_290px]">
                     <RetentionChartCard retention={dashboard.retention} states={visibleStates} cta={dashboard.analysisCta} />
                     <VideoPreviewCard latestVideo={dashboard.latestVideo} states={visibleStates} cta={dashboard.analysisCta} />
                   </div>
 
-                  <div className="min-[1280px]:hidden">
+                  <div className="min-[1600px]:hidden">
                     <InsightsIACard insights={dashboard.insights} cta={dashboard.analysisCta} states={visibleStates} />
                   </div>
 
-                  <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 lg:grid-cols-3 min-[1680px]:grid-cols-[250px_minmax(0,1fr)_360px]">
+                  <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 xl:grid-cols-3 min-[1680px]:grid-cols-[250px_minmax(0,1fr)_360px]">
                     <ViralPotentialCard metrics={dashboard.metrics} states={visibleStates} />
                     <EmotionalCurveCard states={visibleStates} />
                     <ContentPillarsCard states={visibleStates} />
@@ -1320,12 +1345,12 @@ function DashboardV2Client({ dashboard, children }: { dashboard: DashboardData; 
 
                   <RecommendationsSection recommendations={dashboard.recommendations} context={dashboard.metrics.recommendationsContext} states={visibleStates} />
 
-                  <div className="min-[1280px]:hidden">
+                  <div className="min-[1600px]:hidden">
                     <TopVideosCard videos={dashboard.topVideos} states={visibleStates} />
                   </div>
                 </div>
 
-                <div data-dashboard-right-rail="true" className="hidden min-w-0 space-y-3.5 min-[1280px]:block">
+                <div data-dashboard-right-rail="true" className="hidden min-w-0 space-y-3.5 min-[1600px]:block">
                   <InsightsIACard insights={dashboard.insights} cta={dashboard.analysisCta} states={visibleStates} />
                   <TopVideosCard videos={dashboard.topVideos} states={visibleStates} />
                 </div>

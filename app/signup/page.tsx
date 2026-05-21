@@ -187,7 +187,7 @@ export default function SignupPage() {
           localStorage.removeItem(PENDING_PLAN_KEY);
           if (pendingPlan === 'creator' || pendingPlan === 'pro' || pendingPlan === 'scale') {
             // User chose a paid plan from GuestGate → pricing page
-            window.location.href = '/pricing';
+            window.location.href = '/dashboard/billing';
           } else {
             // Normal signup (no GuestGate) → dashboard
             window.location.href = '/dashboard';

@@ -45,4 +45,4 @@ export function getSupabaseAdmin(): SupabaseClient {
 export const supabaseAuth = getSupabaseAuth();
 export const supabase = getSupabaseAdmin();
 
-export type Plan = 'free' | 'creator' | 'pro' | 'scale';
+export type Plan = 'free' | 'starter' | 'pro' | 'lifetime' | 'creator' | 'scale';

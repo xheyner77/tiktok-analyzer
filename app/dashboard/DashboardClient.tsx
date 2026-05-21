@@ -93,12 +93,14 @@ function tiktokOAuthFlashMessage(
   };
 }
 
-const planLabels: Record<Plan, string> = { free: 'Free', creator: 'Creator', pro: 'Pro', scale: 'Scale' };
+const planLabels: Record<Plan, string> = { free: 'Free', starter: 'Starter', creator: 'Starter', pro: 'Pro', lifetime: 'Lifetime', scale: 'Lifetime' };
 
 const planGradient: Record<Plan, string> = {
   free:  'from-gray-500/20 to-gray-600/20 border-gray-500/25 text-gray-300',
+  starter: 'from-vn-fuchsia/25 to-vn-violet/20 border-vn-fuchsia/30 text-vn-fuchsia',
   creator: 'from-vn-fuchsia/25 to-vn-violet/20 border-vn-fuchsia/30 text-vn-fuchsia',
   pro:   'from-cyan-300/20 to-vn-indigo/20 border-cyan-300/30 text-cyan-200',
+  lifetime: 'from-vn-violet/30 to-vn-indigo/25 border-vn-violet/35 text-vn-glow',
   scale: 'from-vn-violet/30 to-vn-indigo/25 border-vn-violet/35 text-vn-glow',
 };
 
@@ -649,14 +651,14 @@ function LockedSection({
 
           {/* CTA */}
           <Link
-            href="/pricing"
+            href="/dashboard/billing"
             className={`inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r hover:brightness-110 active:scale-[0.98] transition-all ${
               isPro
                 ? 'from-vn-fuchsia to-vn-indigo shadow-[0_8px_32px_-8px_rgba(232,121,249,0.5)]'
                 : 'from-vn-violet to-vn-fuchsia shadow-[0_8px_32px_-8px_rgba(139,92,246,0.45)]'
             }`}
           >
-            {isPro ? '⭐' : '🔥'} {isPro ? 'Passer à Pro' : 'Passer à Scale'} — {price}€/mois
+            {isPro ? '⭐' : '🔥'} {isPro ? 'Passer à Pro' : 'Débloquer Lifetime'} — {price}€
             <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
               <path fillRule="evenodd" d="M6.22 4.22a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06L7.28 11.78a.75.75 0 0 1-1.06-1.06L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
             </svg>
@@ -804,7 +806,7 @@ export default function DashboardClient({
       const data = await res.json().catch(() => ({}));
       if (!res.ok) { alert(data.error ?? 'Mise à niveau impossible.'); return; }
       const synced = await waitForBillingPlan('scale');
-      if (!synced) console.warn('[Dashboard] Scale webhook lent.');
+      if (!synced) console.warn('[Dashboard] Lifetime webhook lent.');
       window.location.href = '/dashboard?t=' + Date.now();
     } catch (e) { console.error(e); alert('Erreur réseau.'); }
     finally { setScaleUpgradeLoading(false); }
@@ -887,7 +889,7 @@ export default function DashboardClient({
             </div>
             <div>
               <p className="text-sm font-semibold text-emerald-400">Paiement réussi — compte mis à jour !</p>
-              <p className="text-xs text-emerald-600 mt-0.5">Plan {upgradedPlan === 'scale' ? 'Scale' : 'Pro'} actif.</p>
+              <p className="text-xs text-emerald-600 mt-0.5">Plan {upgradedPlan === 'scale' ? 'Lifetime' : 'Pro'} actif.</p>
             </div>
           </div>
         )}
@@ -1057,7 +1059,7 @@ export default function DashboardClient({
               <p className="text-[11px] text-gray-600 mt-1">{hooksRemaining > 0 ? `${hooksRemaining} restant${hooksRemaining > 1 ? 's' : ''}` : 'Quota atteint'}</p>
             </div>
           ) : (
-            <Link href="/pricing" className="rounded-2xl border border-vn-fuchsia/20 bg-gradient-to-br from-vn-fuchsia/[0.07] to-vn-indigo/[0.05] p-5 group hover:border-vn-fuchsia/35 transition-all">
+            <Link href="/dashboard/billing" className="rounded-2xl border border-vn-fuchsia/20 bg-gradient-to-br from-vn-fuchsia/[0.07] to-vn-indigo/[0.05] p-5 group hover:border-vn-fuchsia/35 transition-all">
               <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500 mb-3">Plan actuel</p>
               <p className="text-2xl font-black text-white leading-none mb-1">Free</p>
               <p className="text-[11px] text-vn-fuchsia font-semibold group-hover:text-vn-fuchsia/80 transition-colors">Passer à Pro →</p>
@@ -1353,8 +1355,8 @@ export default function DashboardClient({
           <LockedSection
             targetPlan="scale"
             price={DISPLAY_CATALOG_SCALE_EUR}
-            badge="Fonctionnalités Scale"
-            title="Passe en mode Scale"
+            badge="Fonctionnalités Lifetime"
+            title="D?bloque Lifetime"
             subtitle="Volume équipe, stratégie avancée, comptes TikTok multiples et pilotage contenu pour agences, studios et créateurs ambitieux."
             features={[
               { icon: '📈', text: 'Analyses illimitées' },
@@ -1366,18 +1368,18 @@ export default function DashboardClient({
           />
         )}
 
-        {/* ── Scale upgrade banner (Pro + Stripe only — quick 1-click upgrade) ── */}
+        {/* Lifetime upgrade banner */}
         {showScaleUpgrade && (
           <div className="relative overflow-hidden rounded-2xl border border-vn-violet/30 bg-gradient-to-br from-vn-violet/10 to-vn-fuchsia/[0.06] p-6">
             <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-vn-violet/50 to-transparent pointer-events-none" />
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <p className="text-sm font-bold text-white mb-1">Passer à Scale</p>
+                <p className="text-sm font-bold text-white mb-1">Débloquer Lifetime</p>
                 <p className="text-xs text-gray-400">Analyses illimitées · hooks illimités · stratégie avancée · comptes TikTok multiples</p>
               </div>
               <button type="button" disabled={scaleUpgradeLoading} onClick={handleScaleUpgrade}
                 className="shrink-0 px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-vn-indigo to-vn-fuchsia hover:opacity-90 disabled:opacity-50 transition-all shadow-lg shadow-vn-fuchsia/20">
-                {scaleUpgradeLoading ? 'Mise à niveau…' : `Scale — ${DISPLAY_CATALOG_SCALE_EUR}€/mois`}
+                {scaleUpgradeLoading ? 'Mise à niveau…' : `Lifetime — ${DISPLAY_CATALOG_SCALE_EUR}€`}
               </button>
             </div>
           </div>
@@ -1423,7 +1425,7 @@ export default function DashboardClient({
                 </div>
                 <p className="text-sm font-semibold text-white mb-2">Historique disponible en Pro</p>
                 <p className="text-xs text-gray-500 mb-5">Retrouve toutes tes analyses passées et suis ta progression.</p>
-                <Link href="/pricing" className="inline-flex items-center gap-1.5 text-xs font-semibold px-5 py-2.5 rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:opacity-90 transition-opacity shadow-lg shadow-vn-fuchsia/20">
+                <Link href="/dashboard/billing" className="inline-flex items-center gap-1.5 text-xs font-semibold px-5 py-2.5 rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:opacity-90 transition-opacity shadow-lg shadow-vn-fuchsia/20">
                   Passer à Pro →
                 </Link>
               </div>
@@ -1465,7 +1467,7 @@ export default function DashboardClient({
               </Link>
 
               {plan === 'free' ? (
-                <Link href="/pricing" className="flex items-center gap-3.5 px-5 py-3.5 border-t border-white/[0.05] hover:bg-white/[0.04] transition-all group">
+                <Link href="/dashboard/billing" className="flex items-center gap-3.5 px-5 py-3.5 border-t border-white/[0.05] hover:bg-white/[0.04] transition-all group">
                   <div className="w-8 h-8 rounded-lg bg-vn-violet/15 border border-vn-violet/25 flex items-center justify-center shrink-0">
                     <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 text-vn-glow">
                       <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" />

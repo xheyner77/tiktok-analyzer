@@ -5,6 +5,7 @@ import {
   invoiceSubscriptionId,
   resetMonthlyCountersForSubscription,
   setSubscriptionPaymentFailed,
+  syncUserFromPaidLifetimeCheckout,
   syncUserFromPaidSubscriptionCheckout,
   syncUserRowFromStripeSubscription,
 } from '@/lib/stripe-subscription-sync';
@@ -84,8 +85,15 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: res.reason }, { status: 500 });
           }
           console.log('[webhook] checkout.session.completed sync OK — plan accordé en DB user=', session.metadata?.userId);
+        } else if (session.mode === 'payment' && session.metadata?.plan === 'scale') {
+          const res = await syncUserFromPaidLifetimeCheckout(stripe, session);
+          if (!res.ok) {
+            console.error('[webhook] lifetime checkout sync failed:', res.reason, res.log ?? '');
+            return NextResponse.json({ error: res.reason }, { status: 500 });
+          }
+          console.log('[webhook] checkout.session.completed lifetime sync OK — user=', session.metadata?.userId);
         } else {
-          console.warn('[webhook] Ignored checkout (not subscription) mode=', session.mode, session.id);
+          console.warn('[webhook] Ignored checkout mode=', session.mode, session.id);
         }
         break;
       }

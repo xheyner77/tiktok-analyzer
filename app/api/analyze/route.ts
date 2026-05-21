@@ -28,6 +28,7 @@ import type { VideoIntelligenceResult } from '@/lib/types';
 import { buildVideoAnalysisSnapshot, getCreatorMemoryForAnalysis, persistAnalysisSnapshotAndMemory } from '@/lib/creator-memory-store';
 import { buildCreatorMemoryContext, getCreatorMemory, learnCreatorMemoryFromAnalysis } from '@/lib/creator-memory';
 import { getCreatorMemoryLimit } from '@/lib/plan-limits';
+import { createMemoryJob, processMemoryJob } from '@/lib/memory';
 import { buildReconstructionIA as buildReconstructionIAOutput } from '@/lib/ai-reconstruction-engine';
 import { buildStructuredReconstruction } from '@/lib/reconstruction/engine';
 
@@ -51,7 +52,32 @@ function getAudienceDisplay(body: Record<string, unknown>): string {
   return sanitizeShortString(body.nicheLabel, 80) ?? 'ton audience';
 }
 
-type ReconstructionPlan = 'free' | 'creator' | 'pro' | 'scale';
+type ReconstructionPlan = 'free' | 'starter' | 'pro' | 'lifetime' | 'creator' | 'scale';
+
+async function enqueueMemoryLearning(input: {
+  userId: string;
+  analysisId: string | null;
+  plan: string;
+}): Promise<void> {
+  if (!input.analysisId) return;
+
+  try {
+    const job = await createMemoryJob({
+      userId: input.userId,
+      analysisId: input.analysisId,
+      jobType: 'learn_from_analysis',
+    });
+
+    if (job && process.env.MEMORY_PROCESS_SYNC === 'true') {
+      const result = await processMemoryJob(job, input.plan);
+      if (!result.ok) {
+        console.warn('[analyze] memory sync job failed:', result.error);
+      }
+    }
+  } catch (error) {
+    console.warn('[analyze] memory job enqueue failed:', error instanceof Error ? error.message : error);
+  }
+}
 
 function getMonthlyResetAt(user?: { stripe_subscription_id?: string | null; subscription_current_period_end?: string | null; last_reset_at?: string | null }): string {
   if (user?.stripe_subscription_id && user.subscription_current_period_end) {
@@ -99,7 +125,7 @@ function enrichScaleReconstruction(reconstruction: NonNullable<AnalysisResult['r
   return {
     ...reconstruction,
     createdAt: now,
-    planUsed: 'scale',
+    planUsed: 'lifetime',
     scaleVariants: [
       {
         name: 'Structure preuve avant contexte',
@@ -140,7 +166,7 @@ function enrichScaleReconstruction(reconstruction: NonNullable<AnalysisResult['r
 
 function finalizeReconstructionForPlan(
   reconstruction: NonNullable<AnalysisResult['reconstructionIA']>,
-  plan: 'pro' | 'scale'
+  plan: 'pro' | 'lifetime'
 ): NonNullable<AnalysisResult['reconstructionIA']> {
   const createdAt = new Date().toISOString();
   const aiReasoning = [
@@ -149,7 +175,7 @@ function finalizeReconstructionForPlan(
     reconstruction.whyThisStructureWorks.changeJustification,
   ].filter(Boolean);
   const base = { ...reconstruction, optimizedCTAs: reconstruction.ctaRecommendations, createdAt, planUsed: plan, aiReasoning };
-  return plan === 'scale' ? enrichScaleReconstruction(base) : base;
+  return plan === 'lifetime' ? enrichScaleReconstruction(base) : base;
 }
 
 function buildRepostVersionFromBody(body: Record<string, unknown>): AnalysisResult['repostVersion'] {
@@ -414,7 +440,7 @@ function attachAnalyzerOutputs(
   enriched.repostVersion = enriched.repostVersion ?? buildRepostVersionFromBody(body);
   const reconPlan = reconstructionOptions?.plan ?? 'free';
   const reconUsed = reconstructionOptions?.used ?? 0;
-  if (reconstructionOptions?.canGenerate && (reconPlan === 'pro' || reconPlan === 'scale')) {
+  if (reconstructionOptions?.canGenerate && (reconPlan === 'pro' || reconPlan === 'lifetime')) {
     enriched.reconstructionIA = finalizeReconstructionForPlan(
       enriched.reconstructionIA ?? buildReconstructionIAOutput(enriched, body, context ?? getAnalysisEngineContext(body)),
       reconPlan
@@ -431,7 +457,7 @@ function attachAnalyzerOutputs(
     const status = limit > 0 && reconUsed >= limit ? 'quota_exceeded' : 'locked';
     const message = status === 'quota_exceeded'
       ? 'Tu as utilisé toutes tes reconstructions IA ce mois-ci.'
-      : 'La Reconstruction IA est disponible avec Pro et Scale.';
+      : 'La Reconstruction IA est disponible avec Pro et Lifetime.';
     withReconstructionAccess(enriched, status, reconPlan, reconUsed, reconstructionOptions?.user, message);
   }
   enriched.actionPlan = enriched.actionPlan?.length ? enriched.actionPlan : buildActionPlan();
@@ -878,7 +904,7 @@ function buildMockResult(url: string, plan: string = 'free'): AnalysisResult {
     })),
   };
 
-  if (plan === 'scale') {
+  if (plan === 'lifetime') {
     result.strategy = profile.strategy;
     result.viralTips = profile.viralTips;
   }
@@ -1200,6 +1226,19 @@ async function postVisionAnalyze(
   const limit = PLAN_LIMITS[effective] ?? PLAN_LIMITS.free;
   const reservedQuota = dbUser ? await reserveAnalysisQuota(dbUser) : null;
   if (dbUser && !reservedQuota?.allowed) {
+    const used = reservedQuota?.used ?? dbUser.analyses_count;
+    if (used < limit) {
+      return NextResponse.json(
+        {
+          error: 'Impossible de vérifier ton quota pour le moment. Réessaie dans quelques secondes.',
+          type: 'analysis',
+          plan: effective,
+          used,
+          limit,
+        },
+        { status: 500 }
+      );
+    }
     const isFreeLifetime = effective === 'free' && !dbUser.stripe_subscription_id;
     return NextResponse.json(
       {
@@ -1208,7 +1247,7 @@ async function postVisionAnalyze(
           : 'Limite d\'analyses atteinte pour cette période. Attend le renouvellement ou passe à un plan supérieur.',
         type: 'analysis',
         plan: effective,
-        used: reservedQuota?.used ?? dbUser.analyses_count,
+        used,
         limit,
       },
       { status: 429 }
@@ -1357,7 +1396,7 @@ async function postVisionAnalyze(
     transcriptChars: videoIntelligence.transcript.text?.length ?? 0,
     ocrChars: videoIntelligence.onScreenText.text.join(' ').length,
     promptChars: analysisContext.promptContext.length,
-    outputTokens: plan === 'scale' ? 2400 : 1700,
+    outputTokens: plan === 'lifetime' ? 2400 : 1700,
     whisperMinutes: videoIntelligence.transcript.available && durationSec ? Math.max(0.1, durationSec / 60) : 0,
   });
   console.info('[analysis-cost] estimate', costEstimate);
@@ -1451,6 +1490,9 @@ async function postVisionAnalyze(
 
   if (session) {
     const analysisId = await saveAnalysis(session.userId, persistUrl, result);
+    if (!analysisId) {
+      throw new Error('Analysis persistence failed.');
+    }
     const snapshot = buildVideoAnalysisSnapshot({
       userId: session.userId,
       plan,
@@ -1469,6 +1511,11 @@ async function postVisionAnalyze(
         videoUrl: persistUrl,
         result,
         snapshot,
+      }),
+      enqueueMemoryLearning({
+        userId: session.userId,
+        analysisId,
+        plan,
       }),
       learnCreatorMemoryFromAnalysis({
         userId: session.userId,
@@ -1611,6 +1658,19 @@ export async function POST(request: NextRequest) {
     });
 
     if (!reservedQuota.allowed) {
+      const used = reservedQuota.used;
+      if (used < limit) {
+        return NextResponse.json(
+          {
+            error: 'Impossible de vérifier ton quota pour le moment. Réessaie dans quelques secondes.',
+            type: 'analysis',
+            plan: effectivePlan,
+            used,
+            limit,
+          },
+          { status: 500 }
+        );
+      }
       const isFreeLifetime = effectivePlan === 'free' && !dbUser.stripe_subscription_id;
       return NextResponse.json(
         {
@@ -1619,7 +1679,7 @@ export async function POST(request: NextRequest) {
             : 'Limite d\'analyses atteinte pour cette période. Attend le renouvellement ou passe à un plan supérieur.',
           type:  'analysis',
           plan:  effectivePlan,
-          used:  reservedQuota.used,
+          used,
           limit,
         },
         { status: 429 }
@@ -1732,7 +1792,7 @@ export async function POST(request: NextRequest) {
 
     if (useOpenAI) {
       try {
-        result = await analyzeWithOpenAI(url, plan === 'scale' ? 'scale' : 'pro', observedMetrics, detected
+        result = await analyzeWithOpenAI(url, plan === 'lifetime' ? 'lifetime' : 'pro', observedMetrics, detected
           ? {
               caption: detected.caption,
               authorUsername: detected.authorUsername,
@@ -1783,7 +1843,7 @@ export async function POST(request: NextRequest) {
       framesForReasoning: 0,
       transcriptChars: videoIntelligence.transcript.text?.length ?? 0,
       promptChars: analysisContext.promptContext.length,
-      outputTokens: plan === 'scale' ? 2200 : 1500,
+      outputTokens: plan === 'lifetime' ? 2200 : 1500,
     });
     console.info('[analysis-cost] url estimate', costEstimate);
     const previousAnalyses = session ? await getRecentAnalysesForMemory(session.userId, getCreatorMemoryLimit(plan)) : [];
@@ -1828,6 +1888,9 @@ export async function POST(request: NextRequest) {
 
     if (session && dbUser) {
       const analysisId = await saveAnalysis(session.userId, url, result);
+      if (!analysisId) {
+        throw new Error('Analysis persistence failed.');
+      }
       const snapshot = buildVideoAnalysisSnapshot({
         userId: session.userId,
         plan,
@@ -1846,6 +1909,11 @@ export async function POST(request: NextRequest) {
           videoUrl: url,
           result,
           snapshot,
+        }),
+        enqueueMemoryLearning({
+          userId: session.userId,
+          analysisId,
+          plan,
         }),
         learnCreatorMemoryFromAnalysis({
           userId: session.userId,

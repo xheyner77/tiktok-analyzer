@@ -17,7 +17,7 @@ export async function GET() {
 
     const tier = getEffectivePlan(user);
     const analyses = await getAnalyses(session.userId, tier);
-    const dashboardCap = tier === 'scale' ? analyses.length : Math.min(analyses.length, 30);
+    const dashboardCap = tier === 'lifetime' ? analyses.length : Math.min(analyses.length, 30);
     return NextResponse.json({
       analyses: analyses.slice(0, dashboardCap),
       locked: tier === 'free',

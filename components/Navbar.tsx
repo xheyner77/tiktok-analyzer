@@ -26,9 +26,6 @@ export default async function Navbar() {
             <a href="/#comment-ca-marche" className={linkCls}>
               Comment ça marche
             </a>
-            <a href="/#tarifs" className={linkCls}>
-              Tarifs
-            </a>
           </div>
         </div>
 

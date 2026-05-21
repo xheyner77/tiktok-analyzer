@@ -68,7 +68,6 @@ export default function Footer() {
             <ul className="space-y-3">
               {[
                 { label: 'Fonctionnalités', href: '/#features' },
-                { label: 'Tarifs',          href: '/#pricing' },
                 { label: 'FAQ',             href: '/#faq' },
                 { label: 'Nouveautés',      href: '/changelog' },
               ].map(({ label, href }) => (
@@ -95,7 +94,6 @@ export default function Footer() {
             <ul className="space-y-3">
               {[
                 { label: 'Fonctionnalités', href: '/#features' },
-                { label: 'Tarifs',          href: '/#pricing' },
                 { label: 'Nouveautés',      href: '/changelog' },
               ].map(({ label, href }) => (
                 <li key={label}>

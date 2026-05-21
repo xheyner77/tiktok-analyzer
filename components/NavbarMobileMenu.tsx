@@ -17,29 +17,34 @@ interface NavbarMobileMenuProps {
 
 const PLAN_COLORS: Record<Plan, string> = {
   free: 'border-white/[0.1] bg-white/[0.04] text-gray-300',
+  starter: 'border-vn-fuchsia/25 bg-vn-fuchsia/10 text-fuchsia-100',
   creator: 'border-vn-fuchsia/25 bg-vn-fuchsia/10 text-fuchsia-100',
   pro: 'border-cyan-300/25 bg-cyan-300/10 text-cyan-100',
+  lifetime: 'border-vn-violet/30 bg-vn-violet/15 text-violet-100',
   scale: 'border-vn-violet/30 bg-vn-violet/15 text-violet-100',
 };
 
 const PLAN_LABELS: Record<Plan, string> = {
   free: 'Plan Free',
-  creator: 'Plan Creator',
+  starter: 'Plan Starter',
+  creator: 'Plan Starter',
   pro: 'Plan Pro',
-  scale: 'Plan Scale',
+  lifetime: 'Plan Lifetime',
+  scale: 'Plan Lifetime',
 };
 
 const PLAN_SHORT_LABELS: Record<Plan, string> = {
   free: 'Free',
-  creator: 'Creator',
+  starter: 'Starter',
+  creator: 'Starter',
   pro: 'Pro',
-  scale: 'Scale',
+  lifetime: 'Lifetime',
+  scale: 'Lifetime',
 };
 
 const navLinks = [
   { href: '/#fonctionnalites', label: 'Fonctionnalités' },
   { href: '/#comment-ca-marche', label: 'Comment ça marche' },
-  { href: '/#tarifs', label: 'Tarifs' },
 ];
 
 function CloseIcon() {

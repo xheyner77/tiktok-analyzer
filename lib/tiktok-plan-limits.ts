@@ -1,17 +1,17 @@
-export type TikTokPlanKey = 'free' | 'creator' | 'pro' | 'scale';
+export type TikTokPlanKey = 'free' | 'starter' | 'pro' | 'lifetime';
 
 export function normalizeTikTokPlan(plan: string | null | undefined): TikTokPlanKey {
-  if (plan === 'scale') return 'scale';
+  if (plan === 'lifetime' || plan === 'scale') return 'lifetime';
   if (plan === 'pro') return 'pro';
-  if (plan === 'creator') return 'creator';
+  if (plan === 'starter' || plan === 'creator') return 'starter';
   return 'free';
 }
 
 export function getTikTokAccountLimitForPlan(plan: string | null | undefined): number {
   const normalized = normalizeTikTokPlan(plan);
-  if (normalized === 'scale') return 8;
-  if (normalized === 'pro') return 3;
-  if (normalized === 'creator') return 1;
+  if (normalized === 'lifetime') return 3;
+  if (normalized === 'pro') return 1;
+  if (normalized === 'starter') return 1;
   return 0;
 }
 

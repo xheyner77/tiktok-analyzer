@@ -282,7 +282,7 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
                   +{locked} recommandation{locked > 1 ? 's' : ''} en plus avec Pro
                 </p>
                 <Link
-                  href="/pricing"
+                  href="/dashboard/billing"
                   className="inline-flex items-center justify-center gap-1.5 text-[12px] font-semibold px-5 py-2.5 rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_6px_20px_-6px_rgba(232,121,249,0.45)] mt-1"
                 >
                   ⭐ Débloquer avec Pro
@@ -327,7 +327,7 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
                         </div>
                         <div className="absolute inset-0 flex flex-col items-center justify-center text-center gap-1.5 px-3 py-3 bg-[#0d0d12]/[0.96]">
                           <span className="text-[9px] font-bold text-vn-fuchsia uppercase tracking-[0.12em]">Plan Pro</span>
-                          <Link href="/pricing" className="text-[10px] font-semibold text-white/90 hover:text-white">
+                          <Link href="/dashboard/billing" className="text-[10px] font-semibold text-white/90 hover:text-white">
                             Voir tout →
                           </Link>
                         </div>
@@ -350,7 +350,7 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
                         </div>
                         <div className="absolute inset-0 flex flex-col items-center justify-center text-center gap-1.5 px-3 py-3 bg-[#0d0d12]/[0.96]">
                           <span className="text-[9px] font-bold text-vn-fuchsia uppercase tracking-[0.12em]">Plan Pro</span>
-                          <Link href="/pricing" className="text-[10px] font-semibold text-white/90 hover:text-white">
+                          <Link href="/dashboard/billing" className="text-[10px] font-semibold text-white/90 hover:text-white">
                             Voir tout →
                           </Link>
                         </div>
@@ -370,7 +370,7 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
                       <div className="absolute inset-0 flex flex-col items-center justify-center text-center gap-2 px-4 py-5 bg-[#0d0d12]/[0.97]">
                         <span className="text-[9px] font-bold text-vn-fuchsia uppercase tracking-[0.12em]">Reco pilier · Pro</span>
                         <Link
-                          href="/pricing"
+                          href="/dashboard/billing"
                           className="inline-flex items-center justify-center text-[11px] font-semibold px-4 py-2 rounded-lg bg-gradient-to-r from-vn-fuchsia/90 to-vn-indigo/90 text-white hover:brightness-110 transition-all"
                         >
                           Débloquer
@@ -447,7 +447,7 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
                       Contexte stats, benchmark et lecture algo complète.
                     </p>
                     <Link
-                      href="/pricing"
+                      href="/dashboard/billing"
                       className="inline-flex items-center justify-center text-[11px] font-semibold px-4 py-2 rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:brightness-110 transition-all shadow-[0_4px_16px_-4px_rgba(232,121,249,0.35)] mt-1"
                     >
                       Débloquer
@@ -484,7 +484,7 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center gap-2.5 px-5 py-6 bg-[#0d0d12]/[0.97]">
                   <span className="text-[9px] font-bold text-vn-violet uppercase tracking-[0.12em]">Action prioritaire · Pro</span>
                   <Link
-                    href="/pricing"
+                    href="/dashboard/billing"
                     className="inline-flex items-center justify-center text-[11px] font-semibold px-4 py-2 rounded-xl bg-gradient-to-r from-vn-violet to-vn-indigo text-white hover:brightness-110 transition-all"
                   >
                     Débloquer
@@ -515,7 +515,7 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
                     Compare structure et stats réelles en un seul indicateur.
                   </p>
                   <Link
-                    href="/pricing"
+                    href="/dashboard/billing"
                     className="text-[11px] font-semibold text-white hover:text-vn-fuchsia transition-colors mt-0.5"
                   >
                     Voir les plans →
@@ -565,7 +565,7 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
                 Débloque l'ordre recommandé, les corrections priorisées et la mémoire créateur étendue.
               </p>
               <Link
-                href="/pricing"
+                href="/dashboard/billing"
                 className="inline-flex items-center justify-center gap-1.5 text-[12px] font-semibold px-6 py-3 rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_8px_24px_-8px_rgba(232,121,249,0.45)]"
               >
                 ⭐ Passer à Pro
@@ -607,7 +607,7 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
         <div className="px-7 sm:px-10 py-8 text-center md:text-left">
           <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-2 sm:gap-3 mb-6">
             <p className={label9}>Hypothèses IA</p>
-            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-vn-fuchsia/15 text-vn-fuchsia border border-vn-fuchsia/20 uppercase tracking-wide">Scale</span>
+            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-vn-fuchsia/15 text-vn-fuchsia border border-vn-fuchsia/20 uppercase tracking-wide">Lifetime</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3 text-left max-w-lg mx-auto md:max-w-none md:mx-0">
             {(data.viralTips ?? []).map((tip, i) => (
@@ -618,12 +618,12 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
           </div>
         </div>
       ) : plan !== 'scale' && (
-        /* Locked Scale insights preview */
+        /* Locked Lifetime insights preview */
         <div className="relative overflow-hidden border-t-0 min-h-[300px]">
           <div className="blur-sm pointer-events-none select-none opacity-30 px-7 sm:px-10 py-10 min-h-[280px]" aria-hidden>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mb-6">
               <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-gray-600">Hypothèses IA</p>
-              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-300 border border-violet-500/20 uppercase tracking-wide">Scale</span>
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-300 border border-violet-500/20 uppercase tracking-wide">Lifetime</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3 max-w-lg mx-auto">
               {['Ton hook crée une tension narrative à tester — continue sur cet angle spécifique.','Tes cuts synchronisés sur le beat sont un signal détecté à vérifier en montage.','La rétention après 15s semble solide — hypothèse IA à confirmer avec tes données TikTok.','Signal détecté : boucle d’attention possible sur les 3 premières secondes.'].map((tip, i) => (
@@ -641,7 +641,7 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
                 </svg>
               </div>
               <span className="text-[9px] font-bold px-3 py-1 rounded-full bg-vn-violet/20 text-violet-300 border border-vn-violet/35 uppercase tracking-[0.14em]">
-                Plan Scale
+                Plan Lifetime
               </span>
               <p className="text-[15px] font-black text-white leading-tight">Hypothèses IA avancées</p>
               <p className="text-[11px] text-gray-400 leading-relaxed">
@@ -655,10 +655,10 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
                 ))}
               </div>
               <Link
-                href="/pricing"
+                href="/dashboard/billing"
                 className="inline-flex items-center justify-center gap-2 text-[12px] font-bold px-6 py-3 rounded-xl bg-gradient-to-r from-vn-violet to-vn-fuchsia text-white hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_8px_28px_-8px_rgba(139,92,246,0.5)] mt-2 w-full max-w-[240px]"
               >
-                Passer à Scale
+                Passer à Lifetime
               </Link>
               <p className="text-[10px] text-gray-600 pt-1">Sans engagement · Annule en 1 clic</p>
             </div>

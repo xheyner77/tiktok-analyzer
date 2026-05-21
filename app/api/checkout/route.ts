@@ -4,6 +4,7 @@ import { getSession } from '@/lib/session';
 import { getUserById } from '@/lib/auth';
 import { getSiteUrl } from '@/lib/site-url';
 import {
+  assertStripePriceIsOneTimePayment,
   assertStripePriceIsMonthlySubscription,
   type BillingInterval,
   getStripePriceId,
@@ -11,6 +12,7 @@ import {
   type PaidStripePlan,
   PLAN_RANK,
 } from '@/lib/stripe-billing';
+import { getPlanLabel } from '@/lib/plans';
 import {
   blockTestStripePublishableInProduction,
   blockTestStripeSecretInProduction,
@@ -46,7 +48,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Intervalle invalide. Valeurs acceptées : month, year.' }, { status: 400 });
     }
     if (plan === 'creator' && interval === 'year') {
-      return NextResponse.json({ error: 'Le plan Creator est disponible uniquement en mensuel.' }, { status: 400 });
+      return NextResponse.json({ error: 'Le plan Starter est disponible uniquement en mensuel.' }, { status: 400 });
+    }
+    if (plan === 'scale' && interval !== 'month') {
+      return NextResponse.json({ error: 'Le plan Lifetime est un paiement unique.' }, { status: 400 });
     }
 
     const userProfile = await getUserById(session.userId);
@@ -62,7 +67,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: isSamePlan
-            ? `Tu es déjà sur le plan ${plan === 'creator' ? 'Creator' : plan === 'pro' ? 'Pro' : 'Scale'}.`
+            ? `Tu es déjà sur le plan ${getPlanLabel(plan)}.`
             : `Tu es déjà sur un plan supérieur.`,
           code: isSamePlan ? 'ALREADY_ON_PLAN' : 'PLAN_DOWNGRADE_BLOCKED',
         },
@@ -70,7 +75,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (hasActiveStripeSub) {
+    if (hasActiveStripeSub && plan !== 'scale') {
       return NextResponse.json(
         {
           error: 'Tu as déjà un abonnement Stripe actif. Gère-le depuis le dashboard ou contacte le support.',
@@ -83,10 +88,13 @@ export async function POST(request: NextRequest) {
     const baseUrl = getSiteUrl(request.headers.get('origin'));
     const stripe = getStripe();
     const priceId = getStripePriceId(plan as PaidStripePlan, interval);
+    const checkoutMode: Stripe.Checkout.SessionCreateParams.Mode = plan === 'scale' ? 'payment' : 'subscription';
 
-    const priceCheck = await assertStripePriceIsMonthlySubscription(stripe, priceId);
+    const priceCheck = checkoutMode === 'payment'
+      ? await assertStripePriceIsOneTimePayment(stripe, priceId)
+      : await assertStripePriceIsMonthlySubscription(stripe, priceId);
     if (!priceCheck.ok) {
-      console.error('[checkout] Price invalide pour abonnement:', priceCheck.code, priceId, priceCheck.message);
+      console.error('[checkout] Price invalide:', priceCheck.code, priceId, priceCheck.message);
       return NextResponse.json(
         { error: priceCheck.message, code: priceCheck.code },
         { status: 400 }
@@ -97,25 +105,28 @@ export async function POST(request: NextRequest) {
     // toutes les méthodes actives dans le Dashboard (carte, PayPal, etc.)
     // Forcer uniquement `['card']` empêcherait PayPal d'apparaître.
     const params: Stripe.Checkout.SessionCreateParams = {
-      mode: 'subscription',
+      mode: checkoutMode,
       line_items: [{ price: priceId, quantity: 1 }],
       metadata: {
         userId: session.userId,
         plan,
         interval,
       },
-      subscription_data: {
+      success_url: `${baseUrl}/dashboard?success=1&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/dashboard/billing`,
+      // Stripe Checkout : lien « Ajouter un code promotionnel » (codes actifs dans Dashboard → Produits → Codes promo)
+      allow_promotion_codes: true,
+    };
+
+    if (checkoutMode === 'subscription') {
+      params.subscription_data = {
         metadata: {
           userId: session.userId,
           plan,
           interval,
         },
-      },
-      success_url: `${baseUrl}/dashboard?success=1&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/pricing`,
-      // Stripe Checkout : lien « Ajouter un code promotionnel » (codes actifs dans Dashboard → Produits → Codes promo)
-      allow_promotion_codes: true,
-    };
+      };
+    }
 
     if (userProfile?.stripe_customer_id) {
       params.customer = userProfile.stripe_customer_id;
@@ -125,7 +136,7 @@ export async function POST(request: NextRequest) {
 
     const checkoutSession = await stripe.checkout.sessions.create(params);
 
-    console.log('[checkout] Session créée (mode subscription, renouvellement mensuel)', {
+    console.log('[checkout] Session créée', {
       sessionId: checkoutSession.id,
       mode: checkoutSession.mode,
       priceId,

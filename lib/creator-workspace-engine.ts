@@ -20,7 +20,7 @@ export interface CreatorWorkspace {
   };
 }
 
-export function buildCreatorWorkspace(items: RepostPriorityInput[], ownerLabel = 'Creator workspace'): CreatorWorkspace {
+export function buildCreatorWorkspace(items: RepostPriorityInput[], ownerLabel = 'Espace créateur'): CreatorWorkspace {
   const hooks = new Set(items.flatMap((item) => [
     item.result.repostVersion?.hook,
     ...(item.result.coachAnalysis?.hookVariants ?? []),

@@ -583,10 +583,10 @@ export default function HookGeneratorPage() {
 
         {authLoaded && authUser && plan === 'free' && (
           <div className="mt-6 rounded-[20px] border border-white/[0.08] bg-white/[0.03] p-5">
-            <p className="text-sm font-black text-white">Hook Studio est disponible à partir de Creator.</p>
-            <p className="mt-2 text-sm leading-6 text-slate-500">{MAX_HOOKS_CREATOR} hooks/mois avec Creator · {MAX_HOOKS_PRO} hooks/mois avec Pro.</p>
-            <Link href="/pricing" className="mt-4 inline-flex rounded-xl bg-gradient-to-r from-violet-500 to-blue-600 px-5 py-2.5 text-sm font-black text-white">
-              Passer à Creator · {DISPLAY_CATALOG_CREATOR_EUR}€/mois
+            <p className="text-sm font-black text-white">Hook Studio est disponible à partir de Starter.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-500">{MAX_HOOKS_CREATOR} hooks/mois avec Starter · {MAX_HOOKS_PRO} hooks/mois avec Pro.</p>
+            <Link href="/dashboard/billing" className="mt-4 inline-flex rounded-xl bg-gradient-to-r from-violet-500 to-blue-600 px-5 py-2.5 text-sm font-black text-white">
+              Passer à Starter · {DISPLAY_CATALOG_CREATOR_EUR}€/mois
             </Link>
           </div>
         )}
@@ -737,7 +737,7 @@ export default function HookGeneratorPage() {
                 disabled={loading || (!!authUser && !canUse)}
                 className="min-h-[52px] w-full rounded-[14px] bg-[linear-gradient(135deg,#e879f9,#8b5cf6_55%,#2563eb)] px-5 text-sm font-black text-white shadow-[0_24px_60px_-28px_rgba(139,92,246,1)] transition hover:-translate-y-0.5 hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45"
               >
-                {loading ? 'Construction des 3 premières secondes...' : !authUser ? 'Créer mes hooks →' : plan === 'free' ? 'Disponible avec Creator' : `Générer ${count} hooks ${hookMode === 'text' ? 'textuels' : 'parlés'} →`}
+                {loading ? 'Construction des 3 premières secondes...' : !authUser ? 'Créer mes hooks →' : plan === 'free' ? 'Disponible avec Starter' : `Générer ${count} hooks ${hookMode === 'text' ? 'textuels' : 'parlés'} →`}
               </button>
             </div>
           </div>
@@ -815,7 +815,7 @@ export default function HookGeneratorPage() {
           <article className="rounded-[22px] border border-white/[0.075] bg-[linear-gradient(135deg,rgba(76,29,149,0.2),rgba(5,9,20,0.98)_58%,rgba(8,47,73,0.2))] p-5">
             <Badge tone="violet">Pro</Badge>
             <h3 className="mt-3 text-[22px] font-black tracking-[-0.04em] text-white">Les hooks personnalisés viennent de ta mémoire créateur.</h3>
-            <p className="mt-3 text-[13px] leading-6 text-slate-400">Creator génère des hooks solides. Pro utilise tes analyses pour éviter les phrases génériques et pousser tes patterns gagnants.</p>
+            <p className="mt-3 text-[13px] leading-6 text-slate-400">Starter génère des hooks solides. Pro utilise tes analyses pour éviter les phrases génériques et pousser tes patterns gagnants.</p>
             <Link href="/dashboard/billing" className="mt-5 inline-flex min-h-[42px] items-center rounded-[12px] border border-white/[0.09] bg-white/[0.05] px-4 text-[13px] font-black text-white transition hover:bg-white/[0.08]">
               Voir Pro
             </Link>

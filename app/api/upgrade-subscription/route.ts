@@ -1,24 +1,13 @@
 import { NextResponse } from 'next/server';
-import Stripe from 'stripe';
 import { getSession } from '@/lib/session';
-import { getUserById } from '@/lib/auth';
-import {
-  assertStripePriceIsMonthlySubscription,
-  getStripePriceId,
-  isSubscriptionStatusAllowingAccess,
-} from '@/lib/stripe-billing';
 import { blockTestStripeSecretInProduction } from '@/lib/stripe-prod-guard';
 
 const stripeSecret = process.env.STRIPE_SECRET_KEY?.trim();
 
-function getStripe(): Stripe {
-  if (!stripeSecret) throw new Error('STRIPE_SECRET_KEY manquant');
-  return new Stripe(stripeSecret);
-}
-
 /**
- * Pro → Scale : met à jour **Stripe** uniquement. Le plan en base est mis à jour par
- * `customer.subscription.updated` (webhook signé).
+ * Legacy endpoint conservé pour compatibilité.
+ * Lifetime n'est plus une mise à niveau d'abonnement : c'est un Checkout `payment`
+ * via /api/checkout avec plan=scale.
  */
 export async function POST() {
   const skBlock = blockTestStripeSecretInProduction();
@@ -30,50 +19,11 @@ export async function POST() {
       return NextResponse.json({ error: 'Non authentifié.' }, { status: 401 });
     }
 
-    const user = await getUserById(session.userId);
-    if (!user?.stripe_subscription_id || !isSubscriptionStatusAllowingAccess(user.subscription_status)) {
-      return NextResponse.json(
-        { error: 'Aucun abonnement actif à mettre à niveau.', code: 'NO_ACTIVE_SUBSCRIPTION' },
-        { status: 400 }
-      );
-    }
-
-    if (user.plan !== 'pro') {
-      return NextResponse.json(
-        { error: 'La mise à niveau Scale est réservée aux comptes Pro.', code: 'NOT_PRO' },
-        { status: 400 }
-      );
-    }
-
-    const stripe = getStripe();
-    const sub = await stripe.subscriptions.retrieve(user.stripe_subscription_id);
-    const item = sub.items.data[0];
-    if (!item?.id) {
-      return NextResponse.json({ error: 'Abonnement Stripe invalide (aucun item).' }, { status: 500 });
-    }
-
-    const scalePriceId = getStripePriceId('scale');
-    const scaleCheck = await assertStripePriceIsMonthlySubscription(stripe, scalePriceId);
-    if (!scaleCheck.ok) {
-      console.error('[upgrade-subscription] Price Scale invalide:', scaleCheck.code);
-      return NextResponse.json({ error: scaleCheck.message, code: scaleCheck.code }, { status: 400 });
-    }
-    if (item.price.id === scalePriceId) {
-      return NextResponse.json({ error: 'Tu es déjà sur le plan Scale.', code: 'ALREADY_SCALE' }, { status: 400 });
-    }
-
-    await stripe.subscriptions.update(sub.id, {
-      items: [{ id: item.id, price: scalePriceId }],
-      proration_behavior: 'create_prorations',
-      metadata: {
-        ...sub.metadata,
-        userId: session.userId,
-        plan: 'scale',
-      },
-    });
-
-    console.log('[upgrade-subscription] Stripe subscription updated → Scale; DB via webhook user', session.userId);
-    return NextResponse.json({ success: true, pendingWebhook: true });
+    if (!stripeSecret) throw new Error('STRIPE_SECRET_KEY manquant');
+    return NextResponse.json(
+      { error: 'Lifetime est un paiement unique. Utilise le checkout Lifetime.', code: 'LIFETIME_CHECKOUT_REQUIRED' },
+      { status: 400 }
+    );
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error('[upgrade-subscription]', message);

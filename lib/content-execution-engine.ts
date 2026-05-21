@@ -215,7 +215,7 @@ function buildAutoVariants(hooks: HookRewriteVariant[], ctas: CtaRewriteVariant[
       title: 'Hooks a comparer',
       variants: hooks.slice(0, 4).map((hook) => hook.hook),
       testSuggestion: 'Tester direct vs preuve sur le prochain repost.',
-      saveReason: 'Alimente Hook Vault et Creator Memory.',
+      saveReason: 'Alimente Hook Vault et mémoire créateur.',
     },
     {
       id: 'auto_ctas',

@@ -38,7 +38,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS users_stripe_subscription_id_key
 -- 3. Auto-update updated_at on every row change
 CREATE OR REPLACE FUNCTION public.handle_updated_at()
 RETURNS TRIGGER
-LANGUAGE plpgsql AS $$
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
 BEGIN
   NEW.updated_at = NOW();
   RETURN NEW;

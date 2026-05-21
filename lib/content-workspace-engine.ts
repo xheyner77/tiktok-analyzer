@@ -216,7 +216,7 @@ function buildTeamRoles(plan: Plan): WorkspaceTeamRole[] {
   return [
     { role: 'owner', label: 'Owner', focus: 'Priorites, projets, benchmarks et progression globale.', unlocked: true },
     { role: 'strategist', label: 'Strategist', focus: 'Choix des hooks, angles et experiments.', unlocked: scale },
-    { role: 'creator', label: 'Creator', focus: 'Hook, CTA et validation avant publication.', unlocked: scale },
+    { role: 'creator', label: 'Créateur', focus: 'Hook, CTA et validation avant publication.', unlocked: scale },
     { role: 'editor', label: 'Editor', focus: 'Rythme, cuts, captions et pattern interrupts.', unlocked: scale },
     { role: 'client_viewer', label: 'Client viewer', focus: 'Vue agence: progression client sans details sensibles.', unlocked: scale },
   ];

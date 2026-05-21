@@ -43,7 +43,7 @@ const shippingCards = [
   {
     date: 'Dimanche 3 mai',
     title: 'Dashboard + plans',
-    text: 'L’expérience s’adapte mieux au statut Free, Creator, Pro ou Scale.',
+    text: 'L’expérience s’adapte mieux au statut Free, Starter, Pro ou Lifetime.',
   },
   {
     date: 'Dimanche 10 mai',
@@ -61,9 +61,9 @@ const releases: Release[] = [
     status: 'live',
     impact: 'Billing',
     title: 'Plans, quotas et dashboard alignés',
-    summary: 'Creator, Pro et Scale deviennent plus lisibles, avec des limites produit cohérentes et une expérience plus fiable.',
+    summary: 'Starter, Pro et Lifetime deviennent plus lisibles, avec des limites produit cohérentes et une expérience plus fiable.',
     bullets: [
-      'Creator, Pro et Scale cohérents avec Stripe.',
+      'Starter, Pro et Lifetime cohérents avec Stripe.',
       'Limites TikTok prêtes par plan.',
       'Dashboard adapté au statut Free ou paid.',
     ],
@@ -132,7 +132,7 @@ const releases: Release[] = [
     version: 'v1.1.0',
     date: 'Dimanche 5 avril 2026',
     isoDate: '2026-04-05',
-    category: 'Creator OS',
+    category: 'Starter OS',
     status: 'live',
     impact: 'Dashboard',
     title: 'Dashboard V2 premium',
@@ -159,14 +159,14 @@ const latestHighlights = [
   },
   {
     title: 'Quotas cohérents',
-    text: 'Chaque plan a une place claire: démarrer, progresser, puis scaler avec plus de volume.',
+    text: 'Chaque plan a une place claire: démarrer, progresser, puis Lifetimer avec plus de volume.',
   },
   {
     title: 'Dashboard adapté au plan',
-    text: 'L’interface devient plus claire selon le statut Free, Creator, Pro ou Scale.',
+    text: 'L’interface devient plus claire selon le statut Free, Starter, Pro ou Lifetime.',
   },
   {
-    title: 'Scale prêt',
+    title: 'Lifetime prêt',
     text: 'Les fondations sont posées pour les comptes TikTok, les équipes et les usages plus intensifs.',
   },
 ];
@@ -181,13 +181,13 @@ const roadmapCards = [
   {
     title: 'Connexion TikTok multi-comptes',
     status: 'En cours',
-    plan: 'Scale',
+    plan: 'Lifetime',
     text: 'Centraliser plusieurs comptes pour les créateurs avancés, agences et équipes.',
   },
   {
     title: 'Suivi résultats après remontage',
     status: 'Prochain',
-    plan: 'Creator',
+    plan: 'Starter',
     text: 'Comparer la version corrigée à la vidéo initiale pour apprendre ce qui a vraiment marché.',
   },
   {
@@ -205,7 +205,7 @@ const roadmapCards = [
   {
     title: 'Rapports hebdomadaires',
     status: 'Vision',
-    plan: 'Scale',
+    plan: 'Lifetime',
     text: 'Recevoir une synthèse claire des blocages, progrès et priorités de contenu.',
   },
 ];
@@ -274,7 +274,7 @@ function Hero() {
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/signup"
-                className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-vn-fuchsia to-vn-indigo px-6 text-sm font-black text-white shadow-lg shadow-vn-fuchsia/20 transition hover:scale-[1.01] hover:brightness-110 active:scale-[0.98]"
+                className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-vn-fuchsia to-vn-indigo px-6 text-sm font-black text-white shadow-lg shadow-vn-fuchsia/20 transition hover:Lifetime-[1.01] hover:brightness-110 active:Lifetime-[0.98]"
               >
                 Tester l&apos;analyse
                 <ArrowIcon />
@@ -360,7 +360,7 @@ function LatestRelease() {
               </div>
 
               <h3 className="mt-6 max-w-2xl text-3xl font-black tracking-tight text-white sm:text-5xl">
-                Plans Creator, Pro et Scale align&eacute;s avec le vrai produit.
+                Plans Starter, Pro et Lifetime align&eacute;s avec le vrai produit.
               </h3>
               <p className="mt-5 max-w-2xl text-base leading-8 text-gray-400">
                 Les quotas, Stripe, le dashboard et les limites TikTok sont maintenant coh&eacute;rents pour pr&eacute;parer
@@ -537,7 +537,7 @@ function FinalCta() {
         </p>
         <Link
           href="/signup"
-          className="mt-8 inline-flex min-h-[50px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-vn-fuchsia to-vn-indigo px-7 text-sm font-black text-white shadow-lg shadow-vn-fuchsia/20 transition hover:scale-[1.01] hover:brightness-110 active:scale-[0.98]"
+          className="mt-8 inline-flex min-h-[50px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-vn-fuchsia to-vn-indigo px-7 text-sm font-black text-white shadow-lg shadow-vn-fuchsia/20 transition hover:Lifetime-[1.01] hover:brightness-110 active:Lifetime-[0.98]"
         >
           Analyser une vid&eacute;o gratuite
           <ArrowIcon />

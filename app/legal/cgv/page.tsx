@@ -36,23 +36,23 @@ export default function CGVPage() {
           </Section>
 
           <Section title="2. Plans et tarifs">
-            <p>Viralynz propose les abonnements suivants (prix TTC) :</p>
+            <p>Viralynz propose les plans suivants (prix TTC) :</p>
             <ul>
-              <li><strong className="text-white">Creator</strong> — 7,99 €/mois, 30 analyses/mois, 150 hooks/mois</li>
-              <li><strong className="text-white">Pro</strong> — 29,99 €/mois, 150 analyses/mois, 500 hooks/mois</li>
-              <li><strong className="text-white">Scale</strong> — 79,99 €/mois, analyses et hooks illimités, jusqu’à 8 comptes TikTok</li>
+              <li><strong className="text-white">Starter</strong> — 10 €/mois, 30 analyses/mois, 150 hooks/mois</li>
+              <li><strong className="text-white">Pro</strong> — 29 €/mois, expérience complète Viralynz</li>
+              <li><strong className="text-white">Lifetime</strong> — 149 € en paiement unique, accès à vie</li>
             </ul>
             <p>Tous les prix sont indiqués en euros TTC. Viralynz se réserve le droit de modifier ses tarifs avec un préavis de 30 jours. Les modifications tarifaires ne s&apos;appliquent pas aux abonnements en cours pendant leur période de facturation.</p>
           </Section>
 
           <Section title="3. Commande et paiement">
             <p>La commande est passée directement sur le site viralynz.com. Le paiement est traité de manière sécurisée via <strong className="text-white">Stripe</strong>, conformément à ses propres conditions d&apos;utilisation.</p>
-            <p>Viralynz n&apos;a pas accès à vos données bancaires. Le débit est effectué immédiatement lors de la souscription, puis automatiquement chaque mois à la date anniversaire.</p>
+            <p>Viralynz n&apos;a pas accès à vos données bancaires. Starter et Pro sont débités mensuellement. Lifetime est débité une seule fois.</p>
             <p>Moyens de paiement acceptés : carte bancaire (Visa, Mastercard, American Express).</p>
           </Section>
 
           <Section title="4. Durée et renouvellement">
-            <p>Les abonnements Creator, Pro et Scale sont des abonnements mensuels à reconduction tacite. Ils se renouvellent automatiquement chaque mois sauf résiliation avant la date de renouvellement.</p>
+            <p>Starter et Pro sont des abonnements mensuels à reconduction tacite. Lifetime est un paiement unique sans renouvellement mensuel.</p>
             <p>Les quotas (analyses, hooks) sont réinitialisés à chaque date de renouvellement. Les quotas non utilisés ne sont pas reportés.</p>
           </Section>
 

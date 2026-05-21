@@ -10,7 +10,7 @@ export default function AnalysisCounter({ used, limit }: AnalysisCounterProps) {
     return (
       <div className="flex items-center justify-center gap-2">
         <span className="w-1.5 h-1.5 rounded-full bg-vn-fuchsia" style={{ boxShadow: '0 0 6px rgba(232,121,249,0.6)' }} />
-        <span className="text-xs font-medium text-gray-500">Quota mensuel — Plan Scale</span>
+        <span className="text-xs font-medium text-gray-500">Quota mensuel — Plan Lifetime</span>
       </div>
     );
   }

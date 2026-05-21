@@ -1,4 +1,4 @@
-export type AppPlan = 'free' | 'creator' | 'pro' | 'scale';
+export type AppPlan = 'free' | 'starter' | 'pro' | 'lifetime' | 'creator' | 'scale';
 export type RawPlan = AppPlan | string | null | undefined;
 
 export interface PlanLimits {
@@ -10,17 +10,17 @@ export interface PlanLimits {
 }
 
 export function normalizePlan(plan: RawPlan): AppPlan {
-  if (plan === 'creator') return 'creator';
+  if (plan === 'starter' || plan === 'creator') return 'starter';
   if (plan === 'pro') return 'pro';
-  if (plan === 'scale') return 'scale';
+  if (plan === 'lifetime' || plan === 'scale') return 'lifetime';
   return 'free';
 }
 
 export function getPlanLabel(plan: RawPlan): string {
   const normalized = normalizePlan(plan);
-  if (normalized === 'creator') return 'Creator';
+  if (normalized === 'starter') return 'Starter';
   if (normalized === 'pro') return 'Pro';
-  if (normalized === 'scale') return 'Scale';
+  if (normalized === 'lifetime') return 'Lifetime';
   return 'Free';
 }
 
@@ -30,20 +30,14 @@ export function isPaidPlan(plan: RawPlan): boolean {
 
 export function getPlanLimits(plan: RawPlan): PlanLimits {
   const normalized = normalizePlan(plan);
-  if (normalized === 'scale') {
-    return {
-      analyses: Number.POSITIVE_INFINITY,
-      hooks: Number.POSITIVE_INFINITY,
-      reconstructions: 150,
-      history: Number.POSITIVE_INFINITY,
-      tiktokAccounts: 8,
-    };
+  if (normalized === 'lifetime') {
+    return { analyses: 1000, hooks: 2000, reconstructions: 30, history: 1000, tiktokAccounts: 3 };
   }
   if (normalized === 'pro') {
-    return { analyses: 150, hooks: 500, reconstructions: 30, history: 200, tiktokAccounts: 3 };
+    return { analyses: 100, hooks: 200, reconstructions: 30, history: 200, tiktokAccounts: 1 };
   }
-  if (normalized === 'creator') {
-    return { analyses: 30, hooks: 150, reconstructions: 0, history: 30, tiktokAccounts: 1 };
+  if (normalized === 'starter') {
+    return { analyses: 30, hooks: 50, reconstructions: 0, history: 30, tiktokAccounts: 1 };
   }
   return { analyses: 3, hooks: 0, reconstructions: 0, history: 0, tiktokAccounts: 0 };
 }

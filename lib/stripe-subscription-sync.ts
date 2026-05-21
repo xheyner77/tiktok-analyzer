@@ -1,11 +1,13 @@
 /**
- * Écritures abonnement / plan payant (creator, pro, scale) sur `public.users` :
+ * Écritures abonnement / plan payant (starter, pro, lifetime) sur `public.users`.
+ * `creator` et `scale` restent acceptés uniquement comme valeurs legacy Stripe.
  * **uniquement** depuis `app/api/webhook/route.ts` (événements Stripe signés).
  * Ne pas appeler ces fonctions depuis une route « success », le client ou des query params.
  */
 import type Stripe from 'stripe';
 import { supabase } from '@/lib/supabase';
 import { PLAN_RANK, planFromStripePriceId } from '@/lib/stripe-billing';
+import { normalizePlan } from '@/lib/plans';
 
 /** Fin de période de facturation (Stripe API récente : sur l’item d’abonnement). */
 export function subscriptionCurrentPeriodEndIso(sub: Stripe.Subscription): string {
@@ -62,7 +64,7 @@ export async function syncUserFromPaidSubscriptionCheckout(
 
   const userId = session.metadata?.userId;
   const metaPlan = session.metadata?.plan;
-  if (!userId || (metaPlan !== 'creator' && metaPlan !== 'pro' && metaPlan !== 'scale')) {
+  if (!userId || (metaPlan !== 'starter' && metaPlan !== 'creator' && metaPlan !== 'pro' && metaPlan !== 'lifetime' && metaPlan !== 'scale')) {
     return { ok: false, reason: 'invalid_metadata', log: session.id };
   }
   if (opts.expectedUserId && opts.expectedUserId !== userId) {
@@ -99,7 +101,7 @@ export async function syncUserFromPaidSubscriptionCheckout(
   if (!planFromPrice) {
     return { ok: false, reason: 'price_not_mapped_to_env', log: priceId };
   }
-  if (planFromPrice !== metaPlan) {
+  if (normalizePlan(planFromPrice) !== normalizePlan(metaPlan)) {
     return {
       ok: false,
       reason: 'price_metadata_mismatch',
@@ -178,6 +180,99 @@ export async function syncUserFromPaidSubscriptionCheckout(
 }
 
 /**
+ * Après Checkout Session `mode: payment` payée — attribue l'accès Lifetime.
+ * Lifetime est stocké comme `lifetime`; `scale` reste seulement accepté en metadata legacy.
+ */
+export async function syncUserFromPaidLifetimeCheckout(
+  stripe: Stripe,
+  session: Stripe.Checkout.Session,
+): Promise<SyncCheckoutResult> {
+  if (session.mode !== 'payment') {
+    return { ok: false, reason: 'not_payment_mode', log: session.id };
+  }
+  if (session.payment_status !== 'paid') {
+    return { ok: false, reason: 'not_paid', log: session.id };
+  }
+
+  const userId = session.metadata?.userId;
+  const metaPlan = session.metadata?.plan;
+  if (!userId || (metaPlan !== 'lifetime' && metaPlan !== 'scale')) {
+    return { ok: false, reason: 'invalid_lifetime_metadata', log: session.id };
+  }
+
+  const lineItems = await stripe.checkout.sessions.listLineItems(session.id, { limit: 1 });
+  const priceId = lineItems.data[0]?.price?.id ?? null;
+  if (!priceId) {
+    return { ok: false, reason: 'missing_price_on_payment', log: session.id };
+  }
+
+  const planFromPrice = planFromStripePriceId(priceId);
+  if (planFromPrice !== 'lifetime') {
+    return { ok: false, reason: 'price_not_mapped_to_lifetime', log: priceId };
+  }
+
+  const customerId = typeof session.customer === 'string' ? session.customer : session.customer?.id;
+  if (!customerId) {
+    return { ok: false, reason: 'missing_customer_id', log: session.id };
+  }
+
+  const { data: currentUser, error: readErr } = await supabase
+    .from('users')
+    .select('plan, stripe_subscription_id')
+    .eq('id', userId)
+    .single();
+
+  if (readErr) {
+    return { ok: false, reason: 'db_read_failed', log: readErr.message };
+  }
+
+  if (currentUser?.stripe_subscription_id) {
+    try {
+      await stripe.subscriptions.update(currentUser.stripe_subscription_id, {
+        cancel_at_period_end: true,
+        metadata: {
+          lifetime_checkout_session_id: session.id,
+          replaced_by_lifetime: 'true',
+        },
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.warn('[stripe-sync] Lifetime paid but old subscription cancellation failed:', message);
+    }
+  }
+
+  const now = new Date().toISOString();
+  const { error: upErr } = await supabase
+    .from('users')
+    .update({
+      plan: 'lifetime',
+      stripe_customer_id: customerId,
+      stripe_subscription_id: null,
+      subscription_status: 'lifetime',
+      subscription_current_period_end: null,
+      subscription_cancel_at_period_end: false,
+      analyses_count: 0,
+      hooks_count: 0,
+      reconstructions_count: 0,
+      last_reset_at: now,
+    })
+    .eq('id', userId);
+
+  if (upErr) {
+    return { ok: false, reason: 'db_update_failed', log: upErr.message };
+  }
+
+  console.log('[stripe-sync] Lifetime Stripe enregistré (checkout.session.completed)', {
+    userId,
+    plan: 'lifetime',
+    stripe_customer_id: customerId,
+    price_id: priceId,
+    session_id: session.id,
+  });
+  return { ok: true };
+}
+
+/**
  * Met à jour la ligne users depuis un objet Subscription Stripe (webhooks updated / reconcile).
  */
 export async function syncUserRowFromStripeSubscription(sub: Stripe.Subscription): Promise<SyncCheckoutResult> {
@@ -212,7 +307,7 @@ export async function syncUserRowFromStripeSubscription(sub: Stripe.Subscription
     return { ok: false, reason: 'db_read_failed', log: readErr.message };
   }
 
-  let nextPlan = (currentUser?.plan ?? 'free') as 'free' | 'creator' | 'pro' | 'scale';
+  let nextPlan = (currentUser?.plan ?? 'free') as string;
   const statusAllowsTierFromPrice =
     sub.status === 'active' || sub.status === 'trialing' || sub.status === 'past_due';
   if (planFromPrice && statusAllowsTierFromPrice) {
