@@ -769,7 +769,7 @@ function FakeQrCode() {
     >
       <div className="relative h-full w-full overflow-hidden rounded-[1rem] bg-white">
         <svg
-          className="h-full w-full"
+          className="h-full w-full scale-105 opacity-45 blur-[6px]"
           viewBox={`0 0 ${fakeQrViewBox} ${fakeQrViewBox}`}
           shapeRendering="crispEdges"
           aria-hidden
@@ -779,6 +779,12 @@ function FakeQrCode() {
             <rect key={`${x}-${y}`} x={x} y={y} width="1" height="1" fill="#111111" />
           ))}
         </svg>
+        <div className="pointer-events-none absolute inset-0 bg-white/42 backdrop-blur-[2px]" aria-hidden />
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden>
+          <div className="rounded-full border border-black/10 bg-white/78 px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.16em] text-[#111827] shadow-[0_14px_42px_-28px_rgba(15,23,42,0.8)]">
+            Accès stores
+          </div>
+        </div>
         <div className="pointer-events-none absolute inset-0 rounded-[1rem] ring-1 ring-black/10" aria-hidden />
       </div>
     </motion.div>
@@ -787,8 +793,8 @@ function FakeQrCode() {
 
 function GooglePlayBadge() {
   return (
-    <div className="inline-flex h-11 min-w-[10.4rem] select-none items-center justify-center gap-3 rounded-lg border border-white/14 bg-white/[0.94] px-4 text-[#0f172a] shadow-[0_12px_36px_-24px_rgba(255,255,255,0.65)]">
-      <svg className="h-5 w-5 shrink-0" viewBox="0 0 28 31" aria-hidden>
+    <div className="inline-flex h-11 min-w-[10.4rem] select-none items-center justify-center gap-3 rounded-lg border border-white/10 bg-white/[0.08] px-4 text-white/48 shadow-[0_12px_36px_-24px_rgba(255,255,255,0.35)] backdrop-blur-xl grayscale">
+      <svg className="h-5 w-5 shrink-0 opacity-50" viewBox="0 0 28 31" aria-hidden>
         <defs>
           <linearGradient id="play-cyan" x1="1.6" y1="2.1" x2="16" y2="16" gradientUnits="userSpaceOnUse">
             <stop stopColor="#22d3ee" />
@@ -819,8 +825,8 @@ function GooglePlayBadge() {
 
 function AppStoreBadge() {
   return (
-    <div className="inline-flex h-11 min-w-[10.4rem] select-none items-center justify-center gap-3 rounded-lg border border-white/14 bg-black/90 px-4 text-white shadow-[0_12px_36px_-24px_rgba(255,255,255,0.45)]">
-      <svg className="h-5 w-5 shrink-0" viewBox="0 0 28 32" fill="currentColor" aria-hidden>
+    <div className="inline-flex h-11 min-w-[10.4rem] select-none items-center justify-center gap-3 rounded-lg border border-white/10 bg-white/[0.065] px-4 text-white/48 shadow-[0_12px_36px_-24px_rgba(255,255,255,0.35)] backdrop-blur-xl">
+      <svg className="h-5 w-5 shrink-0 opacity-55" viewBox="0 0 28 32" fill="currentColor" aria-hidden>
         <path d="M18.48 1.9c.08 1.34-.39 2.62-1.36 3.72-.93 1.05-2.4 1.86-3.74 1.75-.15-1.28.5-2.68 1.38-3.7.98-1.12 2.65-1.98 3.72-1.77Z" />
         <path d="M23.9 22.68c-.6 1.36-.9 1.96-1.68 3.18-1.08 1.68-2.6 3.78-4.5 3.8-1.69.02-2.13-1.1-4.42-1.08-2.3.02-2.78 1.1-4.46 1.08-1.9-.02-3.35-1.9-4.43-3.58C1.4 21.42 1.1 15.98 2.96 13.06c1.32-2.08 3.4-3.3 5.36-3.32 2-.02 3.24 1.1 4.9 1.1 1.6 0 2.58-1.1 4.9-1.1 1.74.02 3.6.96 4.92 2.6-4.3 2.36-3.6 8.5.86 10.34Z" />
       </svg>
@@ -848,10 +854,10 @@ function MobileAppComingSoonSection() {
 
           <div className="text-center lg:text-left">
             <h2 className="text-[2rem] font-black uppercase leading-[0.95] tracking-tight text-white sm:text-[3.35rem] lg:text-[4rem]">
-              L&rsquo;application arrive <span className={titleGradient}>bient&ocirc;t</span>
+              L&rsquo;application arrive sur les <span className={titleGradient}>stores</span>
             </h2>
             <p className="mx-auto mt-3 max-w-2xl text-sm font-semibold leading-6 text-gray-400 sm:text-base lg:mx-0">
-              Viralynz sera bient&ocirc;t disponible sur mobile. Scanne le code quand l&rsquo;acc&egrave;s ouvrira et garde ton coach de repost dans la poche.
+              Viralynz fonctionne d&eacute;j&agrave; sur mobile. L&rsquo;app native arrive bient&ocirc;t sur Google Play et l&rsquo;App Store pour retrouver ton coach de repost plus vite.
             </p>
             <div className="mt-5 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
               <GooglePlayBadge />
