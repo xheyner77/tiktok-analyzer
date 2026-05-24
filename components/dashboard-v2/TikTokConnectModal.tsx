@@ -14,7 +14,7 @@ type TikTokConnectModalProps = {
   hasAnalyses?: boolean;
 };
 
-const unlockedMetrics = ['Profil TikTok relié', 'Analyses associées', 'Dashboard prêt', 'Données avancées à venir'];
+const syncBenefits = ['Analyses liées à ton profil', 'Dashboard personnalisé', 'Insights plus précis'];
 
 const tiktokMessages: Record<string, { tone: 'warn' | 'error' | 'success'; title: string; body: string }> = {
   config: {
@@ -70,7 +70,7 @@ const tiktokMessages: Record<string, { tone: 'warn' | 'error' | 'success'; title
   connected: {
     tone: 'success',
     title: 'TikTok connecté',
-    body: 'Ton compte TikTok est bien relié. Tu peux maintenant analyser une vidéo.',
+    body: 'Ton compte TikTok est bien relié. Ton dashboard peut utiliser ce profil.',
   },
 };
 
@@ -84,7 +84,6 @@ function isDismissedRecently(value: string | null) {
 export default function TikTokConnectModal({
   isTikTokConnected,
   connectUrl = '/api/tiktok/connect',
-  analyzerUrl = '/dashboard/analyze',
 }: TikTokConnectModalProps) {
   const [open, setOpen] = useState(false);
   const searchParams = useSearchParams();
@@ -128,28 +127,41 @@ export default function TikTokConnectModal({
     setOpen(false);
   }
 
+  useEffect(() => {
+    if (!open) return undefined;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        closeModal();
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [open]);
+
   if (isTikTokConnected || !open) return null;
 
   return (
-    <div data-tiktok-connect-modal="true" className="fixed inset-0 z-[240] flex items-center justify-center overflow-x-hidden overflow-y-auto bg-[#020611]/80 px-3 py-3 backdrop-blur-[12px] sm:px-6 sm:py-4">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_48%_16%,rgba(139,92,246,0.18),transparent_30%),radial-gradient(circle_at_68%_43%,rgba(34,211,238,0.07),transparent_27%)]" />
+    <div data-tiktok-connect-modal="true" className="fixed inset-0 z-[240] flex items-center justify-center overflow-x-hidden overflow-y-auto bg-[#020611]/78 px-4 py-4 backdrop-blur-[14px]">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_48%_20%,rgba(139,92,246,0.18),transparent_32%),radial-gradient(circle_at_72%_58%,rgba(34,211,238,0.07),transparent_30%)]" />
       <section
         aria-modal="true"
         role="dialog"
         aria-labelledby="tiktok-connect-title"
-        className="relative max-h-[calc(100vh-24px)] w-full max-w-[640px] overflow-x-hidden overflow-y-auto rounded-[18px] border border-white/[0.10] bg-[linear-gradient(180deg,rgba(12,17,33,0.94),rgba(3,7,18,0.985))] p-3.5 text-white shadow-[0_32px_100px_-48px_rgba(124,58,237,0.95),0_0_0_1px_rgba(34,211,238,0.055),inset_0_1px_0_rgba(255,255,255,0.12)] sm:p-4 md:p-5"
+        className="relative w-[calc(100vw-32px)] max-w-[460px] overflow-hidden rounded-[22px] border border-violet-200/[0.12] bg-[linear-gradient(180deg,rgba(11,16,31,0.96),rgba(3,7,18,0.99))] p-5 text-white shadow-[0_30px_100px_-56px_rgba(124,58,237,0.95),0_0_0_1px_rgba(34,211,238,0.045),inset_0_1px_0_rgba(255,255,255,0.11)] sm:p-6"
       >
-        <div className="pointer-events-none absolute -right-20 -top-28 h-52 w-52 rounded-full bg-violet-500/[0.16] blur-3xl" />
-        <div className="pointer-events-none absolute -left-20 bottom-10 h-44 w-44 rounded-full bg-cyan-300/[0.07] blur-3xl" />
+        <div className="pointer-events-none absolute -right-24 -top-28 h-56 w-56 rounded-full bg-violet-500/[0.14] blur-3xl" />
+        <div className="pointer-events-none absolute -left-24 bottom-8 h-48 w-48 rounded-full bg-cyan-300/[0.07] blur-3xl" />
         <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(34,211,238,0.62),rgba(196,88,255,0.58),transparent)]" />
 
         <button
           type="button"
-          aria-label="Fermer le popup TikTok"
+          aria-label="Fermer"
           onClick={closeModal}
-          className="absolute right-4 top-4 z-30 grid h-8 w-8 place-items-center rounded-[9px] border border-white/[0.08] bg-white/[0.035] text-slate-500 transition hover:border-white/[0.16] hover:bg-white/[0.07] hover:text-white focus:outline-none focus:ring-2 focus:ring-violet-300/[0.35]"
+          className="absolute right-4 top-4 z-30 grid h-9 w-9 place-items-center rounded-full border border-white/[0.10] bg-white/[0.055] text-slate-400 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition hover:border-white/[0.18] hover:bg-white/[0.08] hover:text-white focus:outline-none focus:ring-2 focus:ring-violet-300/[0.35]"
         >
-          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M18 6 6 18" />
             <path d="m6 6 12 12" />
           </svg>
@@ -157,27 +169,24 @@ export default function TikTokConnectModal({
 
         <div className="relative">
           <div className="flex items-center gap-2 pr-10">
-            <div className="inline-flex h-7 items-center gap-2 rounded-full border border-cyan-200/[0.16] bg-cyan-200/[0.07] px-2.5 text-[9.5px] font-black uppercase tracking-[0.16em] text-cyan-100 shadow-[0_0_24px_-16px_rgba(34,211,238,0.9)]">
+            <div className="inline-flex h-8 items-center gap-2 rounded-full border border-cyan-200/[0.16] bg-cyan-200/[0.07] px-3 text-[10px] font-black uppercase tracking-[0.16em] text-cyan-100 shadow-[0_0_24px_-16px_rgba(34,211,238,0.9)]">
               <span className="grid h-5 w-5 place-items-center rounded-full bg-white/[0.06] text-[13px] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.13)]">♪</span>
               TikTok Sync
             </div>
-            <span className="hidden text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500 min-[420px]:inline">
-              Dashboard réel
-            </span>
           </div>
 
-          <div className="mt-3 max-w-[560px] pr-7 sm:pr-10">
-            <h2 id="tiktok-connect-title" className="text-[23px] font-black leading-[1.05] tracking-[-0.025em] text-white sm:text-[30px]">
-              Connecte TikTok à Viralynz
+          <div className="mt-4 pr-8">
+            <h2 id="tiktok-connect-title" className="text-[25px] font-black leading-[1.02] tracking-[-0.03em] text-white sm:text-[30px]">
+              Connecte ton TikTok
             </h2>
-            <p className="mt-2 text-[12.5px] leading-[1.45] text-slate-300 sm:text-[13.5px]">
-              Relie ton compte TikTok pour associer tes analyses à ton profil. Les performances avancées seront disponibles après activation des permissions TikTok dédiées.
+            <p className="mt-2.5 text-[13.5px] font-medium leading-5 text-slate-300 sm:text-sm sm:leading-6">
+              Associe ton compte pour activer tes analyses et personnaliser ton dashboard Viralynz.
             </p>
           </div>
 
           {tiktokMessage && (
             <div
-              className={`mt-3 rounded-[12px] border px-3 py-2.5 ${
+              className={`mt-4 rounded-[14px] border px-3 py-2.5 ${
                 tiktokMessage.tone === 'success'
                   ? 'border-emerald-300/[0.18] bg-emerald-300/[0.07] text-emerald-50'
                   : tiktokMessage.tone === 'error'
@@ -190,92 +199,36 @@ export default function TikTokConnectModal({
             </div>
           )}
 
-          <div className="relative mt-4">
-            <div className="pointer-events-none absolute inset-x-8 -top-4 h-24 rounded-full bg-violet-500/[0.13] blur-3xl" />
-            <div className="group relative overflow-hidden rounded-[16px] border border-violet-200/[0.22] bg-[linear-gradient(145deg,rgba(139,92,246,0.16),rgba(20,27,48,0.84)_48%,rgba(5,10,22,0.92))] p-3 shadow-[0_24px_70px_-42px_rgba(139,92,246,0.98),inset_0_1px_0_rgba(255,255,255,0.08)] transition duration-200 hover:-translate-y-0.5 hover:border-cyan-200/[0.24] sm:p-3.5">
-              <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,rgba(226,96,255,0.95),rgba(34,211,238,0.40),transparent)]" />
-              <div className="flex items-start gap-2.5">
-                <div className="grid h-8 w-8 shrink-0 place-items-center rounded-[9px] bg-violet-400/[0.16] text-cyan-100 ring-1 ring-violet-200/[0.16] shadow-[0_8px_24px_-16px_rgba(34,211,238,0.9)]">
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M9 18V5l12-2v13" />
-                    <circle cx="6" cy="18" r="3" />
-                    <circle cx="18" cy="16" r="3" />
-                  </svg>
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-[15px] font-black leading-tight text-white">Connecter TikTok</h3>
-                  <p className="mt-1 text-[12px] leading-[1.38] text-slate-300 sm:text-[12.5px]">
-                    Autorise Viralynz à reconnaître ton compte TikTok et préparer ton dashboard.
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-3 grid grid-cols-2 gap-1.5">
-                {unlockedMetrics.map((metric) => (
-                  <div key={metric} className="flex min-h-[34px] items-center gap-2 rounded-[10px] border border-white/[0.075] bg-white/[0.045] px-2.5 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-                    <svg className="h-3 w-3 shrink-0 text-cyan-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="m20 6-11 11-5-5" />
-                    </svg>
-                    <span className="text-[10.5px] font-extrabold leading-tight text-slate-100 sm:text-[11px]">{metric}</span>
-                  </div>
-                ))}
-              </div>
-
-              <Link
-                href={connectUrl}
-                className="mt-3 flex h-10 w-full items-center justify-center rounded-[10px] bg-[linear-gradient(135deg,#ef6cff_0%,#8b5cf6_50%,#5b21e8_100%)] px-4 text-[13px] font-black text-white shadow-[0_16px_36px_-17px_rgba(139,92,246,0.98),inset_0_1px_0_rgba(255,255,255,0.28)] transition hover:scale-[1.01] hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-violet-300/[0.45]"
-              >
-                Connecter TikTok
-              </Link>
-            </div>
-
-            <div className="my-3 flex items-center gap-2 text-center">
-              <div className="h-px flex-1 bg-white/[0.07]" />
-              <span className="text-[10.5px] font-bold uppercase tracking-[0.13em] text-slate-500">
-                ou commence sans connecter TikTok
+          <div className="mt-4 flex flex-wrap gap-2">
+            {syncBenefits.map((benefit) => (
+              <span key={benefit} className="rounded-full border border-white/[0.08] bg-white/[0.045] px-2.5 py-1.5 text-[11px] font-bold leading-none text-slate-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                {benefit}
               </span>
-              <div className="h-px flex-1 bg-white/[0.07]" />
-            </div>
-
-            <div className="relative overflow-hidden rounded-[14px] border border-white/[0.08] bg-white/[0.032] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.045)] transition duration-200 hover:border-cyan-100/[0.16] hover:bg-white/[0.045]">
-              <div className="flex flex-col gap-3 min-[460px]:flex-row min-[460px]:items-center min-[460px]:justify-between">
-                <div className="flex min-w-0 items-start gap-2.5">
-                  <div className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-[9px] bg-cyan-300/[0.075] text-cyan-100 ring-1 ring-white/[0.07]">
-                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="m15 10 4.5-2.5v9L15 14" />
-                      <rect width="12" height="10" x="3" y="7" rx="2" />
-                      <path d="M9 13v-2" />
-                      <path d="M8 12h2" />
-                    </svg>
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="text-[14px] font-black leading-tight text-white">Analyser une vidéo</h3>
-                    <p className="mt-1 text-[12px] leading-[1.35] text-slate-400">
-                      Upload une vidéo et reçois ton diagnostic + ta V2 recommandée.
-                    </p>
-                  </div>
-                </div>
-                <Link
-                  href={analyzerUrl}
-                  className="flex h-10 w-full shrink-0 items-center justify-center rounded-[10px] border border-cyan-100/[0.16] bg-cyan-100/[0.055] px-4 text-[12.5px] font-black text-cyan-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.055)] transition hover:border-cyan-100/[0.30] hover:bg-cyan-100/[0.08] focus:outline-none focus:ring-2 focus:ring-cyan-200/[0.25] min-[460px]:w-auto"
-                >
-                  Analyser une vidéo
-                </Link>
-              </div>
-            </div>
+            ))}
           </div>
 
-          <div className="mt-3 flex flex-col items-center gap-1 border-t border-white/[0.07] pt-2.5 text-center sm:flex-row sm:justify-between sm:text-left">
-            <p className="text-[11px] font-medium leading-snug text-slate-500">
-              Tu peux connecter TikTok plus tard depuis le dashboard.
-            </p>
+          <Link
+            href={connectUrl}
+            className="mt-5 flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-[linear-gradient(135deg,rgba(217,70,239,0.96)_0%,rgba(139,92,246,0.98)_48%,rgba(34,211,238,0.92)_100%)] px-5 text-sm font-black text-white shadow-[0_20px_54px_-32px_rgba(34,211,238,0.95),inset_0_1px_0_rgba(255,255,255,0.20)] transition hover:-translate-y-0.5 hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-violet-300/[0.45]"
+          >
+            <span>Connecter TikTok</span>
+            <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
+              <path d="M3.5 8h8.2" strokeLinecap="round" />
+              <path d="m8.7 4.6 3.4 3.4-3.4 3.4" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </Link>
+
+          <div className="mt-3 text-center">
             <button
               type="button"
               onClick={closeModal}
-              className="rounded-[8px] px-3 py-1.5 text-[12px] font-bold text-slate-500 transition hover:bg-white/[0.04] hover:text-slate-300 focus:outline-none focus:ring-2 focus:ring-white/10"
+              className="rounded-xl px-3 py-2 text-[13px] font-bold text-slate-400 transition hover:bg-white/[0.045] hover:text-slate-200 focus:outline-none focus:ring-2 focus:ring-white/10"
             >
-              Plus tard
+              Continuer sans connecter
             </button>
+            <p className="mt-2 text-[11.5px] font-medium leading-4 text-slate-500">
+              Tu pourras le faire plus tard depuis ton dashboard.
+            </p>
           </div>
         </div>
       </section>
