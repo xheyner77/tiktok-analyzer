@@ -763,13 +763,13 @@ function FakeQrCode() {
 
   return (
     <motion.div
-      animate={reduceMotion ? undefined : { y: [0, -7, 0], rotate: [-0.25, 0.3, -0.25] }}
-      transition={reduceMotion ? undefined : { duration: 5.2, repeat: Infinity, ease: 'easeInOut' }}
-      className="relative mx-auto flex h-[10.75rem] w-[10.75rem] items-center justify-center rounded-[1.45rem] bg-white p-3 shadow-[0_0_0_1px_rgba(255,255,255,0.96)_inset,0_22px_64px_-34px_rgba(255,255,255,0.72)] sm:h-[12rem] sm:w-[12rem]"
+      animate={reduceMotion ? undefined : { y: [0, -5, 0], rotate: [-0.18, 0.22, -0.18] }}
+      transition={reduceMotion ? undefined : { duration: 5.6, repeat: Infinity, ease: 'easeInOut' }}
+      className="relative mx-auto flex h-[10.5rem] w-[10.5rem] items-center justify-center rounded-[1.65rem] bg-white p-3 shadow-[0_0_0_1px_rgba(255,255,255,0.96)_inset,0_0_54px_-22px_rgba(232,121,249,0.9),0_24px_70px_-38px_rgba(34,211,238,0.8)] sm:h-[11.75rem] sm:w-[11.75rem]"
     >
-      <div className="relative h-full w-full overflow-hidden rounded-[1rem] bg-white">
+      <div className="relative h-full w-full overflow-hidden rounded-[1.1rem] bg-white">
         <svg
-          className="h-full w-full scale-105 opacity-45 blur-[6px]"
+          className="h-full w-full scale-105 opacity-40 blur-[6px]"
           viewBox={`0 0 ${fakeQrViewBox} ${fakeQrViewBox}`}
           shapeRendering="crispEdges"
           aria-hidden
@@ -779,13 +779,13 @@ function FakeQrCode() {
             <rect key={`${x}-${y}`} x={x} y={y} width="1" height="1" fill="#111111" />
           ))}
         </svg>
-        <div className="pointer-events-none absolute inset-0 bg-white/42 backdrop-blur-[2px]" aria-hidden />
+        <div className="pointer-events-none absolute inset-0 bg-white/45 backdrop-blur-[2px]" aria-hidden />
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden>
-          <div className="rounded-full border border-black/10 bg-white/78 px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.16em] text-[#111827] shadow-[0_14px_42px_-28px_rgba(15,23,42,0.8)]">
-            Accès stores
+          <div className="rounded-full border border-black/10 bg-white/82 px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.16em] text-[#111827] shadow-[0_14px_42px_-28px_rgba(15,23,42,0.8)]">
+            Stores
           </div>
         </div>
-        <div className="pointer-events-none absolute inset-0 rounded-[1rem] ring-1 ring-black/10" aria-hidden />
+        <div className="pointer-events-none absolute inset-0 rounded-[1.1rem] ring-1 ring-black/10" aria-hidden />
       </div>
     </motion.div>
   );
@@ -793,8 +793,14 @@ function FakeQrCode() {
 
 function GooglePlayBadge() {
   return (
-    <div className="inline-flex h-11 min-w-[10.4rem] select-none items-center justify-center gap-3 rounded-lg border border-white/10 bg-white/[0.08] px-4 text-white/48 shadow-[0_12px_36px_-24px_rgba(255,255,255,0.35)] backdrop-blur-xl grayscale">
-      <svg className="h-5 w-5 shrink-0 opacity-50" viewBox="0 0 28 31" aria-hidden>
+    <button
+      type="button"
+      aria-disabled="true"
+      disabled
+      className="group inline-flex h-12 w-full cursor-not-allowed select-none items-center justify-between gap-3 rounded-2xl border border-vn-fuchsia/18 bg-white/[0.055] px-4 text-left text-white/72 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_16px_44px_-34px_rgba(232,121,249,0.75)] backdrop-blur-xl transition-none disabled:cursor-not-allowed sm:h-[3.25rem]"
+    >
+      <span className="flex min-w-0 items-center gap-3">
+        <svg className="h-5 w-5 shrink-0 opacity-75 grayscale-[0.35] saturate-[0.55]" viewBox="0 0 28 31" aria-hidden>
         <defs>
           <linearGradient id="play-cyan" x1="1.6" y1="2.1" x2="16" y2="16" gradientUnits="userSpaceOnUse">
             <stop stopColor="#22d3ee" />
@@ -818,48 +824,63 @@ function GooglePlayBadge() {
         <path d="m16.4 15.5 4.05 3.93 4.95-2.84c1.48-.86 1.48-2.32 0-3.18l-4.95-2.84-4.05 3.93Z" fill="url(#play-yellow)" />
         <path d="M2.7 28.8c.55.22 1.5-.04 2.65-.7l15.1-8.67-4.05-3.93L2.7 28.8Z" fill="url(#play-pink)" />
       </svg>
-      <span className="text-sm font-black leading-none">Google Play</span>
-    </div>
+        <span className="truncate text-[0.95rem] font-black leading-none">Google Play</span>
+      </span>
+      <span className="shrink-0 rounded-full border border-white/10 bg-white/[0.07] px-2.5 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] text-white/50">
+        Bient&ocirc;t
+      </span>
+    </button>
   );
 }
 
 function AppStoreBadge() {
   return (
-    <div className="inline-flex h-11 min-w-[10.4rem] select-none items-center justify-center gap-3 rounded-lg border border-white/10 bg-white/[0.065] px-4 text-white/48 shadow-[0_12px_36px_-24px_rgba(255,255,255,0.35)] backdrop-blur-xl">
-      <svg className="h-5 w-5 shrink-0 opacity-55" viewBox="0 0 28 32" fill="currentColor" aria-hidden>
-        <path d="M18.48 1.9c.08 1.34-.39 2.62-1.36 3.72-.93 1.05-2.4 1.86-3.74 1.75-.15-1.28.5-2.68 1.38-3.7.98-1.12 2.65-1.98 3.72-1.77Z" />
-        <path d="M23.9 22.68c-.6 1.36-.9 1.96-1.68 3.18-1.08 1.68-2.6 3.78-4.5 3.8-1.69.02-2.13-1.1-4.42-1.08-2.3.02-2.78 1.1-4.46 1.08-1.9-.02-3.35-1.9-4.43-3.58C1.4 21.42 1.1 15.98 2.96 13.06c1.32-2.08 3.4-3.3 5.36-3.32 2-.02 3.24 1.1 4.9 1.1 1.6 0 2.58-1.1 4.9-1.1 1.74.02 3.6.96 4.92 2.6-4.3 2.36-3.6 8.5.86 10.34Z" />
-      </svg>
-      <span className="text-sm font-black leading-none">App Store</span>
-    </div>
+    <button
+      type="button"
+      aria-disabled="true"
+      disabled
+      className="group inline-flex h-12 w-full cursor-not-allowed select-none items-center justify-between gap-3 rounded-2xl border border-cyan-200/14 bg-white/[0.05] px-4 text-left text-white/72 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_16px_44px_-34px_rgba(34,211,238,0.72)] backdrop-blur-xl transition-none disabled:cursor-not-allowed sm:h-[3.25rem]"
+    >
+      <span className="flex min-w-0 items-center gap-3">
+        <svg className="h-5 w-5 shrink-0 text-white/70" viewBox="0 0 28 32" fill="currentColor" aria-hidden>
+          <path d="M18.48 1.9c.08 1.34-.39 2.62-1.36 3.72-.93 1.05-2.4 1.86-3.74 1.75-.15-1.28.5-2.68 1.38-3.7.98-1.12 2.65-1.98 3.72-1.77Z" />
+          <path d="M23.9 22.68c-.6 1.36-.9 1.96-1.68 3.18-1.08 1.68-2.6 3.78-4.5 3.8-1.69.02-2.13-1.1-4.42-1.08-2.3.02-2.78 1.1-4.46 1.08-1.9-.02-3.35-1.9-4.43-3.58C1.4 21.42 1.1 15.98 2.96 13.06c1.32-2.08 3.4-3.3 5.36-3.32 2-.02 3.24 1.1 4.9 1.1 1.6 0 2.58-1.1 4.9-1.1 1.74.02 3.6.96 4.92 2.6-4.3 2.36-3.6 8.5.86 10.34Z" />
+        </svg>
+        <span className="truncate text-[0.95rem] font-black leading-none">App Store</span>
+      </span>
+      <span className="shrink-0 rounded-full border border-white/10 bg-white/[0.07] px-2.5 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] text-white/50">
+        Bient&ocirc;t
+      </span>
+    </button>
   );
 }
 
 function MobileAppComingSoonSection() {
   return (
-    <MotionSection className={`${shell} relative pb-7 pt-2 sm:pb-10 sm:pt-0`}>
-      <div className="relative overflow-hidden rounded-[1.6rem] border border-white/[0.09] bg-[#05070d] shadow-[0_34px_150px_-90px_rgba(34,211,238,0.9)] sm:rounded-[2rem]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_8%_50%,rgba(34,211,238,0.22),transparent_32%),radial-gradient(circle_at_19%_46%,rgba(232,121,249,0.22),transparent_30%),radial-gradient(circle_at_80%_8%,rgba(99,102,241,0.22),transparent_34%),linear-gradient(90deg,rgba(255,255,255,0.055),rgba(255,255,255,0.018)_34%,rgba(3,3,8,0.78))]" aria-hidden />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:34px_34px] opacity-20" aria-hidden />
-        <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-cyan-200/55 to-transparent" aria-hidden />
+    <MotionSection className={`${shell} relative pb-8 pt-2 sm:pb-12 sm:pt-1`}>
+      <div className="relative mx-auto max-w-[26.25rem] overflow-hidden rounded-[2rem] border border-white/[0.11] bg-[#050711]/88 p-[1px] shadow-[0_34px_140px_-86px_rgba(34,211,238,0.88)] sm:rounded-[2.25rem]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_16%_6%,rgba(232,121,249,0.32),transparent_34%),radial-gradient(circle_at_88%_18%,rgba(34,211,238,0.24),transparent_32%),radial-gradient(circle_at_50%_110%,rgba(99,102,241,0.24),transparent_40%)]" aria-hidden />
+        <div className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/55 to-transparent" aria-hidden />
 
-        <div className="relative grid gap-6 px-4 py-7 sm:px-8 sm:py-9 lg:grid-cols-[17.5rem_1fr] lg:items-center lg:gap-10 lg:px-10">
-          <div className="relative mx-auto w-full max-w-[17rem] lg:max-w-none">
-            <div className="absolute -inset-4 rounded-[2rem] bg-[radial-gradient(circle,rgba(34,211,238,0.46),transparent_62%)] blur-xl" aria-hidden />
-            <div className="absolute -inset-3 rounded-[2rem] bg-vn-fuchsia/20 blur-2xl" aria-hidden />
-            <div className="relative rounded-[1.7rem] border border-white/[0.1] bg-white/[0.055] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_28px_90px_-54px_rgba(34,211,238,0.95)] backdrop-blur-xl">
+        <div className="relative rounded-[1.95rem] bg-[linear-gradient(180deg,rgba(255,255,255,0.075),rgba(255,255,255,0.03)_38%,rgba(3,5,13,0.88))] px-4 py-5 backdrop-blur-xl sm:rounded-[2.2rem] sm:px-6 sm:py-7">
+          <div className="relative mx-auto w-full max-w-[18rem] rounded-[1.75rem] border border-white/[0.12] bg-white/[0.06] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_26px_80px_-50px_rgba(232,121,249,0.95)] sm:max-w-[19.5rem] sm:p-5">
+            <div className="absolute -inset-4 rounded-[2.2rem] bg-[radial-gradient(circle,rgba(34,211,238,0.26),transparent_62%)] blur-2xl" aria-hidden />
+            <div className="relative">
               <FakeQrCode />
+              <div className="mx-auto mt-4 w-fit rounded-full border border-white/10 bg-[#080b16]/82 px-3.5 py-1.5 text-[0.68rem] font-black uppercase tracking-[0.16em] text-white/68 shadow-[0_12px_38px_-28px_rgba(34,211,238,0.75)]">
+                Acc&egrave;s stores bient&ocirc;t
+              </div>
             </div>
           </div>
 
-          <div className="text-center lg:text-left">
-            <h2 className="text-[2rem] font-black uppercase leading-[0.95] tracking-tight text-white sm:text-[3.35rem] lg:text-[4rem]">
-              L&rsquo;application arrive sur les <span className={titleGradient}>stores</span>
+          <div className="mx-auto mt-6 max-w-[23rem] text-center">
+            <h2 className="text-[2.15rem] font-black leading-[0.94] tracking-tight text-white sm:text-[3rem]">
+              L&rsquo;app Viralynz arrive <span className={titleGradient}>bient&ocirc;t</span>
             </h2>
-            <p className="mx-auto mt-3 max-w-2xl text-sm font-semibold leading-6 text-gray-400 sm:text-base lg:mx-0">
-              Viralynz fonctionne d&eacute;j&agrave; sur mobile. L&rsquo;app native arrive bient&ocirc;t sur Google Play et l&rsquo;App Store pour retrouver ton coach de repost plus vite.
+            <p className="mx-auto mt-4 text-[0.95rem] font-semibold leading-6 text-slate-300/82 sm:text-base sm:leading-7">
+              Viralynz fonctionne d&eacute;j&agrave; sur mobile depuis ton navigateur. Les versions Google Play et App Store arrivent bient&ocirc;t pour retrouver ton coach de repost encore plus vite.
             </p>
-            <div className="mt-5 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
+            <div className="mt-5 grid gap-3 sm:mt-6">
               <GooglePlayBadge />
               <AppStoreBadge />
             </div>
