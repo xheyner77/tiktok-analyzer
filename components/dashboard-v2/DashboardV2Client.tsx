@@ -1204,20 +1204,20 @@ function RecommendationsSection({
           {recommendations.map((item, index) => {
             const style = recommendationStyles[index] ?? recommendationStyles[0];
             return (
-            <div key={item.title} className={`${softPanel} flex min-h-[136px] min-w-0 flex-col border-white/[0.095] bg-white/[0.048] p-3.5 min-[1600px]:h-[144px]`}>
+            <div key={item.title} className={`${softPanel} flex min-h-[150px] min-w-0 flex-col border-white/[0.095] bg-white/[0.048] p-3.5`}>
               <div className="flex items-center gap-2.5">
                 <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-[9px] bg-gradient-to-br ${style.tone} text-white shadow-[0_12px_28px_-14px_rgba(124,58,237,0.88)]`}>
                   <Icon name={style.icon} className="h-4 w-4" />
                 </span>
                 <div className="min-w-0 break-words text-[13.5px] font-bold leading-tight text-white">{item.title}</div>
               </div>
-              <p className={`mt-2.5 flex-1 break-words text-[12.05px] leading-[1.38] ${item.locked ? 'text-slate-500' : 'text-slate-300/92'}`}>{item.description}</p>
+              <p className={`mt-2.5 flex-1 break-words pb-2 text-[12.05px] leading-[1.38] ${item.locked ? 'text-slate-500' : 'text-slate-300/92'}`}>{item.description}</p>
               {item.locked || !states.hasAnalyses ? (
-              <Link href="/dashboard/analyze" className="mt-2 flex h-[30px] w-full items-center justify-center rounded-[8px] border border-white/[0.08] bg-white/[0.05] text-[11.85px] font-bold text-slate-300 transition hover:bg-white/[0.08] hover:text-white">
+              <Link href="/dashboard/analyze" className="mt-auto flex h-[30px] w-full items-center justify-center rounded-[8px] border border-white/[0.08] bg-white/[0.05] text-[11.85px] font-bold text-slate-300 transition hover:bg-white/[0.08] hover:text-white">
                   Analyser une vidéo
                 </Link>
               ) : (
-                <button className={`mt-2 h-[30px] w-full text-[11.85px] ${primaryButton}`} type="button">{item.cta}</button>
+                <button className={`mt-auto h-[30px] w-full text-[11.85px] ${primaryButton}`} type="button">{item.cta}</button>
               )}
             </div>
             );
