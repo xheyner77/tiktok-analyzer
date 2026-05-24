@@ -214,22 +214,6 @@ function ProfileCard({
     <div className="group relative">
       {menuOpen && (
         <div className="absolute bottom-[calc(100%+10px)] right-0 z-50 w-[218px] overflow-hidden rounded-[14px] border border-white/[0.09] bg-[linear-gradient(180deg,rgba(8,15,30,0.98),rgba(3,7,16,0.995))] p-1.5 shadow-[0_26px_86px_-42px_rgba(0,0,0,0.98),0_0_0_1px_rgba(139,92,246,0.08),inset_0_1px_0_rgba(255,255,255,0.07)] backdrop-blur-xl">
-          {[
-            { label: 'Gérer mon plan', href: '/dashboard/billing', icon: 'crown' as IconName },
-            { label: 'Paramètres du compte', href: '/dashboard/settings', icon: 'settings' as IconName },
-            { label: 'Facturation', href: '/dashboard/billing', icon: 'shield' as IconName },
-          ].map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              onClick={() => setMenuOpen(false)}
-              className="flex h-10 items-center gap-2.5 rounded-[10px] px-3 text-[12px] font-bold text-slate-200 transition hover:bg-white/[0.06] hover:text-white"
-            >
-              <Icon name={item.icon} className="h-4 w-4 text-violet-200/80" />
-              <span>{item.label}</span>
-            </Link>
-          ))}
-          <div className="my-1 h-px bg-white/[0.07]" />
           <button
             type="button"
             onClick={() => void logout()}
@@ -317,6 +301,20 @@ function SidebarSupportButton({ onSelect }: { onSelect?: () => void }) {
     >
       <Icon name="message" className="h-4 w-4 text-cyan-100/58 transition group-hover:text-cyan-100/86" />
       <span className="min-w-0 flex-1 truncate">Support</span>
+      <Icon name="chevron" className="h-3.5 w-3.5 text-slate-500 transition group-hover:text-slate-300" />
+    </Link>
+  );
+}
+
+function SidebarSettingsButton({ onSelect }: { onSelect?: () => void }) {
+  return (
+    <Link
+      href="/dashboard/settings"
+      onClick={onSelect}
+      className="group flex h-[40px] w-full items-center gap-2.5 rounded-[9px] border border-white/[0.075] bg-white/[0.026] px-3 text-[12px] font-bold text-slate-300 transition hover:border-violet-200/20 hover:bg-white/[0.05] hover:text-white focus:outline-none focus:ring-2 focus:ring-violet-200/20"
+    >
+      <Icon name="settings" className="h-4 w-4 text-violet-100/60 transition group-hover:text-violet-100/90" />
+      <span className="min-w-0 flex-1 truncate">Paramètres</span>
       <Icon name="chevron" className="h-3.5 w-3.5 text-slate-500 transition group-hover:text-slate-300" />
     </Link>
   );
@@ -598,6 +596,7 @@ function MobileDrawer({
         <div className="mt-6 space-y-4">
           <ProfileCard user={user} tiktokConnection={tiktokConnection} showPlanAction />
           <SidebarSupportButton onSelect={onClose} />
+          <SidebarSettingsButton onSelect={onClose} />
         </div>
       </aside>
     </div>
