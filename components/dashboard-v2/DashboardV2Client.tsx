@@ -880,10 +880,10 @@ function CreatorPortrait({ latestVideo }: { latestVideo: DashboardData['latestVi
       )}
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,7,18,0.04),rgba(3,7,18,0.34)_62%,rgba(3,7,18,0.82))]" />
       <div className="absolute left-2.5 top-2.5 rounded-md border border-white/10 bg-black/24 px-1.5 py-1 text-[12px] text-white/60 backdrop-blur">Analyse</div>
-      <div className="absolute right-[58px] top-[96px] grid h-[50px] w-[50px] place-items-center rounded-full bg-black/48 text-white backdrop-blur-md shadow-[0_12px_34px_rgba(0,0,0,0.42)] sm:right-[62px] sm:top-[138px] sm:h-[58px] sm:w-[58px]">
+      <div className="absolute right-[58px] top-1/2 grid h-[50px] w-[50px] -translate-y-1/2 place-items-center rounded-full bg-black/48 text-white backdrop-blur-md shadow-[0_12px_34px_rgba(0,0,0,0.42)] sm:right-[62px] sm:h-[58px] sm:w-[58px]">
         <Icon name="play" className="h-6 w-6 sm:h-7 sm:w-7" />
       </div>
-      <div className="absolute right-2.5 top-[92px] flex flex-col items-center gap-3 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.65)] sm:top-[134px] sm:gap-4">
+      <div className="absolute right-2.5 top-1/2 flex -translate-y-1/2 flex-col items-center gap-3 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.65)] sm:gap-3.5">
         <div className="text-center">
           <Icon name="heart" className="mx-auto h-6 w-6" />
           <div className="mt-1 text-[9px] font-bold">{latestVideo.likes}</div>
@@ -926,7 +926,7 @@ function VideoPreviewCard({
 
   return (
     <div className={`${shellCard} min-h-[330px] p-3.5 sm:h-[378px]`}>
-      <div className="h-[198px] overflow-hidden rounded-[10px] border border-white/[0.08] shadow-[0_18px_48px_-28px_rgba(124,58,237,0.62)] sm:h-[254px]">
+      <div className="h-[198px] overflow-hidden rounded-[10px] border border-white/[0.08] shadow-[0_18px_48px_-28px_rgba(124,58,237,0.62)] sm:h-[218px]">
         <CreatorPortrait latestVideo={latestVideo} />
       </div>
       <h3 className="mt-3 line-clamp-2 text-[15px] font-bold leading-snug text-white">{latestVideo.title}</h3>
