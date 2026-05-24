@@ -510,13 +510,13 @@ function MobileDashboardHeader({
   onMenuOpen: () => void;
 }) {
   return (
-    <header data-mobile-dashboard-header="true" className="sticky top-0 z-40 border-b border-white/[0.065] bg-[#020611]/88 px-4 py-3 backdrop-blur-xl min-[1280px]:hidden">
-      <div className="mx-auto flex w-full max-w-[1180px] items-center gap-3">
+    <header data-mobile-dashboard-header="true" className="sticky top-0 z-40 border-b border-white/[0.065] bg-[#020611]/88 px-3 py-2.5 shadow-[0_18px_44px_-34px_rgba(124,58,237,0.85)] backdrop-blur-xl min-[1280px]:hidden">
+      <div className="mx-auto flex w-full max-w-[780px] items-center gap-3">
         <button
           type="button"
           aria-label="Ouvrir le menu"
           onClick={onMenuOpen}
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] border border-white/[0.09] bg-white/[0.045] text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-[13px] border border-white/[0.09] bg-white/[0.045] text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
             <path d="M4 7h16" />
@@ -530,7 +530,7 @@ function MobileDashboardHeader({
             <div className="truncate text-[18px] font-black tracking-[-0.035em] text-white">Viralynz</div>
           </div>
         </div>
-        <Link href="/dashboard/analyze" aria-label="Nouvelle analyse" className={`grid h-10 w-10 shrink-0 place-items-center ${primaryButton}`}>
+        <Link href="/dashboard/analyze" aria-label="Nouvelle analyse" className={`grid h-11 w-11 shrink-0 place-items-center !rounded-[13px] ${primaryButton}`}>
           <Icon name="plus" className="h-4 w-4" />
         </Link>
       </div>
@@ -1245,6 +1245,437 @@ function RecommendationsSection({
   );
 }
 
+function recommendationHref(item: DashboardRecommendation) {
+  const key = `${item.title} ${item.cta}`.toLowerCase();
+  if (key.includes('hook')) return '/dashboard/hooks';
+  if (key.includes('horaire') || key.includes('tendance')) return '/dashboard/radar';
+  if (key.includes('engagement') || key.includes('exemple')) return '/dashboard/library';
+  return '/dashboard/analyze';
+}
+
+function MobileActionLink({
+  href,
+  children,
+  tone = 'ghost',
+}: {
+  href: string;
+  children: ReactNode;
+  tone?: 'primary' | 'ghost' | 'dark';
+}) {
+  const toneClass = tone === 'primary'
+    ? 'border-transparent bg-[linear-gradient(135deg,#d95df2_0%,#7c5cff_54%,#5b21e8_100%)] text-white shadow-[0_18px_42px_-22px_rgba(124,58,237,0.95),inset_0_1px_0_rgba(255,255,255,0.2)]'
+    : tone === 'dark'
+      ? 'border-white/[0.09] bg-[#080d19]/72 text-white hover:border-violet-200/20 hover:bg-white/[0.06]'
+      : 'border-cyan-200/18 bg-cyan-300/[0.075] text-cyan-100 hover:border-cyan-200/30 hover:bg-cyan-300/[0.11]';
+
+  return (
+    <Link
+      href={href}
+      className={`inline-flex h-12 items-center justify-center gap-2 rounded-[15px] border px-4 text-[13px] font-black transition focus:outline-none focus:ring-2 focus:ring-violet-300/35 ${toneClass}`}
+    >
+      {children}
+    </Link>
+  );
+}
+
+function MobileWelcomeStatus({
+  user,
+  states,
+  tiktokConnection,
+}: {
+  user: DashboardData['user'];
+  states: DashboardData['states'];
+  tiktokConnection: DashboardData['tiktokConnection'];
+}) {
+  return (
+    <section className="relative overflow-hidden rounded-[22px] border border-white/[0.085] bg-[linear-gradient(145deg,rgba(9,17,33,0.88),rgba(4,8,18,0.96))] p-4 shadow-[0_18px_54px_-38px_rgba(0,0,0,0.92),inset_0_1px_0_rgba(255,255,255,0.055)] min-[1280px]:hidden">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_8%,rgba(168,85,247,0.18),transparent_36%),radial-gradient(circle_at_88%_12%,rgba(34,211,238,0.09),transparent_34%)]" />
+      <div className="relative flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-[1.72rem] font-black leading-[1.02] tracking-[-0.055em] text-white">Bienvenue, {user.name} 👋</h1>
+          <p className="mt-1.5 text-[0.88rem] leading-5 text-slate-400">Ton aperçu de performance est prêt.</p>
+        </div>
+        <span className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-[0.68rem] font-black ${states.hasTikTokConnection ? 'border-emerald-300/18 bg-emerald-300/10 text-emerald-100' : 'border-white/[0.09] bg-white/[0.045] text-slate-300'}`}>
+          <span className={`h-1.5 w-1.5 rounded-full ${states.hasTikTokConnection ? 'bg-emerald-300 shadow-[0_0_12px_rgba(110,231,183,0.7)]' : 'bg-slate-500'}`} />
+          {states.hasTikTokConnection ? 'TikTok connecté' : 'TikTok non connecté'}
+        </span>
+      </div>
+      {states.hasTikTokConnection && tiktokConnection.displayName ? (
+        <p className="relative mt-3 truncate text-[0.75rem] font-semibold text-emerald-100/70">{tiktokConnection.displayName}</p>
+      ) : null}
+    </section>
+  );
+}
+
+function MobilePrimaryActions({ states }: { states: DashboardData['states'] }) {
+  return (
+    <section className="grid gap-2.5 min-[1280px]:hidden">
+      <MobileActionLink href="/dashboard/analyze" tone="primary">
+        <Icon name="plus" className="h-4 w-4" />
+        Analyser une vidéo
+      </MobileActionLink>
+      {!states.hasTikTokConnection ? (
+        <div className="rounded-[18px] border border-cyan-200/[0.13] bg-cyan-300/[0.055] p-3">
+          <p className="text-[0.78rem] leading-5 text-cyan-50/82">Connecte TikTok pour importer tes vidéos et enrichir tes analyses.</p>
+          <Link href="/api/tiktok/connect" className="mt-2 inline-flex h-9 items-center gap-2 rounded-[11px] border border-cyan-200/18 bg-cyan-300/10 px-3 text-[0.76rem] font-black text-cyan-100">
+            <span className="text-[0.95rem] leading-none">♪</span>
+            Connecter TikTok
+          </Link>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function MobileNextMoveCard({
+  recommendations,
+  states,
+}: {
+  recommendations: DashboardRecommendation[];
+  states: DashboardData['states'];
+}) {
+  const recommendation = recommendations[0];
+  const title = states.hasAnalyses && recommendation ? recommendation.title : 'Améliore ton hook';
+  const description = states.hasAnalyses && recommendation
+    ? recommendation.description
+    : 'Analyse une vidéo pour transformer ton prochain repost en décision de montage.';
+  const href = states.hasAnalyses && recommendation ? recommendationHref(recommendation) : '/dashboard/analyze';
+  const cta = states.hasAnalyses && recommendation ? recommendation.cta : 'Analyser une vidéo';
+
+  return (
+    <section className="relative overflow-hidden rounded-[22px] border border-violet-200/[0.14] bg-[linear-gradient(145deg,rgba(25,18,55,0.86),rgba(6,12,26,0.96)_62%,rgba(4,8,17,0.98))] p-4 shadow-[0_20px_58px_-36px_rgba(124,58,237,0.8),inset_0_1px_0_rgba(255,255,255,0.06)] min-[1280px]:hidden">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_9%_0%,rgba(217,70,239,0.2),transparent_34%),radial-gradient(circle_at_94%_18%,rgba(34,211,238,0.1),transparent_32%)]" />
+      <div className="relative flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[10px] border border-violet-200/18 bg-violet-400/12 text-violet-100">
+              <Icon name="spark" className="h-4 w-4" />
+            </span>
+            <span className="rounded-full border border-fuchsia-200/16 bg-fuchsia-300/10 px-2.5 py-1 text-[0.62rem] font-black uppercase tracking-[0.15em] text-fuchsia-100">Priorité</span>
+          </div>
+          <h2 className="mt-3 text-[1.08rem] font-black leading-tight tracking-[-0.035em] text-white">{title}</h2>
+          <p className="mt-1.5 line-clamp-2 text-[0.82rem] leading-5 text-slate-300">{description}</p>
+        </div>
+      </div>
+      <Link href={href} className="relative mt-3 inline-flex h-10 items-center justify-center gap-2 rounded-[12px] bg-white/[0.075] px-3.5 text-[0.78rem] font-black text-white ring-1 ring-white/[0.09] transition hover:bg-white/[0.1]">
+        {cta}
+        <Icon name="chevron" className="h-3.5 w-3.5" />
+      </Link>
+    </section>
+  );
+}
+
+function MobilePerformanceSummary({
+  dashboard,
+  states,
+}: {
+  dashboard: DashboardData;
+  states: DashboardData['states'];
+}) {
+  const retentionScore = dashboard.insights.find((item) => item.type === 'retention')?.score ?? null;
+  const memoryScores = dashboard.insights.map((item) => item.score).filter((score): score is number => typeof score === 'number');
+  const memoryScore = memoryScores.length > 0 ? Math.round(memoryScores.reduce((sum, score) => sum + score, 0) / memoryScores.length) : null;
+  const items = [
+    dashboard.metrics.averageViralScore !== null ? { label: 'Score viral', value: `${dashboard.metrics.averageViralScore}/100`, tone: 'text-violet-100' } : null,
+    retentionScore !== null ? { label: 'Rétention', value: `${retentionScore}/100`, tone: 'text-orange-100' } : null,
+    memoryScore !== null ? { label: 'Mémoire IA', value: `${memoryScore}/100`, tone: 'text-cyan-100' } : null,
+    states.hasTikTokMetrics ? { label: 'Vues', value: dashboard.metrics.totalViews, tone: 'text-emerald-100' } : null,
+  ].filter((item): item is { label: string; value: string; tone: string } => Boolean(item));
+
+  return (
+    <section className={`${shellCard} p-4 min-[1280px]:hidden`}>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-[1rem] font-black tracking-[-0.02em] text-white">Résumé performance</h2>
+        <span className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-slate-500">Réel</span>
+      </div>
+      {items.length === 0 ? (
+        <div className="mt-3 rounded-[14px] border border-white/[0.07] bg-white/[0.035] p-3 text-[0.82rem] leading-5 text-slate-400">
+          Analyse une vidéo pour remplir tes métriques. Viralynz n’invente pas tes scores.
+        </div>
+      ) : (
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          {items.slice(0, 4).map((item) => (
+            <div key={item.label} className="rounded-[14px] border border-white/[0.075] bg-white/[0.04] p-3">
+              <p className="text-[0.68rem] font-bold uppercase tracking-[0.11em] text-slate-500">{item.label}</p>
+              <p className={`mt-2 text-[1.2rem] font-black leading-none tracking-[-0.04em] ${item.tone}`}>{item.value}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function MobileLatestAnalysis({
+  dashboard,
+  states,
+}: {
+  dashboard: DashboardData;
+  states: DashboardData['states'];
+}) {
+  if (!states.hasLatestAnalysis) {
+    return (
+      <section className={`${shellCard} p-4 min-[1280px]:hidden`}>
+        <h2 className="text-[1rem] font-black text-white">Dernière analyse</h2>
+        <p className="mt-2 text-[0.82rem] leading-5 text-slate-400">Ta première analyse apparaîtra ici, avec le signal principal et le score réel.</p>
+        <Link href="/dashboard/analyze" className="mt-3 inline-flex h-10 items-center rounded-[12px] bg-white/[0.06] px-3.5 text-[0.78rem] font-black text-white ring-1 ring-white/[0.08]">Analyser une vidéo</Link>
+      </section>
+    );
+  }
+
+  const mainSignal = dashboard.insights[0]?.title ?? 'Signal à vérifier';
+  const score = dashboard.metrics.averageViralScore;
+
+  return (
+    <section className={`${shellCard} p-3.5 min-[1280px]:hidden`}>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h2 className="text-[1rem] font-black text-white">Dernière analyse</h2>
+        <Link href={dashboard.analysisCta.href} className="text-[0.74rem] font-black text-violet-200">Voir</Link>
+      </div>
+      <div className="flex gap-3">
+        <div className="h-[86px] w-[78px] shrink-0 overflow-hidden rounded-[14px] border border-white/[0.08]">
+          <CreatorPortrait latestVideo={dashboard.latestVideo} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="line-clamp-2 text-[0.92rem] font-black leading-5 text-white">{dashboard.latestVideo.title}</h3>
+          <p className="mt-1 text-[0.72rem] text-slate-500">{dashboard.latestVideo.date} · {dashboard.latestVideo.duration}</p>
+          <div className="mt-2 grid gap-1 text-[0.75rem] leading-4 text-slate-300">
+            <span>Score viral : <strong className="text-white">{score === null ? '—' : `${score}/100`}</strong></span>
+            <span className="truncate">Signal principal : <strong className="text-white">{mainSignal}</strong></span>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function MobileRecommendations({
+  recommendations,
+  states,
+}: {
+  recommendations: DashboardRecommendation[];
+  states: DashboardData['states'];
+}) {
+  return (
+    <section className={`${shellCard} p-4 min-[1280px]:hidden`}>
+      <div>
+        <h2 className="text-[1rem] font-black text-white">Recommandations</h2>
+        <p className="mt-1 text-[0.78rem] text-slate-400">Applique ces actions au prochain repost.</p>
+      </div>
+      <div className="mt-3 grid gap-2">
+        {recommendations.slice(0, 3).map((item, index) => {
+          const style = recommendationStyles[index] ?? recommendationStyles[0];
+          const href = item.locked || !states.hasAnalyses ? '/dashboard/analyze' : recommendationHref(item);
+          return (
+            <div key={item.title} className="flex items-start gap-2.5 rounded-[15px] border border-white/[0.075] bg-white/[0.04] p-2.5">
+              <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-[11px] bg-gradient-to-br ${style.tone} text-white`}>
+                <Icon name={style.icon} className="h-4 w-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-[0.86rem] font-black leading-4 text-white">{item.title}</h3>
+                <p className="mt-1 line-clamp-2 text-[0.72rem] leading-4 text-slate-400">{item.description}</p>
+                <Link href={href} className="mt-2 inline-flex h-8 items-center rounded-[10px] border border-white/[0.08] bg-white/[0.045] px-3 text-[0.68rem] font-black text-slate-200">
+                  {item.locked || !states.hasAnalyses ? 'Analyser une vidéo' : item.cta}
+                </Link>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function MobileMemoryCompact({
+  insights,
+  states,
+}: {
+  insights: DashboardInsight[];
+  states: DashboardData['states'];
+}) {
+  return (
+    <section className={`${shellCard} p-4 min-[1280px]:hidden`}>
+      <div className="flex items-center gap-2">
+        <h2 className="text-[1rem] font-black text-white">Mémoire IA</h2>
+        <span className="rounded-full border border-violet-200/18 bg-violet-400/10 px-2 py-0.5 text-[0.62rem] font-black uppercase tracking-[0.12em] text-violet-100">Nouveau</span>
+      </div>
+      <p className="mt-1 text-[0.78rem] text-slate-400">Ces signaux viennent de ta dernière analyse.</p>
+      {!states.hasRealInsights ? (
+        <div className="mt-3 rounded-[14px] border border-white/[0.07] bg-white/[0.035] p-3 text-[0.78rem] leading-5 text-slate-400">
+          Analyse une vidéo pour remplir ta mémoire avec de vrais signaux.
+        </div>
+      ) : (
+        <div className="mt-3 grid gap-2">
+          {insights.slice(0, 3).map((item) => {
+            const style = insightStyleByType[item.type];
+            return (
+              <div key={item.title} className="flex items-center gap-2.5 rounded-[14px] border border-white/[0.07] bg-white/[0.04] p-2.5">
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[10px]" style={{ background: `${style.color}22`, color: style.color }}>
+                  <Icon name={style.icon} className="h-4 w-4" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <h3 className="truncate text-[0.82rem] font-black text-white">{item.title}</h3>
+                  <p className="line-clamp-1 text-[0.7rem] text-slate-400">{item.description}</p>
+                </div>
+                <MiniScoreRing score={item.score} color={style.color} />
+              </div>
+            );
+          })}
+        </div>
+      )}
+      <Link href="/dashboard/insights" className="mt-3 inline-flex h-9 items-center rounded-[11px] border border-white/[0.08] bg-white/[0.045] px-3 text-[0.74rem] font-black text-white">Voir la mémoire complète</Link>
+    </section>
+  );
+}
+
+function MobileRetentionSparkline({ retention }: { retention: DashboardData['retention'] }) {
+  const points = retention.points.slice(0, 9);
+  if (points.length < 2) return null;
+  const coords = points.map((point, index) => {
+    const x = 10 + (index * (180 / Math.max(points.length - 1, 1)));
+    const y = 82 - (Math.max(0, Math.min(100, point.current)) / 100) * 64;
+    return `${index === 0 ? 'M' : 'L'}${x.toFixed(1)} ${y.toFixed(1)}`;
+  }).join(' ');
+  return (
+    <svg viewBox="0 0 200 92" className="h-[92px] w-full" fill="none" aria-hidden="true">
+      <path d={`${coords} L190 88 L10 88 Z`} fill="url(#mobileRetentionFill)" />
+      <path d={coords} stroke="url(#mobileRetentionLine)" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" />
+      <defs>
+        <linearGradient id="mobileRetentionLine" x1="10" y1="18" x2="190" y2="84">
+          <stop stopColor="#e879f9" />
+          <stop offset=".52" stopColor="#8b5cf6" />
+          <stop offset="1" stopColor="#22d3ee" />
+        </linearGradient>
+        <linearGradient id="mobileRetentionFill" x1="100" y1="20" x2="100" y2="88">
+          <stop stopColor="#8b5cf6" stopOpacity=".24" />
+          <stop offset="1" stopColor="#22d3ee" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
+function MobileRetentionCompact({
+  retention,
+  states,
+  cta,
+}: {
+  retention: DashboardData['retention'];
+  states: DashboardData['states'];
+  cta: DashboardData['analysisCta'];
+}) {
+  return (
+    <section className={`${shellCard} p-4 min-[1280px]:hidden`}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-[1rem] font-black text-white">Rétention</h2>
+          <p className="mt-1 text-[0.78rem] text-slate-400">Les moments clés détectés dans ta vidéo.</p>
+        </div>
+        <Link href={cta.href} className="shrink-0 text-[0.72rem] font-black text-violet-200">Voir</Link>
+      </div>
+      {states.hasRetentionData ? (
+        <>
+          <div className="mt-2 rounded-[14px] border border-white/[0.065] bg-white/[0.03] px-2">
+            <MobileRetentionSparkline retention={retention} />
+          </div>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {retention.keyMoments.slice(0, 3).map((moment) => (
+              <span key={`${moment.label}-${moment.time}`} className={`rounded-full px-2.5 py-1 text-[0.68rem] font-black ${moment.tone}`}>
+                {moment.label} {moment.time}
+              </span>
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="mt-3 rounded-[14px] border border-white/[0.07] bg-white/[0.035] p-3 text-[0.78rem] leading-5 text-slate-400">
+          Disponible après une analyse avec assez de points de rétention.
+        </div>
+      )}
+    </section>
+  );
+}
+
+function MobileUnlockModules({ states }: { states: DashboardData['states'] }) {
+  const modules = [
+    'Courbe émotionnelle',
+    'Piliers de contenu',
+    'Vidéos performantes',
+  ];
+
+  return (
+    <section className={`${shellCard} p-4 min-[1280px]:hidden`}>
+      <h2 className="text-[1rem] font-black text-white">À construire</h2>
+      <p className="mt-1 text-[0.78rem] leading-5 text-slate-400">Débloque ces modules avec plus d’analyses réelles.</p>
+      <div className="mt-3 grid gap-2">
+        {modules.map((module) => (
+          <div key={module} className="flex h-10 items-center justify-between rounded-[12px] border border-white/[0.065] bg-white/[0.035] px-3">
+            <span className="text-[0.78rem] font-bold text-slate-300">{module}</span>
+            <span className="text-[0.66rem] font-black uppercase tracking-[0.12em] text-slate-500">Bientôt</span>
+          </div>
+        ))}
+      </div>
+      {!states.hasAnalyses ? (
+        <Link href="/dashboard/analyze" className="mt-3 inline-flex h-9 items-center rounded-[11px] bg-white/[0.06] px-3 text-[0.74rem] font-black text-white ring-1 ring-white/[0.08]">Analyser une vidéo</Link>
+      ) : null}
+    </section>
+  );
+}
+
+function MobileTopVideosCompact({
+  videos,
+  states,
+}: {
+  videos: DashboardTopVideo[];
+  states: DashboardData['states'];
+}) {
+  if (!states.hasRealTopVideos || videos.length === 0) return null;
+  return (
+    <section className={`${shellCard} p-4 min-[1280px]:hidden`}>
+      <div className="flex items-center justify-between">
+        <h2 className="text-[1rem] font-black text-white">Vidéos performantes</h2>
+        <Link href="/dashboard/library" className="text-[0.72rem] font-black text-violet-200">Voir tout</Link>
+      </div>
+      <div className="mt-3 grid gap-2">
+        {videos.slice(0, 3).map((video) => (
+          <div key={video.id} className="flex items-center gap-2.5 rounded-[14px] border border-white/[0.07] bg-white/[0.035] p-2">
+            <div className="h-10 w-10 shrink-0 rounded-[10px] bg-violet-500/20" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[0.8rem] font-black text-white">{video.title}</p>
+              <p className="text-[0.68rem] text-slate-500">{video.date}</p>
+            </div>
+            <span className="rounded-full border border-emerald-300/20 bg-emerald-300/10 px-2 py-1 text-[0.68rem] font-black text-emerald-100">{video.score}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function MobileOverviewDashboard({
+  dashboard,
+  states,
+  tiktokConnection,
+}: {
+  dashboard: DashboardData;
+  states: DashboardData['states'];
+  tiktokConnection: DashboardData['tiktokConnection'];
+}) {
+  return (
+    <div className="grid gap-3 min-[1280px]:hidden">
+      <MobileWelcomeStatus user={dashboard.user} states={states} tiktokConnection={tiktokConnection} />
+      <MobilePrimaryActions states={states} />
+      <MobileNextMoveCard recommendations={dashboard.recommendations} states={states} />
+      <MobilePerformanceSummary dashboard={dashboard} states={states} />
+      <MobileLatestAnalysis dashboard={dashboard} states={states} />
+      <MobileRecommendations recommendations={dashboard.recommendations} states={states} />
+      <MobileMemoryCompact insights={dashboard.insights} states={states} />
+      <MobileRetentionCompact retention={dashboard.retention} states={states} cta={dashboard.analysisCta} />
+      <MobileUnlockModules states={states} />
+      <MobileTopVideosCompact videos={dashboard.topVideos} states={states} />
+    </div>
+  );
+}
+
 function DashboardV2Client({ dashboard, children }: { dashboard: DashboardData; children?: ReactNode }) {
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -1340,6 +1771,9 @@ function DashboardV2Client({ dashboard, children }: { dashboard: DashboardData; 
           <div data-dashboard-content="true" className="relative mx-auto w-full min-w-0 max-w-[1180px] px-4 pb-8 pt-5 sm:px-5 md:px-6 lg:px-8 min-[1280px]:mx-0 min-[1280px]:max-w-none min-[1280px]:flex-1 min-[1280px]:overflow-y-auto min-[1280px]:overscroll-contain min-[1280px]:px-6 min-[1280px]:pb-8 min-[1280px]:pt-5 min-[1440px]:px-8 min-[1680px]:px-9">
             {showOverview ? (
               <>
+                <MobileOverviewDashboard dashboard={dashboard} states={visibleStates} tiktokConnection={visibleTikTokConnection} />
+
+                <div className="hidden min-[1280px]:block">
                 <ResponsiveIntro user={dashboard.user} states={visibleStates} tiktokConnection={visibleTikTokConnection} />
                 <KpiGrid metrics={dashboard.metrics} states={visibleStates} />
 
@@ -1372,6 +1806,7 @@ function DashboardV2Client({ dashboard, children }: { dashboard: DashboardData; 
                   <TopVideosCard videos={dashboard.topVideos} states={visibleStates} />
                 </div>
               </section>
+              </div>
               </>
             ) : children}
           </div>
