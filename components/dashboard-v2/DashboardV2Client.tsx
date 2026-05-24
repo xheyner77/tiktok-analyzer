@@ -623,6 +623,7 @@ function ResponsiveIntro({ user, states, tiktokConnection }: { user: DashboardDa
 
 type KpiItem = {
   label: string;
+  mobileLabel?: string;
   value: string;
   delta: string | null;
   note: string;
@@ -641,9 +642,9 @@ function buildKpis(metrics: DashboardData['metrics'], states: DashboardData['sta
     : 'analyse ta première vidéo';
 
   return [
-    { label: 'Vues totales', value: metrics.totalViews, delta: null, note: states.hasTikTokMetrics ? 'données TikTok importées' : tikTokNote, icon: 'analysis', tone: 'green', real: states.hasTikTokMetrics },
-    { label: "Taux d'engagement", value: metrics.engagementRate, delta: null, note: states.hasTikTokMetrics ? 'données TikTok importées' : tikTokNote, icon: 'clock', tone: 'green', real: states.hasTikTokMetrics },
-    { label: 'Temps moyen de visionnage', value: metrics.averageWatchTime, delta: null, note: states.hasTikTokMetrics ? 'données TikTok importées' : tikTokNote, icon: 'info', tone: 'green', real: states.hasTikTokMetrics },
+    { label: 'Vues totales', mobileLabel: 'Vues', value: metrics.totalViews, delta: null, note: states.hasTikTokMetrics ? 'données TikTok importées' : tikTokNote, icon: 'analysis', tone: 'green', real: states.hasTikTokMetrics },
+    { label: "Taux d'engagement", mobileLabel: 'Engagement', value: metrics.engagementRate, delta: null, note: states.hasTikTokMetrics ? 'données TikTok importées' : tikTokNote, icon: 'clock', tone: 'green', real: states.hasTikTokMetrics },
+    { label: 'Temps moyen de visionnage', mobileLabel: 'Visionnage', value: metrics.averageWatchTime, delta: null, note: states.hasTikTokMetrics ? 'données TikTok importées' : tikTokNote, icon: 'info', tone: 'green', real: states.hasTikTokMetrics },
     { label: 'Score viral (moy.)', value: metrics.averageViralScore === null ? '—' : String(metrics.averageViralScore), delta: metrics.viralScoreChange, note: analysisNote, icon: 'target', tone: 'ring', score: metrics.averageViralScore, real: metrics.averageViralScore !== null },
   ];
 }
@@ -663,11 +664,11 @@ function Sparkline({ color = '#a855f7' }: { color?: string }) {
   );
 }
 
-function StatCard({ item }: { item: KpiItem }) {
+function StatCard({ item, className = '', compactMobile = false }: { item: KpiItem; className?: string; compactMobile?: boolean }) {
   if (item.tone === 'ring') {
     const score = item.score;
     return (
-      <div className={`${shellCard} min-h-[124px] p-4 sm:h-[128px] sm:p-5`}>
+      <div className={`${shellCard} ${className} min-h-[124px] p-4 sm:h-[128px] sm:p-5`}>
         <div className="text-[13px] text-white/88">{item.label}</div>
         <div className="mt-4 flex items-center gap-4">
           <div
@@ -688,17 +689,18 @@ function StatCard({ item }: { item: KpiItem }) {
   }
 
   return (
-    <div className={`${shellCard} min-h-[124px] p-4 sm:h-[128px] sm:p-5`}>
-      <div className="flex items-center justify-between text-[13px] text-white/88">
-        <span>{item.label}</span>
-        <Icon name={item.icon} className="h-4 w-4 text-white/80" />
+    <div className={`${shellCard} ${className} ${compactMobile ? 'min-h-[104px] p-2.5 min-[1280px]:min-h-[124px] min-[1280px]:p-5' : 'min-h-[124px] p-4 sm:h-[128px] sm:p-5'}`}>
+      <div className={`${compactMobile ? 'flex items-start justify-between gap-1 text-[11px] leading-tight min-[1280px]:text-[13px]' : 'flex items-center justify-between text-[13px]'} text-white/88`}>
+        <span className={compactMobile ? 'line-clamp-2 min-[1280px]:hidden' : ''}>{compactMobile ? item.mobileLabel ?? item.label : item.label}</span>
+        {compactMobile ? <span className="hidden min-[1280px]:inline">{item.label}</span> : null}
+        <Icon name={item.icon} className={`${compactMobile ? 'h-3.5 w-3.5 min-[1280px]:h-4 min-[1280px]:w-4' : 'h-4 w-4'} shrink-0 text-white/80`} />
       </div>
-      <div className="mt-4 flex items-end gap-3">
-        <div className={`text-[29px] font-semibold leading-none tracking-[-0.045em] sm:text-[33px] ${item.real ? 'text-white' : 'text-slate-500'}`}>{item.value}</div>
+      <div className={`${compactMobile ? 'mt-3 min-[1280px]:mt-4' : 'mt-4'} flex items-end gap-3`}>
+        <div className={`${compactMobile ? 'text-[24px] min-[1280px]:text-[33px]' : 'text-[29px] sm:text-[33px]'} font-semibold leading-none tracking-[-0.045em] ${item.real ? 'text-white' : 'text-slate-500'}`}>{item.value}</div>
         {item.delta && <div className="pb-1 text-[14px] font-semibold text-[#7CFF59]">↗ {item.delta}</div>}
       </div>
-      <div className="mt-2 text-[13px] text-slate-400">{item.note}</div>
-      {item.real && <Sparkline />}
+      <div className={`${compactMobile ? 'hidden min-[1280px]:block' : 'block'} mt-2 text-[13px] text-slate-400`}>{item.note}</div>
+      {item.real && <div className={compactMobile ? 'hidden min-[1280px]:block' : ''}><Sparkline /></div>}
     </div>
   );
 }
@@ -731,10 +733,14 @@ function OpportunityCard({ metrics, className = '' }: { metrics: DashboardData['
 
 function KpiGrid({ metrics, states }: { metrics: DashboardData['metrics']; states: DashboardData['states'] }) {
   const kpis = buildKpis(metrics, states);
+  const tiktokKpis = kpis.slice(0, 3);
+  const scoreKpi = kpis[3];
+
   return (
-    <section data-dashboard-kpi-grid="true" className="mt-4 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 lg:grid-cols-3 min-[1280px]:grid-cols-4 min-[1600px]:grid-cols-[repeat(4,minmax(0,1fr))_minmax(280px,1.08fr)] min-[1680px]:gap-4">
-      {kpis.map((item) => <StatCard key={item.label} item={item} />)}
-      <OpportunityCard metrics={metrics} className="min-[420px]:col-span-2 lg:col-span-1 min-[1280px]:col-span-2 min-[1600px]:col-span-1" />
+    <section data-dashboard-kpi-grid="true" className="mt-4 grid grid-cols-3 gap-2.5 min-[640px]:gap-3 min-[1280px]:grid-cols-4 min-[1600px]:grid-cols-[repeat(4,minmax(0,1fr))_minmax(280px,1.08fr)] min-[1680px]:gap-4">
+      {tiktokKpis.map((item) => <StatCard key={item.label} item={item} compactMobile />)}
+      {scoreKpi ? <StatCard item={scoreKpi} className="col-span-3 min-[1280px]:col-span-1" /> : null}
+      <OpportunityCard metrics={metrics} className="col-span-3 min-[1280px]:col-span-2 min-[1600px]:col-span-1" />
     </section>
   );
 }
