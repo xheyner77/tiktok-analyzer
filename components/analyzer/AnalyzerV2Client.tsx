@@ -331,7 +331,7 @@ function SectionCard({
   eyebrow?: string;
 }) {
   return (
-    <section className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.055] to-white/[0.025] p-4 sm:p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_18px_60px_-40px_rgba(0,0,0,0.9)]">
+    <section className="min-w-0 overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.055] to-white/[0.025] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_18px_60px_-40px_rgba(0,0,0,0.9)] sm:p-5">
       {eyebrow && <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-vn-violet/70">{eyebrow}</p>}
       <h2 className="text-base font-bold text-white">{title}</h2>
       <div className="mt-4">{children}</div>
@@ -412,7 +412,7 @@ function UploadCard({
       }}
       onDragLeave={() => setIsDragging(false)}
       onDrop={onDrop}
-      className={`relative overflow-hidden rounded-2xl border p-5 transition-all ${
+      className={`relative min-w-0 overflow-hidden rounded-2xl border p-4 transition-all sm:p-5 ${
         isDragging
           ? 'border-vn-fuchsia/45 bg-vn-fuchsia/[0.08]'
           : file
@@ -422,10 +422,10 @@ function UploadCard({
     >
       <input ref={inputRef} type="file" accept="video/mp4,video/quicktime,video/*" className="hidden" disabled={disabled} onChange={onChange} />
       <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-vn-fuchsia/40 to-transparent" />
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-vn-violet/25 bg-vn-violet/15 text-vn-violet">
-            <VideoIcon className="h-6 w-6" />
+      <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-vn-violet/25 bg-vn-violet/15 text-vn-violet sm:h-12 sm:w-12">
+            <VideoIcon className="h-5 w-5 sm:h-6 sm:w-6" />
           </div>
           <div className="min-w-0">
             {file ? (
@@ -436,18 +436,18 @@ function UploadCard({
             ) : (
               <>
                 <p className="text-sm font-semibold text-white">Dépose ta vidéo ici</p>
-                <p className="mt-1 text-xs text-gray-500">MP4, MOV ou TikTok export — max 200 Mo</p>
+                <p className="mt-1 text-xs leading-5 text-gray-500">MP4, MOV ou export TikTok · max 200 Mo</p>
               </>
             )}
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex w-full min-w-0 gap-2 sm:w-auto sm:shrink-0">
           {file && (
             <button
               type="button"
               disabled={disabled}
               onClick={onClear}
-              className="rounded-xl border border-white/[0.1] bg-white/[0.04] px-4 py-2.5 text-xs font-semibold text-gray-300 transition hover:border-white/[0.18] hover:bg-white/[0.07] disabled:opacity-50"
+              className="min-h-[42px] flex-1 rounded-xl border border-white/[0.1] bg-white/[0.04] px-4 py-2.5 text-xs font-semibold text-gray-300 transition hover:border-white/[0.18] hover:bg-white/[0.07] disabled:opacity-50 sm:flex-none"
             >
               Retirer
             </button>
@@ -456,7 +456,7 @@ function UploadCard({
             type="button"
             disabled={disabled}
             onClick={() => inputRef.current?.click()}
-            className="rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-black transition hover:bg-gray-200 disabled:opacity-50"
+            className="min-h-[42px] flex-1 rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-black transition hover:bg-gray-200 disabled:opacity-50 sm:flex-none"
           >
             {file ? 'Changer la vidéo' : 'Sélectionner'}
           </button>
@@ -1888,10 +1888,10 @@ export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientP
         </div>
       )}
 
-      <div className={embedded ? 'relative mx-auto w-full max-w-[1120px] pb-10 pt-2' : 'relative mx-auto max-w-6xl px-4 py-8 pb-20 sm:px-6 sm:py-10'}>
+      <div className={embedded ? 'relative mx-auto w-full max-w-[1120px] min-w-0 px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 sm:pt-8 min-[1280px]:px-0 min-[1280px]:pb-10 min-[1280px]:pt-2' : 'relative mx-auto max-w-6xl min-w-0 px-4 py-8 pb-20 sm:px-6 sm:py-10'}>
         <header className={embedded ? 'mt-0' : 'mt-4'}>
           <div>
-            <h1 className={embedded ? 'max-w-3xl text-[30px] font-black leading-[1.02] tracking-[-0.04em] text-white sm:text-[38px]' : 'max-w-3xl text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl'}>
+            <h1 className={embedded ? 'max-w-3xl text-[28px] font-black leading-[1.04] tracking-[-0.04em] text-white min-[390px]:text-[30px] sm:text-[38px]' : 'max-w-3xl text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl'}>
               Analyser une vidéo <span className="bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent">TikTok</span>
             </h1>
             <p className={embedded ? 'mt-3 max-w-2xl text-[14px] leading-relaxed text-slate-400 sm:text-[15px]' : 'mt-4 max-w-2xl text-base leading-relaxed text-gray-400 sm:text-lg'}>
@@ -1900,8 +1900,8 @@ export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientP
           </div>
         </header>
 
-        <div className="mt-8 grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
-          <div className="space-y-5">
+        <div className="mt-7 grid min-w-0 gap-5 lg:mt-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+          <div className="min-w-0 space-y-5">
             <SectionCard title="Importer la vidéo" eyebrow="Étape 1">
               <UploadCard
                 file={videoFile}
@@ -1917,19 +1917,19 @@ export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientP
                   type="url"
                   value={uploadTiktokUrl}
                   onChange={(e) => setUploadTiktokUrl(e.target.value)}
-                  placeholder="https://vm.tiktok.com/... ou tiktok.com/.../video/..."
+                  placeholder="https://vm.tiktok.com/..."
                   disabled={isLoading || isLimitReached}
-                  className="w-full rounded-xl border border-white/[0.09] bg-white/[0.035] px-4 py-3.5 text-sm text-white outline-none transition placeholder:text-gray-600 hover:border-white/[0.15] focus:border-vn-violet/50 focus:ring-2 focus:ring-vn-violet/10 disabled:opacity-50"
+                  className="block w-full min-w-0 rounded-xl border border-white/[0.09] bg-white/[0.035] px-3.5 py-3.5 text-sm text-white outline-none transition placeholder:text-gray-600 hover:border-white/[0.15] focus:border-vn-violet/50 focus:ring-2 focus:ring-vn-violet/10 disabled:opacity-50 sm:px-4"
                 />
               </div>
             </SectionCard>
 
-            <div className="rounded-2xl border border-white/[0.08] bg-[#080810]/90 p-4">
+            <div className="min-w-0 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#080810]/90 p-3.5 sm:p-4">
               <button
                 type="button"
                 onClick={() => void analyzeFromUpload()}
                 disabled={!canSubmit}
-                className="relative w-full overflow-hidden rounded-2xl bg-gradient-to-r from-vn-fuchsia via-vn-violet to-vn-indigo px-5 py-4 text-sm font-black text-white shadow-[0_16px_50px_-24px_rgba(232,121,249,0.9)] transition hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
+                className="relative w-full min-w-0 overflow-hidden rounded-2xl bg-gradient-to-r from-vn-fuchsia via-vn-violet to-vn-indigo px-4 py-4 text-sm font-black text-white shadow-[0_16px_50px_-24px_rgba(232,121,249,0.9)] transition hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 sm:px-5"
               >
                 {isLoading ? extractStatus || 'Analyse en cours...' : "Lancer le diagnostic"}
               </button>
@@ -1956,7 +1956,7 @@ export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientP
             )}
           </div>
 
-          <aside className={`space-y-4 lg:sticky ${embedded ? 'lg:top-5' : 'lg:top-6'}`}>
+          <aside className={`min-w-0 space-y-4 lg:sticky ${embedded ? 'lg:top-5' : 'lg:top-6'}`}>
             {isReady && !isLimitReached && (
               <AnalysisCounter used={effectiveCount} limit={effectiveLimit === Infinity ? undefined : effectiveLimit} />
             )}
