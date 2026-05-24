@@ -50,10 +50,10 @@ type MemoryIconName =
   | 'warning';
 
 const primaryButton =
-  'inline-flex h-10 min-w-0 items-center justify-center gap-2 rounded-[12px] bg-[linear-gradient(135deg,#4d7cff_0%,#8b5cf6_48%,#f05ceb_100%)] px-3.5 text-[0.82rem] font-black text-white shadow-[0_14px_34px_rgba(139,92,246,0.28),inset_0_1px_0_rgba(255,255,255,0.22)] transition hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-200/80 active:scale-[0.99]';
+  'inline-flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-[11px] bg-[linear-gradient(135deg,#4d7cff_0%,#8b5cf6_48%,#f05ceb_100%)] px-2.5 text-[0.72rem] font-black text-white shadow-[0_12px_28px_rgba(139,92,246,0.26),inset_0_1px_0_rgba(255,255,255,0.22)] transition hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-200/80 active:scale-[0.99] min-[1280px]:h-10 min-[1280px]:gap-2 min-[1280px]:px-3.5 min-[1280px]:text-[0.82rem]';
 
 const secondaryButton =
-  'inline-flex h-10 min-w-0 items-center justify-center gap-2 rounded-[12px] border border-white/[0.12] bg-white/[0.035] px-3.5 text-[0.82rem] font-black text-zinc-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition hover:border-white/20 hover:bg-white/[0.06] focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200/70 active:scale-[0.99]';
+  'inline-flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-[11px] border border-white/[0.12] bg-white/[0.035] px-2.5 text-[0.72rem] font-black text-zinc-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition hover:border-white/20 hover:bg-white/[0.06] focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200/70 active:scale-[0.99] min-[1280px]:h-10 min-[1280px]:gap-2 min-[1280px]:px-3.5 min-[1280px]:text-[0.82rem]';
 
 const memoryCards: Array<{
   title: string;
@@ -66,26 +66,26 @@ const memoryCards: Array<{
     title: 'Tes hooks',
     type: 'hook',
     icon: 'sparkle',
-    empty: 'Aucun hook confirmé pour le moment.',
+    empty: 'Aucun hook confirmé.',
   },
   {
     title: 'Tes erreurs',
     type: 'mistake',
     icon: 'warning',
-    empty: 'Aucune erreur récurrente confirmée.',
+    empty: 'Aucune erreur confirmée.',
   },
   {
     title: 'Tes formats',
     type: 'format',
     icon: 'grid',
-    empty: 'Aucun signal confirmé pour le moment.',
+    empty: 'Aucun signal confirmé.',
   },
   {
     title: 'Tes V2',
     type: 'v2',
     icon: 'refresh',
-    empty: 'Aucune opportunité de repost confirmée.',
-    lockedCopy: 'Débloqué avec une mémoire plus avancée.',
+    empty: 'Aucune V2 confirmée.',
+    lockedCopy: 'Débloqué plus tard.',
   },
 ];
 
@@ -146,7 +146,7 @@ function Pill({
   };
 
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] ${tones[tone]}`}>
+    <span className={`inline-flex h-6 items-center gap-1 rounded-full border px-2 text-[0.56rem] font-black uppercase tracking-[0.12em] min-[1280px]:h-auto min-[1280px]:gap-1.5 min-[1280px]:px-2.5 min-[1280px]:py-1 min-[1280px]:text-[0.62rem] min-[1280px]:tracking-[0.14em] ${tones[tone]}`}>
       {children}
     </span>
   );
@@ -195,7 +195,7 @@ export default function MemoryPageClient() {
   const heroTier = overview?.tierLabel ?? 'Mémoire étendue';
 
   return (
-    <main className="relative isolate min-h-[calc(100dvh-4.25rem)] overflow-x-hidden bg-[#020611] px-3 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 text-white sm:px-4 lg:px-6">
+    <main className="relative isolate -mx-4 -mb-8 -mt-5 h-[calc(100svh-66px)] overflow-hidden bg-[#020611] px-3 py-2 text-white sm:-mx-5 md:-mx-6 lg:-mx-8 min-[1280px]:mx-0 min-[1280px]:mb-0 min-[1280px]:mt-0 min-[1280px]:min-h-[calc(100dvh-4.25rem)] min-[1280px]:overflow-x-hidden min-[1280px]:px-3 min-[1280px]:pb-[calc(1rem+env(safe-area-inset-bottom))] min-[1280px]:pt-3">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_16%_10%,rgba(139,92,246,0.24),transparent_31%),radial-gradient(circle_at_88%_20%,rgba(34,211,238,0.13),transparent_30%),radial-gradient(circle_at_72%_82%,rgba(236,72,153,0.13),transparent_34%),linear-gradient(180deg,#030714_0%,#02040b_58%,#030511_100%)]"
@@ -205,7 +205,7 @@ export default function MemoryPageClient() {
         className="pointer-events-none absolute inset-0 -z-10 opacity-[0.14] [background-image:linear-gradient(rgba(148,163,184,0.18)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.18)_1px,transparent_1px)] [background-size:40px_40px] [mask-image:linear-gradient(to_bottom,black,transparent_86%)]"
       />
 
-      <div className="mx-auto flex w-full max-w-[760px] flex-col gap-2.5 sm:gap-3">
+      <div className="mx-auto grid h-full w-full max-w-[760px] grid-rows-[186px_94px_100px_210px_120px] gap-2 min-[1280px]:flex min-[1280px]:h-auto min-[1280px]:flex-col min-[1280px]:gap-3">
         <MemoryHero tierLabel={heroTier} />
 
         <MemoryStatusCard
@@ -249,37 +249,37 @@ export default function MemoryPageClient() {
 
 function MemoryHero({ tierLabel }: { tierLabel: string }) {
   return (
-    <section className="relative min-h-[248px] overflow-hidden rounded-[22px] border border-violet-200/[0.16] bg-[linear-gradient(145deg,rgba(22,19,50,0.88),rgba(4,9,22,0.9)_45%,rgba(4,8,18,0.94))] p-3.5 shadow-[0_18px_54px_rgba(0,0,0,0.38)] backdrop-blur-2xl sm:min-h-[260px] sm:p-4">
+    <section className="relative h-full min-h-0 overflow-hidden rounded-[20px] border border-violet-200/[0.16] bg-[linear-gradient(145deg,rgba(22,19,50,0.88),rgba(4,9,22,0.9)_45%,rgba(4,8,18,0.94))] p-3 shadow-[0_18px_54px_rgba(0,0,0,0.38)] backdrop-blur-2xl min-[1280px]:h-auto min-[1280px]:min-h-[248px] min-[1280px]:rounded-[22px] min-[1280px]:p-3.5">
       <div
         aria-hidden="true"
         className="absolute inset-0 bg-[radial-gradient(circle_at_18%_16%,rgba(236,72,153,0.15),transparent_30%),radial-gradient(circle_at_86%_48%,rgba(79,70,229,0.22),transparent_38%)]"
       />
       <AiMemoryVisual />
 
-      <div className="relative z-10 flex min-h-[220px] w-full max-w-[24rem] flex-col items-start">
+      <div className="relative z-10 flex h-full w-full max-w-[24rem] flex-col items-start">
         <div className="flex flex-nowrap gap-1.5">
           <Pill tone="violet">Mémoire créateur</Pill>
           <Pill tone="cyan">{tierLabel}</Pill>
         </div>
-        <p className="mt-4 max-w-[58%] min-w-[13.5rem] text-[0.68rem] font-black uppercase tracking-[0.24em] text-violet-300">
+        <p className="mt-3 max-w-[64%] min-w-[12.8rem] text-[0.58rem] font-black uppercase tracking-[0.22em] text-violet-300 min-[1280px]:mt-4 min-[1280px]:text-[0.68rem]">
           Mémoire IA
         </p>
-        <h1 className="mt-2 max-w-[58%] min-w-[13.5rem] text-[1.78rem] font-black leading-[1.02] tracking-[-0.055em] text-zinc-50 min-[420px]:text-[1.95rem] sm:text-[2.12rem]">
+        <h1 className="mt-1.5 max-w-[64%] min-w-[12.8rem] text-[1.5rem] font-black leading-[0.98] tracking-[-0.055em] text-zinc-50 min-[420px]:text-[1.62rem] min-[1280px]:mt-2 min-[1280px]:text-[1.95rem]">
           Viralynz apprend ton
           <br />
           style à chaque analyse.
         </h1>
-        <p className="mt-3 max-w-[58%] min-w-[13.5rem] text-[0.82rem] leading-[1.38] text-zinc-300 sm:text-[0.9rem]">
+        <p className="mt-2 max-w-[63%] min-w-[12.8rem] text-[0.68rem] leading-[1.25] text-zinc-300 min-[1280px]:mt-3 min-[1280px]:text-[0.82rem] min-[1280px]:leading-[1.38]">
           Analyse après analyse, Viralynz construit une mémoire de tes hooks, de tes erreurs et des formats à retester.
         </p>
 
-        <div className="mt-4 flex w-full max-w-[22.5rem] flex-row gap-2">
+        <div className="mt-auto flex w-full max-w-[20rem] flex-row gap-1.5 pb-0.5 min-[1280px]:mt-4 min-[1280px]:max-w-[22.5rem] min-[1280px]:gap-2 min-[1280px]:pb-0">
           <Link href="/dashboard/analyze" className={`${primaryButton} flex-[1.05]`}>
             Analyser une vidéo
-            <MemoryIcon name="arrow" className="h-3.5 w-3.5" />
+            <MemoryIcon name="arrow" className="h-3 w-3 min-[1280px]:h-3.5 min-[1280px]:w-3.5" />
           </Link>
           <Link href="/dashboard/library?tab=analyses" className={`${secondaryButton} flex-1`}>
-            <MemoryIcon name="clock" className="h-3.5 w-3.5 text-zinc-300" />
+            <MemoryIcon name="clock" className="h-3 w-3 text-zinc-300 min-[1280px]:h-3.5 min-[1280px]:w-3.5" />
             Voir mon historique
           </Link>
         </div>
@@ -306,22 +306,22 @@ function MemoryStatusCard({
   const status = loading ? 'Chargement' : overview ? statusLabel(overview.status) : 'Indisponible';
 
   return (
-    <section className="relative overflow-hidden rounded-[20px] border border-white/[0.1] bg-white/[0.04] p-3.5 shadow-[0_16px_48px_rgba(0,0,0,0.3)] backdrop-blur-2xl sm:p-4">
+    <section className="relative h-full min-h-0 overflow-hidden rounded-[18px] border border-white/[0.1] bg-white/[0.04] p-2.5 shadow-[0_16px_48px_rgba(0,0,0,0.3)] backdrop-blur-2xl min-[1280px]:h-auto min-[1280px]:rounded-[20px] min-[1280px]:p-3.5">
       <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(circle_at_8%_22%,rgba(59,130,246,0.13),transparent_32%),radial-gradient(circle_at_90%_20%,rgba(139,92,246,0.11),transparent_28%)]" />
       <div className="relative z-10 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
         <div>
-          <p className="text-[0.62rem] font-black uppercase tracking-[0.24em] text-zinc-400">État de la mémoire</p>
-          <h2 className="mt-1.5 text-[1.08rem] font-black tracking-[-0.03em] text-white sm:text-xl">{status}</h2>
-          <div className="mt-2 flex items-end gap-1">
-            <span className="bg-[linear-gradient(135deg,#c084fc_0%,#8b5cf6_42%,#f472d0_100%)] bg-clip-text text-[2.55rem] font-black leading-none tracking-[-0.08em] text-transparent sm:text-[2.85rem]">
+          <p className="text-[0.54rem] font-black uppercase leading-3 tracking-[0.24em] text-zinc-400 min-[1280px]:text-[0.62rem]">État de la mémoire</p>
+          <h2 className="mt-1 text-[0.95rem] font-black tracking-[-0.03em] text-white min-[1280px]:mt-1.5 min-[1280px]:text-[1.08rem]">{status}</h2>
+          <div className="mt-1 flex items-end gap-1 min-[1280px]:mt-2">
+            <span className="bg-[linear-gradient(135deg,#c084fc_0%,#8b5cf6_42%,#f472d0_100%)] bg-clip-text text-[2.12rem] font-black leading-none tracking-[-0.08em] text-transparent min-[1280px]:text-[2.55rem]">
               {score}
             </span>
-            <span className="pb-0.5 text-base font-black text-zinc-500">/100</span>
+            <span className="pb-0.5 text-sm font-black text-zinc-500 min-[1280px]:text-base">/100</span>
           </div>
         </div>
 
-        <div className="flex items-start justify-end gap-2.5">
-          <div className="mt-1 hidden gap-2 text-xs font-semibold text-zinc-400 min-[390px]:grid">
+        <div className="flex items-start justify-end gap-2">
+          <div className="mt-0.5 hidden gap-1.5 text-[0.66rem] font-semibold leading-4 text-zinc-400 min-[390px]:grid min-[1280px]:mt-1 min-[1280px]:gap-2 min-[1280px]:text-xs">
             <p className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-violet-400 shadow-[0_0_12px_rgba(167,139,250,0.65)]" />
               {pluralizeAnalysis(analysesLearned)}
@@ -331,42 +331,42 @@ function MemoryStatusCard({
               {activeFactsCount} souvenirs actifs
             </p>
           </div>
-          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-[16px] border border-violet-200/25 bg-violet-300/[0.08] text-[1.2rem] font-black text-violet-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_0_26px_rgba(139,92,246,0.14)] sm:h-14 sm:w-14">
+          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[15px] border border-violet-200/25 bg-violet-300/[0.08] text-[1rem] font-black text-violet-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_0_26px_rgba(139,92,246,0.14)] min-[1280px]:h-12 min-[1280px]:w-12 min-[1280px]:text-[1.2rem]">
             IA
           </div>
         </div>
       </div>
 
-      <div className="relative z-10 mt-2.5 h-1.5 overflow-hidden rounded-full bg-white/[0.08]">
+      <div className="relative z-10 mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/[0.08] min-[1280px]:mt-2.5">
         <div
           className="h-full rounded-full bg-[linear-gradient(90deg,#22d3ee_0%,#8b5cf6_52%,#f472d0_100%)] shadow-[0_0_24px_rgba(139,92,246,0.58)]"
           style={{ width: `${Math.max(score, score > 0 ? 8 : 0)}%` }}
         />
       </div>
-      <p className="relative z-10 mt-2 text-xs leading-5 text-zinc-400">{learningHelp(overview, error)}</p>
+      <p className="relative z-10 mt-1 line-clamp-1 text-[0.66rem] leading-4 text-zinc-400 min-[1280px]:mt-2 min-[1280px]:text-xs min-[1280px]:leading-5">{learningHelp(overview, error)}</p>
     </section>
   );
 }
 
 function MemoryUnlockCard({ locked }: { locked?: boolean }) {
   return (
-    <section className="relative overflow-hidden rounded-[20px] border border-white/[0.1] bg-white/[0.035] px-3 py-3.5 text-center shadow-[0_16px_48px_rgba(0,0,0,0.28)] backdrop-blur-2xl sm:px-4">
+    <section className="relative h-full min-h-0 overflow-hidden rounded-[18px] border border-white/[0.1] bg-white/[0.035] px-2.5 py-2 text-center shadow-[0_16px_48px_rgba(0,0,0,0.28)] backdrop-blur-2xl min-[1280px]:h-auto min-[1280px]:rounded-[20px] min-[1280px]:px-3 min-[1280px]:py-3.5">
       <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(139,92,246,0.16),transparent_34%)]" />
       <div className="relative z-10 mx-auto max-w-[42rem]">
         <Pill tone={locked ? 'slate' : 'violet'}>
           <MemoryIcon name="lock" className="h-3 w-3" />
           À débloquer
         </Pill>
-        <h2 className="mx-auto mt-2 max-w-[34rem] text-[1.04rem] font-black leading-tight tracking-[-0.035em] text-white sm:text-xl">
+        <h2 className="mx-auto mt-1.5 max-w-[34rem] text-[0.9rem] font-black leading-[1.05] tracking-[-0.035em] text-white min-[1280px]:mt-2 min-[1280px]:text-[1.04rem]">
           Analyse 3 vidéos pour débloquer ta Mémoire IA.
         </h2>
-        <p className="mx-auto mt-1 max-w-[35rem] text-xs leading-5 text-zinc-400 sm:text-[0.82rem]">
+        <p className="mx-auto mt-1 line-clamp-2 max-w-[35rem] text-[0.62rem] leading-3.5 text-zinc-400 min-[1280px]:text-xs min-[1280px]:leading-5">
           La mémoire se construit uniquement à partir de tes vraies analyses. Aucun score inventé, aucun conseil générique.
         </p>
-        <div className="mt-3 flex flex-wrap justify-center gap-2">
+        <div className="mt-2 flex flex-nowrap justify-center gap-1.5 overflow-hidden min-[1280px]:mt-3 min-[1280px]:flex-wrap min-[1280px]:gap-2">
           {unlockChips.map((chip) => (
-            <span key={chip.label} className={`inline-flex h-8 items-center justify-center gap-1.5 rounded-[10px] border px-2.5 text-xs font-black ${chip.tone}`}>
-              <MemoryIcon name={chip.icon} className="h-3.5 w-3.5" />
+            <span key={chip.label} className={`inline-flex h-6 min-w-0 items-center justify-center gap-1 rounded-[9px] border px-1.5 text-[0.62rem] font-black ${chip.tone} min-[1280px]:h-8 min-[1280px]:gap-1.5 min-[1280px]:px-2.5 min-[1280px]:text-xs`}>
+              <MemoryIcon name={chip.icon} className="h-3 w-3 shrink-0 min-[1280px]:h-3.5 min-[1280px]:w-3.5" />
               {chip.label}
             </span>
           ))}
@@ -386,7 +386,7 @@ function MemoryInsightGrid({
   enoughForPatterns: boolean;
 }) {
   return (
-    <section className="grid gap-2.5 min-[380px]:grid-cols-2">
+    <section className="grid h-full min-h-0 grid-cols-2 grid-rows-2 gap-2 min-[1280px]:h-auto min-[1280px]:gap-2.5">
       {memoryCards.map((card) => {
         const visibleFacts = (facts[card.type] ?? []).slice(0, card.type === 'mistake' ? 2 : 1);
         const locked = card.type === 'v2' ? Boolean(overview?.locked.proSections && !enoughForPatterns) : Boolean(overview?.locked.memory);
@@ -424,14 +424,14 @@ function MemoryFactCard({
   const hasFacts = facts.length > 0;
 
   return (
-    <article className="relative overflow-hidden rounded-[18px] border border-white/[0.1] bg-white/[0.035] p-2.5 shadow-[0_14px_42px_rgba(0,0,0,0.26)] backdrop-blur-2xl transition hover:border-violet-200/20 hover:bg-white/[0.05] sm:p-3">
+    <article className="relative h-full min-h-0 overflow-hidden rounded-[16px] border border-white/[0.1] bg-white/[0.035] p-2 shadow-[0_14px_42px_rgba(0,0,0,0.26)] backdrop-blur-2xl transition hover:border-violet-200/20 hover:bg-white/[0.05] min-[1280px]:h-auto min-[1280px]:rounded-[18px] min-[1280px]:p-2.5">
       <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(circle_at_10%_0%,rgba(139,92,246,0.08),transparent_32%)]" />
       <div className="relative z-10 flex items-center justify-between gap-2">
-        <h3 className="text-[0.96rem] font-black tracking-[-0.025em] text-white sm:text-base">{title}</h3>
+        <h3 className="text-[0.82rem] font-black tracking-[-0.025em] text-white min-[1280px]:text-[0.96rem]">{title}</h3>
         <StatusBadge real={hasFacts} locked={locked} />
       </div>
 
-      <div className="relative z-10 mt-2 grid gap-1.5">
+      <div className="relative z-10 mt-1.5 grid gap-1 overflow-hidden min-[1280px]:mt-2 min-[1280px]:gap-1.5">
         {locked ? (
           <MemoryEmptyState icon={icon} copy={lockedCopy ?? 'Débloqué après plus d’analyses réelles.'} />
         ) : hasFacts ? (
@@ -446,39 +446,39 @@ function MemoryFactCard({
 
 function MemoryFactItem({ fact, icon }: { fact: MemoryFact; icon: MemoryIconName }) {
   return (
-    <div className="group flex items-start gap-2 rounded-[14px] border border-white/[0.08] bg-[#07101f]/70 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition hover:border-white/[0.14] hover:bg-[#0a1324]/80">
-      <div className="grid h-8 w-8 shrink-0 place-items-center rounded-[10px] border border-violet-200/20 bg-violet-400/10 text-violet-200">
-        <MemoryIcon name={icon} className="h-4 w-4" />
+    <div className="group flex min-h-0 items-start gap-1.5 rounded-[12px] border border-white/[0.08] bg-[#07101f]/70 p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition hover:border-white/[0.14] hover:bg-[#0a1324]/80 min-[1280px]:gap-2 min-[1280px]:rounded-[14px] min-[1280px]:p-2">
+      <div className="grid h-6 w-6 shrink-0 place-items-center rounded-[8px] border border-violet-200/20 bg-violet-400/10 text-violet-200 min-[1280px]:h-8 min-[1280px]:w-8 min-[1280px]:rounded-[10px]">
+        <MemoryIcon name={icon} className="h-3 w-3 min-[1280px]:h-4 min-[1280px]:w-4" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[0.82rem] font-black leading-4 text-zinc-50">{fact.title}</p>
-        <p className="mt-0.5 line-clamp-2 text-[0.68rem] leading-4 text-zinc-400">{fact.content}</p>
+        <p className="truncate text-[0.68rem] font-black leading-3.5 text-zinc-50 min-[1280px]:text-[0.82rem] min-[1280px]:leading-4">{fact.title}</p>
+        <p className="mt-0.5 line-clamp-1 text-[0.58rem] leading-3 text-zinc-400 min-[1280px]:line-clamp-2 min-[1280px]:text-[0.68rem] min-[1280px]:leading-4">{fact.content}</p>
       </div>
-      <MemoryIcon name="arrow" className="mt-2 h-3.5 w-3.5 shrink-0 text-zinc-500 transition group-hover:translate-x-0.5 group-hover:text-zinc-300" />
+      <MemoryIcon name="arrow" className="mt-1.5 h-3 w-3 shrink-0 text-zinc-500 transition group-hover:translate-x-0.5 group-hover:text-zinc-300 min-[1280px]:mt-2 min-[1280px]:h-3.5 min-[1280px]:w-3.5" />
     </div>
   );
 }
 
 function MemoryEmptyState({ icon, copy }: { icon: MemoryIconName; copy: string }) {
   return (
-    <div className="flex min-h-[4rem] items-center gap-2 rounded-[14px] border border-white/[0.07] bg-[#07101f]/50 p-2 text-xs leading-5 text-zinc-400">
-      <div className="grid h-8 w-8 shrink-0 place-items-center rounded-[10px] border border-white/[0.08] bg-white/[0.035] text-zinc-500">
-        <MemoryIcon name={icon} className="h-4 w-4" />
+    <div className="flex h-11 min-h-0 items-center gap-1.5 rounded-[12px] border border-white/[0.07] bg-[#07101f]/50 p-1.5 text-[0.62rem] leading-3.5 text-zinc-400 min-[1280px]:min-h-[4rem] min-[1280px]:gap-2 min-[1280px]:rounded-[14px] min-[1280px]:p-2 min-[1280px]:text-xs min-[1280px]:leading-5">
+      <div className="grid h-6 w-6 shrink-0 place-items-center rounded-[8px] border border-white/[0.08] bg-white/[0.035] text-zinc-500 min-[1280px]:h-8 min-[1280px]:w-8 min-[1280px]:rounded-[10px]">
+        <MemoryIcon name={icon} className="h-3 w-3 min-[1280px]:h-4 min-[1280px]:w-4" />
       </div>
-      <p>{copy}</p>
+      <p className="line-clamp-2">{copy}</p>
     </div>
   );
 }
 
 function MemoryProgressionCard({ analysesLearned }: { analysesLearned: number }) {
   return (
-    <section className="relative min-h-[160px] overflow-hidden rounded-[20px] border border-violet-200/[0.16] bg-[linear-gradient(145deg,rgba(14,16,37,0.9),rgba(5,10,24,0.94)_55%,rgba(16,13,52,0.9))] p-3.5 shadow-[0_16px_48px_rgba(0,0,0,0.3)] backdrop-blur-2xl sm:min-h-[174px] sm:p-4">
+    <section className="relative h-full min-h-0 overflow-hidden rounded-[18px] border border-violet-200/[0.16] bg-[linear-gradient(145deg,rgba(14,16,37,0.9),rgba(5,10,24,0.94)_55%,rgba(16,13,52,0.9))] p-2.5 shadow-[0_16px_48px_rgba(0,0,0,0.3)] backdrop-blur-2xl min-[1280px]:h-auto min-[1280px]:min-h-[160px] min-[1280px]:rounded-[20px] min-[1280px]:p-3.5">
       <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(circle_at_78%_42%,rgba(91,75,255,0.22),transparent_34%),radial-gradient(circle_at_88%_8%,rgba(236,72,153,0.12),transparent_24%)]" />
       <MemoryHologram />
 
       <div className="relative z-10 max-w-[64%]">
-        <p className="text-[0.62rem] font-black uppercase tracking-[0.26em] text-violet-200/75">Progression mémoire</p>
-        <div className="mt-3 grid gap-0">
+        <p className="text-[0.54rem] font-black uppercase tracking-[0.24em] text-violet-200/75 min-[1280px]:text-[0.62rem]">Progression mémoire</p>
+        <div className="mt-1.5 grid gap-0 min-[1280px]:mt-3">
           {progressionSteps.map((step, index) => (
             <ProgressStep
               key={step.value}
@@ -496,23 +496,23 @@ function MemoryProgressionCard({ analysesLearned }: { analysesLearned: number })
 
 function ProgressStep({ value, label, active, last }: { value: number; label: string; active: boolean; last: boolean }) {
   return (
-    <div className="relative flex gap-3 pb-1.5 last:pb-0">
-      {!last ? <span className="absolute left-3.5 top-7 h-[calc(100%-1.75rem)] w-px bg-white/[0.1]" /> : null}
-      <div className={`relative z-10 grid h-7 w-7 shrink-0 place-items-center rounded-full border text-xs font-black ${
+    <div className="relative flex gap-2 pb-0.5 last:pb-0 min-[1280px]:gap-3 min-[1280px]:pb-1.5">
+      {!last ? <span className="absolute left-2.5 top-5 h-[calc(100%-1rem)] w-px bg-white/[0.1] min-[1280px]:left-3.5 min-[1280px]:top-7 min-[1280px]:h-[calc(100%-1.75rem)]" /> : null}
+      <div className={`relative z-10 grid h-5 w-5 shrink-0 place-items-center rounded-full border text-[0.62rem] font-black min-[1280px]:h-7 min-[1280px]:w-7 min-[1280px]:text-xs ${
         active
           ? 'border-violet-200/40 bg-violet-400/20 text-white shadow-[0_0_18px_rgba(139,92,246,0.42)]'
           : 'border-white/[0.1] bg-white/[0.035] text-zinc-500'
       }`}>
         {value}
       </div>
-      <p className={`pt-0.5 text-[0.82rem] font-black leading-5 sm:text-sm ${active ? 'text-white' : 'text-zinc-500'}`}>{label}</p>
+      <p className={`pt-0 text-[0.68rem] font-black leading-5 min-[1280px]:pt-0.5 min-[1280px]:text-[0.82rem] ${active ? 'text-white' : 'text-zinc-500'}`}>{label}</p>
     </div>
   );
 }
 
 function AiMemoryVisual() {
   return (
-    <div className="pointer-events-none absolute -right-[4.1rem] top-3 z-0 h-[92%] w-[62%] max-w-[17rem] opacity-70 sm:-right-2 sm:w-[48%] sm:opacity-[0.88]">
+    <div className="pointer-events-none absolute -right-8 top-4 z-0 h-[88%] w-[48%] max-w-[12rem] opacity-[0.72] min-[1280px]:-right-[4.1rem] min-[1280px]:top-3 min-[1280px]:h-[92%] min-[1280px]:w-[62%] min-[1280px]:max-w-[17rem] min-[1280px]:opacity-70">
       <svg aria-hidden="true" viewBox="0 0 360 360" className="h-full w-full">
         <defs>
           <radialGradient id="memoryBrainGlow" cx="50%" cy="50%" r="50%">
@@ -588,7 +588,7 @@ function MemoryBrainPath() {
 
 function MemoryHologram() {
   return (
-    <div className="pointer-events-none absolute bottom-0 right-0 h-36 w-36 opacity-[0.78] sm:right-8 sm:h-40 sm:w-40">
+    <div className="pointer-events-none absolute bottom-0 right-1 h-28 w-28 opacity-[0.78] min-[1280px]:right-0 min-[1280px]:h-36 min-[1280px]:w-36">
       <svg aria-hidden="true" viewBox="0 0 220 220" className="h-full w-full">
         <defs>
           <radialGradient id="hologramGlow" cx="50%" cy="62%" r="48%">
