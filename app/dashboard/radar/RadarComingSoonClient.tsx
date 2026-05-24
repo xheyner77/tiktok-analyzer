@@ -52,7 +52,7 @@ export default function RadarComingSoonClient() {
   }
 
   return (
-    <main className="relative isolate min-h-[calc(100dvh-4.25rem)] overflow-x-hidden bg-[#020611] px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-4 text-white sm:px-6 lg:px-8">
+    <main className="relative isolate min-h-[calc(100dvh-4.25rem)] overflow-x-hidden bg-[#020611] px-3 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 text-white sm:px-4 lg:px-6">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_18%_10%,rgba(151,71,255,0.22),transparent_32%),radial-gradient(circle_at_82%_14%,rgba(236,72,153,0.16),transparent_30%),radial-gradient(circle_at_75%_82%,rgba(34,211,238,0.13),transparent_34%),linear-gradient(180deg,#030714_0%,#02040b_58%,#030511_100%)]"
@@ -62,36 +62,36 @@ export default function RadarComingSoonClient() {
         className="pointer-events-none absolute inset-0 -z-10 opacity-[0.18] [background-image:linear-gradient(rgba(148,163,184,0.18)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.18)_1px,transparent_1px)] [background-size:40px_40px] [mask-image:linear-gradient(to_bottom,black,transparent_82%)]"
       />
 
-      <div className="mx-auto flex w-full max-w-[48rem] flex-col gap-4 min-[1180px]:max-w-5xl">
-        <section className="relative overflow-hidden rounded-[28px] border border-violet-200/[0.16] bg-[linear-gradient(145deg,rgba(24,18,52,0.84),rgba(5,10,24,0.88)_42%,rgba(4,9,21,0.9))] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.42)] backdrop-blur-2xl sm:p-7 min-[860px]:grid min-[860px]:grid-cols-[1.05fr_0.95fr] min-[860px]:items-center">
+      <div className="mx-auto flex w-full max-w-[780px] flex-col gap-2.5 sm:gap-3">
+        <section className="relative min-h-[258px] overflow-hidden rounded-[22px] border border-violet-200/[0.16] bg-[linear-gradient(145deg,rgba(24,18,52,0.84),rgba(5,10,24,0.88)_42%,rgba(4,9,21,0.9))] p-4 shadow-[0_18px_58px_rgba(0,0,0,0.4)] backdrop-blur-2xl sm:min-h-[274px] sm:p-5">
           <div
             aria-hidden="true"
             className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(236,72,153,0.16),transparent_30%),radial-gradient(circle_at_82%_52%,rgba(34,211,238,0.12),transparent_34%)]"
           />
           <HeroRadarVisual />
 
-          <div className="relative z-10 flex max-w-[25rem] flex-col items-start">
-            <span className="inline-flex items-center gap-2 rounded-full border border-fuchsia-200/20 bg-white/[0.06] px-4 py-2 text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-zinc-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-              <span className="h-2 w-2 rounded-full bg-pink-300 shadow-[0_0_16px_rgba(249,168,212,0.8)]" />
+          <div className="relative z-10 flex max-w-[24rem] flex-col items-start">
+            <span className="inline-flex h-8 items-center gap-2 rounded-full border border-fuchsia-200/20 bg-white/[0.06] px-3 text-[0.66rem] font-semibold uppercase tracking-[0.24em] text-zinc-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+              <span className="h-2 w-2 shrink-0 rounded-full bg-pink-300 shadow-[0_0_16px_rgba(249,168,212,0.8)]" />
               Accès anticipé
             </span>
-            <p className="mt-6 text-[0.78rem] font-bold uppercase tracking-[0.28em] text-violet-300">
+            <p className="mt-4 max-w-[56%] min-w-[12.5rem] text-[0.68rem] font-bold uppercase tracking-[0.27em] text-violet-300">
               Radar tendances
             </p>
-            <h1 className="mt-3 text-[2.35rem] font-black leading-[0.98] tracking-[-0.04em] text-zinc-50 sm:text-5xl">
+            <h1 className="mt-2 max-w-[58%] min-w-[12.5rem] text-[1.92rem] font-black leading-[0.98] tracking-[-0.045em] text-zinc-50 min-[430px]:text-[2.12rem] sm:text-[2.45rem]">
               Repère les signaux
               <br />
               avant saturation.
             </h1>
-            <p className="mt-4 max-w-[22rem] text-[0.98rem] leading-7 text-zinc-300 sm:text-base">
+            <p className="mt-3 max-w-[57%] min-w-[12.5rem] text-[0.82rem] leading-[1.42] text-zinc-300 sm:text-[0.92rem]">
               Le futur module Viralynz analysera les hooks, formats et signaux TikTok pour t’aider à décider quoi tester avant les autres.
             </p>
 
-            <div className="mt-6 flex w-full max-w-[24rem] flex-col gap-3">
+            <div className="mt-4 flex w-full max-w-[24rem] flex-col gap-2">
               <WaitlistButton onClick={notifyLaunch} label="Me prévenir au lancement" />
               <Link
                 href="/dashboard"
-                className="inline-flex h-12 items-center justify-center rounded-2xl border border-white/[0.12] bg-white/[0.035] px-5 text-sm font-semibold text-zinc-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition hover:border-white/20 hover:bg-white/[0.06] focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-300/70"
+                className="inline-flex h-10 items-center justify-center rounded-[12px] border border-white/[0.12] bg-white/[0.035] px-4 text-[0.82rem] font-semibold text-zinc-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition hover:border-white/20 hover:bg-white/[0.06] focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-300/70"
               >
                 Retour au dashboard
               </Link>
@@ -99,12 +99,12 @@ export default function RadarComingSoonClient() {
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-[26px] border border-white/[0.1] bg-white/[0.035] p-4 shadow-[0_22px_70px_rgba(0,0,0,0.34)] backdrop-blur-2xl sm:p-5">
+        <section className="overflow-hidden rounded-[22px] border border-white/[0.1] bg-white/[0.035] p-3.5 shadow-[0_18px_54px_rgba(0,0,0,0.32)] backdrop-blur-2xl sm:p-4">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-[0.78rem] font-bold uppercase tracking-[0.28em] text-blue-300">
+            <h2 className="text-[0.68rem] font-bold uppercase tracking-[0.28em] text-blue-300 sm:text-[0.78rem]">
               Radar des tendances
             </h2>
-            <span className="inline-flex shrink-0 items-center gap-2 rounded-full border border-emerald-200/10 bg-emerald-300/[0.08] px-3.5 py-2 text-[0.68rem] font-bold uppercase tracking-[0.2em] text-zinc-200">
+            <span className="inline-flex h-8 shrink-0 items-center gap-2 rounded-full border border-emerald-200/10 bg-emerald-300/[0.08] px-3 text-[0.62rem] font-bold uppercase tracking-[0.2em] text-zinc-200">
               <span className="h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_14px_rgba(110,231,183,0.72)]" />
               En veille
             </span>
@@ -114,18 +114,18 @@ export default function RadarComingSoonClient() {
 
         <FeatureList />
 
-        <section className="relative overflow-hidden rounded-[26px] border border-fuchsia-200/20 bg-[linear-gradient(135deg,rgba(82,49,231,0.92),rgba(185,42,162,0.88)_48%,rgba(232,74,154,0.82))] p-5 shadow-[0_24px_80px_rgba(147,51,234,0.28)] sm:p-6">
+        <section className="relative overflow-hidden rounded-[22px] border border-fuchsia-200/20 bg-[linear-gradient(135deg,rgba(82,49,231,0.92),rgba(185,42,162,0.88)_48%,rgba(232,74,154,0.82))] p-3.5 shadow-[0_18px_54px_rgba(147,51,234,0.25)] sm:p-4">
           <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(255,255,255,0.16),transparent_30%),radial-gradient(circle_at_82%_18%,rgba(34,211,238,0.14),transparent_24%)]" />
-          <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex min-w-0 items-center gap-4">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[20px] border border-white/20 bg-[#1d1447]/40 text-violet-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]">
-                <RadarIcon name="bell" className="h-8 w-8" />
+          <div className="relative z-10 flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] border border-white/20 bg-[#1d1447]/40 text-violet-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] sm:h-14 sm:w-14">
+                <RadarIcon name="bell" className="h-6 w-6 sm:h-7 sm:w-7" />
               </div>
               <div className="min-w-0">
-                <h2 className="text-lg font-black leading-tight tracking-[-0.02em] text-white sm:text-xl">
+                <h2 className="text-[0.95rem] font-black leading-tight tracking-[-0.02em] text-white sm:text-lg">
                   Sois prévenu dès l’ouverture du Radar.
                 </h2>
-                <p className="mt-1 max-w-[30rem] text-sm leading-6 text-violet-100/80">
+                <p className="mt-1 max-w-[24rem] text-xs leading-5 text-violet-100/80 sm:text-sm">
                   Les premiers accès seront réservés aux comptes actifs Viralynz.
                 </p>
               </div>
@@ -133,10 +133,10 @@ export default function RadarComingSoonClient() {
             <button
               type="button"
               onClick={notifyLaunch}
-              className="inline-flex h-12 shrink-0 items-center justify-center gap-3 rounded-2xl border border-white/10 bg-[#160d27]/85 px-5 text-sm font-bold text-white shadow-[0_14px_34px_rgba(0,0,0,0.22)] transition hover:bg-[#1d1234]/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:min-w-[11rem]"
+              className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-[14px] border border-white/10 bg-[#160d27]/85 px-3.5 text-[0.82rem] font-bold text-white shadow-[0_14px_34px_rgba(0,0,0,0.22)] transition hover:bg-[#1d1234]/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:min-w-[10rem] sm:px-5"
             >
               Me prévenir
-              <RadarIcon name="arrow" className="h-4 w-4 text-zinc-300" />
+              <RadarIcon name="arrow" className="h-3.5 w-3.5 text-zinc-300" />
             </button>
           </div>
         </section>
@@ -179,18 +179,18 @@ function WaitlistButton({ onClick, label }: { onClick: () => void; label: string
     <button
       type="button"
       onClick={onClick}
-      className="group inline-flex h-14 items-center justify-center gap-3 rounded-2xl bg-[linear-gradient(135deg,#5b4bff_0%,#c13ee5_48%,#f04f9d_100%)] px-5 text-sm font-bold text-white shadow-[0_18px_44px_rgba(192,62,229,0.28)] transition hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-200/80 active:scale-[0.99]"
+      className="group inline-flex h-11 items-center justify-center gap-2.5 rounded-[13px] bg-[linear-gradient(135deg,#5b4bff_0%,#c13ee5_48%,#f04f9d_100%)] px-4 text-[0.84rem] font-bold text-white shadow-[0_16px_38px_rgba(192,62,229,0.26)] transition hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-200/80 active:scale-[0.99]"
     >
-      <RadarIcon name="bell" className="h-5 w-5 text-violet-100" />
+      <RadarIcon name="bell" className="h-4 w-4 text-violet-100" />
       <span>{label}</span>
-      <RadarIcon name="arrow" className="h-4 w-4 text-white/75 transition group-hover:translate-x-0.5" />
+      <RadarIcon name="arrow" className="h-3.5 w-3.5 text-white/75 transition group-hover:translate-x-0.5" />
     </button>
   )
 }
 
 function HeroRadarVisual() {
   return (
-    <div className="pointer-events-none absolute -right-20 top-20 z-0 h-72 w-72 opacity-80 sm:-right-8 sm:top-12 sm:h-80 sm:w-80 min-[860px]:relative min-[860px]:right-auto min-[860px]:top-auto min-[860px]:ml-auto min-[860px]:h-[23rem] min-[860px]:w-[23rem] min-[860px]:opacity-100">
+    <div className="pointer-events-none absolute -right-[4.6rem] top-5 z-0 h-[15.5rem] w-[15.5rem] opacity-[0.85] min-[420px]:-right-8 min-[420px]:top-4 min-[420px]:h-[16.5rem] min-[420px]:w-[16.5rem] sm:right-2 sm:h-[17.5rem] sm:w-[17.5rem]">
       <svg aria-hidden="true" viewBox="0 0 320 320" className="h-full w-full">
         <defs>
           <radialGradient id="heroRadarGlow" cx="50%" cy="50%" r="50%">
@@ -245,9 +245,9 @@ function HeroRadarVisual() {
 
 function RadarVisualization() {
   return (
-    <div className="relative mt-4 h-[270px] overflow-hidden rounded-[24px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(7,13,32,0.88),rgba(5,8,18,0.94))] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] sm:h-[300px]">
+    <div className="relative mt-3 h-[205px] overflow-hidden rounded-[20px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(7,13,32,0.88),rgba(5,8,18,0.94))] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] sm:h-[255px]">
       <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(circle_at_50%_70%,rgba(94,92,255,0.18),transparent_30%),radial-gradient(circle_at_78%_30%,rgba(236,72,153,0.12),transparent_28%),radial-gradient(circle_at_22%_46%,rgba(34,211,238,0.08),transparent_25%)]" />
-      <svg aria-hidden="true" viewBox="0 0 720 330" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full">
+      <svg aria-hidden="true" viewBox="0 0 720 330" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 -top-2 h-[88%] w-full sm:h-full">
         <defs>
           <radialGradient id="radarCore" cx="50%" cy="70%" r="32%">
             <stop offset="0%" stopColor="#a78bfa" stopOpacity="0.9" />
@@ -296,18 +296,18 @@ function RadarVisualization() {
         <circle cx="360" cy="250" r="3" fill="#f5d0fe" filter="url(#radarNodeGlow)" />
       </svg>
 
-      <div className="absolute bottom-3 left-3 right-3 rounded-[22px] border border-white/[0.12] bg-[#11172a]/76 p-3 text-center shadow-[0_18px_50px_rgba(0,0,0,0.32)] backdrop-blur-xl sm:left-10 sm:right-10">
-        <p className="text-[0.72rem] font-black uppercase tracking-[0.32em] text-zinc-200">
+      <div className="absolute bottom-2.5 left-4 right-4 rounded-[18px] border border-white/[0.12] bg-[#11172a]/76 p-2.5 text-center shadow-[0_18px_50px_rgba(0,0,0,0.32)] backdrop-blur-xl sm:left-10 sm:right-10 sm:p-3">
+        <p className="text-[0.62rem] font-black uppercase tracking-[0.3em] text-zinc-200 sm:text-[0.72rem]">
           Bientôt dans Viralynz
         </p>
-        <div className="mt-3 grid grid-cols-3 gap-2">
+        <div className="mt-2 grid grid-cols-3 gap-1.5 sm:gap-2">
           {radarChips.map((chip) => (
-            <div key={chip.label} className="min-w-0 rounded-2xl border border-white/[0.1] bg-white/[0.055] px-2.5 py-2.5 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
-              <div className="flex items-center gap-2">
-                <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${chip.color}`} />
-                <span className="truncate text-sm font-bold text-zinc-100">{chip.label}</span>
+            <div key={chip.label} className="min-w-0 rounded-[15px] border border-white/[0.1] bg-white/[0.055] px-2 py-2 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:px-2.5 sm:py-2.5">
+              <div className="flex items-center gap-1.5">
+                <span className={`h-2 w-2 shrink-0 rounded-full ${chip.color}`} />
+                <span className="whitespace-nowrap text-[0.76rem] font-bold leading-4 text-zinc-100 sm:text-sm">{chip.label}</span>
               </div>
-              <p className="mt-1 truncate pl-[1.125rem] text-xs text-zinc-400">{chip.caption}</p>
+              <p className="mt-0.5 whitespace-nowrap pl-3.5 text-[0.66rem] leading-4 text-zinc-400 sm:text-xs">{chip.caption}</p>
             </div>
           ))}
         </div>
@@ -318,24 +318,24 @@ function RadarVisualization() {
 
 function FeatureList() {
   return (
-    <section className="rounded-[26px] border border-white/[0.1] bg-white/[0.035] p-3 shadow-[0_22px_70px_rgba(0,0,0,0.32)] backdrop-blur-2xl sm:p-4">
+    <section className="rounded-[22px] border border-white/[0.1] bg-white/[0.035] p-2.5 shadow-[0_18px_54px_rgba(0,0,0,0.3)] backdrop-blur-2xl sm:p-3">
       {featureItems.map((item, index) => (
         <div
           key={item.title}
-          className={`group flex items-center gap-4 rounded-[20px] px-2 py-4 transition hover:bg-white/[0.035] sm:px-3 ${
+          className={`group flex items-center gap-3 rounded-[16px] px-2 py-2.5 transition hover:bg-white/[0.035] sm:px-3 sm:py-3 ${
             index < featureItems.length - 1 ? 'border-b border-white/[0.075]' : ''
           }`}
         >
-          <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-gradient-to-br ${item.tone} ring-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]`}>
-            <RadarIcon name={item.icon} className="h-6 w-6" />
+          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-gradient-to-br ${item.tone} ring-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] sm:h-12 sm:w-12`}>
+            <RadarIcon name={item.icon} className="h-5 w-5 sm:h-6 sm:w-6" />
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="truncate text-base font-black tracking-[-0.015em] text-zinc-50 sm:text-lg">
+            <h3 className="text-[0.98rem] font-black leading-5 tracking-[-0.015em] text-zinc-50 sm:text-lg">
               {item.title}
             </h3>
-            <p className="mt-0.5 truncate text-sm text-zinc-400 sm:text-base">{item.description}</p>
+            <p className="mt-0.5 text-[0.82rem] leading-5 text-zinc-400 sm:text-base">{item.description}</p>
           </div>
-          <RadarIcon name="arrow" className="h-5 w-5 shrink-0 text-zinc-500 transition group-hover:translate-x-0.5 group-hover:text-zinc-300" />
+          <RadarIcon name="arrow" className="h-4 w-4 shrink-0 text-zinc-500 transition group-hover:translate-x-0.5 group-hover:text-zinc-300 sm:h-5 sm:w-5" />
         </div>
       ))}
     </section>
