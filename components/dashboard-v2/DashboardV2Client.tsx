@@ -186,7 +186,15 @@ function getAccountInitials(name: string, email: string) {
   return source.slice(0, 2).toUpperCase();
 }
 
-function ProfileCard({ user, tiktokConnection }: { user: DashboardData['user']; tiktokConnection: DashboardData['tiktokConnection'] }) {
+function ProfileCard({
+  user,
+  tiktokConnection,
+  showPlanAction = false,
+}: {
+  user: DashboardData['user'];
+  tiktokConnection: DashboardData['tiktokConnection'];
+  showPlanAction?: boolean;
+}) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const router = useRouter();
@@ -285,6 +293,15 @@ function ProfileCard({ user, tiktokConnection }: { user: DashboardData['user']; 
               />
             </span>
           </div>
+          {showPlanAction ? (
+            <Link
+              href="/dashboard/billing"
+              className="mt-3 flex h-9 w-full items-center justify-center gap-2 rounded-[9px] border border-violet-300/20 bg-violet-400/10 text-[12px] font-black text-violet-100 transition hover:border-violet-200/35 hover:bg-violet-400/15 focus:outline-none focus:ring-2 focus:ring-violet-300/30"
+            >
+              <Icon name="crown" className="h-4 w-4" />
+              Gérer mon plan
+            </Link>
+          ) : null}
         </div>
       </div>
     </div>
@@ -569,13 +586,9 @@ function MobileDrawer({
         </div>
 
         <div className="mt-6 grid gap-3">
-          <Link href="/dashboard/analyze" onClick={onClose} className={`flex h-[44px] items-center justify-center gap-2 px-5 text-[14px] ${primaryButton}`}>
-            <Icon name="plus" className="h-4 w-4" />
-            Analyser une vidéo
-          </Link>
           {!states.hasTikTokConnection && (
             <Link href="/api/tiktok/connect" onClick={onClose} className="flex h-[44px] items-center justify-center gap-2 rounded-[9px] border border-cyan-300/18 bg-cyan-300/10 px-4 text-[13px] font-bold text-cyan-100 transition hover:border-cyan-200/30 hover:bg-cyan-300/14">
-              <span className="text-[16px] leading-none">â™ª</span>
+              <span className="text-[16px] leading-none">♪</span>
               Connecter TikTok
             </Link>
           )}
@@ -583,8 +596,7 @@ function MobileDrawer({
         </div>
 
         <div className="mt-6 space-y-4">
-          <PlanUsageCard user={user} />
-          <ProfileCard user={user} tiktokConnection={tiktokConnection} />
+          <ProfileCard user={user} tiktokConnection={tiktokConnection} showPlanAction />
           <SidebarSupportButton onSelect={onClose} />
         </div>
       </aside>
