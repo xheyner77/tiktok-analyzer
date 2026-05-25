@@ -6,6 +6,8 @@ import {
   LANGUAGE_STORAGE_KEY,
   phraseTranslations,
   reversePhraseTranslations,
+  sortedPhraseTranslations,
+  sortedReversePhraseTranslations,
   translations,
   type Language,
   type TranslationKey,
@@ -26,8 +28,17 @@ function isLanguage(value: string | null): value is Language {
 }
 
 function translatePhrase(value: string, language: Language) {
-  if (language === 'en') return phraseTranslations[value] ?? value;
-  return reversePhraseTranslations[value] ?? value;
+  const exact = language === 'en' ? phraseTranslations[value] : reversePhraseTranslations[value];
+  if (exact) return exact;
+
+  let translated = value;
+  const entries = language === 'en' ? sortedPhraseTranslations : sortedReversePhraseTranslations;
+  for (const [source, target] of entries) {
+    if (translated.includes(source)) {
+      translated = translated.split(source).join(target);
+    }
+  }
+  return translated;
 }
 
 function translateTextContent(value: string, language: Language) {
@@ -76,7 +87,15 @@ function translateDom(root: ParentNode, language: Language) {
 function getTranslation(key: TranslationKey, language: Language) {
   const [namespace, item] = key.split('.') as [keyof typeof translations.fr, string];
   const bundle = translations[language][namespace] as Record<string, string>;
-  return bundle[item] ?? key;
+  const value = bundle[item];
+  if (!value) {
+    const missing = `[missing translation: ${key}]`;
+    if (process.env.NODE_ENV !== 'production') {
+      console.error(missing);
+    }
+    return missing;
+  }
+  return value;
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
