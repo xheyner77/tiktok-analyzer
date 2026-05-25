@@ -26,12 +26,21 @@ export default async function Navbar() {
             <a href="/#comment-ca-marche" className={linkCls}>
               Comment ça marche
             </a>
+            <Link href="/review/tiktok-demo" className={linkCls}>
+              Review TikTok FR/EN
+            </Link>
           </div>
         </div>
 
         <div className="hidden lg:flex items-center gap-2 shrink-0">
           {session ? (
             <>
+              <Link
+                href="/review/tiktok-demo"
+                className="text-[13px] font-semibold px-4 py-2.5 rounded-full border border-cyan-300/18 bg-cyan-300/[0.075] text-cyan-100 hover:border-cyan-200/30 hover:bg-cyan-300/[0.11] transition-all"
+              >
+                FR / EN
+              </Link>
               <Link
                 href="/dashboard"
                 className="ml-2 text-[13px] font-semibold px-5 py-2.5 rounded-full bg-gradient-to-r from-vn-fuchsia to-vn-indigo text-white hover:brightness-110 transition-all shadow-lg shadow-vn-fuchsia/25"

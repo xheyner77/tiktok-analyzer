@@ -60,6 +60,7 @@ type NavItem = { label: string; href: string; icon: IconName; badge?: string; fr
 
 const NAV_ITEMS: NavItem[] = [
   { label: 'Vue d’ensemble', href: '/dashboard', icon: 'home' },
+  { label: 'Review TikTok FR/EN', href: '/review/tiktok-demo', icon: 'external' },
   { label: 'Analyser', href: '/dashboard/analyze', icon: 'analysis' },
   { label: 'Mémoire IA', href: '/dashboard/insights', icon: 'insights' },
   { label: 'Générateur de hooks', href: '/dashboard/hooks', icon: 'pen' },

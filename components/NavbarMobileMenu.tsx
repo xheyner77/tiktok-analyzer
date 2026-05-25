@@ -50,6 +50,11 @@ const navLinks = [
     description: 'Choisis le plan adapté à ton volume',
   },
   {
+    href: '/review/tiktok-demo',
+    label: 'Review TikTok FR/EN',
+    description: 'Ouvre la page de review avec le switch de langue',
+  },
+  {
     href: '/#faq',
     label: 'FAQ',
     description: 'Les réponses avant de démarrer',
