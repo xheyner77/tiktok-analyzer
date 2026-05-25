@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { createPortal } from 'react-dom';
 import BrandLogo from './BrandLogo';
+import LanguageSwitcher from './LanguageSwitcher';
 import type { AppPlan } from '@/lib/plans';
 
 type Plan = AppPlan;
@@ -48,11 +49,6 @@ const navLinks = [
     href: '/pricing',
     label: 'Tarifs',
     description: 'Choisis le plan adapté à ton volume',
-  },
-  {
-    href: '/review/tiktok-demo',
-    label: 'Review TikTok FR/EN',
-    description: 'Ouvre la page de review avec le switch de langue',
   },
   {
     href: '/#faq',
@@ -179,14 +175,17 @@ export default function NavbarMobileMenu({ isLoggedIn, email, plan = 'free' }: N
             <div className="min-w-0">
               <BrandLogo href="/" />
             </div>
-            <button
-              type="button"
-              onClick={closeMenu}
-              className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-white/10 bg-white/[0.055] text-zinc-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_16px_42px_-34px_rgba(232,121,249,0.95)] backdrop-blur-xl transition hover:border-white/18 hover:bg-white/[0.08] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vn-violet/60"
-              aria-label="Fermer le menu"
-            >
-              <CloseIcon />
-            </button>
+            <div className="flex shrink-0 items-center gap-2">
+              <LanguageSwitcher compact />
+              <button
+                type="button"
+                onClick={closeMenu}
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-white/10 bg-white/[0.055] text-zinc-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_16px_42px_-34px_rgba(232,121,249,0.95)] backdrop-blur-xl transition hover:border-white/18 hover:bg-white/[0.08] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vn-violet/60"
+                aria-label="Fermer le menu"
+              >
+                <CloseIcon />
+              </button>
+            </div>
           </header>
 
           <nav className="mt-5" aria-label="Navigation mobile">

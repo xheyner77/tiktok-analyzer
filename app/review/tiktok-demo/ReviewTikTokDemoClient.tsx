@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
+import { useLanguage } from '@/lib/i18n/useLanguage';
 
 type ReviewLang = 'fr' | 'en';
 
@@ -40,7 +41,6 @@ export type ReviewTikTokDemoData = {
   }>;
 };
 
-const STORAGE_KEY = 'viralynz_review_lang';
 const CONNECT_HREF = '/api/tiktok/connect?review=1&return_to=%2Freview%2Ftiktok-demo';
 const FALLBACK = '—';
 
@@ -188,11 +188,6 @@ const copy = {
   },
 } as const;
 
-function getStoredLanguage(): ReviewLang {
-  if (typeof window === 'undefined') return 'fr';
-  return window.localStorage.getItem(STORAGE_KEY) === 'en' ? 'en' : 'fr';
-}
-
 function formatNumber(value: number | null, lang: ReviewLang) {
   if (value === null) return FALLBACK;
   return new Intl.NumberFormat(lang === 'fr' ? 'fr-FR' : 'en-US').format(value);
@@ -266,19 +261,15 @@ function TikTokGlyph() {
 }
 
 export default function ReviewTikTokDemoClient({ data }: { data: ReviewTikTokDemoData }) {
-  const [lang, setLang] = useState<ReviewLang>('fr');
+  const { language, setLanguage } = useLanguage();
+  const lang: ReviewLang = language;
   const [disconnecting, setDisconnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const t = copy[lang];
   const account = data.account;
 
-  useEffect(() => {
-    setLang(getStoredLanguage());
-  }, []);
-
   function updateLanguage(nextLang: ReviewLang) {
-    setLang(nextLang);
-    window.localStorage.setItem(STORAGE_KEY, nextLang);
+    setLanguage(nextLang);
   }
 
   async function disconnectTikTok() {

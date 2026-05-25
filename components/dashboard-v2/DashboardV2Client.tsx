@@ -8,6 +8,7 @@ import type { DashboardData, DashboardInsight, DashboardRecommendation, Dashboar
 import TikTokConnectModal from '@/components/dashboard-v2/TikTokConnectModal';
 import { TikTokConnectionManager } from '@/components/dashboard-v2/TikTokConnectionManager';
 import { TikTokConnectedSuccessModal } from '@/components/dashboard-v2/TikTokConnectedSuccessModal';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 type IconName =
   | 'home'
@@ -60,7 +61,6 @@ type NavItem = { label: string; href: string; icon: IconName; badge?: string; fr
 
 const NAV_ITEMS: NavItem[] = [
   { label: 'Vue d’ensemble', href: '/dashboard', icon: 'home' },
-  { label: 'Review TikTok FR/EN', href: '/review/tiktok-demo', icon: 'external' },
   { label: 'Analyser', href: '/dashboard/analyze', icon: 'analysis' },
   { label: 'Mémoire IA', href: '/dashboard/insights', icon: 'insights' },
   { label: 'Générateur de hooks', href: '/dashboard/hooks', icon: 'pen' },
@@ -475,6 +475,7 @@ function DashboardTopBar({
         <p className="mt-1.5 truncate text-[13px] font-medium text-slate-400 min-[1440px]:text-[14px]">{copy.subtitle}</p>
       </div>
       <div className="flex shrink-0 items-center gap-2.5 min-[1440px]:gap-3">
+        <LanguageSwitcher />
         <button className="flex h-[42px] items-center gap-2 rounded-[9px] border border-white/[0.09] bg-[#071120]/82 px-3 text-[13px] font-semibold text-slate-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] min-[1440px]:px-4" type="button">
           <Icon name="calendar" className="h-4 w-4 text-slate-300" />
           <span className="hidden min-[1400px]:inline">Période actuelle</span>
@@ -531,6 +532,7 @@ function MobileDashboardHeader({
             <div className="truncate text-[18px] font-black tracking-[-0.035em] text-white">Viralynz</div>
           </div>
         </div>
+        <LanguageSwitcher compact />
         <Link href="/dashboard/analyze" aria-label="Nouvelle analyse" className={`grid h-11 w-11 shrink-0 place-items-center !rounded-[13px] ${primaryButton}`}>
           <Icon name="plus" className="h-4 w-4" />
         </Link>
