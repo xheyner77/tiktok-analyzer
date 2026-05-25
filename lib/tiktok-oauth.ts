@@ -6,9 +6,11 @@
 import { CANONICAL_PRODUCTION_SITE_URL, getSiteUrl } from './site-url';
 
 export const TIKTOK_OAUTH_STATE_COOKIE = 'tiktok_oauth_state';
+export const TIKTOK_OAUTH_RETURN_TO_COOKIE = 'tiktok_oauth_return_to';
 
 /** Scope minimal : profil de base. Add video.list in env only after TikTok approval. */
 export const TIKTOK_LOGIN_SCOPES = process.env.TIKTOK_OAUTH_SCOPES?.trim() || 'user.info.basic';
+export const TIKTOK_REVIEW_SCOPES = 'user.info.basic,user.info.profile,user.info.stats,video.list';
 
 const AUTH_URL = 'https://www.tiktok.com/v2/auth/authorize/';
 const TOKEN_URL = 'https://open.tiktokapis.com/v2/oauth/token/';
@@ -36,13 +38,13 @@ export function getTikTokRedirectUri(originHeader?: string | null): string {
   return `${siteUrl}/api/tiktok/callback`;
 }
 
-export function logTikTokOAuthConfig(params: { clientKey: string; redirectUri: string }) {
+export function logTikTokOAuthConfig(params: { clientKey: string; redirectUri: string; scopes?: string }) {
   console.info('[tiktok/connect] OAuth config', {
     hasClientKey: params.clientKey.length > 0,
     clientKeyLength: params.clientKey.length,
     clientKeyPrefix: params.clientKey.slice(0, 4),
     redirectUri: params.redirectUri,
-    scopes: TIKTOK_LOGIN_SCOPES,
+    scopes: params.scopes ?? TIKTOK_LOGIN_SCOPES,
   });
 }
 
@@ -50,10 +52,11 @@ export function buildTikTokAuthorizeUrl(params: {
   redirectUri: string;
   state: string;
   clientKey: string;
+  scopes?: string;
 }): string {
   const u = new URL(AUTH_URL);
   u.searchParams.set('client_key', params.clientKey);
-  u.searchParams.set('scope', TIKTOK_LOGIN_SCOPES);
+  u.searchParams.set('scope', params.scopes ?? TIKTOK_LOGIN_SCOPES);
   u.searchParams.set('response_type', 'code');
   u.searchParams.set('redirect_uri', params.redirectUri);
   u.searchParams.set('state', params.state);

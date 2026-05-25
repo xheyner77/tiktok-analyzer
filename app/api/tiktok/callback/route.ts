@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession, COOKIE_OPTIONS } from '@/lib/session';
 import {
+  TIKTOK_OAUTH_RETURN_TO_COOKIE,
   TIKTOK_OAUTH_STATE_COOKIE,
   TIKTOK_USER_INFO_BASIC_FIELDS,
   exchangeTikTokAuthorizationCode,
@@ -17,15 +18,27 @@ function redirectDashboard(request: NextRequest, query: Record<string, string>) 
   return NextResponse.redirect(u);
 }
 
+function redirectAfterTikTok(request: NextRequest, query: Record<string, string>) {
+  const returnTo = request.cookies.get(TIKTOK_OAUTH_RETURN_TO_COOKIE)?.value;
+  if (returnTo === '/review/tiktok-demo') {
+    const u = new URL(returnTo, request.url);
+    for (const [k, v] of Object.entries(query)) u.searchParams.set(k, v);
+    return NextResponse.redirect(u);
+  }
+
+  return redirectDashboard(request, query);
+}
+
 export async function GET(request: NextRequest) {
   const session = await getSession();
   const clearState = (res: NextResponse) => {
     res.cookies.set(TIKTOK_OAUTH_STATE_COOKIE, '', { ...COOKIE_OPTIONS, maxAge: 0 });
+    res.cookies.set(TIKTOK_OAUTH_RETURN_TO_COOKIE, '', { ...COOKIE_OPTIONS, maxAge: 0 });
     return res;
   };
 
   if (!session) {
-    const r = redirectDashboard(request, { tiktok: 'session' });
+    const r = redirectAfterTikTok(request, { tiktok: 'session' });
     return clearState(r);
   }
 
@@ -33,7 +46,7 @@ export async function GET(request: NextRequest) {
   const errDesc = request.nextUrl.searchParams.get('error_description');
   if (err) {
     console.warn('[tiktok/callback] OAuth error:', err, errDesc);
-    const r = redirectDashboard(request, { tiktok: 'denied' });
+    const r = redirectAfterTikTok(request, { tiktok: 'denied' });
     return clearState(r);
   }
 
@@ -48,13 +61,13 @@ export async function GET(request: NextRequest) {
   });
 
   if (!code || !state || !cookieState || state !== cookieState) {
-    const r = redirectDashboard(request, { tiktok: 'state' });
+    const r = redirectAfterTikTok(request, { tiktok: 'state' });
     return clearState(r);
   }
 
   const secrets = getTikTokOAuthSecrets();
   if (!secrets) {
-    const r = redirectDashboard(request, { tiktok: 'config' });
+    const r = redirectAfterTikTok(request, { tiktok: 'config' });
     return clearState(r);
   }
 
@@ -75,7 +88,7 @@ export async function GET(request: NextRequest) {
       tokenExchangeStatus: 'error',
       message: e instanceof Error ? e.message : 'unknown_error',
     });
-    const r = redirectDashboard(request, { tiktok: 'token' });
+    const r = redirectAfterTikTok(request, { tiktok: 'token' });
     return clearState(r);
   }
 
@@ -99,17 +112,17 @@ export async function GET(request: NextRequest) {
       profileFetchStatusCode: e instanceof TikTokUserInfoFetchError ? e.status : null,
       profileErrorMessage: e instanceof Error ? e.message : 'unknown_error',
     });
-    const r = redirectDashboard(request, { tiktok: 'profile' });
+    const r = redirectAfterTikTok(request, { tiktok: 'profile' });
     return clearState(r);
   }
 
   const saved = await upsertTikTokAccountForUser({ userId: session.userId, profile, tokens });
   if (!saved.ok) {
     console.error('[tiktok/callback] account save:', saved);
-    const r = redirectDashboard(request, { tiktok: saved.code === 'limit_reached' ? 'limit' : 'db' });
+    const r = redirectAfterTikTok(request, { tiktok: saved.code === 'limit_reached' ? 'limit' : 'db' });
     return clearState(r);
   }
 
-  const r = redirectDashboard(request, { tiktok: 'connected' });
+  const r = redirectAfterTikTok(request, { tiktok: 'connected' });
   return clearState(r);
 }
