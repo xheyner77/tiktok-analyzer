@@ -31,10 +31,10 @@ export function isPaidPlan(plan: RawPlan): boolean {
 export function getPlanLimits(plan: RawPlan): PlanLimits {
   const normalized = normalizePlan(plan);
   if (normalized === 'lifetime') {
-    return { analyses: 1000, hooks: 2000, reconstructions: 30, history: 1000, tiktokAccounts: 3 };
+    return { analyses: Number.POSITIVE_INFINITY, hooks: Number.POSITIVE_INFINITY, reconstructions: 30, history: 1000, tiktokAccounts: 3 };
   }
   if (normalized === 'pro') {
-    return { analyses: 100, hooks: 200, reconstructions: 30, history: 200, tiktokAccounts: 1 };
+    return { analyses: 150, hooks: 250, reconstructions: 30, history: 200, tiktokAccounts: 1 };
   }
   if (normalized === 'starter') {
     return { analyses: 30, hooks: 50, reconstructions: 0, history: 30, tiktokAccounts: 1 };

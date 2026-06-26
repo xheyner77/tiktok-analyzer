@@ -18,10 +18,10 @@ describe('memory backend limits', () => {
 
     expect(starter.monthlyAnalysesLearned).toBe(30);
     expect(starter.factsPerAnalysis).toBe(5);
-    expect(pro.monthlyAnalysesLearned).toBe(100);
+    expect(pro.monthlyAnalysesLearned).toBe(150);
     expect(pro.factsPerAnalysis).toBe(10);
     expect(pro.retrievalLimit).toBeGreaterThan(starter.retrievalLimit);
-    expect(lifetime.monthlyAnalysesLearned).toBe(1000);
+    expect(lifetime.monthlyAnalysesLearned).toBe(Number.POSITIVE_INFINITY);
     expect(lifetime.maxActiveFacts).toBeGreaterThan(pro.maxActiveFacts);
   });
 

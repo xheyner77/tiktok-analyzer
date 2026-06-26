@@ -105,7 +105,6 @@ export function getEffectivePlan(user: {
     if (user.stripe_subscription_id && isSubscriptionStatusAllowingAccess(user.subscription_status)) {
       return 'pro';
     }
-    if (process.env.NODE_ENV !== 'production') return 'pro';
     return 'free';
   }
 
