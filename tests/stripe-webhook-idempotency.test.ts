@@ -93,7 +93,7 @@ function webhookRequest(): NextRequest {
 
 function mockClaim(action: string, attempts = 1) {
   rpc.mockResolvedValue({
-    data: [{ action, status: action.startsWith('duplicate') ? 'processed' : 'processing', attempts }],
+    data: [{ action, status: action === 'duplicate_processed' ? 'processed' : 'processing', attempts }],
     error: null,
   });
 }
@@ -134,15 +134,16 @@ describe('Stripe webhook idempotency', () => {
     expect(update).not.toHaveBeenCalled();
   });
 
-  it('acks a recent processing event without reprocessing it', async () => {
+  it('asks Stripe to retry a recent processing event without reprocessing it', async () => {
     currentEvent = stripeEvent('evt_processing_recent');
     mockClaim('duplicate_processing', 1);
 
     const response = await postWebhook();
     const body = await response.json();
 
-    expect(response.status).toBe(200);
-    expect(body).toEqual({ received: true, duplicate: true });
+    expect(response.status).toBe(503);
+    expect(response.headers.get('retry-after')).toBe('60');
+    expect(body).toEqual({ error: 'stripe_event_already_processing', retry: true });
     expect(downgradeToFreeBySubscriptionId).not.toHaveBeenCalled();
     expect(update).not.toHaveBeenCalled();
   });

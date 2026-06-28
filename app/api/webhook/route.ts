@@ -152,6 +152,19 @@ export async function POST(request: NextRequest) {
   }
 
   if (!claim.shouldProcess) {
+    if (claim.action === 'duplicate_processing') {
+      console.warn('[webhook] Stripe event already processing; asking Stripe to retry:', {
+        eventId: event.id,
+        type: event.type,
+        action: claim.action,
+        attempts: claim.attempts,
+      });
+      return NextResponse.json(
+        { error: 'stripe_event_already_processing', retry: true },
+        { status: 503, headers: { 'Retry-After': '60' } }
+      );
+    }
+
     console.log('[webhook] Duplicate Stripe event acked:', {
       eventId: event.id,
       type: event.type,
