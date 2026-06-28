@@ -10,18 +10,109 @@ import {
   syncUserRowFromStripeSubscription,
 } from '@/lib/stripe-subscription-sync';
 import { blockTestStripeSecretInProduction } from '@/lib/stripe-prod-guard';
+import { supabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 const stripeSecret = process.env.STRIPE_SECRET_KEY?.trim();
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
+const STRIPE_WEBHOOK_PROCESSING_STALE_MS = 15 * 60 * 1000;
+
+type StripeWebhookClaimAction =
+  | 'process_new'
+  | 'process_retry_stale'
+  | 'process_retry_failed'
+  | 'duplicate_processed'
+  | 'duplicate_processing';
+
+type StripeWebhookClaimRow = {
+  action?: StripeWebhookClaimAction | string;
+  status?: string;
+  attempts?: number;
+};
+
+type StripeWebhookClaim =
+  | { ok: true; shouldProcess: true; action: StripeWebhookClaimAction; attempts: number }
+  | { ok: true; shouldProcess: false; action: StripeWebhookClaimAction; attempts: number }
+  | { ok: false; status: number; reason: string };
 
 function getStripe(): Stripe {
   if (!stripeSecret) {
     throw new Error('STRIPE_SECRET_KEY manquant');
   }
   return new Stripe(stripeSecret);
+}
+
+function shouldProcessClaim(action: string | undefined): action is Extract<StripeWebhookClaimAction, 'process_new' | 'process_retry_stale' | 'process_retry_failed'> {
+  return action === 'process_new' || action === 'process_retry_stale' || action === 'process_retry_failed';
+}
+
+function isDuplicateClaim(action: string | undefined): action is Extract<StripeWebhookClaimAction, 'duplicate_processed' | 'duplicate_processing'> {
+  return action === 'duplicate_processed' || action === 'duplicate_processing';
+}
+
+async function claimStripeWebhookEvent(event: Stripe.Event): Promise<StripeWebhookClaim> {
+  const staleBefore = new Date(Date.now() - STRIPE_WEBHOOK_PROCESSING_STALE_MS).toISOString();
+  const { data, error } = await supabase.rpc('claim_stripe_webhook_event', {
+    p_event_id: event.id,
+    p_event_type: event.type,
+    p_stripe_created_at: new Date(event.created * 1000).toISOString(),
+    p_stale_before: staleBefore,
+  });
+
+  if (error) {
+    console.error('[webhook] Idempotency claim failed:', event.id, error.message);
+    return { ok: false, status: 500, reason: 'idempotency_claim_failed' };
+  }
+
+  const rows = Array.isArray(data) ? data : data ? [data] : [];
+  const row = rows[0] as StripeWebhookClaimRow | undefined;
+  const action = row?.action;
+  const attempts = typeof row?.attempts === 'number' ? row.attempts : 1;
+
+  if (shouldProcessClaim(action)) {
+    return { ok: true, shouldProcess: true, action, attempts };
+  }
+
+  if (isDuplicateClaim(action)) {
+    return { ok: true, shouldProcess: false, action, attempts };
+  }
+
+  console.error('[webhook] Idempotency claim returned unexpected action:', event.id, action);
+  return { ok: false, status: 500, reason: 'idempotency_claim_invalid' };
+}
+
+async function markStripeWebhookEventProcessed(eventId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('stripe_webhook_events')
+    .update({
+      status: 'processed',
+      processed_at: new Date().toISOString(),
+      last_error: null,
+    })
+    .eq('event_id', eventId);
+
+  if (error) {
+    console.error('[webhook] Event processed but idempotency status update failed:', eventId, error.message);
+    return false;
+  }
+
+  return true;
+}
+
+async function markStripeWebhookEventFailed(eventId: string, message: string): Promise<void> {
+  const { error } = await supabase
+    .from('stripe_webhook_events')
+    .update({
+      status: 'failed',
+      last_error: message.slice(0, 1000),
+    })
+    .eq('event_id', eventId);
+
+  if (error) {
+    console.error('[webhook] Failed to mark Stripe event as failed:', eventId, error.message);
+  }
 }
 
 /**
@@ -55,6 +146,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature.' }, { status: 400 });
   }
 
+  const claim = await claimStripeWebhookEvent(event);
+  if (!claim.ok) {
+    return NextResponse.json({ error: claim.reason }, { status: claim.status });
+  }
+
+  if (!claim.shouldProcess) {
+    console.log('[webhook] Duplicate Stripe event acked:', {
+      eventId: event.id,
+      type: event.type,
+      action: claim.action,
+      attempts: claim.attempts,
+    });
+    return NextResponse.json({ received: true, duplicate: true });
+  }
+
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
@@ -82,14 +188,14 @@ export async function POST(request: NextRequest) {
           const res = await syncUserFromPaidSubscriptionCheckout(stripe, session, {});
           if (!res.ok) {
             console.error('[webhook] checkout.session.completed sync failed:', res.reason, res.log ?? '');
-            return NextResponse.json({ error: res.reason }, { status: 500 });
+            throw new Error(`checkout_subscription_sync_failed:${res.reason}:${res.log ?? ''}`);
           }
           console.log('[webhook] checkout.session.completed sync OK — plan accordé en DB user=', session.metadata?.userId);
         } else if (session.mode === 'payment' && session.metadata?.plan === 'scale') {
           const res = await syncUserFromPaidLifetimeCheckout(stripe, session);
           if (!res.ok) {
             console.error('[webhook] lifetime checkout sync failed:', res.reason, res.log ?? '');
-            return NextResponse.json({ error: res.reason }, { status: 500 });
+            throw new Error(`checkout_lifetime_sync_failed:${res.reason}:${res.log ?? ''}`);
           }
           console.log('[webhook] checkout.session.completed lifetime sync OK — user=', session.metadata?.userId);
         } else {
@@ -182,7 +288,7 @@ export async function POST(request: NextRequest) {
         const res = await syncUserRowFromStripeSubscription(sub);
         if (!res.ok) {
           console.error('[webhook] subscription.updated sync failed:', res.reason, res.log ?? '');
-          return NextResponse.json({ error: res.reason }, { status: 500 });
+          throw new Error(`subscription_sync_failed:${res.reason}:${res.log ?? ''}`);
         }
         console.log('[webhook] subscription.updated sync OK sub=', sub.id);
         break;
@@ -201,8 +307,13 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error('[webhook] Handler error:', event.type, message);
-    // 500 → Stripe retente (idempotent sur la plupart des handlers)
+    await markStripeWebhookEventFailed(event.id, message);
     return NextResponse.json({ error: 'Handler failed.' }, { status: 500 });
+  }
+
+  const markedProcessed = await markStripeWebhookEventProcessed(event.id);
+  if (!markedProcessed) {
+    return NextResponse.json({ error: 'idempotency_processed_mark_failed' }, { status: 500 });
   }
 
   return NextResponse.json({ received: true });
