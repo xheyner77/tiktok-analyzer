@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getSession } from '@/lib/session';
+import { isLifetimePlan } from '@/lib/plans';
 import { supabase } from '@/lib/supabase';
 import { blockTestStripeSecretInProduction } from '@/lib/stripe-prod-guard';
 
@@ -38,7 +39,7 @@ export async function POST() {
       return NextResponse.json({ error: 'Tu es déjà sur le plan Free.', code: 'ALREADY_FREE' }, { status: 400 });
     }
 
-    if (currentUser.plan === 'scale' && !currentUser.stripe_subscription_id) {
+    if (isLifetimePlan(currentUser.plan) || currentUser.subscription_status === 'lifetime') {
       return NextResponse.json(
         { error: 'Lifetime est un accès à vie et ne peut pas être annulé comme un abonnement mensuel.', code: 'LIFETIME_ACCESS' },
         { status: 400 }

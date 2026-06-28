@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getSession } from '@/lib/session';
+import { normalizePlan } from '@/lib/plans';
 import { blockTestStripeSecretInProduction } from '@/lib/stripe-prod-guard';
 
 const stripeSecret = process.env.STRIPE_SECRET_KEY?.trim();
@@ -27,9 +28,10 @@ export async function POST(request: NextRequest) {
 
     const { plan, sessionId } = await request.json() as { plan?: string; sessionId?: string };
 
-    if (plan !== 'creator' && plan !== 'pro' && plan !== 'scale') {
+    if (plan !== 'creator' && plan !== 'pro' && plan !== 'lifetime' && plan !== 'scale') {
       return NextResponse.json({ error: 'Plan invalide.' }, { status: 400 });
     }
+    const normalizedPlan = normalizePlan(plan);
 
     if (!sessionId) {
       console.error('[upgrade-plan] sessionId missing — user:', session.userId);
@@ -47,7 +49,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Session Stripe introuvable.' }, { status: 400 });
     }
 
-    const expectedMode = plan === 'scale' ? 'payment' : 'subscription';
+    const expectedMode = normalizedPlan === 'lifetime' ? 'payment' : 'subscription';
     if (checkoutSession.mode !== expectedMode) {
       console.error('[upgrade-plan] Session mode mismatch:', checkoutSession.id, checkoutSession.mode, expectedMode);
       return NextResponse.json({ error: 'Session Stripe incohérente.' }, { status: 400 });
@@ -63,7 +65,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Session invalide.' }, { status: 403 });
     }
 
-    if (checkoutSession.metadata?.plan !== plan) {
+    if (normalizePlan(checkoutSession.metadata?.plan) !== normalizedPlan) {
       console.error('[upgrade-plan] Plan metadata mismatch');
       return NextResponse.json({ error: 'Plan incohérent.' }, { status: 400 });
     }
@@ -75,7 +77,7 @@ export async function POST(request: NextRequest) {
     console.log('[upgrade-plan] Checkout session verified (webhook-only DB)', {
       userId: session.userId,
       sessionId: checkoutSession.id,
-      plan,
+      plan: normalizedPlan,
       payment_status: checkoutSession.payment_status,
       payment_method_types: pmTypes,
       paypal_used: usedPayPal,
@@ -85,7 +87,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      plan,
+      plan: normalizedPlan,
       syncedByWebhookOnly: true,
     });
   } catch (err) {

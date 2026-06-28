@@ -23,6 +23,14 @@ describe('plans', () => {
     expect(getPlanLimits('scale').hooks).toBe(Number.POSITIVE_INFINITY);
   });
 
+  it('treats legacy Scale as effective Lifetime without an active Stripe subscription', () => {
+    expect(getEffectivePlan({
+      plan: 'scale',
+      stripe_subscription_id: null,
+      subscription_status: null,
+    })).toBe('lifetime');
+  });
+
   it('only falls back to free for unknown plans', () => {
     expect(normalizePlan('enterprise_pending')).toBe('free');
     expect(getPlanLimits('enterprise_pending').analyses).toBe(3);

@@ -7,7 +7,7 @@
 import type Stripe from 'stripe';
 import { supabase } from '@/lib/supabase';
 import { PLAN_RANK, planFromStripePriceId } from '@/lib/stripe-billing';
-import { normalizePlan } from '@/lib/plans';
+import { isLifetimePlan, normalizePlan } from '@/lib/plans';
 
 /** Fin de période de facturation (Stripe API récente : sur l’item d’abonnement). */
 export function subscriptionCurrentPeriodEndIso(sub: Stripe.Subscription): string {
@@ -41,6 +41,10 @@ function subscriptionCustomerId(sub: Stripe.Subscription): string | null {
 
 function primaryPriceId(sub: Stripe.Subscription): string | null {
   return sub.items.data[0]?.price?.id ?? null;
+}
+
+function hasStoredLifetimeAccess(user: { plan?: string | null; subscription_status?: string | null } | null | undefined): boolean {
+  return isLifetimePlan(user?.plan) || user?.subscription_status === 'lifetime';
 }
 
 export type SyncCheckoutResult =
@@ -118,12 +122,22 @@ export async function syncUserFromPaidSubscriptionCheckout(
 
   const { data: currentUser, error: readErr } = await supabase
     .from('users')
-    .select('plan, stripe_subscription_id')
+    .select('plan, stripe_subscription_id, subscription_status')
     .eq('id', userId)
     .single();
 
   if (readErr) {
     return { ok: false, reason: 'db_read_failed', log: readErr.message };
+  }
+
+  if (hasStoredLifetimeAccess(currentUser) && !isLifetimePlan(planFromPrice)) {
+    console.warn('[stripe-sync] Lifetime access preserved from subscription checkout', {
+      userId,
+      current: currentUser?.plan,
+      incoming: planFromPrice,
+      subscriptionId: sub.id,
+    });
+    return { ok: true };
   }
 
   const targetRank = PLAN_RANK[planFromPrice] ?? 0;
@@ -299,12 +313,23 @@ export async function syncUserRowFromStripeSubscription(sub: Stripe.Subscription
 
   const { data: currentUser, error: readErr } = await supabase
     .from('users')
-    .select('plan, stripe_subscription_id')
+    .select('plan, stripe_subscription_id, subscription_status')
     .eq('id', userId)
     .single();
 
   if (readErr) {
     return { ok: false, reason: 'db_read_failed', log: readErr.message };
+  }
+
+  if (hasStoredLifetimeAccess(currentUser) && !isLifetimePlan(planFromPrice)) {
+    console.log('[stripe-sync] Lifetime access preserved from subscription event', {
+      userId,
+      current: currentUser?.plan,
+      incoming: planFromPrice,
+      subscriptionId: sub.id,
+      status: sub.status,
+    });
+    return { ok: true };
   }
 
   let nextPlan = (currentUser?.plan ?? 'free') as string;
@@ -383,6 +408,30 @@ export async function setSubscriptionPaymentFailed(subscriptionId: string): Prom
 }
 
 export async function downgradeToFreeBySubscriptionId(subscriptionId: string): Promise<void> {
+  const { data: current, error: readError } = await supabase
+    .from('users')
+    .select('id, email, plan, subscription_status')
+    .eq('stripe_subscription_id', subscriptionId)
+    .maybeSingle();
+
+  if (readError) {
+    console.error('[stripe-sync] downgrade lookup failed:', subscriptionId, readError.message);
+    throw new Error(readError.message);
+  }
+
+  if (!current) {
+    console.log('[stripe-sync] Subscription deleted for unknown or already migrated user', { subscriptionId });
+    return;
+  }
+
+  if (hasStoredLifetimeAccess(current)) {
+    console.log('[stripe-sync] Lifetime access preserved after subscription.deleted', {
+      subscriptionId,
+      userId: current.id,
+    });
+    return;
+  }
+
   const { data: affected, error } = await supabase
     .from('users')
     .update({

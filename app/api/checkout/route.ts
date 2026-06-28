@@ -8,11 +8,12 @@ import {
   assertStripePriceIsMonthlySubscription,
   type BillingInterval,
   getStripePriceId,
+  getEffectivePlan,
   isSubscriptionStatusAllowingAccess,
   type PaidStripePlan,
   PLAN_RANK,
 } from '@/lib/stripe-billing';
-import { getPlanLabel } from '@/lib/plans';
+import { getPlanLabel, isLifetimePlan, normalizePlan } from '@/lib/plans';
 import {
   blockTestStripePublishableInProduction,
   blockTestStripeSecretInProduction,
@@ -41,16 +42,17 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { plan, interval = 'month' } = body as { plan?: string; interval?: BillingInterval };
 
-    if (plan !== 'creator' && plan !== 'pro' && plan !== 'scale') {
-      return NextResponse.json({ error: 'Plan invalide. Valeurs acceptées : creator, pro, scale.' }, { status: 400 });
+    if (plan !== 'creator' && plan !== 'pro' && plan !== 'lifetime' && plan !== 'scale') {
+      return NextResponse.json({ error: 'Plan invalide. Valeurs acceptées : creator, pro, lifetime.' }, { status: 400 });
     }
     if (interval !== 'month' && interval !== 'year') {
       return NextResponse.json({ error: 'Intervalle invalide. Valeurs acceptées : month, year.' }, { status: 400 });
     }
-    if (plan === 'creator' && interval === 'year') {
+    const normalizedPlan = normalizePlan(plan);
+    if (normalizedPlan === 'starter' && interval === 'year') {
       return NextResponse.json({ error: 'Le plan Starter est disponible uniquement en mensuel.' }, { status: 400 });
     }
-    if (plan === 'scale' && interval !== 'month') {
+    if (normalizedPlan === 'lifetime' && interval !== 'month') {
       return NextResponse.json({ error: 'Le plan Lifetime est un paiement unique.' }, { status: 400 });
     }
 
@@ -58,9 +60,17 @@ export async function POST(request: NextRequest) {
     const hasActiveStripeSub =
       !!userProfile?.stripe_subscription_id &&
       isSubscriptionStatusAllowingAccess(userProfile.subscription_status);
-    const currentPlan = hasActiveStripeSub ? (userProfile?.plan ?? 'free') : 'free';
+    const currentPlan = userProfile ? getEffectivePlan(userProfile) : 'free';
+
+    if (isLifetimePlan(currentPlan)) {
+      return NextResponse.json(
+        { error: 'Tu es déjà sur le plan Lifetime.', code: 'ALREADY_ON_PLAN' },
+        { status: 400 }
+      );
+    }
+
     const currentRank = PLAN_RANK[currentPlan] ?? 0;
-    const targetRank = PLAN_RANK[plan] ?? 0;
+    const targetRank = PLAN_RANK[normalizedPlan] ?? 0;
 
     if (currentRank >= targetRank) {
       const isSamePlan = currentRank === targetRank;
@@ -75,7 +85,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (hasActiveStripeSub && plan !== 'scale') {
+    if (hasActiveStripeSub && normalizedPlan !== 'lifetime') {
       return NextResponse.json(
         {
           error: 'Tu as déjà un abonnement Stripe actif. Gère-le depuis le dashboard ou contacte le support.',
@@ -88,7 +98,8 @@ export async function POST(request: NextRequest) {
     const baseUrl = getSiteUrl(request.headers.get('origin'));
     const stripe = getStripe();
     const priceId = getStripePriceId(plan as PaidStripePlan, interval);
-    const checkoutMode: Stripe.Checkout.SessionCreateParams.Mode = plan === 'scale' ? 'payment' : 'subscription';
+    const checkoutMode: Stripe.Checkout.SessionCreateParams.Mode =
+      normalizedPlan === 'lifetime' ? 'payment' : 'subscription';
 
     const priceCheck = checkoutMode === 'payment'
       ? await assertStripePriceIsOneTimePayment(stripe, priceId)
@@ -109,7 +120,7 @@ export async function POST(request: NextRequest) {
       line_items: [{ price: priceId, quantity: 1 }],
       metadata: {
         userId: session.userId,
-        plan,
+        plan: normalizedPlan,
         interval,
       },
       success_url: `${baseUrl}/dashboard?success=1&session_id={CHECKOUT_SESSION_ID}`,
@@ -122,7 +133,7 @@ export async function POST(request: NextRequest) {
       params.subscription_data = {
         metadata: {
           userId: session.userId,
-          plan,
+          plan: normalizedPlan,
           interval,
         },
       };
@@ -141,7 +152,7 @@ export async function POST(request: NextRequest) {
       mode: checkoutSession.mode,
       priceId,
       userId: session.userId,
-      plan,
+      plan: normalizedPlan,
       interval,
       allow_promotion_codes: true,
       customer: params.customer ?? '(nouveau via customer_email)',
