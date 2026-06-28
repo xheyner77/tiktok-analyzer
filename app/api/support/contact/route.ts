@@ -87,6 +87,7 @@ export async function POST(request: NextRequest) {
 
     const supportEmail = process.env.SUPPORT_EMAIL?.trim();
     const resendKey = process.env.RESEND_API_KEY?.trim();
+    const resendFrom = process.env.RESEND_FROM_EMAIL?.trim();
     const fallbackEmail = supportEmail || 'support@viralynz.com';
     const planLabel = dashboard.user.planLabel || (profile?.plan ? profile.plan.toUpperCase() : 'Non disponible');
     const subscriptionStatus = profile?.subscription_status || 'none';
@@ -105,6 +106,17 @@ export async function POST(request: NextRequest) {
       issueReference ? `Reference: ${issueReference}` : '',
     ].filter(Boolean).join('\n');
 
+    if (!resendFrom) {
+      return NextResponse.json(
+        {
+          error: 'Configuration email expéditeur manquante. Ouvre l’email prérempli pour envoyer la demande.',
+          code: 'RESEND_FROM_EMAIL_NOT_CONFIGURED',
+          mailto: buildMailto(fallbackEmail, subject, message, accountContext),
+        },
+        { status: 503 }
+      );
+    }
+
     if (!supportEmail || !resendKey) {
       return NextResponse.json(
         {
@@ -119,10 +131,9 @@ export async function POST(request: NextRequest) {
     }
 
     const resend = new Resend(resendKey);
-    const from = process.env.RESEND_FROM_EMAIL?.trim() || 'Viralynz Support <onboarding@resend.dev>';
 
     await resend.emails.send({
-      from,
+      from: resendFrom,
       to: supportEmail,
       replyTo: session.email,
       subject: `[Viralynz Support] ${priorities[priorityRaw]} - ${requestTypes[typeRaw]} - ${subject}`,

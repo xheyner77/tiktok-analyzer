@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 import { Resend } from 'resend';
 
-const CONTACT_EMAIL = 'xheyner77@gmail.com';
-
 const CATEGORY_LABELS: Record<string, string> = {
   bug:        '🐛 Bug',
   suggestion: '💡 Suggestion',
@@ -29,13 +27,38 @@ export async function POST(request: NextRequest) {
     const fromEncoded = from.replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const catLabel = CATEGORY_LABELS[category] ?? '💬 Autre';
 
+    const resendKey = process.env.RESEND_API_KEY?.trim();
+    const resendFrom = process.env.RESEND_FROM_EMAIL?.trim();
+    const supportEmail = process.env.SUPPORT_EMAIL?.trim();
+
+    const missingEmailConfig = [
+      !resendKey ? 'RESEND_API_KEY' : '',
+      !resendFrom ? 'RESEND_FROM_EMAIL' : '',
+      !supportEmail ? 'SUPPORT_EMAIL' : '',
+    ].filter(Boolean);
+
+    if (process.env.NODE_ENV === 'production' && missingEmailConfig.length > 0) {
+      console.error('[contact] Email config missing in production:', missingEmailConfig.join(', '));
+      return NextResponse.json({ error: 'Configuration email support manquante.' }, { status: 503 });
+    }
+
     /* ── Resend email ─────────────────────────────────────────────────────── */
-    if (process.env.RESEND_API_KEY) {
-      const resend = new Resend(process.env.RESEND_API_KEY);
+    if (resendKey) {
+      if (!resendFrom) {
+        console.error('[contact] RESEND_FROM_EMAIL missing.');
+        return NextResponse.json({ error: 'Configuration email expéditeur manquante.' }, { status: 503 });
+      }
+
+      if (!supportEmail) {
+        console.error('[contact] SUPPORT_EMAIL missing.');
+        return NextResponse.json({ error: 'Email support non configuré.' }, { status: 503 });
+      }
+
+      const resend = new Resend(resendKey);
 
       await resend.emails.send({
-        from:    'Viralynz Contact <onboarding@resend.dev>',
-        to:      CONTACT_EMAIL,
+        from:    resendFrom,
+        to:      supportEmail,
         subject: `[Viralynz Contact] ${catLabel} — ${from}`,
         html: `
           <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#111">
