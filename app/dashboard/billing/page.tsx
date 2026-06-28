@@ -26,11 +26,11 @@ type PlanCard = {
   cta: string;
 };
 
-const planRank: Record<AppPlan | 'creator' | 'scale', number> = { free: 0, starter: 1, creator: 1, pro: 2, lifetime: 3, scale: 3 };
+const planRank: Record<AppPlan, number> = { free: 0, starter: 1, creator: 1, pro: 2, lifetime: 3, scale: 3 };
 
 const plans: PlanCard[] = [
   {
-    id: 'creator',
+    id: 'starter',
     rank: 1,
     name: 'Starter',
     icon: 'bolt',
@@ -67,7 +67,7 @@ const plans: PlanCard[] = [
     cta: `Débloquer Pro — ${DISPLAY_CATALOG_PRO_EUR}€/mois`,
   },
   {
-    id: 'scale',
+    id: 'lifetime',
     rank: 3,
     name: 'Lifetime',
     badge: '∞ ∞ À vie',
@@ -95,10 +95,8 @@ const secondaryButton =
   'inline-flex min-h-[40px] items-center justify-center rounded-[7px] border border-white/[0.10] bg-white/[0.04] px-4 text-[13px] font-black text-slate-300 transition duration-200 hover:border-cyan-200/20 hover:bg-white/[0.07] focus:outline-none focus:ring-2 focus:ring-cyan-200/25';
 
 const checkoutButtonStyles: Record<string, string> = {
-  creator: 'bg-[linear-gradient(135deg,#1db7d1_0%,#5b5cf6_100%)] text-white shadow-[0_16px_42px_-30px_rgba(34,211,238,0.95),inset_0_1px_0_rgba(255,255,255,0.16)] focus:ring-cyan-300/35',
   starter: 'bg-[linear-gradient(135deg,#1db7d1_0%,#5b5cf6_100%)] text-white shadow-[0_16px_42px_-30px_rgba(34,211,238,0.95),inset_0_1px_0_rgba(255,255,255,0.16)] focus:ring-cyan-300/35',
   pro: 'bg-[linear-gradient(135deg,#a855f7_0%,#7c3aed_52%,#4f46e5_100%)] text-white shadow-[0_22px_58px_-28px_rgba(139,92,246,1),inset_0_1px_0_rgba(255,255,255,0.18)] focus:ring-violet-300/45',
-  scale: 'bg-[linear-gradient(135deg,#facc15_0%,#fb923c_100%)] text-[#070811] shadow-[0_18px_48px_-30px_rgba(251,191,36,0.95),inset_0_1px_0_rgba(255,255,255,0.22)] focus:ring-amber-300/45',
   lifetime: 'bg-[linear-gradient(135deg,#facc15_0%,#fb923c_100%)] text-[#070811] shadow-[0_18px_48px_-30px_rgba(251,191,36,0.95),inset_0_1px_0_rgba(255,255,255,0.22)] focus:ring-amber-300/45',
 };
 
@@ -205,7 +203,7 @@ function PlanAction({
 }) {
   const currentRank = planRank[effectivePlan] ?? 0;
 
-  if (effectivePlan === plan.id) {
+  if (effectivePlan === normalizePlan(plan.id)) {
     return (
       <button type="button" disabled className="min-h-[40px] w-full rounded-[7px] border border-white/[0.10] bg-white/[0.045] px-4 text-[13px] font-black text-slate-400">
         Plan actuel
@@ -221,7 +219,7 @@ function PlanAction({
     );
   }
 
-  if (hasActiveStripeSubscription && plan.id !== 'scale' && hasStripeCustomer) {
+  if (hasActiveStripeSubscription && plan.id !== 'lifetime' && hasStripeCustomer) {
     return (
       <BillingActionButton action="portal" fullWidth className={`${secondaryButton} w-full`}>
         Gérer la facturation
@@ -261,7 +259,7 @@ export default async function DashboardBillingPage() {
       <section id="plans" className="mt-14 grid items-stretch gap-5 md:grid-cols-2 xl:flex xl:justify-center xl:gap-6">
         {plans.map((plan) => {
           const isPro = plan.id === 'pro';
-          const isLifetime = plan.id === 'scale';
+          const isLifetime = plan.id === 'lifetime';
           const tone = isLifetime ? 'lifetime' : isPro ? 'pro' : 'starter';
 
           return (
