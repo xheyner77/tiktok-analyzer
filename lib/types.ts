@@ -657,3 +657,98 @@ export interface AnalysisResult {
   strategy?: string;   // Advanced plan — personalized content strategy
   viralTips?: string[]; // Advanced plan — what top viral videos do in this niche
 }
+
+export type AnalysisTransparencyLevel = 'real' | 'partial' | 'estimated' | 'demo' | 'fallback';
+
+export interface AnalysisTransparencyState {
+  level: AnalysisTransparencyLevel;
+  label: string;
+  warning: string | null;
+  confidenceScore: number | null;
+  canShowRealBenchmark: boolean;
+  includeInRealAggregates: boolean;
+  observedData: string[];
+  aiHypotheses: string[];
+  simulations: string[];
+  previews: string[];
+}
+
+function hasPositiveObservedMetric(result: Partial<AnalysisResult> | null | undefined): boolean {
+  const metrics = result?.observedMetrics;
+  return Boolean(
+    metrics
+    && (
+      (typeof metrics.views === 'number' && metrics.views > 0)
+      || (typeof metrics.likes === 'number' && metrics.likes > 0)
+      || (typeof metrics.comments === 'number' && metrics.comments > 0)
+      || (typeof metrics.shares === 'number' && metrics.shares > 0)
+    )
+  );
+}
+
+function transparencyState(
+  level: AnalysisTransparencyLevel,
+  result: Partial<AnalysisResult> | null | undefined,
+  warning: string | null,
+  canShowRealBenchmark = false,
+  includeInRealAggregates = false
+): AnalysisTransparencyState {
+  const disclosure = result?.analyzerMeta?.signalDisclosure;
+  const labels: Record<AnalysisTransparencyLevel, string> = {
+    real: 'Analyse reelle',
+    partial: 'Analyse partielle',
+    estimated: 'Analyse estimee',
+    demo: 'Donnees de demonstration',
+    fallback: 'Analyse degradee',
+  };
+
+  return {
+    level,
+    label: labels[level],
+    warning,
+    confidenceScore: result?.analyzerMeta?.analysisConfidence?.score ?? result?.videoIntelligence?.confidence?.score ?? null,
+    canShowRealBenchmark,
+    includeInRealAggregates,
+    observedData: disclosure?.observedData ?? [],
+    aiHypotheses: disclosure?.aiHypotheses ?? [],
+    simulations: disclosure?.simulations ?? [],
+    previews: disclosure?.previews ?? [],
+  };
+}
+
+export function classifyAnalysisTransparency(result: Partial<AnalysisResult> | null | undefined): AnalysisTransparencyState {
+  const mode = result?.analyzerMeta?.analysisMode;
+  const confidenceScore = result?.analyzerMeta?.analysisConfidence?.score ?? result?.videoIntelligence?.confidence?.score ?? null;
+  const hasWarnings = Boolean(result?.analyzerMeta?.validationWarnings?.length);
+  const hasMissingSignals = Boolean(result?.videoIntelligence?.confidence?.missingSignals?.length);
+  const hasUploadFrames = result?.analysisSource === 'vision_upload' && result?.videoIntelligence?.metadata?.source === 'upload_frames';
+  const hasVerifiedStats = ['cache', 'live_page', 'live_oembed'].includes(result?.observedStatsSource ?? '')
+    && hasPositiveObservedMetric(result)
+    && result?.observedPerformanceEstimated !== true;
+
+  if (mode === 'demo') {
+    return transparencyState('demo', result, 'Donnees de demonstration : ce diagnostic ne doit pas etre lu comme une analyse reelle de ta video.');
+  }
+
+  if (mode === 'fallback' || result?.analyzerMeta?.isFallback) {
+    return transparencyState('fallback', result, 'Analyse degradee : une erreur technique a force un diagnostic prudent.');
+  }
+
+  if (mode === 'metadata' || result?.observedStatsSource === 'manual' || result?.observedPerformanceEstimated) {
+    return transparencyState('estimated', result, 'Analyse estimee : les recommandations reposent sur des metadata, une URL ou des metriques non verifiees.');
+  }
+
+  if (!result?.analyzerMeta && !hasUploadFrames && !hasVerifiedStats) {
+    return transparencyState('estimated', result, 'Analyse ancienne ou incomplete : Viralynz ne peut pas garantir que tous les signaux etaient observes.');
+  }
+
+  if (!hasUploadFrames && !hasVerifiedStats) {
+    return transparencyState('estimated', result, 'Analyse estimee : aucun signal video ou statistique verifie ne permet un benchmark reel.');
+  }
+
+  if (hasWarnings || hasMissingSignals || (typeof confidenceScore === 'number' && confidenceScore < 70)) {
+    return transparencyState('partial', result, 'Analyse partielle : certains signaux manquent, les scores doivent etre lus comme des hypotheses.');
+  }
+
+  return transparencyState('real', result, null, hasVerifiedStats, true);
+}

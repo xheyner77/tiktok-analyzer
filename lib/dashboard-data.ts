@@ -4,7 +4,7 @@ import type { AnalysisRow } from '@/lib/analyses';
 import { getEffectivePlan, getUserById, PLAN_LIMITS } from '@/lib/auth';
 import { getSession } from '@/lib/session';
 import { supabase, type Plan } from '@/lib/supabase';
-import type { AnalysisResult } from '@/lib/types';
+import { classifyAnalysisTransparency, type AnalysisResult } from '@/lib/types';
 import { HISTORY_LIMITS } from '@/lib/plan-limits';
 import { getConnectedTikTokAccountCount } from '@/lib/tiktok-account-limits';
 import { hasVideoListScope, listTikTokAccountsForUser } from '@/lib/tiktok-accounts';
@@ -74,7 +74,7 @@ export interface DashboardTopVideo {
   id: string;
   title: string;
   date: string;
-  score: number;
+  score: number | null;
   views: string;
   thumbnailUrl: string | null;
 }
@@ -343,7 +343,7 @@ function buildTopVideos(analyses: AnalysisRow[]): DashboardTopVideo[] {
       id: row.id,
       title: getVideoTitle(row),
       date: formatDate(row.result?.detectedVideoMeta?.publishedAt ?? row.created_at),
-      score: clampScore(row.result?.viralityScore) ?? 0,
+      score: clampScore(row.result?.viralityScore),
       views: formatCompact(row.result?.observedMetrics?.views, '—'),
       thumbnailUrl: null,
     }));
@@ -360,6 +360,10 @@ function hasObservedMetrics(row: AnalysisRow): boolean {
       || (typeof metrics.shares === 'number' && metrics.shares > 0)
     )
   );
+}
+
+function isRealAggregateAnalysis(row: AnalysisRow): boolean {
+  return classifyAnalysisTransparency(row.result).includeInRealAggregates;
 }
 
 function hasInsightSignal(latest: AnalysisRow | null): boolean {
@@ -416,6 +420,8 @@ export async function getDashboardData(): Promise<DashboardData> {
   const quotaLimit = Number.isFinite(rawQuotaLimit) ? rawQuotaLimit : null;
   const visibleAnalyses = session ? await getDashboardAnalyses(session.userId, plan) : [];
   const latest = visibleAnalyses[0] ?? null;
+  const realAggregateAnalyses = visibleAnalyses.filter(isRealAggregateAnalysis);
+  const latestRealAnalysis = realAggregateAnalyses[0] ?? null;
   const email = profile?.email ?? session?.email ?? '';
   const quotaUsed = profile?.analyses_count ?? visibleAnalyses.length;
   const tiktokAccounts = session ? await listTikTokAccountsForUser(session.userId) : [];
@@ -434,17 +440,17 @@ export async function getDashboardData(): Promise<DashboardData> {
     hasAdvancedMetrics: hasVideoListScope(tikTokScopes),
   };
   const name = email ? firstNameFromEmail(email) : 'Créateur';
-  const retention = buildRetention(latest);
-  const topVideos = tiktokConnection.hasAdvancedMetrics ? buildTopVideos(visibleAnalyses) : [];
-  const insights = buildInsights(latest);
+  const retention = buildRetention(latestRealAnalysis);
+  const topVideos = tiktokConnection.hasAdvancedMetrics ? buildTopVideos(realAggregateAnalyses) : [];
+  const insights = buildInsights(latestRealAnalysis);
   const states: DashboardStates = {
     hasAnalyses: visibleAnalyses.length > 0,
     hasTikTokConnection,
-    hasTikTokMetrics: tiktokConnection.hasAdvancedMetrics && visibleAnalyses.some(hasObservedMetrics),
+    hasTikTokMetrics: tiktokConnection.hasAdvancedMetrics && realAggregateAnalyses.some(hasObservedMetrics),
     hasRetentionData: retention.points.length >= 2,
     hasLatestAnalysis: Boolean(latest),
     hasRealTopVideos: tiktokConnection.hasAdvancedMetrics && topVideos.length > 0,
-    hasRealInsights: hasInsightSignal(latest),
+    hasRealInsights: hasInsightSignal(latestRealAnalysis),
   };
 
   return {
@@ -458,7 +464,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     },
     tiktokConnection,
     states,
-    metrics: buildMetrics(visibleAnalyses, quotaUsed, tiktokConnection.hasAdvancedMetrics),
+    metrics: buildMetrics(realAggregateAnalyses, realAggregateAnalyses.length, tiktokConnection.hasAdvancedMetrics),
     retention,
     latestVideo: buildLatestVideo(latest),
     analysisCta: latest
@@ -472,8 +478,8 @@ export async function getDashboardData(): Promise<DashboardData> {
         },
     insights,
     topVideos,
-    recommendations: buildRecommendations(latest),
+    recommendations: buildRecommendations(latestRealAnalysis),
     hasRealUser: Boolean(profile || session),
-    hasRealAnalyses: visibleAnalyses.length > 0,
+    hasRealAnalyses: realAggregateAnalyses.length > 0,
   };
 }

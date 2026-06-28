@@ -1158,7 +1158,7 @@ function TopVideosCard({ videos, states }: { videos: DashboardTopVideo[]; states
               <div className="line-clamp-2 text-[13px] font-semibold leading-[1.25] text-white">{video.title}</div>
               <div className="mt-1 text-[11.75px] text-slate-500">{video.date}</div>
             </div>
-            <div className="grid h-10 w-10 place-items-center rounded-full border border-green-400/45 bg-green-400/10 text-[13px] font-semibold text-green-300">{video.score}</div>
+            <div className="grid h-10 w-10 place-items-center rounded-full border border-green-400/45 bg-green-400/10 text-[13px] font-semibold text-green-300">{video.score ?? '—'}</div>
             <div className="w-[52px] text-right text-[11.75px] leading-tight text-slate-300">
               <div>{video.views}</div>
               <div className="text-slate-500">vues</div>
@@ -1646,7 +1646,7 @@ function MobileTopVideosCompact({
               <p className="truncate text-[0.8rem] font-black text-white">{video.title}</p>
               <p className="text-[0.68rem] text-slate-500">{video.date}</p>
             </div>
-            <span className="rounded-full border border-emerald-300/20 bg-emerald-300/10 px-2 py-1 text-[0.68rem] font-black text-emerald-100">{video.score}</span>
+            <span className="rounded-full border border-emerald-300/20 bg-emerald-300/10 px-2 py-1 text-[0.68rem] font-black text-emerald-100">{video.score ?? '—'}</span>
           </div>
         ))}
       </div>

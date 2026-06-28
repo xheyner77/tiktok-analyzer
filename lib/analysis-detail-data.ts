@@ -4,10 +4,12 @@ import { getSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
 import type {
   AnalysisResult,
+  AnalysisTransparencyState,
   DiagnosticItem,
   DiagnosticSeverity,
   RepostVersion,
 } from '@/lib/types';
+import { classifyAnalysisTransparency } from '@/lib/types';
 import type {
   ReconstructionPlan,
   ReconstructionSequence,
@@ -35,7 +37,7 @@ export interface AnalysisMoment {
 
 export interface AnalysisDiagnostic {
   label: 'Hook' | 'Rythme' | 'Clarté' | 'Preuve' | 'CTA';
-  score: number;
+  score: number | null;
   problem: string;
   correction: string;
 }
@@ -70,9 +72,10 @@ export interface AnalysisDetailData {
   title: string;
   thumbnailUrl: string | null;
   duration: string;
-  score: number;
+  score: number | null;
   scoreLevel: string;
   scoreExplanation: string;
+  transparency: AnalysisTransparencyState;
   verdict: string;
   summary: string;
   objective: string;
@@ -139,8 +142,8 @@ function finiteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
-function clampScore(value: unknown, fallback: number): number {
-  if (!finiteNumber(value)) return fallback;
+function clampScore(value: unknown): number | null {
+  if (!finiteNumber(value)) return null;
   return Math.max(0, Math.min(100, Math.round(value)));
 }
 
@@ -160,14 +163,16 @@ function formatDuration(seconds: unknown): string {
   return `${seconds.toFixed(seconds >= 20 ? 0 : 1)}s`;
 }
 
-function scoreLevel(score: number): string {
+function scoreLevel(score: number | null): string {
+  if (score === null) return 'Non mesure';
   if (score >= 85) return 'Très fort';
   if (score >= 70) return 'Bon';
   if (score >= 50) return 'Moyen';
   return 'Faible';
 }
 
-function scoreExplanation(score: number): string {
+function scoreExplanation(score: number | null): string {
+  if (score === null) return 'Score indisponible : Viralynz garde les décisions utiles sans inventer de note.';
   if (score >= 85) return 'Le concept est solide. Le prochain gain vient surtout d’une V2 plus directe et plus tendue.';
   if (score >= 70) return 'La vidéo a une base exploitable, mais certains moments ralentissent l’attention avant le payoff.';
   if (score >= 50) return 'L’idée peut fonctionner, mais la structure explique avant de créer une vraie raison de rester.';
@@ -195,12 +200,12 @@ function getSourceLabel(result: DetailResult | null): string {
 
 function getSubScores(result: DetailResult | null) {
   const subScores = result?.coachAnalysis?.subScores;
-  const hook = clampScore(subScores?.hook ?? result?.hook?.score, 62);
-  const retention = clampScore(subScores?.retention ?? result?.retention?.score, 58);
-  const rhythm = clampScore(result?.editing?.score, Math.max(42, retention - 6));
-  const clarity = clampScore(subScores?.clarity, Math.round((hook * 0.45) + (retention * 0.35) + (rhythm * 0.2)));
-  const proof = clampScore(subScores?.tension ?? subScores?.rewatchPotential, Math.max(45, Math.round((retention + clarity) / 2) - 5));
-  const cta = clampScore(subScores?.cta, result?.improvements?.some((item) => item.tip?.toLowerCase().includes('cta')) ? 48 : 64);
+  const hook = clampScore(subScores?.hook ?? result?.hook?.score);
+  const retention = clampScore(subScores?.retention ?? result?.retention?.score);
+  const rhythm = clampScore(result?.editing?.score);
+  const clarity = clampScore(subScores?.clarity);
+  const proof = clampScore(subScores?.tension ?? subScores?.rewatchPotential);
+  const cta = clampScore(subScores?.cta);
 
   return { hook, retention, rhythm, clarity, proof, cta };
 }
@@ -518,7 +523,8 @@ function buildRepostPlan(result: DetailResult | null): string[] {
 
 function normalizeAnalysis(row: AnalysisDetailRow): AnalysisDetailData {
   const result = row.result;
-  const score = clampScore(result?.viralityScore, 55);
+  const score = clampScore(result?.viralityScore);
+  const transparency = classifyAnalysisTransparency(result);
   const title = getVideoTitle(result, row);
   const verdict = firstText(
     result?.coachAnalysis?.verdict,
@@ -540,6 +546,7 @@ function normalizeAnalysis(row: AnalysisDetailRow): AnalysisDetailData {
     score,
     scoreLevel: scoreLevel(score),
     scoreExplanation: scoreExplanation(score),
+    transparency,
     verdict,
     summary: firstText(
       result?.comparativeInsight,

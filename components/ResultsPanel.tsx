@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { AnalysisResult, Improvement } from '@/lib/types';
+import { classifyAnalysisTransparency, type AnalysisResult, type Improvement } from '@/lib/types';
 import { isLifetimePlan } from '@/lib/plans';
 
 interface ResultsPanelProps {
@@ -37,6 +37,21 @@ function compBenchmark(s: number) {
   if (s >= 40) return { pct: 40, grad: 'from-amber-500 to-amber-400',     hex: '#f59e0b' };
   if (s >= 25) return { pct: 60, grad: 'from-red-500 to-red-400',         hex: '#f87171' };
   return              { pct: 78, grad: 'from-red-500 to-red-400',         hex: '#f87171' };
+}
+
+function transparencyBadgeClass(level: ReturnType<typeof classifyAnalysisTransparency>['level']) {
+  if (level === 'real') return 'bg-emerald-400/12 text-emerald-200 border-emerald-300/20';
+  if (level === 'partial') return 'bg-amber-300/12 text-amber-200 border-amber-300/20';
+  if (level === 'estimated') return 'bg-cyan-300/10 text-cyan-100 border-cyan-300/18';
+  return 'bg-orange-400/12 text-orange-200 border-orange-300/20';
+}
+
+function statsSourceLabel(source: AnalysisResult['observedStatsSource']) {
+  if (source === 'live_page') return 'Source : TikTok';
+  if (source === 'live_oembed') return 'Source : oEmbed';
+  if (source === 'cache') return 'Source : cache';
+  if (source === 'manual') return 'Source : saisie manuelle non verifiee';
+  return 'Stats partielles';
 }
 
 function buildSummary(data: AnalysisResult): string {
@@ -143,6 +158,12 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
   const meta    = data.detectedVideoMeta;
   const hasStats = Object.values(metrics).some(v => v != null);
   const isLifetime = isLifetimePlan(plan);
+  const transparency = classifyAnalysisTransparency(data);
+  const confidenceLabel = typeof transparency.confidenceScore === 'number'
+    ? `Confiance ${Math.round(transparency.confidenceScore)}/100`
+    : null;
+  const observedSignals = transparency.observedData.slice(0, 2);
+  const hypothesisSignals = transparency.aiHypotheses.slice(0, 2);
 
   const summary    = buildSummary(data);
   const mainProb   = deriveMainProblem(data);
@@ -209,6 +230,14 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
                   {data.analyzerMeta.analysisModeLabel}
                 </span>
               )}
+              <span className={`text-[9px] font-bold px-2.5 py-0.5 rounded-full border uppercase tracking-wide ${transparencyBadgeClass(transparency.level)}`}>
+                {transparency.label}
+              </span>
+              {confidenceLabel && (
+                <span className="text-[9px] font-bold px-2.5 py-0.5 rounded-full bg-white/[0.04] text-gray-300 border border-white/[0.08] uppercase tracking-wide">
+                  {confidenceLabel}
+                </span>
+              )}
               {data.overperformanceDetected && (
                 <span className="text-[9px] font-bold px-2.5 py-0.5 rounded-full bg-vn-fuchsia/15 text-vn-fuchsia border border-vn-fuchsia/20">
                   ⚡ Surperformance
@@ -219,6 +248,28 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
             <p className="text-[1.25rem] sm:text-[1.45rem] font-bold text-white leading-tight mb-6 max-w-lg mx-auto sm:mx-0">
               {summary}
             </p>
+
+            {transparency.warning && (
+              <div className="mb-6 w-full max-w-xl rounded-2xl border border-amber-300/16 bg-amber-300/[0.055] px-4 py-3 text-left">
+                <p className="text-[12px] font-semibold leading-snug text-amber-100">{transparency.warning}</p>
+                {(observedSignals.length > 0 || hypothesisSignals.length > 0) && (
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    {observedSignals.length > 0 && (
+                      <div>
+                        <p className="text-[9px] font-black uppercase tracking-[0.18em] text-amber-100/55">Observe</p>
+                        <p className="mt-1 text-[11px] leading-snug text-amber-50/75">{observedSignals.join(' · ')}</p>
+                      </div>
+                    )}
+                    {hypothesisSignals.length > 0 && (
+                      <div>
+                        <p className="text-[9px] font-black uppercase tracking-[0.18em] text-amber-100/55">Hypotheses IA</p>
+                        <p className="mt-1 text-[11px] leading-snug text-amber-50/75">{hypothesisSignals.join(' · ')}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="flex gap-7 sm:gap-10 justify-center sm:justify-start">
               {pillars.map(({ title, s }) => {
@@ -399,9 +450,7 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
             <div className="flex flex-col sm:flex-row items-center sm:items-center justify-center sm:justify-between gap-2 mb-6">
               <p className={label9}>Stats publiques</p>
               <span className="text-[9px] text-gray-700">
-                {data.observedStatsSource === 'live_page'   ? 'Source\u00a0: TikTok' :
-                 data.observedStatsSource === 'live_oembed' ? 'Source\u00a0: oEmbed'  :
-                 data.observedStatsSource === 'cache'       ? 'Source\u00a0: cache'   : 'Stats partielles'}
+                {statsSourceLabel(data.observedStatsSource)}
               </span>
             </div>
 
@@ -421,6 +470,7 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
               ))}
             </div>
 
+            {transparency.canShowRealBenchmark ? (
             <div className="flex items-center gap-4 max-w-sm mx-auto sm:mx-0">
               <span className="text-[1.15rem] font-black shrink-0" style={{ color: bench.hex }}>
                 Top {bench.pct}%
@@ -436,6 +486,14 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
                 </div>
               </div>
             </div>
+            ) : (
+              <div className="max-w-lg rounded-2xl border border-white/[0.07] bg-white/[0.035] px-4 py-3 mx-auto sm:mx-0">
+                <p className="text-[11px] font-bold text-gray-300">Benchmark reel indisponible</p>
+                <p className="mt-1 text-[11px] leading-snug text-gray-500">
+                  Les scores restent utiles pour decider quoi couper ou reecrire, mais Viralynz ne les presente pas comme un classement TikTok verifie.
+                </p>
+              </div>
+            )}
 
             {data.comparativeInsight && (
               plan === 'free' ? (
@@ -530,7 +588,9 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
                   {data.observedPerformanceScore}
                 </span>
                 <span className="text-[11px] text-gray-500">
-                  {data.observedPerformanceLabel ?? 'Performance observée'}
+                  {data.observedPerformanceEstimated || !transparency.canShowRealBenchmark
+                    ? 'Performance estimee'
+                    : data.observedPerformanceLabel ?? 'Performance observee'}
                 </span>
               </div>
             )
