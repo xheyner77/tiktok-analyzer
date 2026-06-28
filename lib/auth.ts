@@ -33,6 +33,7 @@ export interface UserProfile {
   created_at: string;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
+  stripe_price_id?: string | null;
   subscription_status: string | null;
   subscription_current_period_end: string | null;
   subscription_cancel_at_period_end: boolean;
@@ -73,16 +74,34 @@ export async function ensureUserProfile(input: { userId: string; email: string }
 
 // ── Read ─────────────────────────────────────────────────────────────────────
 
+const USER_PROFILE_SELECT_WITH_STRIPE_PRICE =
+  'id, email, plan, analyses_count, hooks_count, reconstructions_count, last_reset_at, created_at, stripe_customer_id, stripe_subscription_id, stripe_price_id, subscription_status, subscription_current_period_end, subscription_cancel_at_period_end, tiktok_open_id, tiktok_display_name, tiktok_avatar_url, tiktok_connected_at';
+
+const USER_PROFILE_SELECT_LEGACY =
+  'id, email, plan, analyses_count, hooks_count, reconstructions_count, last_reset_at, created_at, stripe_customer_id, stripe_subscription_id, subscription_status, subscription_current_period_end, subscription_cancel_at_period_end, tiktok_open_id, tiktok_display_name, tiktok_avatar_url, tiktok_connected_at';
+
+function isMissingStripePriceIdColumn(error: { code?: string; message?: string } | null | undefined): boolean {
+  const message = error?.message ?? '';
+  return error?.code === 'PGRST204' || error?.code === '42703' || /stripe_price_id/i.test(message);
+}
+
 /** Read the user profile from public.users (single source of truth) */
 export async function getUserById(id: string): Promise<UserProfile | null> {
-  const { data, error } = await supabase
+  let result = await supabase
     .from('users')
-    .select(
-      'id, email, plan, analyses_count, hooks_count, reconstructions_count, last_reset_at, created_at, stripe_customer_id, stripe_subscription_id, subscription_status, subscription_current_period_end, subscription_cancel_at_period_end, tiktok_open_id, tiktok_display_name, tiktok_avatar_url, tiktok_connected_at'
-    )
+    .select(USER_PROFILE_SELECT_WITH_STRIPE_PRICE)
     .eq('id', id)
     .single();
 
+  if (isMissingStripePriceIdColumn(result.error)) {
+    result = await supabase
+      .from('users')
+      .select(USER_PROFILE_SELECT_LEGACY)
+      .eq('id', id)
+      .single();
+  }
+
+  const { data, error } = result;
   if (error || !data) return null;
 
   const profile: UserProfile = {
@@ -96,6 +115,7 @@ export async function getUserById(id: string): Promise<UserProfile | null> {
     created_at:                        data.created_at,
     stripe_customer_id:               (data.stripe_customer_id as string | null) ?? null,
     stripe_subscription_id:           (data.stripe_subscription_id as string | null) ?? null,
+    stripe_price_id:                  (data as { stripe_price_id?: string | null }).stripe_price_id ?? null,
     subscription_status:              (data.subscription_status as string | null) ?? null,
     subscription_current_period_end:  (data.subscription_current_period_end as string | null) ?? null,
     subscription_cancel_at_period_end: Boolean(data.subscription_cancel_at_period_end),

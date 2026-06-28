@@ -51,6 +51,39 @@ export type SyncCheckoutResult =
   | { ok: true }
   | { ok: false; reason: string; log?: string };
 
+function isMissingStripePriceIdColumn(error: { code?: string; message?: string } | null | undefined): boolean {
+  const message = error?.message ?? '';
+  return error?.code === 'PGRST204' || error?.code === '42703' || /stripe_price_id/i.test(message);
+}
+
+async function updateUserByIdWithStripePriceFallback(
+  userId: string,
+  patch: Record<string, unknown>
+): Promise<{ message: string } | null> {
+  const { error } = await supabase
+    .from('users')
+    .update(patch)
+    .eq('id', userId);
+
+  if (!error || !('stripe_price_id' in patch) || !isMissingStripePriceIdColumn(error)) {
+    return error;
+  }
+
+  const legacyPatch = { ...patch };
+  delete legacyPatch.stripe_price_id;
+
+  const { error: retryError } = await supabase
+    .from('users')
+    .update(legacyPatch)
+    .eq('id', userId);
+
+  if (!retryError) {
+    console.warn('[stripe-sync] stripe_price_id column missing; user sync retried without it', { userId });
+  }
+
+  return retryError;
+}
+
 /**
  * Après Checkout Session (mode subscription) payée — source de vérité partagée webhook + /api/upgrade-plan.
  */
@@ -159,12 +192,13 @@ export async function syncUserFromPaidSubscriptionCheckout(
   const now = new Date().toISOString();
   const periodEndIso = subscriptionCurrentPeriodEndIso(sub);
 
-  const { error: upErr } = await supabase
-    .from('users')
-    .update({
+  const upErr = await updateUserByIdWithStripePriceFallback(
+    userId,
+    {
       plan: planFromPrice,
       stripe_customer_id: customerId,
       stripe_subscription_id: sub.id,
+      stripe_price_id: priceId,
       subscription_status: sub.status,
       subscription_current_period_end: periodEndIso,
       subscription_cancel_at_period_end: sub.cancel_at_period_end ?? false,
@@ -172,8 +206,8 @@ export async function syncUserFromPaidSubscriptionCheckout(
       hooks_count: 0,
       reconstructions_count: 0,
       last_reset_at: now,
-    })
-    .eq('id', userId);
+    }
+  );
 
   if (upErr) {
     return { ok: false, reason: 'db_update_failed', log: upErr.message };
@@ -256,12 +290,13 @@ export async function syncUserFromPaidLifetimeCheckout(
   }
 
   const now = new Date().toISOString();
-  const { error: upErr } = await supabase
-    .from('users')
-    .update({
+  const upErr = await updateUserByIdWithStripePriceFallback(
+    userId,
+    {
       plan: 'lifetime',
       stripe_customer_id: customerId,
       stripe_subscription_id: null,
+      stripe_price_id: priceId,
       subscription_status: 'lifetime',
       subscription_current_period_end: null,
       subscription_cancel_at_period_end: false,
@@ -269,8 +304,8 @@ export async function syncUserFromPaidLifetimeCheckout(
       hooks_count: 0,
       reconstructions_count: 0,
       last_reset_at: now,
-    })
-    .eq('id', userId);
+    }
+  );
 
   if (upErr) {
     return { ok: false, reason: 'db_update_failed', log: upErr.message };
@@ -363,11 +398,14 @@ export async function syncUserRowFromStripeSubscription(sub: Stripe.Subscription
     subscription_cancel_at_period_end: sub.cancel_at_period_end ?? false,
     plan: nextPlan,
   };
+  if (priceId) {
+    patch.stripe_price_id = priceId;
+  }
   if (customerId) {
     patch.stripe_customer_id = customerId;
   }
 
-  const { error: upErr } = await supabase.from('users').update(patch).eq('id', userId);
+  const upErr = await updateUserByIdWithStripePriceFallback(userId, patch);
   if (upErr) {
     return { ok: false, reason: 'db_update_failed', log: upErr.message };
   }
