@@ -10,7 +10,7 @@ export function normalizeTikTokPlan(plan: string | null | undefined): TikTokPlan
 export function getTikTokAccountLimitForPlan(plan: string | null | undefined): number {
   const normalized = normalizeTikTokPlan(plan);
   if (normalized === 'lifetime') return 3;
-  if (normalized === 'pro') return 1;
+  if (normalized === 'pro') return 3;
   if (normalized === 'starter') return 1;
   return 0;
 }

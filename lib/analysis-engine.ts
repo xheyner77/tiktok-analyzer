@@ -1455,10 +1455,16 @@ export function enrichAnalysisResult(result: AnalysisResult, context: AnalysisEn
   const verdict = brain.scoring.verdict || verdictFor(weighted, subScores, repostRecommended);
   const transcriptAnalysis = buildTranscriptAnalysis(signals);
   const fallbackRepostVersion = buildRepost(context, dedupedDiagnostics, weighted, scoreAfter, pattern, dominantHook, sourceResult);
+  const shouldKeepContentAwareRepost =
+    Boolean(sourceResult.videoIntelligence?.onScreenText.available)
+    || pattern === 'ecommerce'
+    || pattern === 'demo_produit';
   const repostVersion = {
-    ...fallbackRepostVersion,
-    ...brain.repost.version,
-    hookVariants: brain.repost.version.hookVariants ?? fallbackRepostVersion.hookVariants,
+    ...(shouldKeepContentAwareRepost ? brain.repost.version : fallbackRepostVersion),
+    ...(shouldKeepContentAwareRepost ? fallbackRepostVersion : brain.repost.version),
+    hookVariants: shouldKeepContentAwareRepost
+      ? fallbackRepostVersion.hookVariants
+      : brain.repost.version.hookVariants ?? fallbackRepostVersion.hookVariants,
   };
   const openingAnalysis = buildOpeningAnalysis(pattern, dedupedDiagnostics, subScores, signals, sourceResult, repostVersion.hook);
   const videoSegments = buildSegmentedTimeline(pattern, dedupedDiagnostics, subScores, signals, sourceResult);

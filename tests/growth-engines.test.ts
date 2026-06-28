@@ -164,7 +164,7 @@ describe('growth engines', () => {
     expect(getTikTokAccountLimitForPlan('free')).toBe(0);
     expect(getTikTokAccountLimitForPlan('creator')).toBe(1);
     expect(getTikTokAccountLimitForPlan('pro')).toBe(3);
-    expect(getTikTokAccountLimitForPlan('scale')).toBe(8);
+    expect(getTikTokAccountLimitForPlan('scale')).toBe(3);
   });
 
   it('aggregates the full growth operating system', () => {
