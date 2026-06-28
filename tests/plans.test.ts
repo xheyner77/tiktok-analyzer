@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getPlanLimits, normalizePlan } from '@/lib/plans';
+import { getPlanLimits, hasProOrLifetimeAccess, isLifetimePlan, normalizePlan } from '@/lib/plans';
 import { getTikTokAccountLimitForPlan } from '@/lib/tiktok-plan-limits';
 import { HOOK_LIMITS, PLAN_LIMITS, RECONSTRUCTION_LIMITS } from '@/lib/plan-limits';
 import { getEffectivePlan } from '@/lib/stripe-billing';
@@ -7,6 +7,15 @@ import { getEffectivePlan } from '@/lib/stripe-billing';
 describe('plans', () => {
   it('normalizes legacy scale as Lifetime compatibility', () => {
     expect(normalizePlan('scale')).toBe('lifetime');
+  });
+
+  it('keeps Lifetime access canonical while accepting legacy Scale', () => {
+    expect(isLifetimePlan('lifetime')).toBe(true);
+    expect(isLifetimePlan('scale')).toBe(true);
+    expect(hasProOrLifetimeAccess('pro')).toBe(true);
+    expect(hasProOrLifetimeAccess('lifetime')).toBe(true);
+    expect(hasProOrLifetimeAccess('scale')).toBe(true);
+    expect(hasProOrLifetimeAccess('free')).toBe(false);
   });
 
   it('does not fallback a Supabase scale alias to free', () => {

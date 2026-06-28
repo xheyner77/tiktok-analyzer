@@ -1,6 +1,7 @@
 import type { RepostPriorityInput } from './repost-priority-engine';
 import type { ContentWorkspaceState } from './content-workspace-engine';
 import type { CumulativeIntelligenceState } from './cumulative-intelligence-layer';
+import { hasProOrLifetimeAccess, isLifetimePlan } from './plans';
 import { SIGNAL_WEIGHTS } from './scoring-weights';
 import type { Plan } from './supabase';
 
@@ -246,10 +247,10 @@ export function buildExpertModeState(input: {
   plan: Plan;
 }): ExpertModeState {
   const item = latest(input.items);
-  const available = input.plan === 'pro' || input.plan === 'scale';
+  const available = hasProOrLifetimeAccess(input.plan);
   const triggeredRules = buildRules(item).filter((rule) => rule.triggered).length;
   return {
-    enabledByDefault: input.plan === 'scale',
+    enabledByDefault: isLifetimePlan(input.plan),
     available,
     planLabel: available ? 'Expert controls' : 'Preview Pro',
     weights: buildWeights(),

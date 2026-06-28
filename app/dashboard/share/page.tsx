@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { getEffectivePlan, getUserById } from '@/lib/auth';
 import { getAnalyses, type AnalysisRow } from '@/lib/analyses';
-import { getPlanLabel, normalizePlan, type AppPlan } from '@/lib/plans';
+import { getPlanLabel, hasProOrLifetimeAccess, isLifetimePlan, normalizePlan } from '@/lib/plans';
 import { getSession } from '@/lib/session';
 import { getTikTokDashboardState, type TikTokDashboardState } from '@/lib/tiktok-accounts';
 
@@ -244,8 +244,8 @@ export default async function DashboardSharePage() {
   const partialItems = v2Items.filter((item) => item.status !== 'V2 prête');
   const activeTikTok = tiktok.active > 0;
   const advancedScopes = hasAdvancedTikTokScopes(tiktok);
-  const isScale = plan === 'scale';
-  const isProOrScale = plan === 'pro' || plan === 'scale';
+  const isLifetime = isLifetimePlan(plan);
+  const isProOrLifetime = hasProOrLifetimeAccess(plan);
 
   const planningLanes = [
     {
@@ -310,7 +310,7 @@ export default async function DashboardSharePage() {
                 <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">État publication</p>
                 <h2 className="mt-2 text-[20px] font-black text-white">Workflow de sortie</h2>
               </div>
-              <Badge tone={isProOrScale ? 'green' : 'amber'}>{planLabel}</Badge>
+              <Badge tone={isProOrLifetime ? 'green' : 'amber'}>{planLabel}</Badge>
             </div>
 
             <div className="mt-5 grid gap-3">
@@ -335,8 +335,8 @@ export default async function DashboardSharePage() {
               <MiniStatus
                 label="Plan actif"
                 value={planLabel}
-                detail={plan === 'creator' ? 'Préparation accessible. Publication enrichie avec Pro.' : isScale ? 'Workflow avancé et multi-comptes.' : isProOrScale ? 'Publication enrichie prête à être activée.' : 'Teste l’analyse avant le workflow publication.'}
-                tone={isProOrScale ? 'green' : 'amber'}
+                detail={plan === 'creator' ? 'Préparation accessible. Publication enrichie avec Pro.' : isLifetime ? 'Workflow avancé et multi-comptes.' : isProOrLifetime ? 'Publication enrichie prête à être activée.' : 'Teste l’analyse avant le workflow publication.'}
+                tone={isProOrLifetime ? 'green' : 'amber'}
               />
             </div>
           </aside>
@@ -391,9 +391,9 @@ export default async function DashboardSharePage() {
             />
             <MiniStatus
               label="Plan compatible"
-              value={plan === 'creator' ? 'Starter · préparation' : isScale ? 'Lifetime · multi-comptes' : isProOrScale ? 'Pro · publication enrichie' : 'Free · analyse test'}
-              detail={isProOrScale ? 'Les modules avancés pourront être activés côté produit.' : 'Pro débloquera les workflows enrichis.'}
-              tone={isProOrScale ? 'green' : 'amber'}
+              value={plan === 'creator' ? 'Starter · préparation' : isLifetime ? 'Lifetime · multi-comptes' : isProOrLifetime ? 'Pro · publication enrichie' : 'Free · analyse test'}
+              detail={isProOrLifetime ? 'Les modules avancés pourront être activés côté produit.' : 'Pro débloquera les workflows enrichis.'}
+              tone={isProOrLifetime ? 'green' : 'amber'}
             />
           </div>
 

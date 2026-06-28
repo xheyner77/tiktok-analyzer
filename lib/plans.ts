@@ -24,6 +24,15 @@ export function getPlanLabel(plan: RawPlan): string {
   return 'Free';
 }
 
+export function isLifetimePlan(plan: RawPlan): boolean {
+  return normalizePlan(plan) === 'lifetime';
+}
+
+export function hasProOrLifetimeAccess(plan: RawPlan): boolean {
+  const normalized = normalizePlan(plan);
+  return normalized === 'pro' || normalized === 'lifetime';
+}
+
 export function isPaidPlan(plan: RawPlan): boolean {
   return normalizePlan(plan) !== 'free';
 }

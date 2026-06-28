@@ -8,6 +8,7 @@ import type { Plan } from '@/lib/supabase';
 import type { AnalysisRow } from '@/lib/analyses';
 import { getScoreTextColor, getRatingColors } from '@/lib/utils';
 import { MAX_ANALYSES_PRO, MAX_HOOKS_PRO, HISTORY_LIMITS, RECONSTRUCTION_LIMITS } from '@/lib/plan-limits';
+import { isLifetimePlan } from '@/lib/plans';
 import { DISPLAY_CATALOG_PRO_EUR, DISPLAY_CATALOG_SCALE_EUR } from '@/lib/stripe-pricing';
 import { waitForBillingPlan } from '@/lib/wait-for-billing-sync';
 import TikTokConnectCard from '@/components/TikTokConnectCard';
@@ -1351,7 +1352,7 @@ export default function DashboardClient({
         {/* ═══════════════════════════════════════════════════════════════ */}
         {/* LOCKED SCALE (free + pro users) */}
         {/* ═══════════════════════════════════════════════════════════════ */}
-        {plan !== 'scale' && (
+        {!isLifetimePlan(plan) && (
           <LockedSection
             targetPlan="scale"
             price={DISPLAY_CATALOG_SCALE_EUR}

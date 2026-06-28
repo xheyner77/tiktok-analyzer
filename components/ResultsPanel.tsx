@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AnalysisResult, Improvement } from '@/lib/types';
+import { isLifetimePlan } from '@/lib/plans';
 
 interface ResultsPanelProps {
   data: AnalysisResult;
-  plan: 'free' | 'pro' | 'scale';
+  plan: 'free' | 'pro' | 'lifetime' | 'scale';
   onReset?: () => void;
 }
 
@@ -141,6 +142,7 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
   const metrics = data.observedMetrics ?? {};
   const meta    = data.detectedVideoMeta;
   const hasStats = Object.values(metrics).some(v => v != null);
+  const isLifetime = isLifetimePlan(plan);
 
   const summary    = buildSummary(data);
   const mainProb   = deriveMainProblem(data);
@@ -603,7 +605,7 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
 
       {/* 6. SCALE — Insights avancés */}
       <Hr />
-      {plan === 'scale' && (data.viralTips?.length ?? 0) > 0 ? (
+      {isLifetime && (data.viralTips?.length ?? 0) > 0 ? (
         <div className="px-7 sm:px-10 py-8 text-center md:text-left">
           <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-2 sm:gap-3 mb-6">
             <p className={label9}>Hypothèses IA</p>
@@ -617,7 +619,7 @@ export default function ResultsPanel({ data, plan, onReset }: ResultsPanelProps)
             ))}
           </div>
         </div>
-      ) : plan !== 'scale' && (
+      ) : !isLifetime && (
         /* Locked Lifetime insights preview */
         <div className="relative overflow-hidden border-t-0 min-h-[300px]">
           <div className="blur-sm pointer-events-none select-none opacity-30 px-7 sm:px-10 py-10 min-h-[280px]" aria-hidden>

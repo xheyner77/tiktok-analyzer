@@ -6,6 +6,7 @@ import type { ContentWorkspaceState } from './content-workspace-engine';
 import type { StrategicDecisionState } from './strategic-decision-engine';
 import type { CumulativeIntelligenceState } from './cumulative-intelligence-layer';
 import type { SmartAutomationState } from './smart-automation-engine';
+import { hasProOrLifetimeAccess } from './plans';
 
 export type PublishingPlatform = 'tiktok' | 'shorts' | 'reels';
 export type ContentPipelineStatus = 'idea' | 'editing' | 'ready' | 'scheduled' | 'posted' | 'repost_candidate';
@@ -135,7 +136,7 @@ function buildScheduleRecommendations(
   const activeProject = workspace.activeProject;
   const hookPrediction = intelligence.predictions.find((prediction) => prediction.type === 'hook');
   const repostPrediction = intelligence.predictions.find((prediction) => prediction.type === 'repost');
-  const advanced = plan === 'pro' || plan === 'scale';
+  const advanced = hasProOrLifetimeAccess(plan);
   return [
     {
       id: 'schedule_tiktok_primary',
