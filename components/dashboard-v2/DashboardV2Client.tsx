@@ -18,6 +18,7 @@ import type {
 import TikTokConnectModal from '@/components/dashboard-v2/TikTokConnectModal';
 import { TikTokConnectionManager } from '@/components/dashboard-v2/TikTokConnectionManager';
 import { TikTokConnectedSuccessModal } from '@/components/dashboard-v2/TikTokConnectedSuccessModal';
+import DashboardOverviewRedesign from '@/components/dashboard-v2/DashboardOverviewRedesign';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useLanguage } from '@/lib/i18n/useLanguage';
 import { translateKnownPhrase } from '@/lib/i18n/translations';
@@ -3235,6 +3236,7 @@ function MobileOverviewDashboard({
 
 function DashboardV2Client({ dashboard, children }: { dashboard: DashboardData; children?: ReactNode }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [managerOpen, setManagerOpen] = useState(false);
   const [locallyDisconnected, setLocallyDisconnected] = useState(false);
@@ -3285,6 +3287,7 @@ function DashboardV2Client({ dashboard, children }: { dashboard: DashboardData; 
     : dashboard.tiktokConnection;
   const showOverview = pathname === '/dashboard';
   const showAnalyzeMobileChrome = pathname === '/dashboard/analyze';
+  const hasTikTokStatusMessage = Boolean(searchParams?.get('tiktok'));
 
   useEffect(() => {
     document.body.setAttribute('data-dashboard-v2', 'true');
@@ -3320,7 +3323,7 @@ function DashboardV2Client({ dashboard, children }: { dashboard: DashboardData; 
           user={dashboard.user}
           tiktokConnection={visibleTikTokConnection}
         />
-        {!visibleStates.hasTikTokConnection && !locallyDisconnected && (
+        {!visibleStates.hasTikTokConnection && !locallyDisconnected && (!showOverview || hasTikTokStatusMessage) && (
           <TikTokConnectModal
             isTikTokConnected={visibleStates.hasTikTokConnection}
             connectUrl="/api/tiktok/connect"
@@ -3353,16 +3356,12 @@ function DashboardV2Client({ dashboard, children }: { dashboard: DashboardData; 
 
           <div data-dashboard-content="true" className="relative mx-auto w-full min-w-0 max-w-[1180px] px-4 pb-8 pt-5 sm:px-5 md:px-6 lg:px-8 min-[1024px]:mx-0 min-[1024px]:max-w-none min-[1024px]:flex-1 min-[1024px]:overflow-y-auto min-[1024px]:overscroll-contain min-[1024px]:px-5 min-[1024px]:pb-7 min-[1024px]:pt-4 min-[1440px]:px-6 min-[1680px]:px-8">
             {showOverview ? (
-              <>
-                <MobileOverviewDashboard dashboard={dashboard} states={visibleStates} tiktokConnection={visibleTikTokConnection} />
-
-                <DesktopOverviewDashboard
-                  dashboard={dashboard}
-                  states={visibleStates}
-                  tiktokConnection={visibleTikTokConnection}
-                  onManageTikTok={() => setManagerOpen(true)}
-                />
-              </>
+              <DashboardOverviewRedesign
+                dashboard={dashboard}
+                states={visibleStates}
+                tiktokConnection={visibleTikTokConnection}
+                onManageTikTok={() => setManagerOpen(true)}
+              />
             ) : children}
           </div>
         </div>

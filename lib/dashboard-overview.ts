@@ -516,7 +516,7 @@ export function buildDashboardOverviewData(source: OverviewSource): DashboardOve
     aiRecommendation: buildAiRecommendation(source),
     activity: buildActivity(source),
     weeklyGoals: buildWeeklyGoals(source),
-    hooksToTest: source.hooks,
+    hooksToTest: source.hooks.slice(0, 3),
     bestTimeSlots: buildTimeSlots(source),
     memoryInsight: source.memory,
   };
