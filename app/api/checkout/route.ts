@@ -4,8 +4,8 @@ import { getSession } from '@/lib/session';
 import { getUserById } from '@/lib/auth';
 import { getSiteUrl } from '@/lib/site-url';
 import {
-  assertStripePriceIsOneTimePayment,
   assertStripePriceIsMonthlySubscription,
+  assertStripePriceIsOneTimePayment,
   type BillingInterval,
   getStripePriceId,
   getEffectivePlan,
@@ -19,11 +19,14 @@ import {
   blockTestStripeSecretInProduction,
 } from '@/lib/stripe-prod-guard';
 
-const stripeSecret = process.env.STRIPE_SECRET_KEY?.trim();
-
 function getStripe(): Stripe {
+  const stripeSecret = process.env.STRIPE_SECRET_KEY?.trim();
   if (!stripeSecret) throw new Error('STRIPE_SECRET_KEY manquant');
   return new Stripe(stripeSecret);
+}
+
+function isCheckoutPlan(plan: string | undefined): plan is PaidStripePlan {
+  return plan === 'starter' || plan === 'creator' || plan === 'pro' || plan === 'lifetime' || plan === 'scale';
 }
 
 export async function POST(request: NextRequest) {
@@ -36,18 +39,19 @@ export async function POST(request: NextRequest) {
     const session = await getSession();
 
     if (!session) {
-      return NextResponse.json({ error: 'Non authentifié.' }, { status: 401 });
+      return NextResponse.json({ error: 'Non authentifie.' }, { status: 401 });
     }
 
     const body = await request.json();
     const { plan, interval = 'month' } = body as { plan?: string; interval?: BillingInterval };
 
-    if (plan !== 'creator' && plan !== 'pro' && plan !== 'lifetime' && plan !== 'scale') {
-      return NextResponse.json({ error: 'Plan invalide. Valeurs acceptées : creator, pro, lifetime.' }, { status: 400 });
+    if (!isCheckoutPlan(plan)) {
+      return NextResponse.json({ error: 'Plan invalide. Valeurs acceptees : starter, pro, lifetime.' }, { status: 400 });
     }
     if (interval !== 'month' && interval !== 'year') {
-      return NextResponse.json({ error: 'Intervalle invalide. Valeurs acceptées : month, year.' }, { status: 400 });
+      return NextResponse.json({ error: 'Intervalle invalide. Valeurs acceptees : month, year.' }, { status: 400 });
     }
+
     const normalizedPlan = normalizePlan(plan);
     if (normalizedPlan === 'starter' && interval === 'year') {
       return NextResponse.json({ error: 'Le plan Starter est disponible uniquement en mensuel.' }, { status: 400 });
@@ -58,13 +62,13 @@ export async function POST(request: NextRequest) {
 
     const userProfile = await getUserById(session.userId);
     const hasActiveStripeSub =
-      !!userProfile?.stripe_subscription_id &&
-      isSubscriptionStatusAllowingAccess(userProfile.subscription_status);
+      Boolean(userProfile?.stripe_subscription_id) &&
+      isSubscriptionStatusAllowingAccess(userProfile?.subscription_status);
     const currentPlan = userProfile ? getEffectivePlan(userProfile) : 'free';
 
     if (isLifetimePlan(currentPlan)) {
       return NextResponse.json(
-        { error: 'Tu es déjà sur le plan Lifetime.', code: 'ALREADY_ON_PLAN' },
+        { error: 'Tu es deja sur le plan Lifetime.', code: 'ALREADY_ON_PLAN' },
         { status: 400 }
       );
     }
@@ -77,8 +81,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: isSamePlan
-            ? `Tu es déjà sur le plan ${getPlanLabel(plan)}.`
-            : `Tu es déjà sur un plan supérieur.`,
+            ? `Tu es deja sur le plan ${getPlanLabel(plan)}.`
+            : 'Tu es deja sur un plan superieur.',
           code: isSamePlan ? 'ALREADY_ON_PLAN' : 'PLAN_DOWNGRADE_BLOCKED',
         },
         { status: 400 }
@@ -88,7 +92,7 @@ export async function POST(request: NextRequest) {
     if (hasActiveStripeSub && normalizedPlan !== 'lifetime') {
       return NextResponse.json(
         {
-          error: 'Tu as déjà un abonnement Stripe actif. Gère-le depuis le dashboard ou contacte le support.',
+          error: 'Tu as deja un abonnement Stripe actif. Gere-le depuis le dashboard ou contacte le support.',
           code: 'ALREADY_SUBSCRIBED',
         },
         { status: 400 }
@@ -97,24 +101,19 @@ export async function POST(request: NextRequest) {
 
     const baseUrl = getSiteUrl(request.headers.get('origin'));
     const stripe = getStripe();
-    const priceId = getStripePriceId(plan as PaidStripePlan, interval);
+    const priceId = getStripePriceId(plan, interval);
     const checkoutMode: Stripe.Checkout.SessionCreateParams.Mode =
       normalizedPlan === 'lifetime' ? 'payment' : 'subscription';
 
     const priceCheck = checkoutMode === 'payment'
       ? await assertStripePriceIsOneTimePayment(stripe, priceId)
       : await assertStripePriceIsMonthlySubscription(stripe, priceId);
+
     if (!priceCheck.ok) {
       console.error('[checkout] Price invalide:', priceCheck.code, priceId, priceCheck.message);
-      return NextResponse.json(
-        { error: priceCheck.message, code: priceCheck.code },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: priceCheck.message, code: priceCheck.code }, { status: 400 });
     }
 
-    // Ne pas passer `payment_method_types` : Stripe Checkout affiche automatiquement
-    // toutes les méthodes actives dans le Dashboard (carte, PayPal, etc.)
-    // Forcer uniquement `['card']` empêcherait PayPal d'apparaître.
     const params: Stripe.Checkout.SessionCreateParams = {
       mode: checkoutMode,
       line_items: [{ price: priceId, quantity: 1 }],
@@ -125,7 +124,6 @@ export async function POST(request: NextRequest) {
       },
       success_url: `${baseUrl}/dashboard?success=1&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/dashboard/billing`,
-      // Stripe Checkout : lien « Ajouter un code promotionnel » (codes actifs dans Dashboard → Produits → Codes promo)
       allow_promotion_codes: true,
     };
 
@@ -147,24 +145,22 @@ export async function POST(request: NextRequest) {
 
     const checkoutSession = await stripe.checkout.sessions.create(params);
 
-    console.log('[checkout] Session créée', {
+    console.log('[checkout] Session creee', {
       sessionId: checkoutSession.id,
       mode: checkoutSession.mode,
       priceId,
       userId: session.userId,
       plan: normalizedPlan,
       interval,
-      allow_promotion_codes: true,
       customer: params.customer ?? '(nouveau via customer_email)',
-      // payment_method_types absent → Stripe Checkout choisit automatiquement (carte + PayPal actifs)
-      payment_method_config: 'automatic (carte + PayPal si actif dans Dashboard)',
     });
+
     return NextResponse.json({ url: checkoutSession.url });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error('[checkout] Error:', message);
     return NextResponse.json(
-      { error: message.includes('STRIPE_PRICE') ? message : 'Erreur lors de la création du paiement.' },
+      { error: message.includes('STRIPE_') ? message : 'Erreur lors de la creation du paiement.' },
       { status: 500 }
     );
   }

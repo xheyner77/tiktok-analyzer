@@ -3,6 +3,13 @@ import { supabase } from './supabase';
 import { protectTikTokToken, revealTikTokToken } from './tiktok-crypto';
 import { canConnectTikTokAccount, formatTikTokAccountLimit, getTikTokAccountLimitForPlan } from './tiktok-account-limits';
 import type { TikTokTokenResponse, TikTokUserInfoBasic } from './tiktok-oauth';
+import {
+  getConfiguredTikTokEnvironment,
+  getTikTokCapabilities,
+  type TikTokCapabilities,
+  type TikTokEnvironment,
+} from './tiktok/capabilities';
+import { parseTikTokScopes } from './tiktok/scopes';
 
 export interface TikTokAccountSafe {
   id: string;
@@ -13,7 +20,12 @@ export interface TikTokAccountSafe {
   connectedAt: string;
   lastSyncAt: string | null;
   status: string;
+  syncStatus: string | null;
+  syncError: string | null;
   canSyncVideos: boolean;
+  environment: TikTokEnvironment;
+  capabilities: TikTokCapabilities;
+  needsReconnect: boolean;
 }
 
 export interface TikTokDashboardAccount extends TikTokAccountSafe {
@@ -37,20 +49,40 @@ export interface TikTokAccountPrivate extends TikTokAccountSafe {
   accessToken: string | null;
   refreshToken: string | null;
   expiresAt: string | null;
-}
-
-function parseScopes(raw: unknown): string[] {
-  if (Array.isArray(raw)) return raw.map(String).filter(Boolean);
-  if (typeof raw === 'string') return raw.split(/[,\s]+/).filter(Boolean);
-  return [];
+  refreshExpiresAt: string | null;
 }
 
 export function hasVideoListScope(scopes: string[]): boolean {
   return scopes.includes('video.list') || scopes.includes('video.list.basic');
 }
 
-function toSafeAccount(row: Record<string, any>): TikTokAccountSafe {
-  const scopes = parseScopes(row.scopes);
+type TikTokAccountRow = {
+  id: string;
+  user_id: string;
+  tiktok_open_id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  username: string | null;
+  scopes: unknown;
+  connected_at: string;
+  last_sync_at: string | null;
+  status: string | null;
+  sync_status?: string | null;
+  sync_error?: string | null;
+  access_token?: string | null;
+  refresh_token?: string | null;
+  expires_at?: string | null;
+  refresh_expires_at?: string | null;
+  environment?: string | null;
+};
+
+function toSafeAccount(row: TikTokAccountRow): TikTokAccountSafe {
+  const scopes = parseTikTokScopes(row.scopes);
+  const capabilities = getTikTokCapabilities({
+    scopes,
+    environment: row.environment,
+    refreshTokenExpiresAt: row.refresh_expires_at ?? null,
+  });
   return {
     id: row.id,
     displayName: row.display_name ?? null,
@@ -60,11 +92,16 @@ function toSafeAccount(row: Record<string, any>): TikTokAccountSafe {
     connectedAt: row.connected_at,
     lastSyncAt: row.last_sync_at ?? null,
     status: row.status ?? 'active',
+    syncStatus: row.sync_status ?? null,
+    syncError: row.sync_error ?? null,
     canSyncVideos: hasVideoListScope(scopes),
+    environment: capabilities.environment,
+    capabilities,
+    needsReconnect: capabilities.needsReconnect,
   };
 }
 
-function toPrivateAccount(row: Record<string, any>): TikTokAccountPrivate {
+function toPrivateAccount(row: TikTokAccountRow): TikTokAccountPrivate {
   const safe = toSafeAccount(row);
   return {
     ...safe,
@@ -73,13 +110,14 @@ function toPrivateAccount(row: Record<string, any>): TikTokAccountPrivate {
     accessToken: revealTikTokToken(row.access_token),
     refreshToken: revealTikTokToken(row.refresh_token),
     expiresAt: row.expires_at ?? null,
+    refreshExpiresAt: row.refresh_expires_at ?? null,
   };
 }
 
 export async function listTikTokAccountsForUser(userId: string): Promise<TikTokAccountSafe[]> {
   const { data, error } = await supabase
     .from('tiktok_accounts')
-    .select('id,display_name,avatar_url,username,scopes,connected_at,last_sync_at,status')
+    .select('id,user_id,tiktok_open_id,display_name,avatar_url,username,scopes,connected_at,last_sync_at,status,sync_status,sync_error,environment,refresh_expires_at')
     .eq('user_id', userId)
     .order('connected_at', { ascending: false });
 
@@ -88,7 +126,7 @@ export async function listTikTokAccountsForUser(userId: string): Promise<TikTokA
     return [];
   }
 
-  return (data ?? []).map((row) => toSafeAccount(row as Record<string, any>));
+  return (data ?? []).map((row) => toSafeAccount(row as TikTokAccountRow));
 }
 
 export async function getTikTokDashboardState(userId: string, plan: string): Promise<TikTokDashboardState> {
@@ -145,7 +183,22 @@ export async function getTikTokAccountForUser(userId: string, accountId: string)
     .maybeSingle();
 
   if (error || !data) return null;
-  return toPrivateAccount(data as Record<string, any>);
+  return toPrivateAccount(data as TikTokAccountRow);
+}
+
+export async function listActiveTikTokPrivateAccountsForUser(userId: string): Promise<TikTokAccountPrivate[]> {
+  const { data, error } = await supabase
+    .from('tiktok_accounts')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('status', 'active');
+
+  if (error) {
+    console.warn('[tiktok-accounts] private list failed:', error.message);
+    return [];
+  }
+
+  return (data ?? []).map((row) => toPrivateAccount(row as TikTokAccountRow));
 }
 
 export async function upsertTikTokAccountForUser(params: {
@@ -169,8 +222,24 @@ export async function upsertTikTokAccountForUser(params: {
     };
   }
 
-  const scopes = parseScopes(params.tokens.scope);
+  const scopes = parseTikTokScopes(params.tokens.scope);
   const expiresAt = new Date(Date.now() + Math.max(60, params.tokens.expires_in) * 1000).toISOString();
+  const refreshExpiresAt = params.tokens.refresh_expires_in
+    ? new Date(Date.now() + Math.max(60, params.tokens.refresh_expires_in) * 1000).toISOString()
+    : null;
+  let accessToken: string | null;
+  let refreshToken: string | null;
+
+  try {
+    accessToken = protectTikTokToken(params.tokens.access_token);
+    refreshToken = protectTikTokToken(params.tokens.refresh_token);
+  } catch (error) {
+    return {
+      ok: false as const,
+      code: 'token_encryption_failed',
+      message: error instanceof Error ? error.message : 'TikTok token encryption failed.',
+    };
+  }
 
   const row = {
     user_id: params.userId,
@@ -179,11 +248,16 @@ export async function upsertTikTokAccountForUser(params: {
     display_name: params.profile.display_name ?? null,
     avatar_url: params.profile.avatar_url ?? null,
     username: null,
-    access_token: protectTikTokToken(params.tokens.access_token),
-    refresh_token: protectTikTokToken(params.tokens.refresh_token),
+    access_token: accessToken,
+    refresh_token: refreshToken,
     expires_at: expiresAt,
+    refresh_expires_at: refreshExpiresAt,
     scopes,
+    environment: getConfiguredTikTokEnvironment(),
     connected_at: new Date().toISOString(),
+    last_sync_at: null,
+    sync_status: 'connected',
+    sync_error: null,
     status: 'active',
   };
 
@@ -204,9 +278,10 @@ export async function upsertTikTokAccountForUser(params: {
       tiktok_union_id: params.profile.union_id ?? null,
       tiktok_display_name: params.profile.display_name ?? null,
       tiktok_avatar_url: params.profile.avatar_url ?? null,
-      tiktok_access_token: params.tokens.access_token,
-      tiktok_refresh_token: params.tokens.refresh_token ?? null,
-      tiktok_token_expires_at: expiresAt,
+      // Legacy columns stay for compatibility but must not contain raw OAuth tokens.
+      tiktok_access_token: null,
+      tiktok_refresh_token: null,
+      tiktok_token_expires_at: null,
       tiktok_connected_at: new Date().toISOString(),
     })
     .eq('id', params.userId);
@@ -222,6 +297,48 @@ export async function disconnectTikTokAccount(userId: string, accountId: string)
     .eq('user_id', userId);
 
   return { ok: !error, error: error?.message };
+}
+
+export async function updateTikTokAccountTokens(params: {
+  userId: string;
+  accountId: string;
+  tokens: TikTokTokenResponse;
+}) {
+  let accessToken: string | null;
+  let refreshToken: string | null;
+
+  try {
+    accessToken = protectTikTokToken(params.tokens.access_token);
+    refreshToken = protectTikTokToken(params.tokens.refresh_token);
+  } catch (error) {
+    return {
+      ok: false as const,
+      error: error instanceof Error ? error.message : 'TikTok token encryption failed.',
+    };
+  }
+
+  const expiresAt = new Date(Date.now() + Math.max(60, params.tokens.expires_in) * 1000).toISOString();
+  const refreshExpiresAt = params.tokens.refresh_expires_in
+    ? new Date(Date.now() + Math.max(60, params.tokens.refresh_expires_in) * 1000).toISOString()
+    : null;
+  const update: Record<string, unknown> = {
+    access_token: accessToken,
+    expires_at: expiresAt,
+    status: 'active',
+    sync_error: null,
+  };
+
+  if (refreshToken) update.refresh_token = refreshToken;
+  if (refreshExpiresAt) update.refresh_expires_at = refreshExpiresAt;
+  if (params.tokens.scope) update.scopes = parseTikTokScopes(params.tokens.scope);
+
+  const { error } = await supabase
+    .from('tiktok_accounts')
+    .update(update)
+    .eq('id', params.accountId)
+    .eq('user_id', params.userId);
+
+  return { ok: !error, error: error?.message, expiresAt };
 }
 
 export async function getTikTokAccountLimitSummary(userId: string, plan: string) {

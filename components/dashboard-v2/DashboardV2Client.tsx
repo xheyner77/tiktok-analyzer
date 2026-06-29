@@ -3,12 +3,24 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type { DashboardData, DashboardInsight, DashboardRecommendation, DashboardTopVideo } from '@/lib/dashboard-data';
+import type {
+  OverviewActivity,
+  OverviewAnalysisCard,
+  OverviewFormatPerformance,
+  OverviewGoal,
+  OverviewHookSuggestion,
+  OverviewKpi,
+  OverviewOpportunity,
+  OverviewTimeSlot,
+} from '@/lib/dashboard-overview';
 import TikTokConnectModal from '@/components/dashboard-v2/TikTokConnectModal';
 import { TikTokConnectionManager } from '@/components/dashboard-v2/TikTokConnectionManager';
 import { TikTokConnectedSuccessModal } from '@/components/dashboard-v2/TikTokConnectedSuccessModal';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { useLanguage } from '@/lib/i18n/useLanguage';
+import { translateKnownPhrase } from '@/lib/i18n/translations';
 
 type IconName =
   | 'home'
@@ -57,6 +69,19 @@ const insightStyleByType: Record<DashboardInsight['type'], { color: string; icon
   engagement: { color: '#14b8a6', icon: 'message' },
 };
 
+const connectedTikTokMessages: Record<string, string> = {
+  config: 'Connexion TikTok a configurer : ajoute les cles TikTok serveur, puis redemarre le serveur.',
+  limit: 'Ton plan bloque un compte TikTok different. Pour reconnecter ce compte, relance avec le meme compte TikTok.',
+  setup: 'Connexion TikTok indisponible cote serveur. Reessaie dans quelques minutes.',
+  session: 'Ta session Viralynz a expire. Reconnecte-toi, puis relance TikTok.',
+  state: 'Session TikTok expiree. Clique a nouveau sur Reconnecter TikTok.',
+  denied: 'Autorisation TikTok annulee avant la fin.',
+  token: 'TikTok n’a pas valide le code OAuth. Verifie la callback URL configuree cote TikTok.',
+  profile: 'TikTok a autorise le compte, mais le profil reste inaccessible.',
+  profile_error: 'TikTok a autorise le compte, mais le profil reste inaccessible.',
+  db: 'La connexion TikTok n’a pas pu etre enregistree en base.',
+};
+
 type NavItem = { label: string; href: string; icon: IconName; badge?: string; freeOnly?: boolean };
 
 const NAV_ITEMS: NavItem[] = [
@@ -64,8 +89,11 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Analyser', href: '/dashboard/analyze', icon: 'analysis' },
   { label: 'Mémoire IA', href: '/dashboard/insights', icon: 'insights' },
   { label: 'Générateur de hooks', href: '/dashboard/hooks', icon: 'pen' },
+  { label: 'Rewrite / V2', href: '/dashboard/rewrite', icon: 'spark' },
+  { label: 'Publication', href: '/dashboard/share', icon: 'share' },
   { label: 'Radar tendances', href: '/dashboard/radar', icon: 'radar' },
   { label: 'Bibliothèque contenu', href: '/dashboard/library', icon: 'folder' },
+  { label: 'Paramètres', href: '/dashboard/settings', icon: 'settings' },
   { label: 'Pricing', href: '/dashboard/billing', icon: 'crown', freeOnly: true },
 ];
 
@@ -142,16 +170,20 @@ function DashboardNav({ user, onSelect }: { user: DashboardData['user']; onSelec
         <Link
           key={item.href}
           href={item.href}
-          className={`group flex h-[43px] w-full items-center gap-3 rounded-[7px] px-3 text-left text-[14px] font-medium transition ${
+          title={item.label}
+          className={`group relative flex h-[42px] w-full items-center justify-center gap-3 rounded-[10px] text-left text-[13px] font-semibold transition xl:justify-start xl:px-3 ${
             active
-              ? 'border border-[#8b5cf6]/35 bg-[linear-gradient(90deg,rgba(124,58,237,0.9),rgba(76,29,149,0.42))] text-white shadow-[0_0_34px_-10px_rgba(124,58,237,0.9),inset_0_1px_0_rgba(255,255,255,0.12)]'
-              : 'text-slate-300/92 hover:bg-white/[0.035] hover:text-white'
+              ? 'border border-[#8b5cf6]/38 bg-[linear-gradient(135deg,rgba(124,58,237,0.94),rgba(59,130,246,0.26))] text-white shadow-[0_0_34px_-12px_rgba(124,58,237,0.95),inset_0_1px_0_rgba(255,255,255,0.13)]'
+              : 'border border-transparent text-slate-300/90 hover:border-white/[0.07] hover:bg-white/[0.045] hover:text-white'
           }`}
           onClick={onSelect}
         >
           <Icon name={item.icon} className={`h-[18px] w-[18px] ${active ? 'text-white' : item.freeOnly ? 'text-violet-200/90 group-hover:text-violet-100' : 'text-slate-300/86 group-hover:text-violet-200'}`} />
-          <span className="min-w-0 flex-1 truncate">{item.label}</span>
-          {item.badge && <span className="rounded-[5px] bg-[#4c1d95] px-2 py-0.5 text-[10px] font-bold text-violet-100">{item.badge}</span>}
+          <span className="hidden min-w-0 flex-1 truncate xl:block">{item.label}</span>
+          {item.badge && <span className="hidden rounded-[5px] bg-[#4c1d95] px-2 py-0.5 text-[10px] font-bold text-violet-100 xl:inline-flex">{item.badge}</span>}
+          <span className="pointer-events-none absolute left-[calc(100%+10px)] top-1/2 z-50 hidden -translate-y-1/2 whitespace-nowrap rounded-[8px] border border-white/[0.09] bg-[#071120]/95 px-2.5 py-1.5 text-[11px] font-bold text-slate-100 opacity-0 shadow-[0_18px_44px_-28px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.07)] backdrop-blur-xl transition group-hover:opacity-100 lg:block xl:hidden">
+            {item.label}
+          </span>
         </Link>
         );
       })}
@@ -321,22 +353,50 @@ function SidebarSettingsButton({ onSelect }: { onSelect?: () => void }) {
   );
 }
 
-function Sidebar({ user, tiktokConnection }: { user: DashboardData['user']; tiktokConnection: DashboardData['tiktokConnection'] }) {
+function Sidebar({
+  user,
+  tiktokConnection,
+}: {
+  user: DashboardData['user'];
+  tiktokConnection: DashboardData['tiktokConnection'];
+}) {
   return (
-    <aside data-dashboard-sidebar="desktop" className="fixed inset-y-0 left-0 z-20 hidden w-[260px] flex-col border-r border-white/[0.065] bg-[linear-gradient(180deg,rgba(3,8,20,0.985),rgba(2,5,12,0.998))] shadow-[28px_0_90px_-46px_rgba(109,40,217,0.68)] min-[1280px]:flex">
-      <div className="flex h-[76px] items-center gap-3 px-6">
-        <LogoMark />
-        <div className="text-[24px] font-black tracking-[-0.04em] text-white">Viralynz</div>
+    <aside data-dashboard-sidebar="desktop" className="fixed inset-y-0 left-0 z-20 hidden w-[84px] flex-col border-r border-white/[0.065] bg-[linear-gradient(180deg,rgba(3,8,20,0.985),rgba(2,5,12,0.998))] shadow-[28px_0_90px_-46px_rgba(109,40,217,0.68)] transition-[width] duration-200 lg:flex xl:w-[260px]">
+      <div className="flex h-[68px] items-center justify-center gap-3 px-3 xl:justify-start xl:px-5">
+        <LogoMark small />
+        <div className="hidden min-w-0 text-[22px] font-black tracking-[-0.04em] text-white xl:block">Viralynz</div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4 pt-1">
+      <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3 pt-1 xl:px-5">
         <DashboardNav user={user} />
       </div>
 
-      <div className="space-y-4 px-5 pb-6 pt-2">
-        <PlanUsageCard user={user} />
-        <ProfileCard user={user} tiktokConnection={tiktokConnection} />
-        <SidebarSupportButton />
+      <div className="space-y-3 px-3 pb-4 pt-2 xl:px-5">
+        <div className="hidden space-y-3 xl:block">
+          <PlanUsageCard user={user} />
+          <ProfileCard user={user} tiktokConnection={tiktokConnection} />
+        </div>
+        <div className="hidden xl:block">
+          <SidebarSupportButton />
+        </div>
+        <div className="grid gap-2 xl:hidden">
+          <Link
+            href="/dashboard/billing"
+            title="Gérer mon plan"
+            className="grid h-[42px] w-full place-items-center rounded-[12px] border border-violet-300/22 bg-[linear-gradient(135deg,rgba(124,58,237,0.24),rgba(34,211,238,0.08))] text-violet-100 shadow-[0_0_26px_-16px_rgba(168,85,247,0.9),inset_0_1px_0_rgba(255,255,255,0.09)] transition hover:border-violet-200/35 hover:bg-violet-400/16 focus:outline-none focus:ring-2 focus:ring-violet-300/25"
+            aria-label="Gérer mon plan"
+          >
+            <Icon name="crown" className="h-[18px] w-[18px]" />
+          </Link>
+          <Link
+            href="/dashboard/support"
+            title="Support"
+            className="grid h-[42px] w-full place-items-center rounded-[12px] border border-white/[0.075] bg-white/[0.035] text-cyan-100/70 transition hover:border-cyan-200/22 hover:bg-white/[0.06] hover:text-cyan-100 focus:outline-none focus:ring-2 focus:ring-cyan-200/20"
+            aria-label="Support"
+          >
+            <Icon name="message" className="h-[18px] w-[18px]" />
+          </Link>
+        </div>
       </div>
     </aside>
   );
@@ -386,7 +446,7 @@ const pageHeaderCopy: Array<{ match: (pathname: string | null) => boolean; title
   {
     match: (pathname) => pathname === '/dashboard',
     title: (user) => `Bienvenue, ${user.name} 👋`,
-    subtitle: 'Voici ton aperçu de performance',
+    subtitle: 'Ton cockpit de croissance TikTok est prêt.',
   },
   {
     match: (pathname) => pathname === '/dashboard/analyze',
@@ -449,7 +509,7 @@ function getPageHeaderCopy(pathname: string | null, user: DashboardData['user'])
 
   return {
     title: `Bienvenue, ${user.name} 👋`,
-    subtitle: 'Voici ton aperçu de performance',
+    subtitle: 'Ton cockpit de croissance TikTok est prêt.',
   };
 }
 
@@ -467,34 +527,46 @@ function DashboardTopBar({
   pathname: string | null;
 }) {
   const copy = getPageHeaderCopy(pathname, user);
+  const tiktokLabel = states.hasTikTokConnection
+    ? states.hasTikTokStats
+      ? 'TikTok synchronisé'
+      : 'TikTok connecté · données limitées'
+    : 'TikTok non connecté';
 
   return (
-    <header className="flex min-h-[76px] items-center justify-between gap-5">
+    <header className="flex min-h-[68px] items-center justify-between gap-4">
       <div className="min-w-0">
-        <h1 className="truncate text-[22px] font-black leading-[1.05] tracking-[-0.035em] text-white min-[1440px]:text-[24px]">{copy.title}</h1>
-        <p className="mt-1.5 truncate text-[13px] font-medium text-slate-400 min-[1440px]:text-[14px]">{copy.subtitle}</p>
+        <h1 className="truncate text-[20px] font-black leading-[1.05] tracking-[-0.035em] text-white min-[1440px]:text-[22px]">{copy.title}</h1>
+        <p className="mt-1 truncate text-[12.5px] font-medium text-slate-400 min-[1440px]:text-[13.5px]">{copy.subtitle}</p>
       </div>
-      <div className="flex shrink-0 items-center gap-2.5 min-[1440px]:gap-3">
+      <div className="flex min-w-0 shrink-0 items-center gap-2">
         <LanguageSwitcher />
-        <button className="flex h-[42px] items-center gap-2 rounded-[9px] border border-white/[0.09] bg-[#071120]/82 px-3 text-[13px] font-semibold text-slate-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] min-[1440px]:px-4" type="button">
+        <button className="flex h-[38px] items-center gap-2 rounded-[9px] border border-white/[0.09] bg-[#071120]/82 px-3 text-[12px] font-semibold text-slate-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] min-[1440px]:h-[40px]" type="button">
           <Icon name="calendar" className="h-4 w-4 text-slate-300" />
           <span className="hidden min-[1400px]:inline">Période actuelle</span>
           <span className="min-[1400px]:hidden">Période</span>
           <Icon name="chevron" className="h-3.5 w-3.5 rotate-90 text-slate-500" />
         </button>
-        <button className="relative flex h-[42px] w-[42px] items-center justify-center rounded-[9px] border border-white/[0.09] bg-[#071120]/82 text-slate-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]" type="button" aria-label="Notifications">
+        <button className="relative flex h-[38px] w-[38px] items-center justify-center rounded-[9px] border border-white/[0.09] bg-[#071120]/82 text-slate-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] min-[1440px]:h-[40px] min-[1440px]:w-[40px]" type="button" aria-label="Notifications">
           <Icon name="bell" className="h-[17px] w-[17px]" />
           <span className="absolute right-[9px] top-[8px] h-2 w-2 rounded-full bg-fuchsia-400 shadow-[0_0_12px_rgba(232,121,249,0.9)]" />
         </button>
         {states.hasTikTokConnection ? (
-          <TikTokConnectedBadge connection={tiktokConnection} onManage={onManageTikTok} />
+          <button
+            type="button"
+            onClick={onManageTikTok}
+            className="hidden h-[38px] max-w-[230px] items-center gap-2 rounded-[9px] border border-emerald-300/18 bg-emerald-300/[0.075] px-3 text-[11.5px] font-black text-emerald-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.075)] transition hover:bg-emerald-300/[0.11] min-[1180px]:flex min-[1440px]:h-[40px]"
+          >
+            <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(110,231,183,0.72)]" />
+            <span className="truncate">{tiktokLabel}</span>
+          </button>
         ) : (
-          <Link href="/api/tiktok/connect" className="flex h-[42px] items-center gap-2 rounded-[9px] border border-cyan-300/18 bg-cyan-300/10 px-3 text-[13px] font-bold text-cyan-100 transition hover:border-cyan-200/30 hover:bg-cyan-300/14 min-[1440px]:px-4">
+          <Link href="/api/tiktok/connect" className="hidden h-[38px] items-center gap-2 rounded-[9px] border border-cyan-300/18 bg-cyan-300/10 px-3 text-[12px] font-bold text-cyan-100 transition hover:border-cyan-200/30 hover:bg-cyan-300/14 min-[1180px]:flex min-[1440px]:h-[40px]">
             <span className="text-[16px] leading-none">♪</span>
             Connecter TikTok
           </Link>
         )}
-        <Link href="/dashboard/analyze" className={`flex h-[42px] items-center gap-2 px-4 text-[13px] min-[1440px]:px-5 min-[1440px]:text-[14px] ${primaryButton}`}>
+        <Link href="/dashboard/analyze" className={`flex h-[38px] items-center gap-2 px-3 text-[12px] min-[1440px]:h-[40px] min-[1440px]:px-4 min-[1440px]:text-[13px] ${primaryButton}`}>
           <Icon name="plus" className="h-4 w-4" />
           <span className="hidden min-[1440px]:inline">Analyser une vidéo</span>
           <span className="min-[1440px]:hidden">Analyser</span>
@@ -512,7 +584,7 @@ function MobileDashboardHeader({
   onMenuOpen: () => void;
 }) {
   return (
-    <header data-mobile-dashboard-header="true" className="sticky top-0 z-40 border-b border-white/[0.065] bg-[#020611]/88 px-3 py-2.5 shadow-[0_18px_44px_-34px_rgba(124,58,237,0.85)] backdrop-blur-xl min-[1280px]:hidden">
+    <header data-mobile-dashboard-header="true" className="sticky top-0 z-40 border-b border-white/[0.065] bg-[#020611]/88 px-3 py-2.5 shadow-[0_18px_44px_-34px_rgba(124,58,237,0.85)] backdrop-blur-xl min-[1024px]:hidden">
       <div className="mx-auto flex w-full max-w-[780px] items-center gap-3">
         <button
           type="button"
@@ -555,7 +627,7 @@ function MobileDrawer({
   tiktokConnection: DashboardData['tiktokConnection'];
 }) {
   return (
-    <div data-mobile-dashboard-drawer="true" className={`fixed inset-0 z-[190] min-[1280px]:hidden ${open ? '' : 'pointer-events-none'}`} aria-hidden={!open}>
+    <div data-mobile-dashboard-drawer="true" className={`fixed inset-0 z-[190] min-[1024px]:hidden ${open ? '' : 'pointer-events-none'}`} aria-hidden={!open}>
       <button
         type="button"
         aria-label="Fermer le menu"
@@ -611,7 +683,7 @@ function ResponsiveIntro({ user, states, tiktokConnection }: { user: DashboardDa
     <section className="min-[1280px]:hidden">
       <div>
         <h1 className="text-[28px] font-semibold leading-[1.06] tracking-[-0.035em] text-white sm:text-[34px]">Bienvenue, {user.name} 👋</h1>
-        <p className="mt-2 text-[14px] leading-relaxed text-slate-400 sm:text-[15px]">Voici ton aperçu de performance</p>
+        <p className="mt-2 text-[14px] leading-relaxed text-slate-400 sm:text-[15px]">Ton cockpit de croissance TikTok est prêt.</p>
       </div>
       {states.hasTikTokConnection && (
         <div className="mt-4">
@@ -637,29 +709,113 @@ function ResponsiveIntro({ user, states, tiktokConnection }: { user: DashboardDa
 
 type KpiItem = {
   label: string;
-  mobileLabel?: string;
   value: string;
-  delta: string | null;
   note: string;
   icon: IconName;
-  tone: 'green' | 'ring';
-  score?: number | null;
-  real: boolean;
+  tone: 'violet' | 'cyan' | 'emerald' | 'slate';
+  progress?: number | null;
 };
 
-function buildKpis(metrics: DashboardData['metrics'], states: DashboardData['states']): KpiItem[] {
-  const tikTokNote = states.hasTikTokConnection
-    ? 'Permissions performances non activées'
-    : 'Connecte TikTok pour relier ton profil';
-  const analysisNote = states.hasAnalyses
-    ? 'calculé depuis tes analyses'
-    : 'analyse ta première vidéo';
+function formatQuotaValue(user: DashboardData['user']) {
+  return `${user.quotaUsed} / ${user.quotaLimit ?? '∞'}`;
+}
+
+function quotaProgress(user: DashboardData['user']) {
+  if (!user.quotaLimit) return 100;
+  return Math.min(100, Math.round((user.quotaUsed / Math.max(user.quotaLimit, 1)) * 100));
+}
+
+function getTikTokStatusLabel(states: DashboardData['states']) {
+  if (!states.hasTikTokConnection) return 'À connecter';
+  if (states.hasTikTokStats) return 'Synchronisé';
+  if (states.hasTikTokVideoPermissions) return 'Connecté · sync à confirmer';
+  return 'Connecté · données limitées';
+}
+
+function buildKpis(dashboard: DashboardData, states: DashboardData['states']): KpiItem[] {
+  const { user, metrics } = dashboard;
+  const scoreValue = metrics.averageViralScore === null ? 'À lancer' : `${metrics.averageViralScore} / 100`;
+  const opportunityValue = states.hasAnalyses
+    ? metrics.opportunityCount > 0
+      ? `${metrics.opportunityCount} à surveiller`
+      : '1 angle à cadrer'
+    : 'À débloquer';
+  const tiktokNote = states.hasTikTokConnection
+    ? states.hasTikTokStats
+      ? 'Stats TikTok synchronisées'
+      : 'Compte relié, permissions stats à compléter'
+    : 'Relie ton profil quand tu veux synchroniser TikTok';
+
+  if (states.hasTikTokStats) {
+    return [
+      {
+        label: 'Vues TikTok',
+        value: metrics.totalViews,
+        note: 'Source : vidéos synchronisées depuis TikTok',
+        icon: 'eye',
+        tone: 'emerald',
+        progress: 100,
+      },
+      {
+        label: 'Engagement TikTok',
+        value: metrics.engagementRate,
+        note: 'Likes, commentaires et partages réels',
+        icon: 'message',
+        tone: 'cyan',
+        progress: metrics.engagementRate === '—' ? 0 : 100,
+      },
+      {
+        label: 'Score viral moyen',
+        value: scoreValue,
+        note: states.hasAnalyses ? 'Source : analyses Viralynz' : 'Lance une analyse pour créer ce score',
+        icon: 'target',
+        tone: 'violet',
+        progress: metrics.averageViralScore,
+      },
+      {
+        label: 'Analyses utilisées ce mois',
+        value: formatQuotaValue(user),
+        note: `Plan ${user.planLabel}`,
+        icon: 'analysis',
+        tone: 'slate',
+        progress: quotaProgress(user),
+      },
+    ];
+  }
 
   return [
-    { label: 'Vues totales', mobileLabel: 'Vues', value: metrics.totalViews, delta: null, note: states.hasTikTokMetrics ? 'données TikTok importées' : tikTokNote, icon: 'analysis', tone: 'green', real: states.hasTikTokMetrics },
-    { label: "Taux d'engagement", mobileLabel: 'Engagement', value: metrics.engagementRate, delta: null, note: states.hasTikTokMetrics ? 'données TikTok importées' : tikTokNote, icon: 'clock', tone: 'green', real: states.hasTikTokMetrics },
-    { label: 'Temps moyen de visionnage', mobileLabel: 'Visionnage', value: metrics.averageWatchTime, delta: null, note: states.hasTikTokMetrics ? 'données TikTok importées' : tikTokNote, icon: 'info', tone: 'green', real: states.hasTikTokMetrics },
-    { label: 'Score viral (moy.)', value: metrics.averageViralScore === null ? '—' : String(metrics.averageViralScore), delta: metrics.viralScoreChange, note: analysisNote, icon: 'target', tone: 'ring', score: metrics.averageViralScore, real: metrics.averageViralScore !== null },
+    {
+      label: 'Analyses utilisées ce mois',
+      value: formatQuotaValue(user),
+      note: `Plan ${user.planLabel}`,
+      icon: 'analysis',
+      tone: 'violet',
+      progress: quotaProgress(user),
+    },
+    {
+      label: 'Score viral moyen',
+      value: scoreValue,
+      note: states.hasAnalyses ? 'Source : analyses Viralynz' : 'Lance une analyse pour créer ce score',
+      icon: 'target',
+      tone: 'cyan',
+      progress: metrics.averageViralScore,
+    },
+    {
+      label: 'Opportunités de repost',
+      value: opportunityValue,
+      note: states.hasAnalyses ? metrics.opportunityText : 'Aucune opportunité inventée',
+      icon: 'spark',
+      tone: 'emerald',
+      progress: states.hasAnalyses ? Math.min(100, 42 + metrics.opportunityCount * 18) : 0,
+    },
+    {
+      label: 'Statut TikTok',
+      value: getTikTokStatusLabel(states),
+      note: tiktokNote,
+      icon: 'shield',
+      tone: 'slate',
+      progress: states.hasTikTokConnection ? (states.hasTikTokStats ? 100 : 58) : 18,
+    },
   ];
 }
 
@@ -678,43 +834,55 @@ function Sparkline({ color = '#a855f7' }: { color?: string }) {
   );
 }
 
-function StatCard({ item, className = '', compactMobile = false }: { item: KpiItem; className?: string; compactMobile?: boolean }) {
-  if (item.tone === 'ring') {
-    const score = item.score;
-    return (
-      <div className={`${shellCard} ${className} min-h-[124px] p-4 sm:h-[128px] sm:p-5`}>
-        <div className="text-[13px] text-white/88">{item.label}</div>
-        <div className="mt-4 flex items-center gap-4">
-          <div
-            className={`grid h-[56px] w-[56px] shrink-0 place-items-center rounded-full p-[4px] sm:h-[60px] sm:w-[60px] ${score === null ? 'bg-white/[0.07]' : 'shadow-[0_0_30px_rgba(168,85,247,0.42)]'}`}
-            style={score === null ? undefined : { background: `conic-gradient(#a855f7 0 ${score}%, rgba(255,255,255,0.07) ${score}% 100%)` }}
-          >
-            <div className="grid h-full w-full place-items-center rounded-full bg-[#06101f]">
-              <span className="text-[25px] font-bold leading-none tracking-[-0.05em] text-white sm:text-[29px]">{score ?? '—'}</span>
-            </div>
-          </div>
-          <div className="min-w-0">
-            <div className="text-[18px] text-slate-300">/100 {item.delta && <span className="ml-2 text-[13px] font-semibold text-[#7CFF59]">↗ {item.delta}</span>}</div>
-            <div className="mt-1 text-[13px] text-slate-400">{item.note}</div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+const kpiToneClass: Record<KpiItem['tone'], { icon: string; progress: string; glow: string }> = {
+  violet: {
+    icon: 'border-violet-200/16 bg-violet-400/12 text-violet-100',
+    progress: 'from-fuchsia-300 via-violet-400 to-violet-600',
+    glow: 'rgba(168,85,247,0.42)',
+  },
+  cyan: {
+    icon: 'border-cyan-200/16 bg-cyan-300/10 text-cyan-100',
+    progress: 'from-cyan-200 via-sky-400 to-violet-500',
+    glow: 'rgba(34,211,238,0.36)',
+  },
+  emerald: {
+    icon: 'border-emerald-200/14 bg-emerald-300/10 text-emerald-100',
+    progress: 'from-emerald-200 via-cyan-300 to-violet-500',
+    glow: 'rgba(16,185,129,0.3)',
+  },
+  slate: {
+    icon: 'border-white/[0.09] bg-white/[0.045] text-slate-200',
+    progress: 'from-slate-300 via-cyan-300 to-violet-400',
+    glow: 'rgba(148,163,184,0.24)',
+  },
+};
 
+function StatCard({ item }: { item: KpiItem }) {
+  const tone = kpiToneClass[item.tone];
+  const progress = typeof item.progress === 'number' && Number.isFinite(item.progress)
+    ? Math.max(0, Math.min(100, item.progress))
+    : null;
   return (
-    <div className={`${shellCard} ${className} ${compactMobile ? 'min-h-[104px] p-2.5 min-[1280px]:min-h-[124px] min-[1280px]:p-5' : 'min-h-[124px] p-4 sm:h-[128px] sm:p-5'}`}>
-      <div className={`${compactMobile ? 'flex items-start justify-between gap-1 text-[11px] leading-tight min-[1280px]:text-[13px]' : 'flex items-center justify-between text-[13px]'} text-white/88`}>
-        <span className={compactMobile ? 'line-clamp-2 min-[1280px]:hidden' : ''}>{compactMobile ? item.mobileLabel ?? item.label : item.label}</span>
-        {compactMobile ? <span className="hidden min-[1280px]:inline">{item.label}</span> : null}
-        <Icon name={item.icon} className={`${compactMobile ? 'h-3.5 w-3.5 min-[1280px]:h-4 min-[1280px]:w-4' : 'h-4 w-4'} shrink-0 text-white/80`} />
+    <div className={`${shellCard} min-h-[118px] p-4`}>
+      <div className="flex items-start justify-between gap-3">
+        <p className="min-w-0 text-[12.5px] font-semibold leading-snug text-slate-300">{item.label}</p>
+        <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-[9px] border ${tone.icon}`}>
+          <Icon name={item.icon} className="h-4 w-4" />
+        </span>
       </div>
-      <div className={`${compactMobile ? 'mt-3 min-[1280px]:mt-4' : 'mt-4'} flex items-end gap-3`}>
-        <div className={`${compactMobile ? 'text-[24px] min-[1280px]:text-[33px]' : 'text-[29px] sm:text-[33px]'} font-semibold leading-none tracking-[-0.045em] ${item.real ? 'text-white' : 'text-slate-500'}`}>{item.value}</div>
-        {item.delta && <div className="pb-1 text-[14px] font-semibold text-[#7CFF59]">↗ {item.delta}</div>}
+      <div className="mt-3 min-h-[32px] text-[23px] font-black leading-none tracking-[-0.04em] text-white min-[1440px]:text-[25px]">
+        {item.value}
       </div>
-      <div className={`${compactMobile ? 'hidden min-[1280px]:block' : 'block'} mt-2 text-[13px] text-slate-400`}>{item.note}</div>
-      {item.real && <div className={compactMobile ? 'hidden min-[1280px]:block' : ''}><Sparkline /></div>}
+      <p className="mt-2 line-clamp-2 min-h-[34px] text-[12px] leading-[1.4] text-slate-400">{item.note}</p>
+      <div className="mt-3 h-[5px] overflow-hidden rounded-full bg-white/[0.075]">
+        <div
+          className={`h-full rounded-full bg-gradient-to-r ${tone.progress}`}
+          style={{
+            width: `${progress ?? 0}%`,
+            boxShadow: `0 0 18px ${tone.glow}`,
+          }}
+        />
+      </div>
     </div>
   );
 }
@@ -745,16 +913,12 @@ function OpportunityCard({ metrics, className = '' }: { metrics: DashboardData['
   );
 }
 
-function KpiGrid({ metrics, states }: { metrics: DashboardData['metrics']; states: DashboardData['states'] }) {
-  const kpis = buildKpis(metrics, states);
-  const tiktokKpis = kpis.slice(0, 3);
-  const scoreKpi = kpis[3];
+function KpiGrid({ dashboard, states }: { dashboard: DashboardData; states: DashboardData['states'] }) {
+  const kpis = buildKpis(dashboard, states);
 
   return (
-    <section data-dashboard-kpi-grid="true" className="mt-4 grid grid-cols-3 gap-2.5 min-[640px]:gap-3 min-[1280px]:grid-cols-4 min-[1600px]:grid-cols-[repeat(4,minmax(0,1fr))_minmax(280px,1.08fr)] min-[1680px]:gap-4">
-      {tiktokKpis.map((item) => <StatCard key={item.label} item={item} compactMobile />)}
-      {scoreKpi ? <StatCard item={scoreKpi} className="col-span-3 min-[1280px]:col-span-1" /> : null}
-      <OpportunityCard metrics={metrics} className="col-span-3 min-[1280px]:col-span-2 min-[1600px]:col-span-1" />
+    <section data-dashboard-kpi-grid="true" className="grid grid-cols-1 gap-3 sm:grid-cols-2 min-[1180px]:grid-cols-4">
+      {kpis.map((item) => <StatCard key={item.label} item={item} />)}
     </section>
   );
 }
@@ -890,6 +1054,8 @@ function RetentionChartCard({
 }
 
 function CreatorPortrait({ latestVideo }: { latestVideo: DashboardData['latestVideo'] }) {
+  const hasSocialMetrics = latestVideo.likes !== '—' || latestVideo.comments !== '—' || latestVideo.shares !== '—';
+
   return (
     <div className="relative h-full w-full overflow-hidden rounded-[10px] bg-[radial-gradient(circle_at_55%_20%,rgba(139,92,246,0.38),transparent_32%),linear-gradient(180deg,#140b2d_0%,#07111f_64%,#030812_100%)]">
       {latestVideo.thumbnailUrl ? (
@@ -903,20 +1069,28 @@ function CreatorPortrait({ latestVideo }: { latestVideo: DashboardData['latestVi
       <div className="absolute right-[58px] top-1/2 grid h-[50px] w-[50px] -translate-y-1/2 place-items-center rounded-full bg-black/48 text-white backdrop-blur-md shadow-[0_12px_34px_rgba(0,0,0,0.42)] sm:right-[62px] sm:h-[58px] sm:w-[58px]">
         <Icon name="play" className="h-6 w-6 sm:h-7 sm:w-7" />
       </div>
-      <div className="absolute right-2.5 top-1/2 flex -translate-y-1/2 flex-col items-center gap-3 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.65)] sm:gap-3.5">
-        <div className="text-center">
-          <Icon name="heart" className="mx-auto h-6 w-6" />
-          <div className="mt-1 text-[9px] font-bold">{latestVideo.likes}</div>
+      {hasSocialMetrics ? (
+        <div className="absolute right-2.5 top-1/2 flex -translate-y-1/2 flex-col items-center gap-3 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.65)] sm:gap-3.5">
+          {latestVideo.likes !== '—' ? (
+            <div className="text-center">
+              <Icon name="heart" className="mx-auto h-6 w-6" />
+              <div className="mt-1 text-[9px] font-bold">{latestVideo.likes}</div>
+            </div>
+          ) : null}
+          {latestVideo.comments !== '—' ? (
+            <div className="text-center">
+              <Icon name="message" className="mx-auto h-5 w-5" />
+              <div className="mt-1 text-[9px] font-bold">{latestVideo.comments}</div>
+            </div>
+          ) : null}
+          {latestVideo.shares !== '—' ? (
+            <div className="text-center">
+              <Icon name="share" className="mx-auto h-5 w-5" />
+              <div className="mt-1 text-[9px] font-bold">{latestVideo.shares}</div>
+            </div>
+          ) : null}
         </div>
-        <div className="text-center">
-          <Icon name="message" className="mx-auto h-5 w-5" />
-          <div className="mt-1 text-[9px] font-bold">{latestVideo.comments}</div>
-        </div>
-        <div className="text-center">
-          <Icon name="share" className="mx-auto h-5 w-5" />
-          <div className="mt-1 text-[9px] font-bold">{latestVideo.shares}</div>
-        </div>
-      </div>
+      ) : null}
       <div className="absolute left-0 top-0 h-full w-[20px] bg-fuchsia-500/25 blur-[10px]" />
     </div>
   );
@@ -971,7 +1145,7 @@ function MiniScoreRing({ score, color }: { score: number | null; color: string }
     <div className="grid h-[54px] w-[54px] shrink-0 place-items-center rounded-full p-[3px]" style={score === null ? { background: 'rgba(255,255,255,.08)' } : { background: `conic-gradient(${color} 0 ${score}%, rgba(255,255,255,.08) ${score}% 100%)` }}>
       <div className="grid h-full w-full place-items-center rounded-full bg-[#071221]">
         <div className="text-center text-[13px] font-black leading-none text-white">
-          {score ?? '—'}<span className="text-[8.5px] text-slate-400">/100</span>
+          {score ?? 'N.D.'}<span className="text-[8.5px] text-slate-400">/100</span>
         </div>
       </div>
     </div>
@@ -987,40 +1161,44 @@ function InsightsIACard({
   cta: DashboardData['analysisCta'];
   states: DashboardData['states'];
 }) {
+  const { language, t } = useLanguage();
+
   return (
     <aside className={`${shellCard} min-h-[380px] p-4 sm:h-[488px] sm:p-5`}>
       <div className="pointer-events-none absolute inset-0 opacity-55 [background-image:radial-gradient(circle_at_88%_14%,rgba(124,58,237,.24),transparent_23%),linear-gradient(rgba(139,92,246,.13)_1px,transparent_1px),linear-gradient(90deg,rgba(139,92,246,.13)_1px,transparent_1px)] [background-size:100%_100%,36px_36px,36px_36px]" />
       <div className="relative flex h-full flex-col">
         <div className="flex items-center gap-2">
           <h2 className="text-[17px] font-semibold text-white">Mémoire IA</h2>
-          <span className="rounded-[5px] bg-[#4c1d95] px-2.5 py-0.5 text-[11px] font-bold text-violet-100">Nouveau</span>
+          <span className="rounded-[5px] bg-[#4c1d95] px-2.5 py-0.5 text-[11px] font-bold text-violet-100">{t('dashboard.new')}</span>
         </div>
         {!states.hasRealInsights ? (
           <div className="mt-5 min-h-[260px] flex-1 sm:min-h-0">
             <EmptyState
               title={states.hasTikTokConnection ? 'Compte connecté. Analyse une vidéo pour débloquer ta mémoire.' : 'Analyse ta première vidéo pour débloquer ta Mémoire IA.'}
               message={states.hasTikTokConnection ? 'TikTok est relié. Viralynz attend une vraie vidéo avant d’afficher des décisions de montage.' : 'Aucun score de hook, rétention ou engagement ne sera affiché tant qu’il ne vient pas d’une vraie analyse.'}
-              cta="Analyser une vidéo"
+              cta={t('dashboard.analyzeVideo')}
               href="/dashboard/analyze"
             />
           </div>
         ) : (
           <>
             <p className="mt-2.5 text-[14.75px] leading-[1.32] text-white">
-              Ces signaux viennent de ta dernière analyse Viralynz. Les champs absents restent neutres.
+              {t('dashboard.memorySignalsLatestFull')}
             </p>
 
             <div className="mt-3 space-y-2">
               {insights.map((item) => {
                 const style = insightStyleByType[item.type];
+                const title = translateKnownPhrase(item.title, language);
+                const description = translateKnownPhrase(item.description, language);
                 return (
                 <div key={item.title} className="flex min-h-[58px] items-center gap-3 rounded-[10px] border border-white/[0.065] bg-white/[0.035] px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
                   <div className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full" style={{ background: `${style.color}22`, color: style.color }}>
                     <Icon name={style.icon} className="h-[16px] w-[16px]" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-[13.6px] font-semibold leading-tight text-white">{item.title}</div>
-                    <p className="mt-1 line-clamp-2 text-[12.25px] leading-[1.36] text-slate-300/92">{item.description}</p>
+                    <div className="text-[13.6px] font-semibold leading-tight text-white">{title}</div>
+                    <p className="mt-1 line-clamp-2 text-[12.25px] leading-[1.36] text-slate-300/92">{description}</p>
                   </div>
                   <MiniScoreRing score={item.score} color={style.color} />
                 </div>
@@ -1042,6 +1220,7 @@ function InsightsIACard({
 
 function ViralPotentialCard({ metrics, states }: { metrics: DashboardData['metrics']; states: DashboardData['states'] }) {
   const score = metrics.averageViralScore;
+  const { t } = useLanguage();
 
   return (
     <div className={`${shellCard} min-h-[226px] p-4 sm:h-[244px] sm:p-5`}>
@@ -1049,9 +1228,9 @@ function ViralPotentialCard({ metrics, states }: { metrics: DashboardData['metri
       {score === null ? (
         <div className="mt-4 min-h-[150px] sm:h-[165px]">
           <EmptyState
-            title="À débloquer"
-            message={states.hasAnalyses ? 'Aucun score viral exploitable dans tes analyses actuelles.' : 'Analyse ta première vidéo pour débloquer cette métrique.'}
-            cta="Analyser une vidéo"
+            title={t('dashboard.unlock')}
+            message={states.hasAnalyses ? t('dashboard.noUsableViralScore') : t('dashboard.unlockMetric')}
+            cta={t('dashboard.analyzeVideo')}
             href="/dashboard/analyze"
           />
         </div>
@@ -1062,14 +1241,14 @@ function ViralPotentialCard({ metrics, states }: { metrics: DashboardData['metri
               <div className="grid h-full w-full place-items-center rounded-full bg-[#07101d]">
                 <div className="flex flex-col items-center justify-center gap-[6px] text-center leading-none">
                   <div className="text-[27px] font-semibold tracking-[-0.045em] text-white">{score}<span className="text-[16px]">%</span></div>
-                  <div className="text-[12.25px] font-medium leading-none text-slate-200">Score moyen</div>
+                  <div className="text-[12.25px] font-medium leading-none text-slate-200">{t('dashboard.scoreAverage')}</div>
                 </div>
               </div>
             </div>
           </div>
-          <div className="mt-2.5 text-center text-[12.75px] leading-none text-slate-400">Basé sur tes analyses Viralynz</div>
+          <div className="mt-2.5 text-center text-[12.75px] leading-none text-slate-400">{t('dashboard.basedOnAnalyses')}</div>
           <div className="mt-3 flex justify-center">
-            <span className="rounded-[7px] border border-fuchsia-400/12 bg-[#2e0f59] px-3 py-1 text-[12px] font-semibold leading-none text-fuchsia-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]">Aucune portée inventée</span>
+            <span className="rounded-[7px] border border-fuchsia-400/12 bg-[#2e0f59] px-3 py-1 text-[12px] font-semibold leading-none text-fuchsia-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]">{t('dashboard.noInventedReach')}</span>
           </div>
         </>
       )}
@@ -1078,14 +1257,16 @@ function ViralPotentialCard({ metrics, states }: { metrics: DashboardData['metri
 }
 
 function EmotionalCurveCard({ states }: { states: DashboardData['states'] }) {
+  const { t } = useLanguage();
+
   return (
     <div className={`${shellCard} min-h-[226px] p-4 sm:h-[244px] sm:p-5`}>
-      <SectionTitle>Courbe émotionnelle</SectionTitle>
+      <SectionTitle>{t('dashboard.emotionalCurve')}</SectionTitle>
       <div className="mt-4 min-h-[150px] sm:h-[165px]">
         <EmptyState
-          title="Aucune courbe réelle"
-          message={states.hasAnalyses ? 'Cette analyse ne contient pas de signaux émotionnels mesurables.' : 'Analyse une vidéo pour détecter les moments émotionnels.'}
-          cta="Analyser une vidéo"
+          title={t('dashboard.noRealCurve')}
+          message={states.hasAnalyses ? t('dashboard.noMeasurableEmotions') : t('dashboard.analyzeForEmotions')}
+          cta={t('dashboard.analyzeVideo')}
           href="/dashboard/analyze"
         />
       </div>
@@ -1094,14 +1275,16 @@ function EmotionalCurveCard({ states }: { states: DashboardData['states'] }) {
 }
 
 function ContentPillarsCard({ states }: { states: DashboardData['states'] }) {
+  const { t } = useLanguage();
+
   return (
     <div className={`${shellCard} min-h-[226px] p-4 sm:h-[244px] sm:p-5`}>
-      <SectionTitle>Performance des piliers de contenu</SectionTitle>
+      <SectionTitle>{t('dashboard.contentPillarPerformance')}</SectionTitle>
       <div className="mt-4 min-h-[150px] sm:h-[165px]">
         <EmptyState
-          title="Catégories à construire"
-          message={states.hasAnalyses ? 'Il faut plus de données réelles pour classer tes piliers de contenu.' : 'Les catégories apparaîtront après plusieurs analyses.'}
-          cta="Analyser une vidéo"
+          title={t('dashboard.categoriesToBuild')}
+          message={states.hasAnalyses ? t('dashboard.needMoreRealDataForPillars') : t('dashboard.categoriesAfterAnalyses')}
+          cta={t('dashboard.analyzeVideo')}
           href="/dashboard/analyze"
         />
       </div>
@@ -1126,19 +1309,20 @@ function VideoThumbnail({ index, color }: { index: number; color: string }) {
 
 function TopVideosCard({ videos, states }: { videos: DashboardTopVideo[]; states: DashboardData['states'] }) {
   const colors = ['#6d28d9', '#f97316', '#22c55e', '#fb7185'];
+  const { t } = useLanguage();
 
   return (
     <aside className={`${shellCard} min-h-[292px] p-4 sm:h-[318px] sm:p-5`}>
       <div className="flex items-center justify-between">
-        <h2 className="text-[17px] font-semibold text-white">Vidéos les plus performantes</h2>
-        <button className="rounded-[6px] px-2 py-1 text-[12.5px] font-medium text-fuchsia-300 transition hover:bg-fuchsia-400/10 hover:text-fuchsia-200" type="button">Voir tout</button>
+        <h2 className="text-[17px] font-semibold text-white">{t('dashboard.videosMostPerforming')}</h2>
+        <button className="rounded-[6px] px-2 py-1 text-[12.5px] font-medium text-fuchsia-300 transition hover:bg-fuchsia-400/10 hover:text-fuchsia-200" type="button">{t('dashboard.viewAll')}</button>
       </div>
       {!states.hasTikTokConnection ? (
         <div className="mt-4 min-h-[218px] sm:h-[242px]">
           <EmptyState
             title="Connecte TikTok"
             message="Relie ton profil TikTok à Viralynz. Les vidéos demandent des permissions avancées."
-            cta="Connecter TikTok"
+            cta={t('dashboard.connectTikTok')}
             href="/api/tiktok/connect"
           />
         </div>
@@ -1158,10 +1342,10 @@ function TopVideosCard({ videos, states }: { videos: DashboardTopVideo[]; states
               <div className="line-clamp-2 text-[13px] font-semibold leading-[1.25] text-white">{video.title}</div>
               <div className="mt-1 text-[11.75px] text-slate-500">{video.date}</div>
             </div>
-            <div className="grid h-10 w-10 place-items-center rounded-full border border-green-400/45 bg-green-400/10 text-[13px] font-semibold text-green-300">{video.score}</div>
+            <div className="grid h-10 w-10 place-items-center rounded-full border border-green-400/45 bg-green-400/10 text-[13px] font-semibold text-green-300">{video.score ?? '—'}</div>
             <div className="w-[52px] text-right text-[11.75px] leading-tight text-slate-300">
               <div>{video.views}</div>
-              <div className="text-slate-500">vues</div>
+              <div className="text-slate-500">{t('dashboard.views')}</div>
             </div>
           </div>
         ))}
@@ -1205,6 +1389,8 @@ function RecommendationsSection({
   context: string;
   states: DashboardData['states'];
 }) {
+  const { language, t } = useLanguage();
+
   return (
     <section className={`${shellCard} min-h-[176px] p-4`}>
       <div className="pointer-events-none absolute inset-y-0 left-0 w-[470px] bg-[radial-gradient(circle_at_18%_40%,rgba(124,58,237,0.22),transparent_46%)]" />
@@ -1215,33 +1401,373 @@ function RecommendationsSection({
         </div>
         <div className="relative w-full shrink-0 min-[1600px]:w-[226px]">
           <div className="flex items-center gap-2">
-            <h2 className="text-[20px] font-semibold tracking-[-0.02em] text-white">Recommandations</h2>
+            <h2 className="text-[20px] font-semibold tracking-[-0.02em] text-white">{t('dashboard.recommendations')}</h2>
             <Icon name="info" className="h-[13px] w-[13px] text-slate-400" />
           </div>
-          <p className="mt-2 max-w-[620px] text-[13.5px] leading-[1.45] text-slate-300 min-[1600px]:mt-3">{context}</p>
+          <p className="mt-2 max-w-[620px] text-[13.5px] leading-[1.45] text-slate-300 min-[1600px]:mt-3">{translateKnownPhrase(context, language)}</p>
         </div>
         <div className="relative grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2 min-[1180px]:grid-cols-4 min-[1180px]:gap-3.5 min-[1280px]:grid-cols-2 min-[1600px]:grid-cols-4">
           {recommendations.map((item, index) => {
             const style = recommendationStyles[index] ?? recommendationStyles[0];
+            const title = translateKnownPhrase(item.title, language);
+            const description = translateKnownPhrase(item.description, language);
+            const cta = translateKnownPhrase(item.cta, language);
             return (
             <div key={item.title} className={`${softPanel} flex min-h-[150px] min-w-0 flex-col border-white/[0.095] bg-white/[0.048] p-3.5`}>
               <div className="flex items-center gap-2.5">
                 <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-[9px] bg-gradient-to-br ${style.tone} text-white shadow-[0_12px_28px_-14px_rgba(124,58,237,0.88)]`}>
                   <Icon name={style.icon} className="h-4 w-4" />
                 </span>
-                <div className="min-w-0 break-words text-[13.5px] font-bold leading-tight text-white">{item.title}</div>
+                <div className="min-w-0 break-words text-[13.5px] font-bold leading-tight text-white">{title}</div>
               </div>
-              <p className={`mt-2.5 flex-1 break-words pb-2 text-[12.05px] leading-[1.38] ${item.locked ? 'text-slate-500' : 'text-slate-300/92'}`}>{item.description}</p>
+              <p className={`mt-2.5 flex-1 break-words pb-2 text-[12.05px] leading-[1.38] ${item.locked ? 'text-slate-500' : 'text-slate-300/92'}`}>{description}</p>
               {item.locked || !states.hasAnalyses ? (
               <Link href="/dashboard/analyze" className="mt-auto flex h-[30px] w-full items-center justify-center rounded-[8px] border border-white/[0.08] bg-white/[0.05] text-[11.85px] font-bold text-slate-300 transition hover:bg-white/[0.08] hover:text-white">
-                  Analyser une vidéo
+                  {t('dashboard.analyzeVideo')}
                 </Link>
               ) : (
-                <button className={`mt-auto h-[30px] w-full text-[11.85px] ${primaryButton}`} type="button">{item.cta}</button>
+                <button className={`mt-auto h-[30px] w-full text-[11.85px] ${primaryButton}`} type="button">{cta}</button>
               )}
             </div>
             );
           })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TikTokStatusBanner({
+  states,
+  connection,
+  onManageTikTok,
+}: {
+  states: DashboardData['states'];
+  connection: DashboardData['tiktokConnection'];
+  onManageTikTok: () => void;
+}) {
+  const displayName = connection.displayName?.trim();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [syncing, setSyncing] = useState(false);
+  const [reconnecting, setReconnecting] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const reconnectHref = '/api/tiktok/connect?mode=reconnect';
+  const tiktokStatus = searchParams?.get('tiktok') ?? null;
+  const statusMessage = tiktokStatus ? connectedTikTokMessages[tiktokStatus] : null;
+
+  function reconnectTikTok() {
+    if (reconnecting) return;
+    setReconnecting(true);
+    window.location.href = reconnectHref;
+  }
+
+  async function syncTikTokNow() {
+    if (syncing) return;
+    setSyncing(true);
+    setSyncMessage(null);
+
+    try {
+      const response = await fetch('/api/tiktok/sync', {
+        method: 'POST',
+        headers: { Accept: 'application/json' },
+      });
+      const payload = await response.json().catch(() => null) as { errors?: Array<{ message?: string }>; reason?: string } | null;
+
+      if (!response.ok) {
+        const message = payload?.errors?.[0]?.message
+          ?? (payload?.reason === 'missing_scope' ? 'TikTok n’a pas accordé les permissions vidéo.' : null)
+          ?? 'Synchronisation TikTok impossible pour le moment.';
+        setSyncMessage(message);
+        return;
+      }
+
+      setSyncMessage('Synchronisation lancée. Le cockpit se met à jour.');
+      router.refresh();
+    } catch {
+      setSyncMessage('Synchronisation TikTok impossible pour le moment.');
+    } finally {
+      setSyncing(false);
+    }
+  }
+
+  if (!states.hasTikTokConnection) {
+    return (
+      <section className={`${shellCard} p-4`}>
+        <div className="flex flex-col gap-4 min-[1180px]:flex-row min-[1180px]:items-center min-[1180px]:justify-between">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-slate-500" />
+              <h2 className="text-[15px] font-black text-white">Connecte TikTok pour synchroniser ton profil.</h2>
+            </div>
+            <p className="mt-2 max-w-[760px] text-[12.5px] leading-relaxed text-slate-400">
+              Tu peux utiliser Viralynz sans TikTok. Le cockpit n’affichera aucune métrique inventée tant que la connexion n’est pas réelle.
+            </p>
+          </div>
+          <Link href="/api/tiktok/connect" className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-[9px] border border-cyan-200/18 bg-cyan-300/10 px-4 text-[12.5px] font-black text-cyan-100 transition hover:border-cyan-200/30 hover:bg-cyan-300/[0.14]">
+            <span className="text-[16px] leading-none">♪</span>
+            Connecter TikTok
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
+  if (!states.hasTikTokStats) {
+    const missingPermissions = connection.needsReconnect || !states.hasTikTokVideoPermissions;
+    const granted = connection.scopes.length > 0 ? connection.scopes.join(', ') : 'profil basique';
+
+    return (
+      <section className={`${shellCard} p-4`}>
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-[42%] bg-[radial-gradient(circle_at_100%_20%,rgba(34,211,238,0.13),transparent_52%)]" />
+        <div className="relative flex flex-col gap-4 min-[1180px]:flex-row min-[1180px]:items-center min-[1180px]:justify-between">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_14px_rgba(110,231,183,0.72)]" />
+              <h2 className="text-[15px] font-black text-white">
+                {missingPermissions ? 'TikTok connecté · permissions insuffisantes' : 'TikTok connecté · synchronisation à lancer'}
+              </h2>
+              {displayName ? <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[11px] font-bold text-slate-300">{displayName}</span> : null}
+            </div>
+            <p className="mt-2 max-w-[820px] text-[12.5px] leading-relaxed text-slate-400">
+              {missingPermissions
+                ? `Le compte est relié, mais le token actuel n’autorise que ${granted}. Reconnecte TikTok pour autoriser les scopes configurés côté Viralynz.`
+                : 'Le compte est relié avec les bonnes permissions. Lance une synchronisation pour relier les vidéos disponibles au cockpit.'}
+            </p>
+            {connection.syncError ? (
+              <p className="mt-2 max-w-[820px] text-[12px] font-bold leading-relaxed text-amber-100">{connection.syncError}</p>
+            ) : null}
+            {syncMessage ? (
+              <p className="mt-2 max-w-[820px] text-[12px] font-bold leading-relaxed text-cyan-100">{syncMessage}</p>
+            ) : null}
+            {statusMessage ? (
+              <p className="mt-2 max-w-[820px] text-[12px] font-bold leading-relaxed text-amber-100">{statusMessage}</p>
+            ) : null}
+          </div>
+          <div className="flex shrink-0 flex-wrap gap-2">
+            {missingPermissions ? (
+              <button
+                type="button"
+                onClick={reconnectTikTok}
+                disabled={reconnecting}
+                className={`inline-flex h-10 items-center justify-center gap-2 px-4 text-[12.5px] disabled:cursor-wait disabled:opacity-70 ${primaryButton}`}
+              >
+                <span className="text-[16px] leading-none">♪</span>
+                {reconnecting ? 'Redirection...' : 'Reconnecter TikTok'}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => void syncTikTokNow()}
+                disabled={syncing}
+                className={`inline-flex h-10 items-center justify-center gap-2 px-4 text-[12.5px] disabled:cursor-not-allowed disabled:opacity-60 ${primaryButton}`}
+              >
+                <Icon name="spark" className="h-4 w-4" />
+                {syncing ? 'Synchronisation...' : 'Synchroniser TikTok'}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onManageTikTok}
+              className="inline-flex h-10 items-center justify-center rounded-[9px] border border-white/[0.09] bg-white/[0.045] px-4 text-[12.5px] font-black text-slate-200 transition hover:bg-white/[0.075] hover:text-white"
+            >
+              Gérer la connexion
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className={`${shellCard} p-4`}>
+      <div className="flex flex-col gap-4 min-[1180px]:flex-row min-[1180px]:items-center min-[1180px]:justify-between">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_14px_rgba(110,231,183,0.72)]" />
+            <h2 className="text-[15px] font-black text-white">TikTok synchronisé</h2>
+            {displayName ? <span className="rounded-full border border-emerald-200/14 bg-emerald-300/10 px-2.5 py-1 text-[11px] font-bold text-emerald-100">{displayName}</span> : null}
+          </div>
+          <p className="mt-2 text-[12.5px] leading-relaxed text-slate-400">Les dernières données TikTok disponibles sont reliées au cockpit.</p>
+        </div>
+        <button
+          type="button"
+          onClick={onManageTikTok}
+          className="inline-flex h-10 shrink-0 items-center justify-center rounded-[9px] border border-white/[0.09] bg-white/[0.045] px-4 text-[12.5px] font-black text-slate-200 transition hover:bg-white/[0.075] hover:text-white"
+        >
+          Gérer la connexion
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function getOpportunityBadge(score: number | null) {
+  if (score !== null && score >= 75) return 'À reposter';
+  if (score !== null && score >= 60) return 'Fort potentiel';
+  return 'À surveiller';
+}
+
+function BestAIOpportunityCard({
+  dashboard,
+  states,
+}: {
+  dashboard: DashboardData;
+  states: DashboardData['states'];
+}) {
+  const { language } = useLanguage();
+  const score = dashboard.metrics.averageViralScore;
+  const mainInsight = dashboard.insights[0];
+  const recommendation = dashboard.recommendations[0];
+  const title = states.hasAnalyses ? dashboard.latestVideo.title : 'Tes premières analyses sont prêtes à guider le repost.';
+  const problem = mainInsight
+    ? translateKnownPhrase(mainInsight.description, language)
+    : 'Viralynz cherche le meilleur angle à republier sans inventer de score TikTok.';
+  const action = recommendation && !recommendation.locked
+    ? translateKnownPhrase(recommendation.description, language)
+    : 'Analyse 2 ou 3 vidéos pour confirmer le pattern le plus rentable à retravailler.';
+
+  return (
+    <section className={`${shellCard} min-h-[252px] p-5`}>
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_8%_0%,rgba(232,121,249,0.18),transparent_34%),radial-gradient(circle_at_95%_12%,rgba(34,211,238,0.11),transparent_35%)]" />
+      <div className="relative flex h-full flex-col">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="grid h-9 w-9 place-items-center rounded-[10px] border border-violet-200/16 bg-violet-400/12 text-violet-100">
+                <Icon name="spark" className="h-4 w-4" />
+              </span>
+              <h2 className="text-[18px] font-black tracking-[-0.025em] text-white">Meilleure opportunité IA</h2>
+            </div>
+            <p className="mt-3 max-w-[760px] text-[14px] leading-relaxed text-slate-300">{title}</p>
+          </div>
+          <span className="rounded-full border border-fuchsia-200/18 bg-fuchsia-300/10 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.14em] text-fuchsia-100">
+            {getOpportunityBadge(score)}
+          </span>
+        </div>
+
+        <div className="mt-5 grid gap-3 min-[1180px]:grid-cols-[0.82fr_1fr_1fr]">
+          <div className="rounded-[10px] border border-white/[0.075] bg-white/[0.04] p-3">
+            <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">Score Viralynz</p>
+            <p className="mt-2 text-[28px] font-black leading-none tracking-[-0.05em] text-white">{score === null ? 'À lancer' : `${score}/100`}</p>
+          </div>
+          <div className="rounded-[10px] border border-white/[0.075] bg-white/[0.035] p-3">
+            <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">Problème principal</p>
+            <p className="mt-2 line-clamp-3 text-[12.5px] leading-relaxed text-slate-300">{problem}</p>
+          </div>
+          <div className="rounded-[10px] border border-white/[0.075] bg-white/[0.035] p-3">
+            <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">Décision</p>
+            <p className="mt-2 line-clamp-3 text-[12.5px] leading-relaxed text-slate-300">{action}</p>
+          </div>
+        </div>
+
+        <div className="mt-auto pt-4">
+          <Link href={dashboard.analysisCta.href} className={`inline-flex h-10 items-center gap-2 px-4 text-[12.5px] ${primaryButton}`}>
+            {states.hasAnalyses ? 'Voir l’analyse' : 'Analyser une vidéo'}
+            <Icon name="chevron" className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ActionPlanCard({ states }: { states: DashboardData['states'] }) {
+  const actions: Array<{ icon: IconName; title: string; description: string; state: string; href: string }> = [
+    {
+      icon: 'analysis',
+      title: 'Analyser une nouvelle vidéo',
+      description: 'Débloque un diagnostic concret : quoi couper, avancer, garder ou republier.',
+      state: 'Recommandé',
+      href: '/dashboard/analyze',
+    },
+    {
+      icon: 'hook',
+      title: 'Tester un nouveau hook',
+      description: 'Réécris les premières secondes avant de remonter la V2.',
+      state: states.hasAnalyses ? 'Recommandé' : 'Optionnel',
+      href: '/dashboard/hooks',
+    },
+    {
+      icon: 'bookmark',
+      title: 'Comparer avec tes anciennes analyses',
+      description: 'Repère les patterns qui reviennent avant de publier le prochain repost.',
+      state: states.hasAnalyses ? 'Optionnel' : 'Bientôt',
+      href: states.hasAnalyses ? '/dashboard/insights' : '/dashboard/analyze',
+    },
+  ];
+
+  return (
+    <section className={`${shellCard} p-5`}>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-[18px] font-black tracking-[-0.025em] text-white">Plan d’action</h2>
+        <span className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">Priorités</span>
+      </div>
+      <div className="mt-4 grid gap-3">
+        {actions.map((action) => (
+          <Link key={action.title} href={action.href} className="group flex items-start gap-3 rounded-[11px] border border-white/[0.075] bg-white/[0.035] p-3 transition hover:border-violet-200/18 hover:bg-white/[0.055]">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] border border-white/[0.08] bg-white/[0.045] text-violet-100">
+              <Icon name={action.icon} className="h-4 w-4" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center justify-between gap-2">
+                <span className="text-[13px] font-black leading-tight text-white">{action.title}</span>
+                <span className="shrink-0 rounded-full border border-white/[0.08] bg-white/[0.045] px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">{action.state}</span>
+              </span>
+              <span className="mt-1.5 block text-[12px] leading-relaxed text-slate-400">{action.description}</span>
+            </span>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function LatestAnalysesCard({
+  dashboard,
+  states,
+}: {
+  dashboard: DashboardData;
+  states: DashboardData['states'];
+}) {
+  if (!states.hasLatestAnalysis) {
+    return (
+      <section className={`${shellCard} p-5`}>
+        <h2 className="text-[18px] font-black tracking-[-0.025em] text-white">Dernières analyses</h2>
+        <div className="mt-4">
+          <EmptyState
+            title="Pas encore assez de données"
+            message="Analyse 2 ou 3 vidéos pour débloquer tes tendances personnelles."
+            cta="Lancer une analyse"
+            href="/dashboard/analyze"
+          />
+        </div>
+      </section>
+    );
+  }
+
+  const score = dashboard.metrics.averageViralScore;
+  return (
+    <section className={`${shellCard} p-5`}>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-[18px] font-black tracking-[-0.025em] text-white">Dernières analyses</h2>
+        <Link href={dashboard.analysisCta.href} className="text-[12px] font-black text-violet-200 hover:text-white">Voir</Link>
+      </div>
+      <div className="mt-4 rounded-[12px] border border-white/[0.075] bg-white/[0.035] p-3.5">
+        <div className="flex items-start gap-3">
+          <div className="h-[64px] w-[58px] shrink-0 overflow-hidden rounded-[12px] border border-white/[0.08]">
+            <CreatorPortrait latestVideo={dashboard.latestVideo} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="line-clamp-2 text-[13.5px] font-black leading-5 text-white">{dashboard.latestVideo.title}</h3>
+            <p className="mt-1 text-[11.5px] text-slate-500">{dashboard.latestVideo.date} · {dashboard.latestVideo.duration}</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <span className="rounded-full border border-violet-200/14 bg-violet-400/10 px-2.5 py-1 text-[11px] font-black text-violet-100">
+                {score === null ? 'Score à lancer' : `${score}/100`}
+              </span>
+              <span className="rounded-full border border-cyan-200/14 bg-cyan-300/10 px-2.5 py-1 text-[11px] font-black text-cyan-100">Analyse Viralynz</span>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -1290,17 +1816,19 @@ function MobileWelcomeStatus({
   states: DashboardData['states'];
   tiktokConnection: DashboardData['tiktokConnection'];
 }) {
+  const { language, t } = useLanguage();
+
   return (
     <section className="relative overflow-hidden rounded-[22px] border border-white/[0.085] bg-[linear-gradient(145deg,rgba(9,17,33,0.88),rgba(4,8,18,0.96))] p-4 shadow-[0_18px_54px_-38px_rgba(0,0,0,0.92),inset_0_1px_0_rgba(255,255,255,0.055)] min-[1280px]:hidden">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_8%,rgba(168,85,247,0.18),transparent_36%),radial-gradient(circle_at_88%_12%,rgba(34,211,238,0.09),transparent_34%)]" />
       <div className="relative flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-[1.72rem] font-black leading-[1.02] tracking-[-0.055em] text-white">Bienvenue, {user.name} 👋</h1>
-          <p className="mt-1.5 text-[0.88rem] leading-5 text-slate-400">Ton aperçu de performance est prêt.</p>
+          <h1 className="text-[1.72rem] font-black leading-[1.02] tracking-[-0.055em] text-white">{t('dashboard.welcome')}, {user.name} 👋</h1>
+          <p className="mt-1.5 text-[0.88rem] leading-5 text-slate-400">{t('dashboard.performanceOverviewReady')}</p>
         </div>
         <span className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-[0.68rem] font-black ${states.hasTikTokConnection ? 'border-emerald-300/18 bg-emerald-300/10 text-emerald-100' : 'border-white/[0.09] bg-white/[0.045] text-slate-300'}`}>
           <span className={`h-1.5 w-1.5 rounded-full ${states.hasTikTokConnection ? 'bg-emerald-300 shadow-[0_0_12px_rgba(110,231,183,0.7)]' : 'bg-slate-500'}`} />
-          {states.hasTikTokConnection ? 'TikTok connecté' : 'TikTok non connecté'}
+          {states.hasTikTokConnection ? t('dashboard.tiktokConnected') : t('dashboard.tiktokNotConnected')}
         </span>
       </div>
       {states.hasTikTokConnection && tiktokConnection.displayName ? (
@@ -1311,18 +1839,20 @@ function MobileWelcomeStatus({
 }
 
 function MobilePrimaryActions({ states }: { states: DashboardData['states'] }) {
+  const { t } = useLanguage();
+
   return (
     <section className="grid gap-2.5 min-[1280px]:hidden">
       <MobileActionLink href="/dashboard/analyze" tone="primary">
         <Icon name="plus" className="h-4 w-4" />
-        Analyser une vidéo
+        {t('dashboard.analyzeVideo')}
       </MobileActionLink>
       {!states.hasTikTokConnection ? (
         <div className="rounded-[18px] border border-cyan-200/[0.13] bg-cyan-300/[0.055] p-3">
-          <p className="text-[0.78rem] leading-5 text-cyan-50/82">Connecte TikTok pour importer tes vidéos et enrichir tes analyses.</p>
+          <p className="text-[0.78rem] leading-5 text-cyan-50/82">{t('dashboard.connectTikTokForAnalyses')}</p>
           <Link href="/api/tiktok/connect" className="mt-2 inline-flex h-9 items-center gap-2 rounded-[11px] border border-cyan-200/18 bg-cyan-300/10 px-3 text-[0.76rem] font-black text-cyan-100">
             <span className="text-[0.95rem] leading-none">♪</span>
-            Connecter TikTok
+            {t('dashboard.connectTikTok')}
           </Link>
         </div>
       ) : null}
@@ -1337,13 +1867,14 @@ function MobileNextMoveCard({
   recommendations: DashboardRecommendation[];
   states: DashboardData['states'];
 }) {
+  const { language, t } = useLanguage();
   const recommendation = recommendations[0];
-  const title = states.hasAnalyses && recommendation ? recommendation.title : 'Améliore ton hook';
+  const title = states.hasAnalyses && recommendation ? translateKnownPhrase(recommendation.title, language) : t('dashboard.improveYourHook');
   const description = states.hasAnalyses && recommendation
-    ? recommendation.description
-    : 'Analyse une vidéo pour transformer ton prochain repost en décision de montage.';
+    ? translateKnownPhrase(recommendation.description, language)
+    : t('dashboard.analyzeForRepostDecision');
   const href = states.hasAnalyses && recommendation ? recommendationHref(recommendation) : '/dashboard/analyze';
-  const cta = states.hasAnalyses && recommendation ? recommendation.cta : 'Analyser une vidéo';
+  const cta = states.hasAnalyses && recommendation ? translateKnownPhrase(recommendation.cta, language) : t('dashboard.analyzeVideo');
 
   return (
     <section className="relative overflow-hidden rounded-[22px] border border-violet-200/[0.14] bg-[linear-gradient(145deg,rgba(25,18,55,0.86),rgba(6,12,26,0.96)_62%,rgba(4,8,17,0.98))] p-4 shadow-[0_20px_58px_-36px_rgba(124,58,237,0.8),inset_0_1px_0_rgba(255,255,255,0.06)] min-[1280px]:hidden">
@@ -1354,7 +1885,7 @@ function MobileNextMoveCard({
             <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[10px] border border-violet-200/18 bg-violet-400/12 text-violet-100">
               <Icon name="spark" className="h-4 w-4" />
             </span>
-            <span className="rounded-full border border-fuchsia-200/16 bg-fuchsia-300/10 px-2.5 py-1 text-[0.62rem] font-black uppercase tracking-[0.15em] text-fuchsia-100">Priorité</span>
+            <span className="rounded-full border border-fuchsia-200/16 bg-fuchsia-300/10 px-2.5 py-1 text-[0.62rem] font-black uppercase tracking-[0.15em] text-fuchsia-100">{t('dashboard.priority')}</span>
           </div>
           <h2 className="mt-3 text-[1.08rem] font-black leading-tight tracking-[-0.035em] text-white">{title}</h2>
           <p className="mt-1.5 line-clamp-2 text-[0.82rem] leading-5 text-slate-300">{description}</p>
@@ -1375,25 +1906,26 @@ function MobilePerformanceSummary({
   dashboard: DashboardData;
   states: DashboardData['states'];
 }) {
+  const { language, t } = useLanguage();
   const retentionScore = dashboard.insights.find((item) => item.type === 'retention')?.score ?? null;
   const memoryScores = dashboard.insights.map((item) => item.score).filter((score): score is number => typeof score === 'number');
   const memoryScore = memoryScores.length > 0 ? Math.round(memoryScores.reduce((sum, score) => sum + score, 0) / memoryScores.length) : null;
   const items = [
-    dashboard.metrics.averageViralScore !== null ? { label: 'Score viral', value: `${dashboard.metrics.averageViralScore}/100`, tone: 'text-violet-100' } : null,
-    retentionScore !== null ? { label: 'Rétention', value: `${retentionScore}/100`, tone: 'text-orange-100' } : null,
+    dashboard.metrics.averageViralScore !== null ? { label: t('dashboard.viralScore'), value: `${dashboard.metrics.averageViralScore}/100`, tone: 'text-violet-100' } : null,
+    retentionScore !== null ? { label: t('dashboard.retention'), value: `${retentionScore}/100`, tone: 'text-orange-100' } : null,
     memoryScore !== null ? { label: 'Mémoire IA', value: `${memoryScore}/100`, tone: 'text-cyan-100' } : null,
-    states.hasTikTokMetrics ? { label: 'Vues', value: dashboard.metrics.totalViews, tone: 'text-emerald-100' } : null,
+    states.hasTikTokMetrics ? { label: t('tiktok.views'), value: dashboard.metrics.totalViews, tone: 'text-emerald-100' } : null,
   ].filter((item): item is { label: string; value: string; tone: string } => Boolean(item));
 
   return (
     <section className={`${shellCard} p-4 min-[1280px]:hidden`}>
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-[1rem] font-black tracking-[-0.02em] text-white">Résumé performance</h2>
-        <span className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-slate-500">Réel</span>
+        <h2 className="text-[1rem] font-black tracking-[-0.02em] text-white">{t('dashboard.performanceSummary')}</h2>
+        <span className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-slate-500">{t('dashboard.real')}</span>
       </div>
       {items.length === 0 ? (
         <div className="mt-3 rounded-[14px] border border-white/[0.07] bg-white/[0.035] p-3 text-[0.82rem] leading-5 text-slate-400">
-          Analyse une vidéo pour remplir tes métriques. Viralynz n’invente pas tes scores.
+          {t('dashboard.analyzeForMetrics')}
         </div>
       ) : (
         <div className="mt-3 grid grid-cols-2 gap-2">
@@ -1416,24 +1948,26 @@ function MobileLatestAnalysis({
   dashboard: DashboardData;
   states: DashboardData['states'];
 }) {
+  const { language, t } = useLanguage();
+
   if (!states.hasLatestAnalysis) {
     return (
       <section className={`${shellCard} p-4 min-[1280px]:hidden`}>
-        <h2 className="text-[1rem] font-black text-white">Dernière analyse</h2>
-        <p className="mt-2 text-[0.82rem] leading-5 text-slate-400">Ta première analyse apparaîtra ici, avec le signal principal et le score réel.</p>
-        <Link href="/dashboard/analyze" className="mt-3 inline-flex h-10 items-center rounded-[12px] bg-white/[0.06] px-3.5 text-[0.78rem] font-black text-white ring-1 ring-white/[0.08]">Analyser une vidéo</Link>
+        <h2 className="text-[1rem] font-black text-white">{t('dashboard.latestAnalysis')}</h2>
+        <p className="mt-2 text-[0.82rem] leading-5 text-slate-400">{t('dashboard.firstAnalysisAppears')}</p>
+        <Link href="/dashboard/analyze" className="mt-3 inline-flex h-10 items-center rounded-[12px] bg-white/[0.06] px-3.5 text-[0.78rem] font-black text-white ring-1 ring-white/[0.08]">{t('dashboard.analyzeVideo')}</Link>
       </section>
     );
   }
 
-  const mainSignal = dashboard.insights[0]?.title ?? 'Signal à vérifier';
+  const mainSignal = dashboard.insights[0]?.title ? translateKnownPhrase(dashboard.insights[0].title, language) : t('dashboard.signalToCheck');
   const score = dashboard.metrics.averageViralScore;
 
   return (
     <section className={`${shellCard} p-3.5 min-[1280px]:hidden`}>
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="text-[1rem] font-black text-white">Dernière analyse</h2>
-        <Link href={dashboard.analysisCta.href} className="text-[0.74rem] font-black text-violet-200">Voir</Link>
+        <h2 className="text-[1rem] font-black text-white">{t('dashboard.latestAnalysis')}</h2>
+        <Link href={dashboard.analysisCta.href} className="text-[0.74rem] font-black text-violet-200">{t('dashboard.view')}</Link>
       </div>
       <div className="flex gap-3">
         <div className="h-[86px] w-[78px] shrink-0 overflow-hidden rounded-[14px] border border-white/[0.08]">
@@ -1443,8 +1977,8 @@ function MobileLatestAnalysis({
           <h3 className="line-clamp-2 text-[0.92rem] font-black leading-5 text-white">{dashboard.latestVideo.title}</h3>
           <p className="mt-1 text-[0.72rem] text-slate-500">{dashboard.latestVideo.date} · {dashboard.latestVideo.duration}</p>
           <div className="mt-2 grid gap-1 text-[0.75rem] leading-4 text-slate-300">
-            <span>Score viral : <strong className="text-white">{score === null ? '—' : `${score}/100`}</strong></span>
-            <span className="truncate">Signal principal : <strong className="text-white">{mainSignal}</strong></span>
+            <span>{t('dashboard.viralScore')} : <strong className="text-white">{score === null ? 'À lancer' : `${score}/100`}</strong></span>
+            <span className="truncate">{t('dashboard.mainSignal')} : <strong className="text-white">{mainSignal}</strong></span>
           </div>
         </div>
       </div>
@@ -1459,26 +1993,31 @@ function MobileRecommendations({
   recommendations: DashboardRecommendation[];
   states: DashboardData['states'];
 }) {
+  const { language, t } = useLanguage();
+
   return (
     <section className={`${shellCard} p-4 min-[1280px]:hidden`}>
       <div>
-        <h2 className="text-[1rem] font-black text-white">Recommandations</h2>
-        <p className="mt-1 text-[0.78rem] text-slate-400">Applique ces actions au prochain repost.</p>
+        <h2 className="text-[1rem] font-black text-white">{t('dashboard.recommendations')}</h2>
+        <p className="mt-1 text-[0.78rem] text-slate-400">{t('dashboard.applyNextRepost')}</p>
       </div>
       <div className="mt-3 grid gap-2">
         {recommendations.slice(0, 3).map((item, index) => {
           const style = recommendationStyles[index] ?? recommendationStyles[0];
           const href = item.locked || !states.hasAnalyses ? '/dashboard/analyze' : recommendationHref(item);
+          const title = translateKnownPhrase(item.title, language);
+          const description = translateKnownPhrase(item.description, language);
+          const cta = translateKnownPhrase(item.cta, language);
           return (
             <div key={item.title} className="flex items-start gap-2.5 rounded-[15px] border border-white/[0.075] bg-white/[0.04] p-2.5">
               <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-[11px] bg-gradient-to-br ${style.tone} text-white`}>
                 <Icon name={style.icon} className="h-4 w-4" />
               </span>
               <div className="min-w-0 flex-1">
-                <h3 className="text-[0.86rem] font-black leading-4 text-white">{item.title}</h3>
-                <p className="mt-1 line-clamp-2 text-[0.72rem] leading-4 text-slate-400">{item.description}</p>
+                <h3 className="text-[0.86rem] font-black leading-4 text-white">{title}</h3>
+                <p className="mt-1 line-clamp-2 text-[0.72rem] leading-4 text-slate-400">{description}</p>
                 <Link href={href} className="mt-2 inline-flex h-8 items-center rounded-[10px] border border-white/[0.08] bg-white/[0.045] px-3 text-[0.68rem] font-black text-slate-200">
-                  {item.locked || !states.hasAnalyses ? 'Analyser une vidéo' : item.cta}
+                  {item.locked || !states.hasAnalyses ? t('dashboard.analyzeVideo') : cta}
                 </Link>
               </div>
             </div>
@@ -1496,29 +2035,33 @@ function MobileMemoryCompact({
   insights: DashboardInsight[];
   states: DashboardData['states'];
 }) {
+  const { language, t } = useLanguage();
+
   return (
     <section className={`${shellCard} p-4 min-[1280px]:hidden`}>
       <div className="flex items-center gap-2">
         <h2 className="text-[1rem] font-black text-white">Mémoire IA</h2>
-        <span className="rounded-full border border-violet-200/18 bg-violet-400/10 px-2 py-0.5 text-[0.62rem] font-black uppercase tracking-[0.12em] text-violet-100">Nouveau</span>
+        <span className="rounded-full border border-violet-200/18 bg-violet-400/10 px-2 py-0.5 text-[0.62rem] font-black uppercase tracking-[0.12em] text-violet-100">{t('dashboard.new')}</span>
       </div>
-      <p className="mt-1 text-[0.78rem] text-slate-400">Ces signaux viennent de ta dernière analyse.</p>
+      <p className="mt-1 text-[0.78rem] text-slate-400">{t('dashboard.memorySignalsLatest')}</p>
       {!states.hasRealInsights ? (
         <div className="mt-3 rounded-[14px] border border-white/[0.07] bg-white/[0.035] p-3 text-[0.78rem] leading-5 text-slate-400">
-          Analyse une vidéo pour remplir ta mémoire avec de vrais signaux.
+          {t('dashboard.analyzeForMemory')}
         </div>
       ) : (
         <div className="mt-3 grid gap-2">
           {insights.slice(0, 3).map((item) => {
             const style = insightStyleByType[item.type];
+            const title = translateKnownPhrase(item.title, language);
+            const description = translateKnownPhrase(item.description, language);
             return (
               <div key={item.title} className="flex items-center gap-2.5 rounded-[14px] border border-white/[0.07] bg-white/[0.04] p-2.5">
                 <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[10px]" style={{ background: `${style.color}22`, color: style.color }}>
                   <Icon name={style.icon} className="h-4 w-4" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <h3 className="truncate text-[0.82rem] font-black text-white">{item.title}</h3>
-                  <p className="line-clamp-1 text-[0.7rem] text-slate-400">{item.description}</p>
+                  <h3 className="truncate text-[0.82rem] font-black text-white">{title}</h3>
+                  <p className="line-clamp-1 text-[0.7rem] text-slate-400">{description}</p>
                 </div>
                 <MiniScoreRing score={item.score} color={style.color} />
               </div>
@@ -1526,7 +2069,7 @@ function MobileMemoryCompact({
           })}
         </div>
       )}
-      <Link href="/dashboard/insights" className="mt-3 inline-flex h-9 items-center rounded-[11px] border border-white/[0.08] bg-white/[0.045] px-3 text-[0.74rem] font-black text-white">Voir la mémoire complète</Link>
+      <Link href="/dashboard/insights" className="mt-3 inline-flex h-9 items-center rounded-[11px] border border-white/[0.08] bg-white/[0.045] px-3 text-[0.74rem] font-black text-white">{t('dashboard.viewFullMemory')}</Link>
     </section>
   );
 }
@@ -1567,14 +2110,16 @@ function MobileRetentionCompact({
   states: DashboardData['states'];
   cta: DashboardData['analysisCta'];
 }) {
+  const { t } = useLanguage();
+
   return (
     <section className={`${shellCard} p-4 min-[1280px]:hidden`}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-[1rem] font-black text-white">Rétention</h2>
-          <p className="mt-1 text-[0.78rem] text-slate-400">Les moments clés détectés dans ta vidéo.</p>
+          <h2 className="text-[1rem] font-black text-white">{t('dashboard.retention')}</h2>
+          <p className="mt-1 text-[0.78rem] text-slate-400">{t('dashboard.keyMomentsDetected')}</p>
         </div>
-        <Link href={cta.href} className="shrink-0 text-[0.72rem] font-black text-violet-200">Voir</Link>
+        <Link href={cta.href} className="shrink-0 text-[0.72rem] font-black text-violet-200">{t('dashboard.view')}</Link>
       </div>
       {states.hasRetentionData ? (
         <>
@@ -1591,7 +2136,7 @@ function MobileRetentionCompact({
         </>
       ) : (
         <div className="mt-3 rounded-[14px] border border-white/[0.07] bg-white/[0.035] p-3 text-[0.78rem] leading-5 text-slate-400">
-          Disponible après une analyse avec assez de points de rétention.
+          {t('dashboard.retentionAvailableAfterAnalysis')}
         </div>
       )}
     </section>
@@ -1599,26 +2144,27 @@ function MobileRetentionCompact({
 }
 
 function MobileUnlockModules({ states }: { states: DashboardData['states'] }) {
+  const { t } = useLanguage();
   const modules = [
-    'Courbe émotionnelle',
-    'Piliers de contenu',
-    'Vidéos performantes',
+    t('dashboard.emotionalCurve'),
+    t('dashboard.contentPillars'),
+    t('dashboard.topPerformingVideos'),
   ];
 
   return (
     <section className={`${shellCard} p-4 min-[1280px]:hidden`}>
-      <h2 className="text-[1rem] font-black text-white">À construire</h2>
-      <p className="mt-1 text-[0.78rem] leading-5 text-slate-400">Débloque ces modules avec plus d’analyses réelles.</p>
+      <h2 className="text-[1rem] font-black text-white">{t('dashboard.comingNext')}</h2>
+      <p className="mt-1 text-[0.78rem] leading-5 text-slate-400">{t('dashboard.unlockModules')}</p>
       <div className="mt-3 grid gap-2">
         {modules.map((module) => (
           <div key={module} className="flex h-10 items-center justify-between rounded-[12px] border border-white/[0.065] bg-white/[0.035] px-3">
             <span className="text-[0.78rem] font-bold text-slate-300">{module}</span>
-            <span className="text-[0.66rem] font-black uppercase tracking-[0.12em] text-slate-500">Bientôt</span>
+            <span className="text-[0.66rem] font-black uppercase tracking-[0.12em] text-slate-500">{t('dashboard.soon')}</span>
           </div>
         ))}
       </div>
       {!states.hasAnalyses ? (
-        <Link href="/dashboard/analyze" className="mt-3 inline-flex h-9 items-center rounded-[11px] bg-white/[0.06] px-3 text-[0.74rem] font-black text-white ring-1 ring-white/[0.08]">Analyser une vidéo</Link>
+        <Link href="/dashboard/analyze" className="mt-3 inline-flex h-9 items-center rounded-[11px] bg-white/[0.06] px-3 text-[0.74rem] font-black text-white ring-1 ring-white/[0.08]">{t('dashboard.analyzeVideo')}</Link>
       ) : null}
     </section>
   );
@@ -1631,12 +2177,13 @@ function MobileTopVideosCompact({
   videos: DashboardTopVideo[];
   states: DashboardData['states'];
 }) {
+  const { t } = useLanguage();
   if (!states.hasRealTopVideos || videos.length === 0) return null;
   return (
     <section className={`${shellCard} p-4 min-[1280px]:hidden`}>
       <div className="flex items-center justify-between">
-        <h2 className="text-[1rem] font-black text-white">Vidéos performantes</h2>
-        <Link href="/dashboard/library" className="text-[0.72rem] font-black text-violet-200">Voir tout</Link>
+        <h2 className="text-[1rem] font-black text-white">{t('dashboard.topPerformingVideos')}</h2>
+        <Link href="/dashboard/library" className="text-[0.72rem] font-black text-violet-200">{t('dashboard.viewAll')}</Link>
       </div>
       <div className="mt-3 grid gap-2">
         {videos.slice(0, 3).map((video) => (
@@ -1646,11 +2193,1008 @@ function MobileTopVideosCompact({
               <p className="truncate text-[0.8rem] font-black text-white">{video.title}</p>
               <p className="text-[0.68rem] text-slate-500">{video.date}</p>
             </div>
-            <span className="rounded-full border border-emerald-300/20 bg-emerald-300/10 px-2 py-1 text-[0.68rem] font-black text-emerald-100">{video.score}</span>
+            <span className="rounded-full border border-emerald-300/20 bg-emerald-300/10 px-2 py-1 text-[0.68rem] font-black text-emerald-100">{video.score ?? '—'}</span>
           </div>
         ))}
       </div>
     </section>
+  );
+}
+
+const mobileShellCard =
+  'relative overflow-hidden rounded-[24px] border border-white/[0.095] bg-[linear-gradient(145deg,rgba(12,18,38,0.86),rgba(5,9,20,0.94)_62%,rgba(4,7,16,0.98))] shadow-[0_24px_70px_-46px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.07)] backdrop-blur-xl';
+
+function MobileSparkline({ tone = 'blue' }: { tone?: 'blue' | 'violet' | 'cyan' }) {
+  const gradients = {
+    blue: ['#38bdf8', '#4f46e5'],
+    violet: ['#a855f7', '#d946ef'],
+    cyan: ['#22d3ee', '#2dd4bf'],
+  };
+  const [from, to] = gradients[tone];
+
+  return (
+    <svg viewBox="0 0 92 42" className="h-12 w-24" fill="none" aria-hidden="true">
+      <path d="M3 34 C13 34 17 30 24 31 C31 32 33 23 40 24 C48 25 48 15 56 16 C64 18 66 12 72 10 C80 8 80 4 89 4" stroke={`url(#spark-${tone})`} strokeWidth="2.2" strokeLinecap="round" />
+      <path d="M3 41 L3 34 C13 34 17 30 24 31 C31 32 33 23 40 24 C48 25 48 15 56 16 C64 18 66 12 72 10 C80 8 80 4 89 4 L89 41 Z" fill={`url(#spark-fill-${tone})`} />
+      <defs>
+        <linearGradient id={`spark-${tone}`} x1="3" x2="89" y1="34" y2="4">
+          <stop stopColor={from} />
+          <stop offset="1" stopColor={to} />
+        </linearGradient>
+        <linearGradient id={`spark-fill-${tone}`} x1="46" x2="46" y1="4" y2="41">
+          <stop stopColor={to} stopOpacity=".28" />
+          <stop offset="1" stopColor={from} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
+function MobilePlayIllustration() {
+  return (
+    <div className="pointer-events-none absolute right-3 top-7 hidden h-36 w-36 min-[390px]:block">
+      <div className="absolute left-4 top-7 h-24 w-24 rotate-[-7deg] rounded-[28px] border border-cyan-200/30 bg-[linear-gradient(145deg,rgba(125,150,255,0.28),rgba(13,20,51,0.72))] shadow-[0_0_44px_-10px_rgba(59,130,246,0.9),inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-xl" />
+      <div className="absolute left-11 top-14 grid h-11 w-11 place-items-center rounded-[14px] border border-cyan-100/30 bg-cyan-300/12 text-cyan-50 shadow-[0_0_28px_rgba(34,211,238,0.52)]">
+        <Icon name="play" className="h-6 w-6" />
+      </div>
+      <div className="absolute left-0 top-16 h-12 w-36 rotate-[-12deg] rounded-[100%] border-2 border-cyan-300/55 shadow-[0_0_24px_rgba(34,211,238,0.58)]" />
+      <span className="absolute right-4 top-8 h-1.5 w-1.5 rounded-full bg-cyan-200 shadow-[0_0_12px_rgba(34,211,238,0.9)]" />
+      <span className="absolute left-5 top-5 h-1 w-1 rounded-full bg-violet-300 shadow-[0_0_10px_rgba(167,139,250,0.9)]" />
+      <span className="absolute bottom-5 right-7 h-1 w-1 rounded-full bg-fuchsia-300 shadow-[0_0_10px_rgba(232,121,249,0.9)]" />
+    </div>
+  );
+}
+
+function MobileOverviewHeader() {
+  return (
+    <header className="pt-[max(18px,env(safe-area-inset-top))]">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <LogoMark small />
+          <span className="text-[1.45rem] font-black tracking-[-0.045em] text-white">Viralynz</span>
+        </div>
+        <button type="button" aria-label="Notifications" className="relative grid h-11 w-11 place-items-center rounded-[14px] border border-white/[0.075] bg-white/[0.035] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+          <Icon name="bell" className="h-[21px] w-[21px]" />
+          <span className="absolute right-2.5 top-2.5 h-2.5 w-2.5 rounded-full bg-violet-400 shadow-[0_0_14px_rgba(139,92,246,0.95)]" />
+        </button>
+      </div>
+      <h1 className="mt-8 text-[2.45rem] font-black leading-[0.98] tracking-[-0.055em] text-white">Vue d&apos;ensemble</h1>
+      <p className="mt-2 text-[1.04rem] font-medium leading-6 text-slate-300/82">Ton cockpit de performance.</p>
+    </header>
+  );
+}
+
+function MobileOverviewHeroCard({ dashboard, states }: { dashboard: DashboardData; states: DashboardData['states'] }) {
+  const hero = dashboard.overview.heroOpportunity;
+  const title = states.hasLatestAnalysis ? 'Meilleure opportunité' : hero.title;
+
+  return (
+    <section className={`${mobileShellCard} mt-6 min-h-[390px] border-violet-300/30 p-5 shadow-[0_0_0_1px_rgba(34,211,238,0.08),0_28px_90px_-48px_rgba(124,58,237,0.95)]`}>
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_10%_2%,rgba(168,85,247,0.32),transparent_34%),radial-gradient(circle_at_82%_20%,rgba(34,211,238,0.18),transparent_38%),linear-gradient(135deg,rgba(78,14,145,0.2),transparent_50%)]" />
+      <MobilePlayIllustration />
+      <div className="relative max-w-[58%] min-[390px]:max-w-[54%]">
+        <div className="flex items-start gap-3">
+          <Icon name="spark" className="mt-1 h-8 w-8 shrink-0 text-white" />
+          <h2 className="text-[1.2rem] font-black leading-[1.12] tracking-[-0.025em] text-white">{title}<br />{states.hasLatestAnalysis ? 'de repost' : 'Viralynz'}</h2>
+        </div>
+      </div>
+      <div className="relative mt-6">
+        <div className="flex items-end gap-1.5">
+          <span className="bg-[linear-gradient(135deg,#22d3ee_0%,#3b82f6_38%,#a855f7_82%)] bg-clip-text text-[4.8rem] font-black leading-none tracking-[-0.085em] text-transparent">
+            {hero.score === null ? '--' : hero.score}
+          </span>
+          <span className="pb-2 text-[2rem] font-black leading-none tracking-[-0.055em] text-slate-300">/100</span>
+        </div>
+        <span className="mt-3 inline-flex h-9 items-center gap-2 rounded-[12px] border border-violet-200/20 bg-violet-400/18 px-3 text-[0.88rem] font-black text-violet-100">
+          <Icon name="insights" className="h-4 w-4" />
+          Insight IA
+        </span>
+        <p className="mt-3 max-w-[260px] text-[0.95rem] font-medium leading-6 text-slate-100/86">{hero.description}</p>
+        <Link href={hero.href} className="mt-5 flex h-14 w-full items-center justify-center gap-3 rounded-[18px] bg-[linear-gradient(90deg,#22c7ff_0%,#4f6dff_50%,#b21fff_100%)] text-[1rem] font-black text-white shadow-[0_18px_48px_-22px_rgba(59,130,246,0.95),0_0_32px_-18px_rgba(168,85,247,0.95)] transition active:scale-[0.99]">
+          {hero.ctaLabel}
+          <Icon name="chevron" className="h-5 w-5" />
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+function MobileKpiCard({
+  label,
+  value,
+  detail,
+  icon,
+  tone,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  icon: IconName;
+  tone: 'blue' | 'violet' | 'cyan';
+}) {
+  const iconTone = tone === 'blue'
+    ? 'border-sky-300/18 bg-sky-400/12 text-sky-100'
+    : tone === 'cyan'
+      ? 'border-cyan-300/18 bg-cyan-300/12 text-cyan-100'
+      : 'border-violet-300/20 bg-violet-400/14 text-violet-100';
+
+  return (
+    <article className={`${mobileShellCard} min-h-[134px] rounded-[20px] p-3.5 min-[1024px]:min-h-[118px]`}>
+      <div className="relative flex h-full flex-col gap-2.5 min-[1024px]:flex-row min-[1024px]:items-start min-[1024px]:gap-3">
+        <div className="flex items-start gap-2.5">
+          <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-[13px] border ${iconTone}`}>
+            <Icon name={icon} className="h-[18px] w-[18px]" />
+          </span>
+          <p className="min-h-[34px] min-w-0 flex-1 text-[0.78rem] font-semibold leading-[1.25] text-slate-300/86 min-[390px]:text-[0.82rem] min-[1024px]:min-h-0 min-[1024px]:truncate">{label}</p>
+        </div>
+        <div className="min-w-0 flex-1 pr-12 min-[1024px]:pr-0">
+          <p className="text-[1.45rem] font-black leading-none tracking-[-0.05em] text-white min-[1024px]:mt-1 min-[1024px]:text-[1.35rem]">{value}</p>
+          <p className="mt-2 max-w-[120px] text-[0.72rem] font-black leading-tight text-emerald-300 min-[390px]:text-[0.75rem] min-[1024px]:text-[0.78rem]">{detail}</p>
+        </div>
+        <div className="absolute bottom-[-2px] right-[-18px] scale-75 opacity-80 min-[390px]:right-[-12px] min-[390px]:scale-90 min-[1024px]:bottom-[-4px] min-[1024px]:right-[-10px] min-[1024px]:scale-100 min-[1024px]:opacity-95">
+          <MobileSparkline tone={tone} />
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function kpiPresentation(kpi: OverviewKpi): { icon: IconName; tone: 'blue' | 'violet' | 'cyan' } {
+  if (kpi.id === 'retention') return { icon: 'clock', tone: 'violet' };
+  if (kpi.id === 'hooks') return { icon: 'spark', tone: 'cyan' };
+  if (kpi.id === 'repostScore') return { icon: 'target', tone: 'blue' };
+  return { icon: 'eye', tone: 'blue' };
+}
+
+function MobileKpiGridPremium({ dashboard, states }: { dashboard: DashboardData; states: DashboardData['states'] }) {
+  const items = dashboard.overview.kpis.map((kpi) => ({
+    label: kpi.label,
+    value: kpi.value,
+    detail: kpi.trendLabel ?? kpi.detail,
+    ...kpiPresentation(kpi),
+  }));
+
+  return (
+    <section className="mt-3 grid grid-cols-2 gap-2.5">
+      {items.map((item) => <MobileKpiCard key={item.label} {...item} />)}
+    </section>
+  );
+}
+
+function formatMobileSyncTime(value: string | null) {
+  if (!value) return 'Dernière sync non disponible';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Dernière sync non disponible';
+  const diffMinutes = Math.max(0, Math.round((Date.now() - date.getTime()) / 60000));
+  if (diffMinutes < 1) return 'Dernière sync à l’instant';
+  if (diffMinutes < 60) return `Dernière sync il y a ${diffMinutes} min`;
+  const hours = Math.round(diffMinutes / 60);
+  if (hours < 24) return `Dernière sync il y a ${hours} h`;
+  const days = Math.round(hours / 24);
+  return `Dernière sync il y a ${days} j`;
+}
+
+function MobileTikTokConnectionCard({
+  connection,
+  states,
+}: {
+  connection: DashboardData['tiktokConnection'];
+  states: DashboardData['states'];
+}) {
+  if (!states.hasTikTokConnection) {
+    return (
+      <Link href="/api/tiktok/connect?review=1" className={`${mobileShellCard} mt-3 flex min-h-[92px] items-center gap-4 rounded-[22px] border-cyan-300/22 p-4 transition active:scale-[0.99]`}>
+        <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full border border-cyan-200/20 bg-cyan-300/10 text-cyan-100">
+          <span className="text-[1.25rem] font-black">TT</span>
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[1.02rem] font-black text-white">Connecter TikTok</p>
+          <p className="mt-1 text-[0.84rem] leading-5 text-slate-400">Connecte ton compte pour enrichir ton cockpit.</p>
+        </div>
+        <Icon name="chevron" className="h-6 w-6 shrink-0 text-slate-300" />
+      </Link>
+    );
+  }
+
+  const displayName = connection.displayName?.trim() || 'Compte TikTok';
+  const initials = displayName.slice(0, 2).toUpperCase();
+
+  return (
+    <Link href="/dashboard/settings" className={`${mobileShellCard} mt-3 flex min-h-[96px] items-center gap-4 rounded-[22px] border-emerald-300/45 p-4 shadow-[0_0_38px_-24px_rgba(16,185,129,0.95),inset_0_1px_0_rgba(255,255,255,0.08)] transition active:scale-[0.99]`}>
+      <div className="relative h-16 w-16 shrink-0">
+        <div className="absolute -inset-1 rounded-full bg-[conic-gradient(#22d3ee,#8b5cf6,#22c55e,#22d3ee)] opacity-95 blur-[1px]" />
+        <div className="relative grid h-16 w-16 place-items-center overflow-hidden rounded-full border border-white/15 bg-[linear-gradient(135deg,rgba(34,211,238,0.2),rgba(124,58,237,0.35))] text-[0.95rem] font-black text-white">
+          {connection.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={connection.avatarUrl} alt="" className="h-full w-full object-cover" />
+          ) : (
+            initials
+          )}
+        </div>
+        <span className="absolute bottom-0 right-0 grid h-6 w-6 place-items-center rounded-full border-2 border-[#06101c] bg-black text-[0.8rem] font-black text-white">♪</span>
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-[1.02rem] font-black leading-tight text-white">Compte TikTok connecté</p>
+          <span className="inline-flex h-7 items-center gap-1.5 rounded-[9px] border border-emerald-300/18 bg-emerald-300/12 px-2.5 text-[0.72rem] font-black text-emerald-200">
+            <span className="h-2 w-2 rounded-full bg-emerald-300" />
+            Connecté
+          </span>
+        </div>
+        <p className="mt-1 truncate text-[0.9rem] font-medium text-slate-300">{displayName}</p>
+        <p className="mt-1 text-[0.78rem] font-medium text-slate-400">{formatMobileSyncTime(connection.lastSyncAt)}</p>
+      </div>
+      <Icon name="chevron" className="h-6 w-6 shrink-0 text-slate-300" />
+    </Link>
+  );
+}
+
+function MobileDailyAiPlanCard({ items }: { items: string[] }) {
+  return (
+    <section className={`${mobileShellCard} mt-3 min-h-[168px] rounded-[22px] border-violet-300/24 p-4`}>
+      <div className="pointer-events-none absolute right-3 top-5 hidden h-28 w-28 rotate-12 rounded-[22px] border border-violet-200/20 bg-[linear-gradient(145deg,rgba(139,92,246,0.34),rgba(34,211,238,0.09))] shadow-[0_0_40px_-14px_rgba(139,92,246,0.95)] min-[390px]:block" />
+      <div className="pointer-events-none absolute right-12 top-10 hidden space-y-3 min-[390px]:block">
+        {[0, 1, 2].map((item) => (
+          <span key={item} className="block h-3 w-14 rounded-full bg-cyan-200/20">
+            <span className="block h-3 w-8 rounded-full bg-[linear-gradient(90deg,#22d3ee,#a855f7)]" />
+          </span>
+        ))}
+      </div>
+      <div className="relative max-w-[82%] min-[390px]:max-w-[76%] min-[1024px]:max-w-[78%]">
+        <div className="mb-3 flex items-center gap-3">
+          <Icon name="spark" className="h-6 w-6 text-white" />
+          <h2 className="text-[1.22rem] font-black tracking-[-0.025em] text-white">Plan IA du jour</h2>
+        </div>
+        <div className="grid gap-2.5">
+          {items.map((item) => (
+            <div key={item} className="flex items-center gap-3">
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[linear-gradient(135deg,#a855f7,#5b21e8)] text-white shadow-[0_0_18px_-8px_rgba(168,85,247,0.95)]">
+                <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m5 10 3 3 7-7" /></svg>
+              </span>
+              <span className="line-clamp-1 text-[0.93rem] font-medium leading-5 text-slate-100/88 min-[390px]:text-[0.95rem]">{item}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function MobileScoreRingPremium({ score, tone }: { score: number; tone: 'green' | 'blue' }) {
+  const color = tone === 'green' ? '#4ade80' : '#60a5fa';
+  const r = 24;
+  const circumference = 2 * Math.PI * r;
+  const dash = circumference * (score / 100);
+
+  return (
+    <div className="relative grid h-[66px] w-[66px] shrink-0 place-items-center">
+      <svg viewBox="0 0 64 64" className="absolute inset-0 h-full w-full -rotate-90" aria-hidden="true">
+        <circle cx="32" cy="32" r={r} stroke="rgba(255,255,255,0.09)" strokeWidth="6" fill="none" />
+        <circle cx="32" cy="32" r={r} stroke={color} strokeWidth="6" fill="none" strokeLinecap="round" strokeDasharray={`${dash} ${circumference - dash}`} />
+      </svg>
+      <span className="text-center text-[1.15rem] font-black leading-[0.9] text-white">{score}<span className="block text-[0.62rem] font-bold text-slate-300">/100</span></span>
+    </div>
+  );
+}
+
+function MobileVideoThumb({ index, durationLabel }: { index: number; durationLabel?: string | null }) {
+  const gradients = [
+    'from-fuchsia-500/35 via-blue-500/25 to-cyan-400/20',
+    'from-violet-500/35 via-fuchsia-500/22 to-blue-500/25',
+  ];
+  return (
+    <div className={`relative h-[72px] w-[108px] shrink-0 overflow-hidden rounded-[14px] border border-white/[0.08] bg-gradient-to-br min-[390px]:w-[118px] min-[1024px]:h-[68px] ${gradients[index % gradients.length]}`}>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_28%_18%,rgba(255,255,255,0.22),transparent_24%),radial-gradient(circle_at_72%_22%,rgba(34,211,238,0.2),transparent_26%),linear-gradient(180deg,transparent,rgba(0,0,0,0.48))]" />
+      <div className="absolute left-1/2 top-1/2 grid h-9 w-9 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-black/36 text-white backdrop-blur-sm">
+        <Icon name="play" className="h-4 w-4" />
+      </div>
+      {durationLabel ? <span className="absolute bottom-1.5 right-1.5 rounded-[7px] bg-black/72 px-1.5 py-1 text-[0.68rem] font-black leading-none text-white">{durationLabel}</span> : null}
+    </div>
+  );
+}
+
+function MobileRecentAnalysisCard({ video, index }: { video: OverviewAnalysisCard; index: number }) {
+  const score = video.score === null ? null : Math.max(0, Math.min(100, Math.round(video.score)));
+  const strong = (score ?? 0) >= 80;
+
+  return (
+    <Link href={video.href} className={`${mobileShellCard} flex min-h-[96px] items-center gap-3 rounded-[18px] p-3 transition active:scale-[0.99] min-[1024px]:min-h-[84px] min-[1024px]:p-2.5`}>
+      {video.thumbnailUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={video.thumbnailUrl} alt="" className="h-[72px] w-[108px] shrink-0 rounded-[14px] object-cover min-[390px]:w-[118px] min-[1024px]:h-[68px]" />
+      ) : (
+        <MobileVideoThumb index={index} durationLabel={video.durationLabel} />
+      )}
+      <div className="min-w-0 flex-1">
+        <h3 className="line-clamp-2 text-[0.92rem] font-black leading-5 text-white min-[390px]:text-[0.98rem]">{video.title}</h3>
+        <p className="mt-1 text-[0.74rem] font-medium text-slate-400 min-[390px]:text-[0.78rem]">{video.createdAtLabel}</p>
+        <span className={`mt-1.5 inline-flex h-6 items-center rounded-[7px] px-2 text-[0.68rem] font-black ${strong ? 'bg-emerald-300/12 text-emerald-200' : video.badgeTone === 'warning' ? 'bg-amber-300/12 text-amber-200' : 'bg-blue-400/12 text-blue-200'}`}>
+          {video.badgeLabel}
+        </span>
+      </div>
+      {score === null ? (
+        <span className="grid h-[58px] w-[58px] shrink-0 place-items-center rounded-full border border-white/[0.08] bg-white/[0.035] text-[1rem] font-black text-slate-300">—</span>
+      ) : (
+        <div className="scale-90 min-[390px]:scale-100">
+          <MobileScoreRingPremium score={score} tone={strong ? 'green' : 'blue'} />
+        </div>
+      )}
+      <Icon name="chevron" className="h-5 w-5 shrink-0 text-slate-400" />
+    </Link>
+  );
+}
+
+function MobileRecentAnalysesPremium({ dashboard, states }: { dashboard: DashboardData; states: DashboardData['states'] }) {
+  const videos = dashboard.overview.recentAnalyses.slice(0, 2);
+
+  return (
+    <section className="mt-5">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h2 className="text-[1.2rem] font-black tracking-[-0.025em] text-white">Analyses récentes</h2>
+        <Link href="/dashboard/library" className="text-[0.98rem] font-black text-violet-300">Voir tout</Link>
+      </div>
+      {states.hasAnalyses && videos.length > 0 ? (
+        <div className="grid gap-2.5">
+          {videos.map((video, index) => <MobileRecentAnalysisCard key={video.id} video={video} index={index} />)}
+          <Link href="/dashboard/library" className={`${mobileShellCard} mt-1 flex h-12 items-center justify-center gap-2 rounded-[18px] text-[0.94rem] font-medium text-slate-200 transition active:scale-[0.99] min-[1024px]:hidden`}>
+            Voir toutes les analyses
+            <Icon name="chevron" className="h-5 w-5 text-slate-400" />
+          </Link>
+        </div>
+      ) : (
+        <div className={`${mobileShellCard} p-5 text-center`}>
+          <p className="text-[1rem] font-black text-white">Aucune analyse récente</p>
+          <p className="mt-2 text-[0.9rem] leading-5 text-slate-400">Analyse une vidéo pour remplir cette section avec de vraies décisions de repost.</p>
+          <Link href="/dashboard/analyze" className="mt-4 inline-flex h-11 items-center justify-center rounded-[14px] bg-white/[0.07] px-4 text-[0.86rem] font-black text-white ring-1 ring-white/[0.08]">Analyser une vidéo</Link>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function MobileSectionHeading({
+  title,
+  icon,
+  action,
+}: {
+  title: string;
+  icon?: IconName;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="mb-3 mt-5 flex items-center justify-between gap-3">
+      <div className="flex min-w-0 items-center gap-2">
+        {icon ? <Icon name={icon} className="h-5 w-5 shrink-0 text-white/90" /> : null}
+        <h2 className="truncate text-[1.2rem] font-black tracking-[-0.025em] text-white">{title}</h2>
+      </div>
+      {action}
+    </div>
+  );
+}
+
+function MobileMoreAnalysesSection({ dashboard, states }: { dashboard: DashboardData; states: DashboardData['states'] }) {
+  const videos = dashboard.overview.recentAnalyses.slice(2, 5);
+  if (!states.hasAnalyses || videos.length === 0) return null;
+
+  return (
+    <section className="mt-2">
+      <div className="grid gap-2.5 min-[1024px]:grid-cols-3">
+        {videos.map((video, index) => <MobileRecentAnalysisCard key={video.id} video={video} index={index + 2} />)}
+      </div>
+      <Link href="/dashboard/library" className={`${mobileShellCard} mt-2 flex h-12 items-center justify-center gap-2 rounded-[18px] text-[0.94rem] font-medium text-slate-200 transition active:scale-[0.99]`}>
+        Voir toutes les analyses
+        <Icon name="chevron" className="h-5 w-5 text-slate-400" />
+      </Link>
+    </section>
+  );
+}
+
+function MobileOpportunityRows({
+  opportunities,
+}: {
+  opportunities: OverviewOpportunity[];
+}) {
+  const tones = [
+    { icon: 'play' as const, color: 'violet' },
+    { icon: 'analysis' as const, color: 'blue' },
+    { icon: 'message' as const, color: 'cyan' },
+  ];
+
+  return (
+    <section>
+      <MobileSectionHeading title="Opportunités à activer" />
+      <div className="grid gap-2.5">
+        {opportunities.map((item, index) => {
+          const tone = tones[index % tones.length];
+          const iconClass = tone.color === 'violet'
+            ? 'border-violet-300/22 bg-violet-400/14 text-violet-200'
+            : tone.color === 'cyan'
+              ? 'border-cyan-300/22 bg-cyan-300/12 text-cyan-200'
+              : 'border-sky-300/22 bg-sky-400/12 text-sky-200';
+          const badgeClass = tone.color === 'violet'
+            ? 'border-fuchsia-300/18 bg-fuchsia-400/10 text-fuchsia-200'
+            : tone.color === 'cyan'
+              ? 'border-cyan-300/18 bg-cyan-300/10 text-cyan-200'
+              : 'border-amber-300/18 bg-amber-300/10 text-amber-200';
+
+          return (
+            <Link key={item.id} href={item.href} className={`${mobileShellCard} flex min-h-[102px] items-center gap-4 rounded-[18px] p-3.5 transition hover:border-violet-200/20 hover:bg-white/[0.035] active:scale-[0.99] min-[1024px]:items-start min-[1024px]:gap-3`}>
+              <span className={`grid h-16 w-16 shrink-0 place-items-center rounded-[16px] border ${iconClass}`}>
+                <Icon name={tone.icon} className="h-8 w-8" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <h3 className="line-clamp-1 text-[1.02rem] font-black leading-6 text-white">{item.title}</h3>
+                <p className="mt-1 line-clamp-2 text-[0.82rem] font-medium leading-5 text-slate-300/86">{item.description}</p>
+              </div>
+              <div className="flex shrink-0 flex-col items-end gap-3 min-[1024px]:self-stretch">
+                <span className={`rounded-full border px-3 py-1 text-[0.75rem] font-black ${badgeClass}`}>{item.priority}</span>
+                <span className="flex items-center gap-1 text-[0.95rem] font-black text-violet-300">
+                  {item.actionLabel}
+                  <Icon name="chevron" className="h-5 w-5 text-slate-400" />
+                </span>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function MobileMiniBars({ tone = 'blue', active = 5 }: { tone?: 'blue' | 'violet' | 'cyan' | 'green'; active?: number }) {
+  const toneClass = {
+    blue: 'bg-sky-400 shadow-[0_0_18px_-7px_rgba(56,189,248,0.95)]',
+    violet: 'bg-violet-400 shadow-[0_0_18px_-7px_rgba(168,85,247,0.95)]',
+    cyan: 'bg-cyan-300 shadow-[0_0_18px_-7px_rgba(34,211,238,0.95)]',
+    green: 'bg-emerald-300 shadow-[0_0_18px_-7px_rgba(74,222,128,0.95)]',
+  }[tone];
+
+  return (
+    <div className="flex h-9 items-end gap-1.5" aria-hidden="true">
+      {[12, 16, 20, 22, 28, 30, 27, 22, 17].map((height, index) => (
+        <span
+          key={`${height}-${index}`}
+          className={`w-2 rounded-sm ${index < active ? toneClass : 'bg-white/10'}`}
+          style={{ height }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function MobileFormatPerformanceSection({ items }: { items: OverviewFormatPerformance[] }) {
+  return (
+    <section>
+      <MobileSectionHeading title="Performances par format" />
+      <div className="-mx-1 flex snap-x gap-3 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden min-[1024px]:mx-0 min-[1024px]:grid min-[1024px]:grid-cols-3 min-[1024px]:overflow-visible min-[1024px]:px-0 min-[1024px]:pb-0">
+        {items.map((item, index) => {
+          const tone = index === 0 ? 'violet' : index === 1 ? 'blue' : 'cyan';
+          const icon = index === 0 ? 'users' : index === 1 ? 'bookmark' : 'shield';
+          return (
+          <article key={item.id} className={`${mobileShellCard} min-h-[142px] min-w-[148px] snap-start rounded-[16px] p-3.5 min-[390px]:min-w-[158px] min-[1024px]:min-h-[120px] min-[1024px]:min-w-0 min-[1024px]:p-4`}>
+            <span className={`grid h-10 w-10 place-items-center rounded-[12px] border ${
+              tone === 'violet'
+                ? 'border-violet-300/20 bg-violet-400/12 text-violet-200'
+                : tone === 'cyan'
+                  ? 'border-cyan-300/20 bg-cyan-300/12 text-cyan-200'
+                  : 'border-sky-300/20 bg-sky-400/12 text-sky-200'
+            }`}>
+              <Icon name={icon} className="h-5 w-5" />
+            </span>
+            <p className="mt-2 truncate text-[0.83rem] font-black text-white">{item.format}</p>
+            <p className="truncate text-[0.68rem] font-medium text-slate-400">{item.metricLabel}</p>
+            <p className="mt-2 text-[1.35rem] font-black leading-none tracking-[-0.045em] text-white min-[1024px]:text-[1.55rem]">
+              {item.value}
+            </p>
+            <p className={`mt-2 text-[0.68rem] font-black ${item.available ? 'text-emerald-300' : 'text-slate-400'}`}>{item.trendLabel ?? 'À mesurer'}</p>
+          </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function MobileAiObjectIllustration() {
+  return (
+    <div className="pointer-events-none absolute bottom-4 right-3 hidden h-32 w-32 min-[390px]:block" aria-hidden="true">
+      <div className="absolute left-8 top-5 h-20 w-20 rotate-6 rounded-[18px] border border-cyan-200/20 bg-[linear-gradient(145deg,rgba(59,130,246,0.18),rgba(124,58,237,0.18))] shadow-[0_0_40px_-12px_rgba(59,130,246,0.95)]" />
+      <div className="absolute left-10 top-8 h-14 w-16 rounded-[999px] border border-violet-200/30 bg-violet-300/12 shadow-[0_0_28px_-8px_rgba(168,85,247,0.95)]" />
+      <div className="absolute left-5 top-20 h-9 w-28 rounded-[100%] border-2 border-cyan-300/50 shadow-[0_0_22px_rgba(34,211,238,0.55)]" />
+      <Icon name="insights" className="absolute left-14 top-12 h-8 w-8 text-cyan-100" />
+    </div>
+  );
+}
+
+function MobileAiRecommendationCard({ block }: { block: DashboardData['overview']['aiRecommendation'] }) {
+  return (
+    <section className={`${mobileShellCard} mt-5 min-h-[206px] rounded-[22px] border-violet-300/30 p-4 shadow-[0_0_42px_-30px_rgba(168,85,247,0.95)]`}>
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_5%_0%,rgba(168,85,247,0.28),transparent_34%),radial-gradient(circle_at_88%_34%,rgba(34,211,238,0.14),transparent_40%)]" />
+      <MobileAiObjectIllustration />
+      <div className="relative max-w-[78%]">
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="text-[1.24rem] font-black tracking-[-0.025em] text-white">{block.title}</h2>
+          <span className="rounded-[10px] border border-violet-200/18 bg-violet-400/16 px-2.5 py-1 text-[0.75rem] font-black text-violet-200">Insight IA</span>
+        </div>
+        <p className="mt-3 text-[0.9rem] font-medium leading-5 text-slate-100/86">{block.description}</p>
+        <div className="mt-3 grid gap-2">
+          {block.items.map((item) => (
+            <div key={item} className="flex items-center gap-2">
+              <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-violet-500 text-white">
+                <svg viewBox="0 0 20 20" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m5 10 3 3 7-7" /></svg>
+              </span>
+              <span className="line-clamp-1 text-[0.78rem] font-medium text-slate-200">{item}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function activityPresentation(activity: OverviewActivity): { icon: IconName; tone: 'violet' | 'cyan' | 'amber' } {
+  if (activity.type === 'tiktok') return { icon: 'radar', tone: 'cyan' };
+  if (activity.type === 'hook') return { icon: 'spark', tone: 'amber' };
+  return { icon: 'target', tone: 'violet' };
+}
+
+function MobileActivitySection({ activities }: { activities: OverviewActivity[] }) {
+  return (
+    <section>
+      <MobileSectionHeading title="Activité récente" />
+      <div className={`${mobileShellCard} rounded-[20px] p-3.5`}>
+        {activities.length > 0 ? (
+          <div className="grid gap-1">
+            {activities.map((activity) => {
+              const style = activityPresentation(activity);
+              return (
+              <Link key={activity.id} href={activity.href} className="flex min-h-[66px] items-center gap-3 rounded-[14px] px-2 py-2 transition hover:bg-white/[0.03] active:scale-[0.99]">
+                <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-[13px] border ${
+                  style.tone === 'violet'
+                    ? 'border-violet-300/20 bg-violet-400/12 text-violet-200'
+                    : style.tone === 'cyan'
+                      ? 'border-cyan-300/20 bg-cyan-300/12 text-cyan-200'
+                      : 'border-amber-300/20 bg-amber-300/12 text-amber-200'
+                }`}>
+                  <Icon name={style.icon} className="h-5 w-5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[0.95rem] font-black text-white">{activity.title}</p>
+                  <p className="truncate text-[0.8rem] font-medium text-slate-400">{activity.description}</p>
+                </div>
+                <span className="max-w-[78px] shrink-0 text-right text-[0.76rem] font-medium leading-4 text-slate-400">{activity.timeLabel}</span>
+                <Icon name="chevron" className="h-5 w-5 shrink-0 text-slate-500" />
+              </Link>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="p-2 text-center">
+            <p className="text-[0.95rem] font-black text-white">Aucune activité récente</p>
+            <p className="mt-1 text-[0.82rem] leading-5 text-slate-400">Analyse une vidéo ou connecte TikTok pour remplir cette timeline.</p>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function MobileWeeklyGoalsSection({ goals }: { goals: OverviewGoal[] }) {
+  return (
+    <section>
+      <MobileSectionHeading title="Objectifs de la semaine" icon="target" />
+      <div className={`${mobileShellCard} rounded-[20px] p-4`}>
+      <div className="grid gap-3.5">
+          {goals.map((goal, index) => {
+            const tone = index === 0 ? 'violet' : index === 1 ? 'blue' : 'cyan';
+            const icon = index === 0 ? 'analysis' : index === 1 ? 'hook' : 'target';
+            return (
+            <div key={goal.label} className="flex items-center gap-3">
+              <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-[13px] border ${
+                tone === 'violet'
+                  ? 'border-violet-300/22 bg-violet-400/14 text-violet-200'
+                  : tone === 'cyan'
+                    ? 'border-cyan-300/22 bg-cyan-300/12 text-cyan-200'
+                    : 'border-sky-300/22 bg-sky-400/12 text-sky-200'
+              }`}>
+                <Icon name={icon} className="h-6 w-6" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="truncate text-[0.93rem] font-medium text-white">{goal.label}</p>
+                  <p className="shrink-0 text-[0.96rem] font-black text-white">{goal.current}/{goal.target}</p>
+                </div>
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
+                  <div className={`h-full rounded-full ${
+                    tone === 'violet'
+                      ? 'bg-[linear-gradient(90deg,#7c3aed,#c084fc)]'
+                      : tone === 'cyan'
+                        ? 'bg-[linear-gradient(90deg,#22c55e,#67e8f9)]'
+                        : 'bg-[linear-gradient(90deg,#4f46e5,#38bdf8)]'
+                  }`} style={{ width: `${goal.percent}%` }} />
+                </div>
+              </div>
+              <p className="w-[64px] shrink-0 text-right text-[0.82rem] font-black text-violet-300">{goal.percent}%</p>
+            </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function MobileHooksToTestSection({ hooks }: { hooks: OverviewHookSuggestion[] }) {
+  return (
+    <section>
+      <MobileSectionHeading title="Hooks à tester" icon="target" />
+      <div className="grid gap-2.5">
+        {hooks.length > 0 ? hooks.map((hook, index) => (
+          <Link key={hook.id} href={hook.href} className={`${mobileShellCard} flex min-h-[84px] items-center gap-3 rounded-[18px] p-3 transition active:scale-[0.99]`}>
+            <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-[14px] border ${index === 0 ? 'border-violet-300/22 bg-violet-400/14 text-violet-200' : index === 1 ? 'border-sky-300/22 bg-sky-400/12 text-sky-200' : 'border-emerald-300/22 bg-emerald-300/12 text-emerald-200'}`}>
+              <Icon name={index === 0 ? 'hook' : index === 1 ? 'play' : 'radar'} className="h-6 w-6" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h3 className="line-clamp-2 text-[0.92rem] font-black leading-5 text-white">{hook.text}</h3>
+              <span className="mt-1 inline-flex rounded-[7px] bg-violet-400/12 px-2 py-0.5 text-[0.68rem] font-black text-violet-200">{hook.category}</span>
+            </div>
+            {hook.score !== null ? <MobileScoreRingPremium score={hook.score} tone={hook.score >= 80 ? 'green' : 'blue'} /> : <span className="text-[1.35rem] font-black text-slate-500">—</span>}
+            <Icon name="chevron" className="h-5 w-5 shrink-0 text-slate-500" />
+          </Link>
+        )) : (
+          <Link href="/dashboard/hooks" className={`${mobileShellCard} flex min-h-[92px] items-center gap-3 rounded-[18px] p-4 transition active:scale-[0.99]`}>
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-[14px] border border-violet-300/22 bg-violet-400/14 text-violet-200">
+              <Icon name="hook" className="h-6 w-6" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-[0.95rem] font-black leading-5 text-white">Aucun hook généré</h3>
+              <p className="mt-1 text-[0.8rem] font-medium leading-5 text-slate-400">Génère des hooks depuis une vraie analyse ou une idée à tester.</p>
+            </div>
+            <Icon name="chevron" className="h-5 w-5 shrink-0 text-slate-500" />
+          </Link>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function MobileTimeSlotsSection({ slots }: { slots: OverviewTimeSlot[] }) {
+  return (
+    <section>
+      <MobileSectionHeading title="Créneaux à privilégier" icon="clock" />
+      <div className="-mx-1 flex snap-x gap-3 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden min-[1024px]:mx-0 min-[1024px]:grid min-[1024px]:grid-cols-3 min-[1024px]:overflow-visible min-[1024px]:px-0 min-[1024px]:pb-0">
+        {slots.map((slot, index) => (
+          <article key={slot.label} className={`${mobileShellCard} min-h-[124px] min-w-[154px] snap-start rounded-[16px] p-3.5 min-[390px]:min-w-[164px] min-[1024px]:min-w-0 min-[1024px]:p-3`}>
+            <div className="flex items-center gap-2">
+              <Icon name="clock" className={`h-5 w-5 ${index === 0 ? 'text-violet-300' : index === 2 ? 'text-cyan-300' : 'text-sky-300'}`} />
+              <p className="text-[0.95rem] font-black text-white">{slot.label}</p>
+            </div>
+            <div className="mt-3">
+              <MobileMiniBars tone={index === 0 ? 'violet' : index === 1 ? 'blue' : 'cyan'} active={slot.available ? 6 + index : 0} />
+            </div>
+            <p className="mt-2 text-[0.76rem] font-black text-emerald-300">{slot.trendLabel}</p>
+            <p className="mt-1 text-[0.7rem] font-medium text-slate-300">{slot.description}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function MobileMemoryCard({ memory }: { memory: DashboardData['overview']['memoryInsight'] }) {
+  return (
+    <section className={`${mobileShellCard} mt-5 min-h-[206px] rounded-[22px] border-violet-300/30 p-4`}>
+      <MobileAiObjectIllustration />
+      <div className="relative max-w-[78%]">
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="text-[1.24rem] font-black tracking-[-0.025em] text-white">Mémoire IA</h2>
+          <span className="rounded-[10px] border border-violet-200/18 bg-violet-400/16 px-2.5 py-1 text-[0.75rem] font-black text-violet-200">Insight IA</span>
+        </div>
+        <p className="mt-3 text-[0.9rem] font-medium leading-5 text-slate-100/82">{memory.description}</p>
+        <div className="mt-3 grid gap-2">
+          {memory.items.map((item) => (
+            <div key={item} className="flex items-center gap-2">
+              <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-violet-500 text-white">
+                <svg viewBox="0 0 20 20" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m5 10 3 3 7-7" /></svg>
+              </span>
+              <span className="line-clamp-1 text-[0.78rem] font-medium text-slate-200">{item}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function MobileQuickActionsSection() {
+  const actions = [
+    { title: 'Analyser une vidéo', detail: 'Obtenir un score et des décisions', href: '/dashboard/analyze', icon: 'play' as const, tone: 'violet' },
+    { title: 'Générer des hooks', detail: 'Créer une V2 plus tendue', href: '/dashboard/hooks', icon: 'spark' as const, tone: 'blue' },
+    { title: 'Voir les insights', detail: 'Mémoire et tendances', href: '/dashboard/insights', icon: 'analysis' as const, tone: 'cyan' },
+    { title: 'Gérer TikTok', detail: 'Compte et permissions', href: '/dashboard/settings', icon: 'settings' as const, tone: 'pink' },
+  ];
+
+  return (
+    <section>
+      <MobileSectionHeading title="Raccourcis" icon="spark" />
+      <div className="grid grid-cols-2 gap-2.5 min-[1024px]:gap-4">
+        {actions.map((action) => (
+          <Link key={action.href} href={action.href} className={`${mobileShellCard} flex min-h-[82px] items-center gap-3 rounded-[18px] p-3 transition hover:border-violet-200/20 hover:bg-white/[0.035] active:scale-[0.99] min-[1024px]:min-h-[104px] min-[1024px]:p-4`}>
+            <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-[14px] border ${
+              action.tone === 'violet'
+                ? 'border-violet-300/22 bg-violet-400/14 text-violet-200'
+                : action.tone === 'cyan'
+                  ? 'border-cyan-300/22 bg-cyan-300/12 text-cyan-200'
+                  : action.tone === 'pink'
+                    ? 'border-fuchsia-300/22 bg-fuchsia-400/12 text-fuchsia-200'
+                    : 'border-sky-300/22 bg-sky-400/12 text-sky-200'
+            }`}>
+              <Icon name={action.icon} className="h-6 w-6" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="line-clamp-1 text-[0.86rem] font-black text-white">{action.title}</p>
+              <p className="mt-1 line-clamp-1 text-[0.68rem] font-medium text-slate-400">{action.detail}</p>
+            </div>
+            <Icon name="chevron" className="h-5 w-5 shrink-0 text-slate-500" />
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function MobileHelpSection() {
+  return (
+    <section>
+      <MobileSectionHeading title="Besoin d’aide ?" icon="info" />
+      <Link href="/dashboard/settings" className={`${mobileShellCard} flex min-h-[92px] items-center gap-4 rounded-[20px] border-violet-300/24 p-4 transition active:scale-[0.99]`}>
+        <span className="grid h-14 w-14 shrink-0 place-items-center rounded-[16px] border border-violet-300/22 bg-violet-400/14 text-violet-200">
+          <Icon name="shield" className="h-7 w-7" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[1rem] font-black text-white">Centre d’aide</p>
+          <p className="mt-1 text-[0.78rem] font-medium text-slate-400">Guides, FAQ et assistance rapide</p>
+        </div>
+        <Icon name="chevron" className="h-6 w-6 shrink-0 text-slate-400" />
+      </Link>
+    </section>
+  );
+}
+
+function MobileBottomNavPremium() {
+  const items: Array<{ href: string; label: string; icon: IconName; active?: boolean }> = [
+    { href: '/dashboard', label: 'Accueil', icon: 'home', active: true },
+    { href: '/dashboard/analyze', label: 'Analyser', icon: 'spark' },
+    { href: '/dashboard/hooks', label: 'Hooks', icon: 'hook' },
+    { href: '/dashboard/settings', label: 'Compte', icon: 'users' },
+  ];
+
+  return (
+    <nav className="fixed inset-x-0 bottom-0 z-[180] mx-auto w-full max-w-[430px] px-3 pb-[max(10px,env(safe-area-inset-bottom))] min-[1024px]:hidden" aria-label="Navigation mobile">
+      <div className="grid grid-cols-4 rounded-[22px] border border-white/[0.09] bg-[#071020]/88 p-1.5 shadow-[0_-18px_58px_-34px_rgba(124,58,237,0.9),inset_0_1px_0_rgba(255,255,255,0.075)] backdrop-blur-2xl">
+        {items.map((item) => (
+          <Link key={item.href} href={item.href} className={`relative flex h-[62px] flex-col items-center justify-center gap-1 rounded-[18px] text-[0.74rem] font-medium transition ${item.active ? 'bg-[linear-gradient(135deg,rgba(37,99,235,0.32),rgba(91,33,182,0.42))] text-sky-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]' : 'text-slate-300/78'}`}>
+            {item.active ? <span className="absolute -top-1 h-2 w-2 rounded-full bg-cyan-300 shadow-[0_0_14px_rgba(34,211,238,0.95)]" /> : null}
+            <Icon name={item.icon} className="h-5 w-5" />
+            <span>{item.label}</span>
+          </Link>
+        ))}
+      </div>
+    </nav>
+  );
+}
+
+function DesktopOverviewHeader({
+  user,
+  tiktokConnection,
+}: {
+  user: DashboardData['user'];
+  tiktokConnection: DashboardData['tiktokConnection'];
+}) {
+  const displayName = tiktokConnection.displayName?.trim() || user.name;
+  const initials = displayName.slice(0, 2).toUpperCase();
+
+  return (
+    <header className="flex items-start justify-between gap-6">
+      <div className="min-w-0">
+        <h1 className="text-[34px] font-black leading-none tracking-[-0.05em] text-white min-[1440px]:text-[38px]">Vue d&apos;ensemble</h1>
+        <p className="mt-2 text-[15px] font-medium text-slate-300/82">Ton cockpit de performance.</p>
+      </div>
+      <div className="flex shrink-0 items-center gap-3">
+        <button type="button" aria-label="Notifications" className="relative grid h-12 w-12 place-items-center rounded-[14px] border border-white/[0.08] bg-white/[0.035] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition hover:border-violet-200/20 hover:bg-white/[0.055]">
+          <Icon name="bell" className="h-5 w-5" />
+          <span className="absolute right-3 top-2.5 h-2.5 w-2.5 rounded-full bg-violet-400 shadow-[0_0_14px_rgba(139,92,246,0.95)]" />
+        </button>
+        <Link href="/dashboard/settings" className="flex h-14 min-w-[210px] items-center gap-3 rounded-[14px] border border-white/[0.085] bg-white/[0.035] px-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition hover:border-violet-200/20 hover:bg-white/[0.055]">
+          <span className="relative grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full border border-white/10 bg-white/[0.06] text-[0.78rem] font-black text-white">
+            {tiktokConnection.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={tiktokConnection.avatarUrl} alt="" className="h-full w-full object-cover" />
+            ) : (
+              initials
+            )}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="flex items-center gap-1.5">
+              <span className="truncate text-[13px] font-black text-white">{displayName}</span>
+              <span className="text-sky-400">●</span>
+            </span>
+          </span>
+          <Icon name="chevron" className="h-4 w-4 rotate-90 text-slate-400" />
+        </Link>
+      </div>
+    </header>
+  );
+}
+
+function DesktopPlayIllustration() {
+  return (
+    <div className="pointer-events-none absolute right-12 top-7 h-[260px] w-[430px]" aria-hidden="true">
+      <div className="absolute right-16 top-7 h-44 w-44 rotate-[-7deg] rounded-[36px] border border-cyan-200/30 bg-[linear-gradient(145deg,rgba(125,150,255,0.3),rgba(13,20,51,0.72))] shadow-[0_0_78px_-18px_rgba(59,130,246,0.95),inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-xl" />
+      <div className="absolute right-[132px] top-[88px] grid h-20 w-20 place-items-center rounded-[22px] border border-cyan-100/30 bg-cyan-300/12 text-cyan-50 shadow-[0_0_42px_rgba(34,211,238,0.52)]">
+        <Icon name="play" className="h-11 w-11" />
+      </div>
+      <div className="absolute right-6 top-[112px] h-[78px] w-[330px] rotate-[-12deg] rounded-[100%] border-2 border-cyan-300/55 shadow-[0_0_34px_rgba(34,211,238,0.6)]" />
+      <div className="absolute right-8 top-[162px] h-[44px] w-[260px] rounded-[100%] border border-blue-500/25" />
+      <span className="absolute right-12 top-10 h-1.5 w-1.5 rounded-full bg-cyan-200 shadow-[0_0_12px_rgba(34,211,238,0.9)]" />
+      <span className="absolute left-20 top-4 h-1 w-1 rounded-full bg-blue-300 shadow-[0_0_10px_rgba(96,165,250,0.9)]" />
+      <span className="absolute bottom-10 right-24 h-1 w-1 rounded-full bg-fuchsia-300 shadow-[0_0_10px_rgba(232,121,249,0.9)]" />
+    </div>
+  );
+}
+
+function DesktopHeroOpportunityCard({ dashboard, states }: { dashboard: DashboardData; states: DashboardData['states'] }) {
+  const hero = dashboard.overview.heroOpportunity;
+
+  return (
+    <section className={`${mobileShellCard} min-h-[330px] rounded-[22px] border-violet-300/30 p-7 shadow-[0_0_0_1px_rgba(34,211,238,0.08),0_28px_90px_-54px_rgba(124,58,237,0.95)]`}>
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_9%_0%,rgba(168,85,247,0.28),transparent_32%),radial-gradient(circle_at_74%_16%,rgba(34,211,238,0.14),transparent_40%),linear-gradient(135deg,rgba(78,14,145,0.15),transparent_50%)]" />
+      <DesktopPlayIllustration />
+      <div className="relative max-w-[455px]">
+        <div className="flex items-center gap-3">
+          <span className="grid h-11 w-11 place-items-center rounded-[14px] border border-violet-200/18 bg-violet-400/14 text-white">
+            <Icon name="spark" className="h-5 w-5" />
+          </span>
+          <h2 className="text-[18px] font-black tracking-[-0.02em] text-white">{states.hasLatestAnalysis ? 'Meilleure opportunité de repost' : hero.title}</h2>
+        </div>
+        <div className="mt-6 flex items-end gap-2">
+          <span className="bg-[linear-gradient(135deg,#22d3ee_0%,#3b82f6_38%,#a855f7_82%)] bg-clip-text text-[76px] font-black leading-none tracking-[-0.085em] text-transparent">
+            {hero.score === null ? '--' : hero.score}
+          </span>
+          <span className="pb-3 text-[36px] font-black leading-none tracking-[-0.055em] text-slate-300">/100</span>
+        </div>
+        <span className="mt-2 inline-flex h-8 items-center gap-2 rounded-[10px] border border-violet-200/20 bg-violet-400/18 px-3 text-[13px] font-black text-violet-100">
+          <Icon name="insights" className="h-4 w-4" />
+          Insight IA
+        </span>
+        <p className="mt-4 max-w-[390px] text-[15px] font-medium leading-7 text-slate-100/86">{hero.description}</p>
+        <Link href={hero.href} className="mt-5 inline-flex h-12 min-w-[310px] items-center justify-center gap-3 rounded-[13px] bg-[linear-gradient(90deg,#22c7ff_0%,#4f6dff_50%,#b21fff_100%)] px-5 text-[14px] font-black text-white shadow-[0_18px_48px_-22px_rgba(59,130,246,0.95),0_0_32px_-18px_rgba(168,85,247,0.95)] transition hover:brightness-110 active:scale-[0.99]">
+          {hero.ctaLabel}
+          <Icon name="chevron" className="h-5 w-5" />
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+function DesktopKpiGridPremium({ dashboard, states }: { dashboard: DashboardData; states: DashboardData['states'] }) {
+  const items = dashboard.overview.kpis.map((kpi) => ({
+    label: kpi.label,
+    value: kpi.value,
+    detail: kpi.trendLabel ?? kpi.detail,
+    ...kpiPresentation(kpi),
+  }));
+
+  return (
+    <section className="grid grid-cols-4 gap-3">
+      {items.map((item) => <MobileKpiCard key={item.label} {...item} />)}
+    </section>
+  );
+}
+
+function DesktopTikTokConnectionCard({
+  connection,
+  states,
+}: {
+  connection: DashboardData['tiktokConnection'];
+  states: DashboardData['states'];
+}) {
+  return <MobileTikTokConnectionCard connection={connection} states={states} />;
+}
+
+function DesktopDailyAiPlanCard({ items }: { items: string[] }) {
+  return <MobileDailyAiPlanCard items={items} />;
+}
+
+function DesktopRecentAnalysesSection({ dashboard, states }: { dashboard: DashboardData; states: DashboardData['states'] }) {
+  const videos = dashboard.overview.recentAnalyses.slice(0, 3);
+
+  return (
+    <section className={`${mobileShellCard} rounded-[20px] p-5`}>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="text-[20px] font-black tracking-[-0.025em] text-white">Analyses récentes</h2>
+        <Link href="/dashboard/library" className="text-[14px] font-black text-violet-300 transition hover:text-white">Voir tout</Link>
+      </div>
+      {states.hasAnalyses && videos.length > 0 ? (
+        <div className="grid gap-2.5">
+          {videos.map((video, index) => <MobileRecentAnalysisCard key={video.id} video={video} index={index} />)}
+        </div>
+      ) : (
+        <div className="rounded-[16px] border border-white/[0.075] bg-white/[0.035] p-6 text-center">
+          <p className="text-[1rem] font-black text-white">Aucune analyse récente</p>
+          <p className="mt-2 text-[0.9rem] leading-5 text-slate-400">Analyse une vidéo pour remplir cette section avec de vraies décisions de repost.</p>
+          <Link href="/dashboard/analyze" className="mt-4 inline-flex h-11 items-center justify-center rounded-[14px] bg-white/[0.07] px-4 text-[0.86rem] font-black text-white ring-1 ring-white/[0.08]">Analyser une vidéo</Link>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function DesktopFooter({ dashboard }: { dashboard: DashboardData }) {
+  return (
+    <footer className={`${mobileShellCard} flex min-h-[74px] items-center justify-between gap-5 rounded-[18px] px-5 py-4 text-[12px] text-slate-400`}>
+      <div className="flex min-w-0 items-center gap-3">
+        <LogoMark small />
+        <span className="font-black text-white">Viralynz Pro</span>
+        <span className="hidden min-[1280px]:inline">— {dashboard.overview.tiktok.lastSyncLabel}</span>
+      </div>
+      <div className="hidden items-center gap-2 text-slate-300 min-[1180px]:flex">
+        <span className="h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(74,222,128,0.8)]" />
+        Tous les systèmes opérationnels
+      </div>
+      <nav className="flex shrink-0 items-center gap-5">
+        <Link href="/legal/confidentialite" className="transition hover:text-white">Confidentialité</Link>
+        <Link href="/legal/cgv" className="transition hover:text-white">Conditions</Link>
+        <Link href="/dashboard/support" className="transition hover:text-white">Contact</Link>
+        <span>v2.4.1</span>
+      </nav>
+    </footer>
+  );
+}
+
+function DesktopOverviewDashboard({
+  dashboard,
+  states,
+  tiktokConnection,
+  onManageTikTok,
+}: {
+  dashboard: DashboardData;
+  states: DashboardData['states'];
+  tiktokConnection: DashboardData['tiktokConnection'];
+  onManageTikTok: () => void;
+}) {
+  return (
+    <div className="hidden min-[1024px]:block">
+      <div className="mx-auto grid w-full max-w-[1380px] gap-4 pb-8 min-[1440px]:gap-5">
+        <DesktopOverviewHeader user={dashboard.user} tiktokConnection={tiktokConnection} />
+        {states.hasTikTokConnection && (!states.hasTikTokVideoPermissions || tiktokConnection.needsReconnect) ? (
+          <TikTokStatusBanner states={states} connection={tiktokConnection} onManageTikTok={onManageTikTok} />
+        ) : null}
+        <DesktopHeroOpportunityCard dashboard={dashboard} states={states} />
+        <DesktopKpiGridPremium dashboard={dashboard} states={states} />
+        <section className="grid gap-4 min-[1180px]:grid-cols-[minmax(0,0.92fr)_minmax(0,1fr)]">
+          <DesktopTikTokConnectionCard connection={tiktokConnection} states={states} />
+          <DesktopDailyAiPlanCard items={dashboard.overview.dailyPlan} />
+        </section>
+        <DesktopRecentAnalysesSection dashboard={dashboard} states={states} />
+        <MobileMoreAnalysesSection dashboard={dashboard} states={states} />
+        <MobileOpportunityRows opportunities={dashboard.overview.opportunities} />
+        <MobileFormatPerformanceSection items={dashboard.overview.formatPerformance} />
+        <MobileAiRecommendationCard block={dashboard.overview.aiRecommendation} />
+        <section className="grid gap-4 min-[1180px]:grid-cols-2">
+          <MobileActivitySection activities={dashboard.overview.activity} />
+          <MobileWeeklyGoalsSection goals={dashboard.overview.weeklyGoals} />
+        </section>
+        <section className="grid gap-4 min-[1180px]:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)]">
+          <MobileHooksToTestSection hooks={dashboard.overview.hooksToTest} />
+          <MobileTimeSlotsSection slots={dashboard.overview.bestTimeSlots} />
+        </section>
+        <MobileMemoryCard memory={dashboard.overview.memoryInsight} />
+        <MobileQuickActionsSection />
+        <MobileHelpSection />
+        <DesktopFooter dashboard={dashboard} />
+      </div>
+    </div>
   );
 }
 
@@ -1664,17 +3208,27 @@ function MobileOverviewDashboard({
   tiktokConnection: DashboardData['tiktokConnection'];
 }) {
   return (
-    <div className="grid gap-3 min-[1280px]:hidden">
-      <MobileWelcomeStatus user={dashboard.user} states={states} tiktokConnection={tiktokConnection} />
-      <MobilePrimaryActions states={states} />
-      <MobileNextMoveCard recommendations={dashboard.recommendations} states={states} />
-      <MobilePerformanceSummary dashboard={dashboard} states={states} />
-      <MobileLatestAnalysis dashboard={dashboard} states={states} />
-      <MobileRecommendations recommendations={dashboard.recommendations} states={states} />
-      <MobileMemoryCompact insights={dashboard.insights} states={states} />
-      <MobileRetentionCompact retention={dashboard.retention} states={states} cta={dashboard.analysisCta} />
-      <MobileUnlockModules states={states} />
-      <MobileTopVideosCompact videos={dashboard.topVideos} states={states} />
+    <div className="relative mx-auto min-h-screen w-full max-w-[430px] overflow-hidden px-1 pb-[124px] min-[1024px]:hidden">
+      <div className="pointer-events-none absolute -left-20 top-0 h-64 w-64 rounded-full bg-violet-600/18 blur-3xl" />
+      <div className="pointer-events-none absolute -right-16 top-28 h-64 w-64 rounded-full bg-cyan-400/10 blur-3xl" />
+      <div className="relative">
+        <MobileOverviewHeader />
+        <MobileOverviewHeroCard dashboard={dashboard} states={states} />
+        <MobileKpiGridPremium dashboard={dashboard} states={states} />
+        <MobileTikTokConnectionCard connection={tiktokConnection} states={states} />
+        <MobileDailyAiPlanCard items={dashboard.overview.dailyPlan} />
+        <MobileRecentAnalysesPremium dashboard={dashboard} states={states} />
+        <MobileOpportunityRows opportunities={dashboard.overview.opportunities} />
+        <MobileAiRecommendationCard block={dashboard.overview.aiRecommendation} />
+        <MobileFormatPerformanceSection items={dashboard.overview.formatPerformance} />
+        <MobileWeeklyGoalsSection goals={dashboard.overview.weeklyGoals} />
+        <MobileHooksToTestSection hooks={dashboard.overview.hooksToTest} />
+        <MobileTimeSlotsSection slots={dashboard.overview.bestTimeSlots} />
+        <MobileMemoryCard memory={dashboard.overview.memoryInsight} />
+        <MobileQuickActionsSection />
+        <MobileHelpSection />
+      </div>
+      <MobileBottomNavPremium />
     </div>
   );
 }
@@ -1692,22 +3246,45 @@ function DashboardV2Client({ dashboard, children }: { dashboard: DashboardData; 
         ...dashboard.states,
         hasTikTokConnection: false,
         hasTikTokMetrics: false,
+        hasTikTokStats: false,
+        hasTikTokVideoScope: false,
+        hasTikTokVideoPermissions: false,
+        hasSyncedTikTokVideos: false,
         hasRealTopVideos: false,
       }
     : dashboard.states;
 
-  const visibleTikTokConnection = locallyDisconnected
+  const visibleTikTokConnection: DashboardData['tiktokConnection'] = locallyDisconnected
     ? {
         ...dashboard.tiktokConnection,
         connected: false,
         displayName: null,
         avatarUrl: null,
         connectedAt: null,
+        lastSyncAt: null,
         scopes: [],
         hasAdvancedMetrics: false,
+        capabilities: {
+          grantedScopes: [],
+          hasBasicProfile: false,
+          hasProfile: false,
+          hasUserStats: false,
+          hasVideoList: false,
+          canFetchProfileStats: false,
+          canFetchVideos: false,
+          canFetchVideoMetrics: false,
+          canFetchWatchTime: false,
+          missingScopes: [],
+          environment: 'unknown' as const,
+          needsReconnect: false,
+        },
+        needsReconnect: false,
+        syncStatus: null,
+        syncError: null,
       }
     : dashboard.tiktokConnection;
   const showOverview = pathname === '/dashboard';
+  const showAnalyzeMobileChrome = pathname === '/dashboard/analyze';
 
   useEffect(() => {
     document.body.setAttribute('data-dashboard-v2', 'true');
@@ -1732,14 +3309,17 @@ function DashboardV2Client({ dashboard, children }: { dashboard: DashboardData; 
       data-tiktok-connected={visibleStates.hasTikTokConnection ? 'true' : 'false'}
       data-has-analyses={dashboard.states.hasAnalyses ? 'true' : 'false'}
       data-dashboard-v2-root="true"
-      className="fixed inset-0 z-[100] overflow-y-auto overflow-x-hidden bg-[#020611] font-sans text-white antialiased min-[1280px]:overflow-hidden"
+      className="fixed inset-0 z-[100] overflow-y-auto overflow-x-hidden bg-[#020611] font-sans text-white antialiased min-[1024px]:overflow-hidden"
     >
-      <div className="relative min-h-screen w-full min-w-0 overflow-x-hidden bg-[radial-gradient(ellipse_75%_52%_at_51%_-18%,rgba(56,189,248,0.08),transparent_58%),radial-gradient(ellipse_58%_44%_at_92%_8%,rgba(124,58,237,0.18),transparent_58%),linear-gradient(180deg,#020611_0%,#030711_100%)] min-[1280px]:h-screen min-[1280px]:min-h-0">
-        <div className="pointer-events-none absolute inset-0 opacity-[0.018] [background-image:linear-gradient(rgba(255,255,255,.75)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.75)_1px,transparent_1px)] [background-size:42px_42px]" />
-        <div className="pointer-events-none absolute left-[260px] top-0 hidden h-full w-px bg-white/[0.02] min-[1280px]:block" />
-        <MobileDashboardHeader user={dashboard.user} onMenuOpen={() => setDrawerOpen(true)} />
+        <div className="relative min-h-screen w-full min-w-0 overflow-x-hidden bg-[radial-gradient(ellipse_75%_52%_at_51%_-18%,rgba(56,189,248,0.08),transparent_58%),radial-gradient(ellipse_58%_44%_at_92%_8%,rgba(124,58,237,0.18),transparent_58%),linear-gradient(180deg,#020611_0%,#030711_100%)] min-[1024px]:h-screen min-[1024px]:min-h-0">
+          <div className="pointer-events-none absolute inset-0 opacity-[0.018] [background-image:linear-gradient(rgba(255,255,255,.75)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.75)_1px,transparent_1px)] [background-size:42px_42px]" />
+          <div className="pointer-events-none absolute top-0 hidden h-full w-px bg-white/[0.02] transition-[left] lg:left-[84px] lg:block xl:left-[260px]" />
+        {!showOverview && !showAnalyzeMobileChrome && <MobileDashboardHeader user={dashboard.user} onMenuOpen={() => setDrawerOpen(true)} />}
         <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} user={dashboard.user} states={visibleStates} tiktokConnection={visibleTikTokConnection} />
-        <Sidebar user={dashboard.user} tiktokConnection={visibleTikTokConnection} />
+        <Sidebar
+          user={dashboard.user}
+          tiktokConnection={visibleTikTokConnection}
+        />
         {!visibleStates.hasTikTokConnection && !locallyDisconnected && (
           <TikTokConnectModal
             isTikTokConnected={visibleStates.hasTikTokConnection}
@@ -1766,50 +3346,22 @@ function DashboardV2Client({ dashboard, children }: { dashboard: DashboardData; 
           </div>
         )}
 
-        <div data-dashboard-main-area="true" className="relative min-w-0 min-[1280px]:ml-[260px] min-[1280px]:flex min-[1280px]:h-screen min-[1280px]:w-[calc(100%-260px)] min-[1280px]:flex-col">
-          <div data-dashboard-topbar="global" className="relative z-50 hidden shrink-0 border-b border-white/[0.075] bg-[linear-gradient(180deg,rgba(3,8,20,0.94),rgba(4,9,20,0.88))] px-6 shadow-[0_22px_70px_-58px_rgba(15,23,42,0.95),inset_0_1px_0_rgba(255,255,255,0.045)] backdrop-blur-xl min-[1280px]:block min-[1440px]:px-8 min-[1680px]:px-9">
+        <div data-dashboard-main-area="true" className="relative min-w-0 overflow-x-hidden transition-[margin] duration-200 lg:ml-[84px] lg:flex lg:h-screen lg:flex-col xl:ml-[260px]">
+          <div data-dashboard-topbar="global" className={`relative z-50 shrink-0 border-b border-white/[0.075] bg-[linear-gradient(180deg,rgba(3,8,20,0.94),rgba(4,9,20,0.88))] px-5 shadow-[0_22px_70px_-58px_rgba(15,23,42,0.95),inset_0_1px_0_rgba(255,255,255,0.045)] backdrop-blur-xl min-[1440px]:px-6 min-[1680px]:px-8 ${showOverview ? 'hidden' : 'hidden min-[1024px]:block'}`}>
             <DashboardTopBar user={dashboard.user} states={visibleStates} tiktokConnection={visibleTikTokConnection} onManageTikTok={() => setManagerOpen(true)} pathname={pathname} />
           </div>
 
-          <div data-dashboard-content="true" className="relative mx-auto w-full min-w-0 max-w-[1180px] px-4 pb-8 pt-5 sm:px-5 md:px-6 lg:px-8 min-[1280px]:mx-0 min-[1280px]:max-w-none min-[1280px]:flex-1 min-[1280px]:overflow-y-auto min-[1280px]:overscroll-contain min-[1280px]:px-6 min-[1280px]:pb-8 min-[1280px]:pt-5 min-[1440px]:px-8 min-[1680px]:px-9">
+          <div data-dashboard-content="true" className="relative mx-auto w-full min-w-0 max-w-[1180px] px-4 pb-8 pt-5 sm:px-5 md:px-6 lg:px-8 min-[1024px]:mx-0 min-[1024px]:max-w-none min-[1024px]:flex-1 min-[1024px]:overflow-y-auto min-[1024px]:overscroll-contain min-[1024px]:px-5 min-[1024px]:pb-7 min-[1024px]:pt-4 min-[1440px]:px-6 min-[1680px]:px-8">
             {showOverview ? (
               <>
                 <MobileOverviewDashboard dashboard={dashboard} states={visibleStates} tiktokConnection={visibleTikTokConnection} />
 
-                <div className="hidden min-[1280px]:block">
-                <ResponsiveIntro user={dashboard.user} states={visibleStates} tiktokConnection={visibleTikTokConnection} />
-                <KpiGrid metrics={dashboard.metrics} states={visibleStates} />
-
-              <section data-dashboard-main-grid="true" className="mt-3.5 grid grid-cols-1 gap-3.5 min-[1600px]:grid-cols-[minmax(0,1fr)_390px] min-[1680px]:grid-cols-[minmax(0,1fr)_430px]">
-                <div className="min-w-0 space-y-3.5">
-                  <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 min-[1680px]:grid-cols-[minmax(0,1fr)_290px]">
-                    <RetentionChartCard retention={dashboard.retention} states={visibleStates} cta={dashboard.analysisCta} />
-                    <VideoPreviewCard latestVideo={dashboard.latestVideo} states={visibleStates} cta={dashboard.analysisCta} />
-                  </div>
-
-                  <div className="min-[1600px]:hidden">
-                    <InsightsIACard insights={dashboard.insights} cta={dashboard.analysisCta} states={visibleStates} />
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 xl:grid-cols-3 min-[1680px]:grid-cols-[250px_minmax(0,1fr)_360px]">
-                    <ViralPotentialCard metrics={dashboard.metrics} states={visibleStates} />
-                    <EmotionalCurveCard states={visibleStates} />
-                    <ContentPillarsCard states={visibleStates} />
-                  </div>
-
-                  <RecommendationsSection recommendations={dashboard.recommendations} context={dashboard.metrics.recommendationsContext} states={visibleStates} />
-
-                  <div className="min-[1600px]:hidden">
-                    <TopVideosCard videos={dashboard.topVideos} states={visibleStates} />
-                  </div>
-                </div>
-
-                <div data-dashboard-right-rail="true" className="hidden min-w-0 space-y-3.5 min-[1600px]:block">
-                  <InsightsIACard insights={dashboard.insights} cta={dashboard.analysisCta} states={visibleStates} />
-                  <TopVideosCard videos={dashboard.topVideos} states={visibleStates} />
-                </div>
-              </section>
-              </div>
+                <DesktopOverviewDashboard
+                  dashboard={dashboard}
+                  states={visibleStates}
+                  tiktokConnection={visibleTikTokConnection}
+                  onManageTikTok={() => setManagerOpen(true)}
+                />
               </>
             ) : children}
           </div>

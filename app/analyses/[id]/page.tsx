@@ -19,6 +19,13 @@ const eyebrow = 'text-[11px] font-black uppercase tracking-[0.18em] text-violet-
 const primaryButton = 'inline-flex h-11 items-center justify-center rounded-xl bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-400 px-5 text-sm font-black text-white shadow-[0_24px_70px_-34px_rgba(168,85,247,0.95)] transition hover:brightness-110';
 const secondaryButton = 'inline-flex h-11 items-center justify-center rounded-xl border border-white/[0.10] bg-white/[0.055] px-5 text-sm font-bold text-slate-200 transition hover:border-cyan-200/20 hover:bg-white/[0.085] hover:text-white';
 
+function transparencyBadgeClass(level: AnalysisDetailData['transparency']['level']) {
+  if (level === 'real') return 'border-emerald-300/22 bg-emerald-400/12 text-emerald-100';
+  if (level === 'partial') return 'border-amber-300/22 bg-amber-300/12 text-amber-100';
+  if (level === 'estimated') return 'border-cyan-300/18 bg-cyan-300/10 text-cyan-100';
+  return 'border-orange-300/22 bg-orange-400/12 text-orange-100';
+}
+
 export default async function AnalysisDetailPage({
   params,
 }: {
@@ -117,10 +124,23 @@ function Hero({ analysis }: { analysis: AnalysisDetailData }) {
             Retour au dashboard
           </Link>
           <div className="flex flex-wrap gap-2">
-            <span className="rounded-full border border-violet-300/22 bg-violet-400/12 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-violet-100">Analyse IA</span>
+            <span className={`rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] ${transparencyBadgeClass(analysis.transparency.level)}`}>
+              {analysis.transparency.label}
+            </span>
+            {typeof analysis.transparency.confidenceScore === 'number' && (
+              <span className="rounded-full border border-white/[0.08] bg-white/[0.045] px-3 py-1 text-[11px] font-bold text-slate-300">
+                Confiance {Math.round(analysis.transparency.confidenceScore)}/100
+              </span>
+            )}
             <span className="rounded-full border border-cyan-300/18 bg-cyan-300/10 px-3 py-1 text-[11px] font-bold text-cyan-100">{analysis.sourceLabel}</span>
           </div>
         </div>
+
+        {analysis.transparency.warning && (
+          <div className="rounded-2xl border border-amber-300/18 bg-amber-300/[0.06] px-4 py-3 text-sm font-semibold leading-6 text-amber-50">
+            {analysis.transparency.warning}
+          </div>
+        )}
 
         <div className="grid gap-5 xl:grid-cols-[330px_minmax(0,1fr)_360px]">
           <VideoPreview analysis={analysis} />
@@ -161,7 +181,7 @@ function VideoPreview({ analysis }: { analysis: AnalysisDetailData }) {
               <h2 className="mt-2 line-clamp-3 text-xl font-black leading-tight tracking-[-0.025em] text-white">{analysis.title}</h2>
             </div>
             <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl border border-violet-200/25 bg-violet-400/18 text-2xl font-black text-white">
-              {analysis.score}
+              {analysis.score ?? '—'}
             </div>
           </div>
           <div className="grid grid-cols-3 gap-2">
@@ -192,7 +212,7 @@ function HeroSummary({ analysis }: { analysis: AnalysisDetailData }) {
     <section className="flex min-w-0 flex-col justify-between rounded-[22px] border border-white/[0.075] bg-white/[0.035] p-5 sm:p-6">
       <div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className={eyebrow}>Analyse complète</span>
+          <span className={eyebrow}>{analysis.transparency.level === 'real' ? 'Analyse complète' : analysis.transparency.label}</span>
           <span className="rounded-full border border-white/[0.08] bg-black/20 px-2.5 py-1 text-[11px] font-bold text-slate-300">{analysis.createdAt}</span>
         </div>
         <h1 className="mt-4 max-w-3xl text-4xl font-black leading-[0.98] tracking-[-0.055em] text-white sm:text-5xl">
@@ -284,10 +304,10 @@ function Diagnostics({ diagnostics }: { diagnostics: AnalysisDiagnostic[] }) {
           <article key={item.label} className={`rounded-[18px] border p-4 ${diagnosticTone(item.score)}`}>
             <div className="flex items-start justify-between gap-3">
               <h3 className="text-base font-black text-white">{item.label}</h3>
-              <span className="rounded-full border border-white/[0.12] bg-black/22 px-2.5 py-1 text-xs font-black text-white">{item.score}/100</span>
+              <span className="rounded-full border border-white/[0.12] bg-black/22 px-2.5 py-1 text-xs font-black text-white">{item.score === null ? '—' : `${item.score}/100`}</span>
             </div>
             <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/[0.08]">
-              <div className="h-full rounded-full bg-gradient-to-r from-fuchsia-400 to-cyan-300" style={{ width: `${item.score}%` }} />
+              <div className="h-full rounded-full bg-gradient-to-r from-fuchsia-400 to-cyan-300" style={{ width: `${item.score ?? 0}%` }} />
             </div>
             <p className="mt-4 text-sm leading-6 text-slate-300">{item.problem}</p>
             <p className="mt-3 rounded-xl border border-white/[0.07] bg-black/18 px-3 py-2 text-sm font-semibold leading-6 text-violet-100">{item.correction}</p>
@@ -446,24 +466,25 @@ function FooterActions({ analysis }: { analysis: AnalysisDetailData }) {
   );
 }
 
-function ScoreDial({ score }: { score: number }) {
+function ScoreDial({ score }: { score: number | null }) {
+  const value = score ?? 0;
   return (
-    <div className="grid h-28 w-28 shrink-0 place-items-center rounded-full p-[7px]" style={{ background: `conic-gradient(#22d3ee 0 ${score}%, rgba(255,255,255,.08) ${score}% 100%)` }}>
+    <div className="grid h-28 w-28 shrink-0 place-items-center rounded-full p-[7px]" style={{ background: score === null ? 'rgba(255,255,255,.08)' : `conic-gradient(#22d3ee 0 ${value}%, rgba(255,255,255,.08) ${value}% 100%)` }}>
       <div className="grid h-full w-full place-items-center rounded-full bg-[#071221]">
         <div className="text-center">
-          <div className="text-4xl font-black tracking-[-0.06em] text-white">{score}</div>
-          <div className="text-xs font-bold text-slate-500">/100</div>
+          <div className="text-4xl font-black tracking-[-0.06em] text-white">{score ?? '—'}</div>
+          <div className="text-xs font-bold text-slate-500">{score === null ? 'score' : '/100'}</div>
         </div>
       </div>
     </div>
   );
 }
 
-function PreviewSignal({ label, value }: { label: string; value: number }) {
+function PreviewSignal({ label, value }: { label: string; value: number | null }) {
   return (
     <div className="rounded-xl border border-white/[0.09] bg-black/28 p-2">
       <p className="text-[9px] font-black uppercase tracking-[0.12em] text-slate-400">{label}</p>
-      <p className="mt-1 text-sm font-black text-white">{value}</p>
+      <p className="mt-1 text-sm font-black text-white">{value ?? '—'}</p>
     </div>
   );
 }
@@ -535,7 +556,8 @@ function SeverityBadge({ severity }: { severity: AnalysisMoment['severity'] }) {
   return <span className={`rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] ${tone}`}>{label}</span>;
 }
 
-function diagnosticTone(score: number): string {
+function diagnosticTone(score: number | null): string {
+  if (score === null) return 'border-white/[0.08] bg-white/[0.035]';
   if (score >= 75) return 'border-emerald-300/16 bg-emerald-400/[0.045]';
   if (score >= 55) return 'border-amber-300/16 bg-amber-300/[0.055]';
   return 'border-red-300/16 bg-red-400/[0.055]';

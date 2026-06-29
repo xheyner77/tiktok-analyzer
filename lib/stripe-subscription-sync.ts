@@ -1,15 +1,17 @@
-/**
- * Écritures abonnement / plan payant (starter, pro, lifetime) sur `public.users`.
- * `creator` et `scale` restent acceptés uniquement comme valeurs legacy Stripe.
- * **uniquement** depuis `app/api/webhook/route.ts` (événements Stripe signés).
- * Ne pas appeler ces fonctions depuis une route « success », le client ou des query params.
- */
 import type Stripe from 'stripe';
+import { isLifetimePlan, normalizePlan } from '@/lib/plans';
 import { supabase } from '@/lib/supabase';
 import { PLAN_RANK, planFromStripePriceId } from '@/lib/stripe-billing';
-import { isLifetimePlan, normalizePlan } from '@/lib/plans';
 
-/** Fin de période de facturation (Stripe API récente : sur l’item d’abonnement). */
+type SupabaseWriteError = {
+  message: string;
+  code?: string;
+};
+
+export type SyncCheckoutResult =
+  | { ok: true }
+  | { ok: false; reason: string; log?: string };
+
 export function subscriptionCurrentPeriodEndIso(sub: Stripe.Subscription): string {
   const endSec =
     sub.items.data[0]?.current_period_end ??
@@ -18,23 +20,23 @@ export function subscriptionCurrentPeriodEndIso(sub: Stripe.Subscription): strin
   return new Date(endSec * 1000).toISOString();
 }
 
-/** ID abonnement depuis une facture (API 2025+ : sous `parent.subscription_details`). */
 export function invoiceSubscriptionId(invoice: Stripe.Invoice): string | null {
-  const p = invoice.parent;
-  if (p?.type === 'subscription_details' && p.subscription_details?.subscription) {
-    const s = p.subscription_details.subscription;
-    return typeof s === 'string' ? s : s.id;
+  const parent = invoice.parent;
+  if (parent?.type === 'subscription_details' && parent.subscription_details?.subscription) {
+    const subscription = parent.subscription_details.subscription;
+    return typeof subscription === 'string' ? subscription : subscription.id;
   }
+
   const legacy = (invoice as unknown as { subscription?: string | Stripe.Subscription }).subscription;
   if (legacy) return typeof legacy === 'string' ? legacy : legacy.id;
   return null;
 }
 
 function subscriptionCustomerId(sub: Stripe.Subscription): string | null {
-  const c = sub.customer;
-  if (typeof c === 'string') return c;
-  if (c && typeof c === 'object' && 'id' in c && !('deleted' in c && (c as { deleted?: boolean }).deleted)) {
-    return (c as Stripe.Customer).id;
+  const customer = sub.customer;
+  if (typeof customer === 'string') return customer;
+  if (customer && typeof customer === 'object' && 'id' in customer && !('deleted' in customer && (customer as { deleted?: boolean }).deleted)) {
+    return (customer as Stripe.Customer).id;
   }
   return null;
 }
@@ -47,13 +49,45 @@ function hasStoredLifetimeAccess(user: { plan?: string | null; subscription_stat
   return isLifetimePlan(user?.plan) || user?.subscription_status === 'lifetime';
 }
 
-export type SyncCheckoutResult =
-  | { ok: true }
-  | { ok: false; reason: string; log?: string };
+function isMissingStripePriceIdColumn(error: SupabaseWriteError): boolean {
+  return error.code === 'PGRST204' || /stripe_price_id/i.test(error.message);
+}
 
-/**
- * Après Checkout Session (mode subscription) payée — source de vérité partagée webhook + /api/upgrade-plan.
- */
+async function updateUserById(userId: string, patch: Record<string, unknown>): Promise<SupabaseWriteError | null> {
+  const { error } = await supabase.from('users').update(patch).eq('id', userId);
+  if (!error || !('stripe_price_id' in patch) || !isMissingStripePriceIdColumn(error)) return error;
+
+  const retryPatch = { ...patch };
+  delete retryPatch.stripe_price_id;
+  const retry = await supabase.from('users').update(retryPatch).eq('id', userId);
+  return retry.error;
+}
+
+async function updateUsersBySubscriptionId(subscriptionId: string, patch: Record<string, unknown>): Promise<{
+  data: Array<Record<string, unknown>> | null;
+  error: SupabaseWriteError | null;
+}> {
+  const result = await supabase
+    .from('users')
+    .update(patch)
+    .eq('stripe_subscription_id', subscriptionId)
+    .select('id, email, plan');
+
+  if (!result.error || !('stripe_price_id' in patch) || !isMissingStripePriceIdColumn(result.error)) {
+    return { data: result.data as Array<Record<string, unknown>> | null, error: result.error };
+  }
+
+  const retryPatch = { ...patch };
+  delete retryPatch.stripe_price_id;
+  const retry = await supabase
+    .from('users')
+    .update(retryPatch)
+    .eq('stripe_subscription_id', subscriptionId)
+    .select('id, email, plan');
+
+  return { data: retry.data as Array<Record<string, unknown>> | null, error: retry.error };
+}
+
 export async function syncUserFromPaidSubscriptionCheckout(
   stripe: Stripe,
   session: Stripe.Checkout.Session,
@@ -68,7 +102,7 @@ export async function syncUserFromPaidSubscriptionCheckout(
 
   const userId = session.metadata?.userId;
   const metaPlan = session.metadata?.plan;
-  if (!userId || (metaPlan !== 'starter' && metaPlan !== 'creator' && metaPlan !== 'pro' && metaPlan !== 'lifetime' && metaPlan !== 'scale')) {
+  if (!userId || !['starter', 'creator', 'pro', 'lifetime', 'scale'].includes(metaPlan ?? '')) {
     return { ok: false, reason: 'invalid_metadata', log: session.id };
   }
   if (opts.expectedUserId && opts.expectedUserId !== userId) {
@@ -78,20 +112,13 @@ export async function syncUserFromPaidSubscriptionCheckout(
   let subRef = session.subscription;
   let subId = typeof subRef === 'string' ? subRef : subRef?.id;
 
-  if (!subId && session.mode === 'subscription') {
-    const expanded = await stripe.checkout.sessions.retrieve(session.id, {
-      expand: ['subscription'],
-    });
+  if (!subId) {
+    const expanded = await stripe.checkout.sessions.retrieve(session.id, { expand: ['subscription'] });
     subRef = expanded.subscription;
     subId = typeof subRef === 'string' ? subRef : subRef?.id;
-    console.log('[stripe-sync] Session récupérée avec expand subscription', {
-      sessionId: session.id,
-      subscriptionId: subId ?? '(toujours absent)',
-    });
   }
 
   if (!subId) {
-    console.error('[stripe-sync] Aucun sub_ sur checkout session', session.id, 'mode=', session.mode);
     return { ok: false, reason: 'missing_subscription_id', log: session.id };
   }
 
@@ -106,11 +133,7 @@ export async function syncUserFromPaidSubscriptionCheckout(
     return { ok: false, reason: 'price_not_mapped_to_env', log: priceId };
   }
   if (normalizePlan(planFromPrice) !== normalizePlan(metaPlan)) {
-    return {
-      ok: false,
-      reason: 'price_metadata_mismatch',
-      log: `price→${planFromPrice} metadata→${metaPlan}`,
-    };
+    return { ok: false, reason: 'price_metadata_mismatch', log: `price:${planFromPrice} metadata:${metaPlan}` };
   }
 
   const customerId =
@@ -145,58 +168,41 @@ export async function syncUserFromPaidSubscriptionCheckout(
   const sameSub = currentUser?.stripe_subscription_id === sub.id;
 
   if (!sameSub && currentRank > targetRank) {
-    console.warn(
-      '[stripe-sync] Skip stale checkout (would downgrade):',
-      userId,
-      'current',
-      currentUser?.plan,
-      'target',
-      planFromPrice
-    );
+    console.warn('[stripe-sync] Skip stale checkout', { userId, current: currentUser?.plan, target: planFromPrice });
     return { ok: true };
   }
 
   const now = new Date().toISOString();
-  const periodEndIso = subscriptionCurrentPeriodEndIso(sub);
-
-  const { error: upErr } = await supabase
-    .from('users')
-    .update({
-      plan: planFromPrice,
-      stripe_customer_id: customerId,
-      stripe_subscription_id: sub.id,
-      subscription_status: sub.status,
-      subscription_current_period_end: periodEndIso,
-      subscription_cancel_at_period_end: sub.cancel_at_period_end ?? false,
-      analyses_count: 0,
-      hooks_count: 0,
-      reconstructions_count: 0,
-      last_reset_at: now,
-    })
-    .eq('id', userId);
+  const upErr = await updateUserById(userId, {
+    plan: planFromPrice,
+    stripe_customer_id: customerId,
+    stripe_subscription_id: sub.id,
+    stripe_price_id: priceId,
+    subscription_status: sub.status,
+    subscription_current_period_end: subscriptionCurrentPeriodEndIso(sub),
+    subscription_cancel_at_period_end: sub.cancel_at_period_end ?? false,
+    analyses_count: 0,
+    hooks_count: 0,
+    reconstructions_count: 0,
+    last_reset_at: now,
+  });
 
   if (upErr) {
     return { ok: false, reason: 'db_update_failed', log: upErr.message };
   }
 
-  const priceObj = sub.items.data[0]?.price;
-  console.log('[stripe-sync] Abonnement Stripe enregistré (checkout.session.completed)', {
+  console.log('[stripe-sync] Subscription synced from checkout', {
     userId,
     plan: planFromPrice,
-    stripe_subscription_id: sub.id,
-    stripe_customer_id: customerId,
-    subscription_status: sub.status,
-    price_id: priceId,
-    recurring_interval: priceObj?.recurring?.interval ?? null,
-    session_id: session.id,
+    subscriptionId: sub.id,
+    customerId,
+    priceId,
+    status: sub.status,
+    sessionId: session.id,
   });
   return { ok: true };
 }
 
-/**
- * Après Checkout Session `mode: payment` payée — attribue l'accès Lifetime.
- * Lifetime est stocké comme `lifetime`; `scale` reste seulement accepté en metadata legacy.
- */
 export async function syncUserFromPaidLifetimeCheckout(
   stripe: Stripe,
   session: Stripe.Checkout.Session,
@@ -256,48 +262,35 @@ export async function syncUserFromPaidLifetimeCheckout(
   }
 
   const now = new Date().toISOString();
-  const { error: upErr } = await supabase
-    .from('users')
-    .update({
-      plan: 'lifetime',
-      stripe_customer_id: customerId,
-      stripe_subscription_id: null,
-      subscription_status: 'lifetime',
-      subscription_current_period_end: null,
-      subscription_cancel_at_period_end: false,
-      analyses_count: 0,
-      hooks_count: 0,
-      reconstructions_count: 0,
-      last_reset_at: now,
-    })
-    .eq('id', userId);
+  const upErr = await updateUserById(userId, {
+    plan: 'lifetime',
+    stripe_customer_id: customerId,
+    stripe_subscription_id: null,
+    stripe_price_id: priceId,
+    subscription_status: 'lifetime',
+    subscription_current_period_end: null,
+    subscription_cancel_at_period_end: false,
+    analyses_count: 0,
+    hooks_count: 0,
+    reconstructions_count: 0,
+    last_reset_at: now,
+  });
 
   if (upErr) {
     return { ok: false, reason: 'db_update_failed', log: upErr.message };
   }
 
-  console.log('[stripe-sync] Lifetime Stripe enregistré (checkout.session.completed)', {
-    userId,
-    plan: 'lifetime',
-    stripe_customer_id: customerId,
-    price_id: priceId,
-    session_id: session.id,
-  });
+  console.log('[stripe-sync] Lifetime synced from checkout', { userId, customerId, priceId, sessionId: session.id });
   return { ok: true };
 }
 
-/**
- * Met à jour la ligne users depuis un objet Subscription Stripe (webhooks updated / reconcile).
- */
 export async function syncUserRowFromStripeSubscription(sub: Stripe.Subscription): Promise<SyncCheckoutResult> {
   const priceId = primaryPriceId(sub);
   const planFromPrice = priceId ? planFromStripePriceId(priceId) : null;
   const customerId = subscriptionCustomerId(sub);
   const periodEndIso = subscriptionCurrentPeriodEndIso(sub);
 
-  const metaUserId = sub.metadata?.userId;
-
-  let userId: string | null = metaUserId ?? null;
+  let userId: string | null = sub.metadata?.userId ?? null;
   if (!userId) {
     const { data: row } = await supabase
       .from('users')
@@ -335,20 +328,17 @@ export async function syncUserRowFromStripeSubscription(sub: Stripe.Subscription
   let nextPlan = (currentUser?.plan ?? 'free') as string;
   const statusAllowsTierFromPrice =
     sub.status === 'active' || sub.status === 'trialing' || sub.status === 'past_due';
+
   if (planFromPrice && statusAllowsTierFromPrice) {
     const curR = PLAN_RANK[nextPlan] ?? 0;
     const newR = PLAN_RANK[planFromPrice] ?? 0;
     if (newR < curR && currentUser?.stripe_subscription_id !== sub.id) {
-      console.warn(
-        '[stripe-sync] Skip stale lower-tier subscription (would overwrite higher plan):',
+      console.warn('[stripe-sync] Skip stale lower-tier subscription', {
         userId,
-        'current',
-        currentUser?.plan,
-        currentUser?.stripe_subscription_id,
-        'incoming',
-        planFromPrice,
-        sub.id
-      );
+        current: currentUser?.plan,
+        incoming: planFromPrice,
+        subscriptionId: sub.id,
+      });
       return { ok: true };
     }
     if (newR >= curR || currentUser?.stripe_subscription_id === sub.id) {
@@ -358,6 +348,7 @@ export async function syncUserRowFromStripeSubscription(sub: Stripe.Subscription
 
   const patch: Record<string, unknown> = {
     stripe_subscription_id: sub.id,
+    stripe_price_id: priceId,
     subscription_status: sub.status,
     subscription_current_period_end: periodEndIso,
     subscription_cancel_at_period_end: sub.cancel_at_period_end ?? false,
@@ -367,12 +358,12 @@ export async function syncUserRowFromStripeSubscription(sub: Stripe.Subscription
     patch.stripe_customer_id = customerId;
   }
 
-  const { error: upErr } = await supabase.from('users').update(patch).eq('id', userId);
+  const upErr = await updateUserById(userId, patch);
   if (upErr) {
     return { ok: false, reason: 'db_update_failed', log: upErr.message };
   }
 
-  console.log('[stripe-sync] Subscription synced → user', userId, 'sub', sub.id, 'status', sub.status);
+  console.log('[stripe-sync] Subscription synced', { userId, subscriptionId: sub.id, status: sub.status, priceId });
   return { ok: true };
 }
 
@@ -387,7 +378,7 @@ export async function resetMonthlyCountersForSubscription(subscriptionId: string
     console.error('[stripe-sync] Renewal counter reset failed:', subscriptionId, error.message);
     throw new Error(error.message);
   }
-  console.log('[stripe-sync] Monthly counters reset (renewal) for sub', subscriptionId);
+  console.log('[stripe-sync] Monthly counters reset', { subscriptionId });
 }
 
 export async function setSubscriptionPaymentFailed(subscriptionId: string): Promise<void> {
@@ -401,7 +392,7 @@ export async function setSubscriptionPaymentFailed(subscriptionId: string): Prom
     console.error('[stripe-sync] payment_failed status update failed:', subscriptionId, error.message);
     throw new Error(error.message);
   }
-  console.warn('[stripe-sync] subscription marked past_due (invoice failed):', {
+  console.warn('[stripe-sync] subscription marked past_due', {
     subscriptionId,
     affectedUser: affected?.[0] ? { id: affected[0].id, plan: affected[0].plan } : '(not found in DB)',
   });
@@ -432,23 +423,21 @@ export async function downgradeToFreeBySubscriptionId(subscriptionId: string): P
     return;
   }
 
-  const { data: affected, error } = await supabase
-    .from('users')
-    .update({
-      plan: 'free',
-      stripe_subscription_id: null,
-      subscription_status: 'canceled',
-      subscription_current_period_end: null,
-      subscription_cancel_at_period_end: false,
-    })
-    .eq('stripe_subscription_id', subscriptionId)
-    .select('id, email');
+  const { data: affected, error } = await updateUsersBySubscriptionId(subscriptionId, {
+    plan: 'free',
+    stripe_subscription_id: null,
+    stripe_price_id: null,
+    subscription_status: 'canceled',
+    subscription_current_period_end: null,
+    subscription_cancel_at_period_end: false,
+  });
 
   if (error) {
     console.error('[stripe-sync] downgrade to free failed:', subscriptionId, error.message);
     throw new Error(error.message);
   }
-  console.log('[stripe-sync] User downgraded to free (subscription deleted):', {
+
+  console.log('[stripe-sync] User downgraded to free', {
     subscriptionId,
     userId: affected?.[0]?.id ?? '(not found)',
   });

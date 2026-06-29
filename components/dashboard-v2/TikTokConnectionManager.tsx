@@ -11,7 +11,12 @@ interface TikTokConnectionManagerProps {
   onDisconnected: () => void;
 }
 
-const advancedPermissions = ['Statistiques TikTok', 'Liste des vidéos', 'Engagement', 'Watch time'] as const;
+const capabilityRows = [
+  { label: 'Profil basique', key: 'hasBasicProfile' },
+  { label: 'Profil avancé', key: 'hasProfile' },
+  { label: 'Statistiques profil', key: 'hasUserStats' },
+  { label: 'Liste des vidéos', key: 'hasVideoList' },
+] as const;
 
 function formatConnectedAt(value: string | null) {
   if (!value) return null;
@@ -55,6 +60,7 @@ export function TikTokConnectionManager({
   const displayName = connection.displayName?.trim() || 'Compte TikTok connecté';
   const connectedAt = useMemo(() => formatConnectedAt(connection.connectedAt), [connection.connectedAt]);
   const activeScopes = connection.scopes.length > 0 ? connection.scopes.map(formatScope).join(', ') : 'profil basique';
+  const capabilities = connection.capabilities;
 
   if (!open || !connection.connected) return null;
 
@@ -139,12 +145,17 @@ export function TikTokConnectionManager({
                   )}
                 </div>
                 <p className="mt-1 text-[12px] font-medium text-slate-400">Compte TikTok relié</p>
-                <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-bold text-slate-300">
-                  <span className="rounded-[7px] border border-white/[0.08] bg-white/[0.04] px-2.5 py-1.5">Permission active : {activeScopes}</span>
-                  {connectedAt && <span className="rounded-[7px] border border-white/[0.08] bg-white/[0.04] px-2.5 py-1.5">Relié le {connectedAt}</span>}
-                </div>
+              <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-bold text-slate-300">
+                <span className="rounded-[7px] border border-white/[0.08] bg-white/[0.04] px-2.5 py-1.5">Permission active : {activeScopes}</span>
+                {connectedAt && <span className="rounded-[7px] border border-white/[0.08] bg-white/[0.04] px-2.5 py-1.5">Relié le {connectedAt}</span>}
               </div>
+              {connection.needsReconnect && (
+                <p className="mt-3 text-[12px] font-bold leading-relaxed text-amber-100">
+                  Nouvelles permissions disponibles. Reconnecte TikTok pour activer les statistiques.
+                </p>
+              )}
             </div>
+          </div>
           </div>
 
           <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -159,26 +170,37 @@ export function TikTokConnectionManager({
                   </span>
                   <div>
                     <p className="text-[13px] font-black text-white">Profil basique</p>
-                    <p className="mt-1 text-[12px] leading-relaxed text-emerald-50/72">Nom, avatar et identifiant TikTok récupérés avec autorisation.</p>
+                    <p className="mt-1 text-[12px] leading-relaxed text-emerald-50/72">
+                      {capabilities.hasBasicProfile ? 'Disponible avec le token actuel.' : 'Reconnecter TikTok pour récupérer le profil.'}
+                    </p>
                   </div>
                 </div>
               </div>
             </section>
 
             <section className="rounded-[16px] border border-white/[0.08] bg-white/[0.035] p-4">
-              <h3 className="text-[13px] font-black text-white">Permissions avancées</h3>
+              <h3 className="text-[13px] font-black text-white">Permissions TikTok</h3>
               <p className="mt-2 text-[12px] leading-relaxed text-slate-400">
-                Les métriques avancées nécessitent des permissions TikTok supplémentaires et une validation de l’app.
+                Viralynz lit uniquement les permissions réellement accordées dans le token TikTok.
               </p>
               <div className="mt-3 grid grid-cols-1 gap-2">
-                {advancedPermissions.map((permission) => (
-                  <div key={permission} className="flex items-center justify-between gap-3 rounded-[10px] border border-white/[0.075] bg-white/[0.03] px-3 py-2.5">
-                    <span className="text-[12px] font-bold text-slate-300">{permission}</span>
-                    <span className="rounded-[6px] border border-slate-300/[0.10] bg-slate-300/[0.045] px-2 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-slate-400">
-                      À venir
+                {capabilityRows.map((permission) => {
+                  const available = Boolean(capabilities[permission.key]);
+                  return (
+                  <div key={permission.label} className="flex items-center justify-between gap-3 rounded-[10px] border border-white/[0.075] bg-white/[0.03] px-3 py-2.5">
+                    <span className="text-[12px] font-bold text-slate-300">{permission.label}</span>
+                    <span className={`rounded-[6px] border px-2 py-1 text-[9px] font-black uppercase tracking-[0.14em] ${available ? 'border-emerald-200/[0.14] bg-emerald-300/[0.07] text-emerald-100' : 'border-amber-200/[0.14] bg-amber-300/[0.055] text-amber-100'}`}>
+                      {available ? 'Disponible' : 'Reconnecter'}
                     </span>
                   </div>
-                ))}
+                  );
+                })}
+                <div className="flex items-center justify-between gap-3 rounded-[10px] border border-white/[0.075] bg-white/[0.03] px-3 py-2.5">
+                  <span className="text-[12px] font-bold text-slate-300">Watch time</span>
+                  <span className="rounded-[6px] border border-slate-300/[0.10] bg-slate-300/[0.045] px-2 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-slate-400">
+                    Non disponible via l’API TikTok actuelle
+                  </span>
+                </div>
               </div>
             </section>
           </div>
@@ -196,6 +218,14 @@ export function TikTokConnectionManager({
             >
               Analyser une vidéo
             </Link>
+            {connection.needsReconnect && (
+              <a
+                href="/api/tiktok/connect?review=1&reconnect=1"
+                className="flex h-11 flex-1 items-center justify-center rounded-[10px] border border-white/[0.09] bg-white/[0.045] px-5 text-[13px] font-bold text-slate-200 transition hover:border-white/[0.14] hover:bg-white/[0.075] hover:text-white focus:outline-none focus:ring-2 focus:ring-violet-300/35"
+              >
+                Reconnecter TikTok
+              </a>
+            )}
             <button
               type="button"
               onClick={() => setConfirmDisconnect(true)}

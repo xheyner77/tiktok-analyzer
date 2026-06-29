@@ -4,9 +4,19 @@ import { motion } from 'framer-motion';
 import type { ReconstructionPlan } from '@/types/reconstruction';
 
 export function ReconstructionMetrics({ plan, isProcessing = false }: { plan: ReconstructionPlan; isProcessing?: boolean }) {
+  const displayMetrics = plan.metrics.map((metric) => {
+    const improves = metric.after >= metric.before;
+    return {
+      ...metric,
+      improves,
+      afterLabel: improves ? String(metric.after) : '—',
+      description: improves ? metric.description : 'Projection non disponible.',
+    };
+  });
+
   return (
     <div className="grid grid-cols-2 gap-2 rounded-2xl border border-white/[0.08] bg-black/22 p-2 sm:grid-cols-4 lg:grid-cols-2">
-      {plan.metrics.map((metric, index) => (
+      {displayMetrics.map((metric, index) => (
         <motion.div
           key={metric.id}
           initial={{ opacity: 0, y: 10 }}
@@ -23,7 +33,7 @@ export function ReconstructionMetrics({ plan, isProcessing = false }: { plan: Re
               transition={{ duration: 0.8, repeat: isProcessing ? Infinity : 0 }}
               className="text-xl font-black text-white"
             >
-              {metric.after}
+              {metric.afterLabel}
             </motion.span>
           </div>
           <p className="mt-1 line-clamp-2 text-[10px] leading-4 text-gray-600">{metric.description}</p>

@@ -27,6 +27,24 @@ function redirectConnectFailure(request: NextRequest, query: Record<string, stri
   return NextResponse.redirect(target);
 }
 
+function shouldUseSandboxReviewScopes(request: NextRequest) {
+  if (request.nextUrl.searchParams.get('review') === '1') return true;
+  if (process.env.TIKTOK_SCOPES?.trim() || process.env.TIKTOK_OAUTH_SCOPES?.trim()) return false;
+  const configuredEnvironment = (
+    process.env.TIKTOK_ENV
+    ?? process.env.NEXT_PUBLIC_TIKTOK_ENV
+    ?? process.env.TIKTOK_APP_MODE
+    ?? ''
+  ).trim().toLowerCase();
+  if (configuredEnvironment === 'sandbox') return true;
+  return process.env.VERCEL_ENV === 'preview' || process.env.NODE_ENV === 'development';
+}
+
+function isReconnectRequest(request: NextRequest) {
+  return request.nextUrl.searchParams.get('mode') === 'reconnect'
+    || request.nextUrl.searchParams.get('reconnect') === '1';
+}
+
 export async function GET(request: NextRequest) {
   const session = await getSession();
   if (!session) {
@@ -42,16 +60,17 @@ export async function GET(request: NextRequest) {
 
   const user = await getUserById(session.userId);
   const plan = user ? getEffectivePlan(user) : 'free';
-  const eligibility = await canConnectTikTokAccount(session.userId, plan);
-  if (!eligibility.allowed) {
-    return redirectConnectFailure(request, {
-      tiktok: eligibility.reason === 'count_failed' ? 'setup' : 'limit',
-    });
+  if (!isReconnectRequest(request)) {
+    const eligibility = await canConnectTikTokAccount(session.userId, plan);
+    if (!eligibility.allowed) {
+      return redirectConnectFailure(request, {
+        tiktok: eligibility.reason === 'count_failed' ? 'setup' : 'limit',
+      });
+    }
   }
 
   const redirectUri = getTikTokRedirectUri(request.headers.get('origin'));
-  const isReviewFlow = request.nextUrl.searchParams.get('review') === '1';
-  const scopes = isReviewFlow ? TIKTOK_REVIEW_SCOPES : TIKTOK_LOGIN_SCOPES;
+  const scopes = shouldUseSandboxReviewScopes(request) ? TIKTOK_REVIEW_SCOPES : TIKTOK_LOGIN_SCOPES;
   logTikTokOAuthConfig({ clientKey: secrets.clientKey, redirectUri, scopes });
   const state = randomBytes(24).toString('hex');
   const authorizeUrl = buildTikTokAuthorizeUrl({

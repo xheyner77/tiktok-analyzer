@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { TikTokConnectionManager } from '@/components/dashboard-v2/TikTokConnectionManager';
+import type { DashboardData } from '@/lib/dashboard-data';
 import type { AppPlan } from '@/lib/plans';
 
 type PreferenceKey = 'premiumAnimations' | 'confirmSensitiveActions' | 'importantProductNotifications';
@@ -20,15 +21,7 @@ type SettingsPageClientProps = {
     quotaUsed: number;
     quotaLimit: number | null;
   };
-  tiktok: {
-    connected: boolean;
-    displayName: string | null;
-    avatarUrl: string | null;
-    connectedAt: string | null;
-    modeLabel: string;
-    scopes: string[];
-    hasAdvancedMetrics: boolean;
-  };
+  tiktok: DashboardData['tiktokConnection'];
 };
 
 type StoredPreferences = Partial<Preferences> & {

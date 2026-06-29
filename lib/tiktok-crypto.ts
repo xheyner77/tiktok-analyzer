@@ -11,7 +11,9 @@ function getKey() {
 export function protectTikTokToken(token: string | null | undefined): string | null {
   if (!token) return null;
   const key = getKey();
-  if (!key) return token;
+  if (!key) {
+    throw new Error('TIKTOK_TOKEN_ENCRYPTION_KEY or SUPABASE_SERVICE_ROLE_KEY is required to store TikTok tokens.');
+  }
 
   const iv = randomBytes(12);
   const cipher = createCipheriv('aes-256-gcm', key, iv);

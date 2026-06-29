@@ -13,13 +13,14 @@ CREATE TABLE IF NOT EXISTS public.users (
   email          TEXT        UNIQUE NOT NULL,
   password_hash  TEXT,
   plan           TEXT        NOT NULL DEFAULT 'free'
-                             CHECK (plan IN ('free', 'creator', 'pro', 'scale')),
+                             CHECK (plan IN ('free', 'starter', 'creator', 'pro', 'lifetime', 'scale', 'elite')),
   analyses_count INTEGER     NOT NULL DEFAULT 0,
   hooks_count    INTEGER     NOT NULL DEFAULT 0,
   reconstructions_count INTEGER NOT NULL DEFAULT 0,
   last_reset_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   stripe_customer_id              TEXT,
   stripe_subscription_id          TEXT,
+  stripe_price_id                 TEXT,
   subscription_status             TEXT,
   subscription_current_period_end TIMESTAMPTZ,
   subscription_cancel_at_period_end BOOLEAN NOT NULL DEFAULT false,
@@ -33,6 +34,10 @@ CREATE INDEX IF NOT EXISTS users_email_idx ON public.users (email);
 CREATE UNIQUE INDEX IF NOT EXISTS users_stripe_subscription_id_key
   ON public.users (stripe_subscription_id)
   WHERE stripe_subscription_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS users_stripe_price_id_idx
+  ON public.users (stripe_price_id)
+  WHERE stripe_price_id IS NOT NULL;
 
 
 -- 3. Auto-update updated_at on every row change
@@ -263,6 +268,34 @@ DROP POLICY IF EXISTS "Service role full access" ON public.users;
 
 CREATE POLICY "Service role full access"
   ON public.users
+  FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+CREATE TABLE IF NOT EXISTS public.stripe_webhook_events (
+  id TEXT PRIMARY KEY,
+  event_type TEXT NOT NULL,
+  stripe_created_at TIMESTAMPTZ,
+  status TEXT NOT NULL DEFAULT 'processing'
+    CHECK (status IN ('processing', 'processed', 'failed')),
+  processing_started_at TIMESTAMPTZ,
+  processed_at TIMESTAMPTZ,
+  last_error TEXT,
+  attempts INTEGER NOT NULL DEFAULT 1,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS stripe_webhook_events_status_idx
+  ON public.stripe_webhook_events (status, created_at DESC);
+
+ALTER TABLE public.stripe_webhook_events ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Service role full access" ON public.stripe_webhook_events;
+
+CREATE POLICY "Service role full access"
+  ON public.stripe_webhook_events
   FOR ALL
   TO service_role
   USING (true)

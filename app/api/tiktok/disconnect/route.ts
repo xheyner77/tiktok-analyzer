@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 import { getTikTokOAuthSecrets, revokeTikTokAccess } from '@/lib/tiktok-oauth';
 import { supabase } from '@/lib/supabase';
+import { listActiveTikTokPrivateAccountsForUser } from '@/lib/tiktok-accounts';
 
 export async function POST() {
   const session = await getSession();
@@ -9,21 +10,15 @@ export async function POST() {
     return NextResponse.json({ error: 'Non connecté.' }, { status: 401 });
   }
 
-  const { data: row, error: readErr } = await supabase
-    .from('users')
-    .select('tiktok_access_token')
-    .eq('id', session.userId)
-    .maybeSingle();
-
-  if (readErr) {
-    console.error('[tiktok/disconnect] read:', readErr);
-    return NextResponse.json({ error: 'Lecture profil impossible.' }, { status: 500 });
-  }
-
-  const token = typeof row?.tiktok_access_token === 'string' ? row.tiktok_access_token : null;
+  const accounts = await listActiveTikTokPrivateAccountsForUser(session.userId);
   const secrets = getTikTokOAuthSecrets();
-  if (token && secrets) {
-    await revokeTikTokAccess(token, secrets);
+  if (secrets) {
+    await Promise.all(
+      accounts
+        .map((account) => account.accessToken)
+        .filter((token): token is string => Boolean(token))
+        .map((token) => revokeTikTokAccess(token, secrets))
+    );
   }
 
   const { error: upErr } = await supabase

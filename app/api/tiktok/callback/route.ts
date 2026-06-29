@@ -10,7 +10,8 @@ import {
   getTikTokRedirectUri,
   TikTokUserInfoFetchError,
 } from '@/lib/tiktok-oauth';
-import { upsertTikTokAccountForUser } from '@/lib/tiktok-accounts';
+import { hasVideoListScope, upsertTikTokAccountForUser } from '@/lib/tiktok-accounts';
+import { syncTikTokAccountProfile, syncTikTokAccountVideos } from '@/lib/tiktok-sync';
 
 function redirectDashboard(request: NextRequest, query: Record<string, string>) {
   const u = new URL('/dashboard', request.url);
@@ -80,7 +81,7 @@ export async function GET(request: NextRequest) {
       step: 'token_exchange',
       tokenExchangeStatus: 'ok',
       hasAccessToken: Boolean(tokens.access_token),
-      scope: tokens.scope ?? null,
+      grantedScopes: tokens.scope ?? null,
     });
   } catch (e) {
     console.error('[tiktok/callback] token exchange:', {
@@ -121,6 +122,43 @@ export async function GET(request: NextRequest) {
     console.error('[tiktok/callback] account save:', saved);
     const r = redirectAfterTikTok(request, { tiktok: saved.code === 'limit_reached' ? 'limit' : 'db' });
     return clearState(r);
+  }
+
+  const canSyncVideos = hasVideoListScope(saved.scopes);
+  console.info('[tiktok/callback] account save', {
+    step: 'account_save',
+    accountSaveStatus: 'ok',
+    accountIdPresent: Boolean(saved.accountId),
+    scopes: saved.scopes,
+    canSyncVideos,
+  });
+
+  const profileSyncResult = await syncTikTokAccountProfile(session.userId, saved.accountId);
+  console.info('[tiktok/callback] post-connect profile sync', {
+    step: 'post_connect_profile_sync',
+    ok: profileSyncResult.ok,
+    status: profileSyncResult.status,
+    error: profileSyncResult.ok ? null : 'error' in profileSyncResult ? profileSyncResult.error : null,
+  });
+
+  if (canSyncVideos) {
+    const syncResult = await syncTikTokAccountVideos(session.userId, saved.accountId);
+    console.info('[tiktok/callback] post-connect sync', {
+      step: 'post_connect_sync',
+      attempted: true,
+      ok: syncResult.ok,
+      status: syncResult.status,
+      videosFound: syncResult.videosFound,
+      missingScope: 'missingScope' in syncResult ? syncResult.missingScope : null,
+      error: syncResult.ok ? null : syncResult.error,
+    });
+  } else {
+    console.info('[tiktok/callback] post-connect sync', {
+      step: 'post_connect_sync',
+      attempted: false,
+      reason: 'missing_video_list_scope',
+      scopes: saved.scopes,
+    });
   }
 
   const r = redirectAfterTikTok(request, { tiktok: 'connected' });
