@@ -1,11 +1,16 @@
 node_modules
 .next
-.env.local
-.env
-.env.*.local
+.env*
+!.env.local.example
 *.tsbuildinfo
+*.log
 .vercel
 .codex*
+coverage/
+playwright-report/
+test-results/
+tmp/
+temp/
 supabase/.temp/
 
 # Captures et exports d'audit pouvant contenir des données utilisateur.
