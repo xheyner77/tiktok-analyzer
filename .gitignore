@@ -6,6 +6,7 @@ node_modules
 *.tsbuildinfo
 .vercel
 .codex*
+supabase/.temp/
 
 # Captures et exports d'audit pouvant contenir des données utilisateur.
 public/Dashboard _ Viralynz _ Viralynz.html

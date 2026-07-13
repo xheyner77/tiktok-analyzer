@@ -1,5 +1,3 @@
--- TikTok Display API sync: scopes, profile stats and raw video metrics.
-
 alter table public.tiktok_accounts
   add column if not exists refresh_expires_at timestamptz,
   add column if not exists environment text not null default 'unknown',
@@ -43,9 +41,6 @@ create table if not exists public.tiktok_profile_stats (
 
 create index if not exists tiktok_profile_stats_user_idx
   on public.tiktok_profile_stats (user_id, fetched_at desc);
-
-create index if not exists tiktok_profile_stats_account_idx
-  on public.tiktok_profile_stats (tiktok_account_id);
 
 drop trigger if exists tiktok_profile_stats_updated_at on public.tiktok_profile_stats;
 create trigger tiktok_profile_stats_updated_at
