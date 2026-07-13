@@ -3,6 +3,7 @@
  * @see https://developers.tiktok.com/doc/login-kit-web/
  */
 
+import { createHmac, randomBytes, timingSafeEqual } from 'crypto';
 import { CANONICAL_PRODUCTION_SITE_URL, getSiteUrl } from './site-url';
 import {
   REQUIRED_TIKTOK_SCOPES,
@@ -23,11 +24,134 @@ const AUTH_URL = 'https://www.tiktok.com/v2/auth/authorize/';
 const TOKEN_URL = 'https://open.tiktokapis.com/v2/oauth/token/';
 const REVOKE_URL = 'https://open.tiktokapis.com/v2/oauth/revoke/';
 const USER_INFO_URL = 'https://open.tiktokapis.com/v2/user/info/';
+const DEFAULT_TIKTOK_API_TIMEOUT_MS = 12_000;
 export const TIKTOK_USER_INFO_BASIC_FIELDS = ['open_id', 'union_id', 'avatar_url', 'display_name'] as const;
 
 export interface TikTokOAuthSecrets {
   clientKey: string;
   clientSecret: string;
+}
+
+type TikTokOAuthStateCookie = {
+  version: 1;
+  userId: string;
+  state: string;
+};
+
+function constantTimeStringEqual(left: string, right: string): boolean {
+  const leftBuffer = Buffer.from(left, 'utf8');
+  const rightBuffer = Buffer.from(right, 'utf8');
+  return leftBuffer.length === rightBuffer.length && timingSafeEqual(leftBuffer, rightBuffer);
+}
+
+function signTikTokOAuthState(userId: string, nonce: string, clientSecret: string): string {
+  return createHmac('sha256', clientSecret)
+    .update(`${userId}:${nonce}`, 'utf8')
+    .digest('base64url');
+}
+
+export function createTikTokOAuthState(userId: string, clientSecret: string): {
+  state: string;
+  cookieValue: string;
+} {
+  const normalizedUserId = userId.trim();
+  if (!normalizedUserId || !clientSecret) {
+    throw new Error('Impossible de sécuriser la connexion TikTok.');
+  }
+
+  const nonce = randomBytes(24).toString('base64url');
+  const signature = signTikTokOAuthState(normalizedUserId, nonce, clientSecret);
+  const state = `${nonce}.${signature}`;
+  const cookiePayload: TikTokOAuthStateCookie = {
+    version: 1,
+    userId: normalizedUserId,
+    state,
+  };
+
+  return {
+    state,
+    cookieValue: Buffer.from(JSON.stringify(cookiePayload), 'utf8').toString('base64url'),
+  };
+}
+
+export function verifyTikTokOAuthState(params: {
+  state: string;
+  cookieValue: string;
+  userId: string;
+  clientSecret: string;
+}): boolean {
+  if (!params.state || !params.cookieValue || !params.userId || !params.clientSecret) return false;
+  if (params.cookieValue.length > 2_048) return false;
+
+  let payload: TikTokOAuthStateCookie;
+  try {
+    payload = JSON.parse(
+      Buffer.from(params.cookieValue, 'base64url').toString('utf8')
+    ) as TikTokOAuthStateCookie;
+  } catch {
+    return false;
+  }
+
+  if (
+    payload.version !== 1
+    || typeof payload.userId !== 'string'
+    || typeof payload.state !== 'string'
+    || !constantTimeStringEqual(payload.userId, params.userId.trim())
+    || !constantTimeStringEqual(payload.state, params.state)
+  ) {
+    return false;
+  }
+
+  const stateParts = params.state.split('.');
+  if (stateParts.length !== 2) return false;
+  const [nonce, signature] = stateParts;
+  if (!/^[A-Za-z0-9_-]{32}$/.test(nonce) || !/^[A-Za-z0-9_-]{43}$/.test(signature)) return false;
+
+  const expectedSignature = signTikTokOAuthState(payload.userId, nonce, params.clientSecret);
+  return constantTimeStringEqual(signature, expectedSignature);
+}
+
+export class TikTokApiRequestError extends Error {
+  reason: 'timeout' | 'network';
+  operation: string;
+
+  constructor(message: string, reason: 'timeout' | 'network', operation: string) {
+    super(message);
+    this.name = 'TikTokApiRequestError';
+    this.reason = reason;
+    this.operation = operation;
+  }
+}
+
+export async function fetchTikTokApiResponse(
+  input: RequestInfo | URL,
+  init: RequestInit,
+  options: { operation: string; timeoutMs?: number }
+): Promise<{ response: Response; raw: string }> {
+  const controller = new AbortController();
+  const timeoutMs = Math.max(1, options.timeoutMs ?? DEFAULT_TIKTOK_API_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(input, { ...init, signal: controller.signal });
+    const raw = await response.text();
+    return { response, raw };
+  } catch {
+    if (controller.signal.aborted) {
+      throw new TikTokApiRequestError(
+        `TikTok n’a pas répondu à temps pendant ${options.operation}.`,
+        'timeout',
+        options.operation
+      );
+    }
+    throw new TikTokApiRequestError(
+      `TikTok est temporairement injoignable pendant ${options.operation}.`,
+      'network',
+      options.operation
+    );
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 export function getTikTokOAuthSecrets(): TikTokOAuthSecrets | null {
@@ -85,6 +209,86 @@ export interface TikTokTokenResponse {
   token_type?: string;
 }
 
+export type TikTokTokenRefreshErrorReason =
+  | 'invalid_refresh'
+  | 'rate_limited'
+  | 'provider_unavailable'
+  | 'invalid_response'
+  | 'provider_rejected';
+
+export class TikTokTokenRefreshError extends Error {
+  readonly reason: TikTokTokenRefreshErrorReason;
+  readonly retryable: boolean;
+  readonly status: number | null;
+
+  constructor(params: {
+    message: string;
+    reason: TikTokTokenRefreshErrorReason;
+    retryable: boolean;
+    status?: number | null;
+  }) {
+    super(params.message);
+    this.name = 'TikTokTokenRefreshError';
+    this.reason = params.reason;
+    this.retryable = params.retryable;
+    this.status = params.status ?? null;
+  }
+}
+
+function readTikTokOAuthErrorCode(payload: Record<string, unknown>): string | null {
+  const nestedError = payload.error && typeof payload.error === 'object' && !Array.isArray(payload.error)
+    ? payload.error as Record<string, unknown>
+    : null;
+  const candidates = [
+    typeof payload.error === 'string' ? payload.error : null,
+    payload.error_code,
+    payload.code,
+    nestedError?.code,
+    nestedError?.error,
+    nestedError?.error_code,
+    nestedError?.type,
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim()) {
+      return candidate.trim().toLowerCase();
+    }
+  }
+  return null;
+}
+
+function isInvalidTikTokRefreshCode(code: string | null): boolean {
+  if (!code) return false;
+  if ([
+    'invalid_grant',
+    'invalid_token',
+    'invalid_refresh',
+    'invalid_refresh_token',
+    'refresh_token_invalid',
+    'refresh_token_expired',
+    'refresh_token_revoked',
+  ].includes(code)) {
+    return true;
+  }
+
+  return code.includes('refresh') && /(invalid|expired|revoked)/.test(code);
+}
+
+function createTikTokRefreshError(params: {
+  reason: TikTokTokenRefreshErrorReason;
+  status: number;
+}): TikTokTokenRefreshError {
+  const permanent = params.reason === 'invalid_refresh';
+  return new TikTokTokenRefreshError({
+    message: permanent
+      ? 'La connexion TikTok doit être renouvelée.'
+      : 'Le renouvellement TikTok est temporairement indisponible. Réessaie dans un instant.',
+    reason: params.reason,
+    retryable: !permanent,
+    status: params.status,
+  });
+}
+
 export async function exchangeTikTokAuthorizationCode(
   code: string,
   redirectUri: string,
@@ -98,7 +302,7 @@ export async function exchangeTikTokAuthorizationCode(
     redirect_uri: redirectUri,
   });
 
-  const res = await fetch(TOKEN_URL, {
+  const { response: res, raw } = await fetchTikTokApiResponse(TOKEN_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -106,9 +310,9 @@ export async function exchangeTikTokAuthorizationCode(
     },
     body: body.toString(),
     cache: 'no-store',
+  }, {
+    operation: 'l’échange du code OAuth',
   });
-
-  const raw = await res.text();
   let json: Record<string, unknown>;
   try {
     json = JSON.parse(raw) as Record<string, unknown>;
@@ -117,27 +321,13 @@ export async function exchangeTikTokAuthorizationCode(
   }
 
   if (!res.ok) {
-    const msg =
-      typeof json.message === 'string'
-        ? json.message
-        : typeof json.error_description === 'string'
-          ? json.error_description
-          : typeof json.error === 'string'
-            ? json.error
-            : `HTTP ${res.status}`;
-    throw new Error(msg);
+    throw new Error(`Échange OAuth TikTok refusé (HTTP ${res.status}).`);
   }
 
   const data = json as Record<string, unknown>;
   const access_token = String(data.access_token ?? '');
   if (!access_token) {
-    const msg =
-      typeof data.error_description === 'string'
-        ? data.error_description
-        : typeof data.error === 'string'
-          ? data.error
-          : 'Réponse token TikTok sans access_token.';
-    throw new Error(msg);
+    throw new Error('Réponse token TikTok sans access_token.');
   }
   const open_id = String(data.open_id ?? '');
   if (!open_id) {
@@ -167,7 +357,7 @@ export async function refreshTikTokAccessToken(
     refresh_token: refreshToken,
   });
 
-  const res = await fetch(TOKEN_URL, {
+  const { response: res, raw } = await fetchTikTokApiResponse(TOKEN_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -175,16 +365,42 @@ export async function refreshTikTokAccessToken(
     },
     body: body.toString(),
     cache: 'no-store',
+  }, {
+    operation: 'le renouvellement du jeton OAuth',
   });
 
-  const raw = await res.text();
-  const json = JSON.parse(raw) as Record<string, unknown>;
+  let json: Record<string, unknown>;
+  try {
+    json = JSON.parse(raw) as Record<string, unknown>;
+  } catch {
+    const reason: TikTokTokenRefreshErrorReason = res.status === 400 || res.status === 401
+      ? 'invalid_refresh'
+      : res.status === 429
+        ? 'rate_limited'
+        : res.status >= 500
+          ? 'provider_unavailable'
+          : 'invalid_response';
+    throw createTikTokRefreshError({ reason, status: res.status });
+  }
+
+  const providerErrorCode = readTikTokOAuthErrorCode(json);
+  if (res.status === 400 || res.status === 401 || isInvalidTikTokRefreshCode(providerErrorCode)) {
+    throw createTikTokRefreshError({ reason: 'invalid_refresh', status: res.status });
+  }
+  if (res.status === 429) {
+    throw createTikTokRefreshError({ reason: 'rate_limited', status: res.status });
+  }
+  if (res.status >= 500) {
+    throw createTikTokRefreshError({ reason: 'provider_unavailable', status: res.status });
+  }
   if (!res.ok) {
-    throw new Error(String(json.error_description ?? json.error ?? `HTTP ${res.status}`));
+    throw createTikTokRefreshError({ reason: 'provider_rejected', status: res.status });
   }
 
   const access_token = String(json.access_token ?? '');
-  if (!access_token) throw new Error('Réponse refresh TikTok sans access_token.');
+  if (!access_token) {
+    throw createTikTokRefreshError({ reason: 'invalid_response', status: res.status });
+  }
 
   return {
     access_token,
@@ -236,16 +452,16 @@ export async function fetchTikTokUserInfo(
 ): Promise<TikTokUserInfo> {
   const fields = requestedFields.join(',');
   const url = `${USER_INFO_URL}?fields=${encodeURIComponent(fields)}`;
-  const res = await fetch(url, {
+  const { response: res, raw } = await fetchTikTokApiResponse(url, {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
     cache: 'no-store',
+  }, {
+    operation: 'la lecture du profil',
   });
-
-  const raw = await res.text();
   let json: Record<string, unknown>;
   try {
     json = JSON.parse(raw) as Record<string, unknown>;
@@ -255,9 +471,12 @@ export async function fetchTikTokUserInfo(
 
   const err = json.error as Record<string, unknown> | undefined;
   const errorCode = typeof err?.code === 'string' ? err.code : null;
-  const errorMessage = typeof err?.message === 'string' ? err.message : null;
   if (!res.ok || (errorCode && errorCode !== 'ok')) {
-    throw new TikTokUserInfoFetchError(errorMessage || `HTTP ${res.status}`, res.status, errorCode);
+    throw new TikTokUserInfoFetchError(
+      `Lecture du profil TikTok refusée (HTTP ${res.status}).`,
+      res.status,
+      errorCode
+    );
   }
 
   const data = json.data as Record<string, unknown> | undefined;
@@ -281,16 +500,93 @@ export async function fetchTikTokUserInfo(
   };
 }
 
-export async function revokeTikTokAccess(accessToken: string, secrets: TikTokOAuthSecrets): Promise<void> {
+export class TikTokRevokeError extends Error {
+  reason: 'timeout' | 'network' | 'provider';
+  status: number | null;
+
+  constructor(
+    message: string,
+    reason: 'timeout' | 'network' | 'provider',
+    status: number | null = null
+  ) {
+    super(message);
+    this.name = 'TikTokRevokeError';
+    this.reason = reason;
+    this.status = status;
+  }
+}
+
+export async function revokeTikTokAccess(
+  accessToken: string,
+  secrets: TikTokOAuthSecrets,
+  options: { timeoutMs?: number } = {}
+): Promise<void> {
   const body = new URLSearchParams({
     client_key: secrets.clientKey,
     client_secret: secrets.clientSecret,
     token: accessToken,
   });
-  await fetch(REVOKE_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: body.toString(),
-    cache: 'no-store',
-  }).catch(() => {});
+  let response: Response;
+  let raw: string;
+  try {
+    const result = await fetchTikTokApiResponse(REVOKE_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Cache-Control': 'no-cache',
+      },
+      body: body.toString(),
+      cache: 'no-store',
+    }, {
+      operation: 'la révocation de l’accès',
+      timeoutMs: options.timeoutMs,
+    });
+    response = result.response;
+    raw = result.raw;
+  } catch (error) {
+    if (error instanceof TikTokApiRequestError && error.reason === 'timeout') {
+      throw new TikTokRevokeError(
+        'TikTok n’a pas confirmé la déconnexion dans le délai prévu.',
+        'timeout'
+      );
+    }
+    throw new TikTokRevokeError('TikTok est temporairement injoignable.', 'network');
+  }
+
+  if (!response.ok) {
+    throw new TikTokRevokeError(
+      `TikTok a refusé la révocation (HTTP ${response.status}).`,
+      'provider',
+      response.status
+    );
+  }
+
+  const normalizedPayload = raw.trim();
+  if (!normalizedPayload) return;
+
+  let payload: Record<string, unknown>;
+  try {
+    payload = JSON.parse(normalizedPayload) as Record<string, unknown>;
+  } catch {
+    throw new TikTokRevokeError(
+      'TikTok a renvoyé une confirmation de révocation invalide.',
+      'provider',
+      response.status
+    );
+  }
+
+  const payloadError = payload.error;
+  const errorCode = payloadError && typeof payloadError === 'object' && !Array.isArray(payloadError)
+    ? (payloadError as Record<string, unknown>).code
+    : null;
+  const hasPayloadError = typeof payloadError === 'string'
+    ? payloadError.trim().length > 0
+    : typeof errorCode === 'string' && errorCode !== 'ok';
+  if (hasPayloadError || typeof payload.error_description === 'string') {
+    throw new TikTokRevokeError(
+      'TikTok a refusé la révocation malgré une réponse HTTP réussie.',
+      'provider',
+      response.status
+    );
+  }
 }

@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import type { ReactNode } from 'react';
+import { isTikTokConnectHref } from '@/lib/tiktok-navigation';
 
 type DashboardPlaceholderPageProps = {
   eyebrow: string;
@@ -11,6 +13,12 @@ type DashboardPlaceholderPageProps = {
   secondaryLabel?: string;
   details?: string[];
 };
+
+function NavigationLink({ href, className, children }: { href: string; className: string; children: ReactNode }) {
+  return isTikTokConnectHref(href)
+    ? <a href={href} className={className}>{children}</a>
+    : <Link href={href} className={className}>{children}</Link>;
+}
 
 export default function DashboardPlaceholderPage({
   eyebrow,
@@ -48,12 +56,12 @@ export default function DashboardPlaceholderPage({
             ) : null}
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href={ctaHref} className="inline-flex min-h-[46px] items-center justify-center rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo px-5 text-sm font-black text-white transition hover:brightness-110">
+              <NavigationLink href={ctaHref} className="inline-flex min-h-[46px] items-center justify-center rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo px-5 text-sm font-black text-white transition hover:brightness-110">
                 {ctaLabel}
-              </Link>
-              <Link href={secondaryHref} className="inline-flex min-h-[46px] items-center justify-center rounded-xl border border-white/[0.09] bg-white/[0.045] px-5 text-sm font-black text-white transition hover:bg-white/[0.07]">
+              </NavigationLink>
+              <NavigationLink href={secondaryHref} className="inline-flex min-h-[46px] items-center justify-center rounded-xl border border-white/[0.09] bg-white/[0.045] px-5 text-sm font-black text-white transition hover:bg-white/[0.07]">
                 {secondaryLabel}
-              </Link>
+              </NavigationLink>
             </div>
           </div>
         </div>

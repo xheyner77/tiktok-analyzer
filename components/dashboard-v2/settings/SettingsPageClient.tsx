@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { TikTokConnectionManager } from '@/components/dashboard-v2/TikTokConnectionManager';
 import type { DashboardData } from '@/lib/dashboard-data';
 import type { AppPlan } from '@/lib/plans';
+import { isTikTokConnectHref } from '@/lib/tiktok-navigation';
 
 type PreferenceKey = 'premiumAnimations' | 'confirmSensitiveActions' | 'importantProductNotifications';
 type Preferences = Record<PreferenceKey, boolean>;
@@ -73,7 +74,7 @@ function normalizePreferences(stored: StoredPreferences): Preferences {
 
 function activeScopes(scopes: string[]): string {
   const cleaned = scopes.map((scope) => (scope === 'user.info.basic' ? 'user.info.basic' : scope.trim())).filter(Boolean);
-  return cleaned.length ? cleaned.join(', ') : 'user.info.basic';
+  return cleaned.length ? cleaned.join(', ') : 'Aucune';
 }
 
 function Badge({ children, tone = 'violet' }: { children: ReactNode; tone?: 'violet' | 'cyan' | 'green' | 'amber' | 'slate' | 'rose' }) {
@@ -148,7 +149,10 @@ function ActionLink({
   subtle?: boolean;
 }) {
   if (subtle) {
-    return <Link href={href} className="inline-flex min-h-[34px] items-center text-[12.5px] font-black text-slate-300 underline-offset-4 transition hover:text-white hover:underline">{children}</Link>;
+    const className = 'inline-flex min-h-[34px] items-center text-[12.5px] font-black text-slate-300 underline-offset-4 transition hover:text-white hover:underline';
+    return isTikTokConnectHref(href)
+      ? <a href={href} className={className}>{children}</a>
+      : <Link href={href} className={className}>{children}</Link>;
   }
 
   const tones = {
@@ -157,11 +161,11 @@ function ActionLink({
     danger: 'border-rose-300/16 bg-rose-400/[0.065] text-rose-100 hover:bg-rose-400/[0.10]',
   };
 
-  return (
-    <Link href={href} className={`inline-flex min-h-[40px] items-center justify-center rounded-[10px] border px-4 text-center text-[12.5px] font-black transition ${tones[tone]}`}>
-      {children}
-    </Link>
-  );
+  const className = `inline-flex min-h-[40px] items-center justify-center rounded-[10px] border px-4 text-center text-[12.5px] font-black transition ${tones[tone]}`;
+
+  return isTikTokConnectHref(href)
+    ? <a href={href} className={className}>{children}</a>
+    : <Link href={href} className={className}>{children}</Link>;
 }
 
 function ActionButton({
@@ -425,7 +429,9 @@ export default function SettingsPageClient({ account, tiktok }: SettingsPageClie
         <SectionCard
           eyebrow="Connexion"
           title="Connexion TikTok"
-          description="TikTok est relié. Les métriques avancées arriveront après validation."
+          description={tiktok.connected
+            ? 'Le profil TikTok est relié. Les métriques avancées restent masquées tant que TikTok ne les autorise pas.'
+            : 'Aucun compte TikTok n’est relié. Viralynz n’affiche aucune métrique TikTok sans connexion réelle.'}
           className="xl:col-start-2 xl:row-start-1"
         >
           <div className="rounded-[16px] border border-white/[0.065] bg-white/[0.032] p-4">
@@ -437,23 +443,36 @@ export default function SettingsPageClient({ account, tiktok }: SettingsPageClie
                   <Badge tone={tiktok.connected ? 'green' : 'slate'}>{tiktok.connected ? 'Connecté' : 'Non connecté'}</Badge>
                   {tiktok.connected && tiktok.modeLabel ? <Badge tone="amber">{tiktok.modeLabel}</Badge> : null}
                 </div>
-                <p className="mt-1 text-[12px] text-slate-500">Permission active : {activeScopes(tiktok.scopes)}</p>
+                <p className="mt-1 text-[12px] text-slate-500">
+                  {tiktok.connected ? `Permissions accordées : ${activeScopes(tiktok.scopes)}` : 'Aucune permission TikTok active'}
+                </p>
               </div>
             </div>
 
             <p className="mt-4 text-[13px] leading-6 text-slate-300">
-              Ton compte TikTok est relié à Viralynz. Les données de profil sont actives, les métriques avancées arriveront après validation TikTok.
+              {tiktok.connected
+                ? 'Ton profil TikTok est relié à Viralynz. Seules les données correspondant aux permissions réellement accordées sont affichées.'
+                : 'Connecte TikTok pour relier ton profil. Tu peux continuer à analyser des vidéos sans connexion et sans métrique inventée.'}
             </p>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-              <div className="rounded-[13px] border border-emerald-300/[0.12] bg-emerald-400/[0.055] p-3">
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-100/70">Disponible maintenant</p>
-                <p className="mt-2 text-[12px] leading-5 text-emerald-50/80">Profil TikTok · Avatar · Nom du compte</p>
-              </div>
-              <div className="rounded-[13px] border border-cyan-300/[0.12] bg-cyan-400/[0.045] p-3">
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-100/70">En attente de validation</p>
-                <p className="mt-2 text-[12px] leading-5 text-cyan-50/80">Vidéos · Stats · Performances</p>
-              </div>
+              {tiktok.connected ? (
+                <>
+                  <div className="rounded-[13px] border border-emerald-300/[0.12] bg-emerald-400/[0.055] p-3">
+                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-100/70">Disponible maintenant</p>
+                    <p className="mt-2 text-[12px] leading-5 text-emerald-50/80">Profil TikTok · Avatar · Nom du compte</p>
+                  </div>
+                  <div className="rounded-[13px] border border-cyan-300/[0.12] bg-cyan-400/[0.045] p-3">
+                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-100/70">Selon les droits accordés</p>
+                    <p className="mt-2 text-[12px] leading-5 text-cyan-50/80">Vidéos · Stats · Performances</p>
+                  </div>
+                </>
+              ) : (
+                <div className="rounded-[13px] border border-slate-300/[0.10] bg-slate-400/[0.045] p-3 sm:col-span-2 xl:col-span-1 2xl:col-span-2">
+                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-200/70">Connexion requise</p>
+                  <p className="mt-2 text-[12px] leading-5 text-slate-300/80">Aucune donnée de profil, vidéo ou performance TikTok n’est affichée dans cet état.</p>
+                </div>
+              )}
             </div>
 
             <div className="mt-4 grid gap-2 sm:grid-cols-2">

@@ -74,7 +74,11 @@ type TikTokAccountRow = {
   expires_at?: string | null;
   refresh_expires_at?: string | null;
   environment?: string | null;
+  updated_at?: string | null;
 };
+
+const TIKTOK_ACCOUNT_PRIVATE_SELECT =
+  'id,user_id,tiktok_open_id,display_name,avatar_url,username,scopes,connected_at,last_sync_at,status,sync_status,sync_error,access_token,refresh_token,expires_at,refresh_expires_at,environment,updated_at' as const;
 
 function toSafeAccount(row: TikTokAccountRow): TikTokAccountSafe {
   const scopes = parseTikTokScopes(row.scopes);
@@ -121,18 +125,36 @@ async function migrateLegacyPlaintextTokens(row: TikTokAccountRow): Promise<void
   const refreshNeedsMigration = Boolean(rawRefresh) && !isProtectedTikTokToken(rawRefresh);
   if (!accessNeedsMigration && !refreshNeedsMigration) return;
 
+  const originalStatus = row.status;
+  if (!row.updated_at || !originalStatus || originalStatus === 'revoked') {
+    console.warn('[tiktok-accounts] legacy_token_migration_skipped', {
+      reason: originalStatus === 'revoked' ? 'account_revoked' : 'missing_row_version',
+    });
+    return;
+  }
+
   try {
     const update: Record<string, string | null> = {};
     if (accessNeedsMigration) update.access_token = protectTikTokToken(rawAccess);
     if (refreshNeedsMigration) update.refresh_token = protectTikTokToken(rawRefresh);
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('tiktok_accounts')
       .update(update)
       .eq('id', row.id)
-      .eq('user_id', row.user_id);
+      .eq('user_id', row.user_id)
+      .eq('status', originalStatus)
+      .eq('updated_at', row.updated_at)
+      .select('id')
+      .maybeSingle();
 
-    if (error) console.error('[tiktok-accounts] legacy_token_migration_failed', { code: error.code });
+    if (error) {
+      console.error('[tiktok-accounts] legacy_token_migration_failed', { code: error.code });
+    } else if (!data) {
+      console.info('[tiktok-accounts] legacy_token_migration_skipped', {
+        reason: 'stale_row',
+      });
+    }
   } catch (error) {
     console.error('[tiktok-accounts] legacy_token_migration_failed', {
       name: error instanceof Error ? error.name : 'UnknownError',
@@ -203,7 +225,7 @@ export async function getTikTokDashboardState(userId: string, plan: string): Pro
 export async function getTikTokAccountForUser(userId: string, accountId: string): Promise<TikTokAccountPrivate | null> {
   const { data, error } = await supabase
     .from('tiktok_accounts')
-    .select('*')
+    .select(TIKTOK_ACCOUNT_PRIVATE_SELECT)
     .eq('id', accountId)
     .eq('user_id', userId)
     .maybeSingle();
@@ -214,15 +236,26 @@ export async function getTikTokAccountForUser(userId: string, accountId: string)
   return toPrivateAccount(row);
 }
 
-export async function listActiveTikTokPrivateAccountsForUser(userId: string): Promise<TikTokAccountPrivate[]> {
-  const { data, error } = await supabase
+async function listTikTokPrivateAccountsForUser(
+  userId: string,
+  status: 'active' | 'disconnectable',
+  options: { throwOnError?: boolean } = {}
+): Promise<TikTokAccountPrivate[]> {
+  let query = supabase
     .from('tiktok_accounts')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('status', 'active');
+    .select(TIKTOK_ACCOUNT_PRIVATE_SELECT)
+    .eq('user_id', userId);
+  query = status === 'active'
+    ? query.eq('status', 'active')
+    : query.neq('status', 'revoked');
+
+  const { data, error } = await query;
 
   if (error) {
     console.warn('[tiktok-accounts] private_list_failed', { code: error.code });
+    if (options.throwOnError) {
+      throw new Error('Lecture des comptes TikTok impossible.');
+    }
     return [];
   }
 
@@ -233,6 +266,20 @@ export async function listActiveTikTokPrivateAccountsForUser(userId: string): Pr
   }));
 }
 
+export async function listActiveTikTokPrivateAccountsForUser(
+  userId: string,
+  options: { throwOnError?: boolean } = {}
+): Promise<TikTokAccountPrivate[]> {
+  return listTikTokPrivateAccountsForUser(userId, 'active', options);
+}
+
+export async function listDisconnectableTikTokPrivateAccountsForUser(
+  userId: string,
+  options: { throwOnError?: boolean } = {}
+): Promise<TikTokAccountPrivate[]> {
+  return listTikTokPrivateAccountsForUser(userId, 'disconnectable', options);
+}
+
 export async function upsertTikTokAccountForUser(params: {
   userId: string;
   profile: TikTokUserInfoBasic;
@@ -240,19 +287,7 @@ export async function upsertTikTokAccountForUser(params: {
 }) {
   const user = await getUserById(params.userId);
   const plan = user ? getEffectivePlan(user) : 'free';
-  const eligibility = await canConnectTikTokAccount(params.userId, plan, {
-    excludingOpenId: params.profile.open_id,
-  });
-
-  if (!eligibility.allowed) {
-    return {
-      ok: false as const,
-      code: 'limit_reached',
-      message: `Limite TikTok atteinte pour ton plan (${formatTikTokAccountLimit(eligibility.limit)} compte${eligibility.limit > 1 ? 's' : ''}).`,
-      limit: eligibility.limit,
-      current: eligibility.current,
-    };
-  }
+  const limit = getTikTokAccountLimitForPlan(plan);
 
   const scopes = parseTikTokScopes(params.tokens.scope);
   const expiresAt = new Date(Date.now() + Math.max(60, params.tokens.expires_in) * 1000).toISOString();
@@ -296,14 +331,85 @@ export async function upsertTikTokAccountForUser(params: {
     status: 'active',
   };
 
-  const { data, error } = await supabase
-    .from('tiktok_accounts')
-    .upsert(row, { onConflict: 'user_id,tiktok_open_id' })
-    .select('id')
-    .single();
+  const { data: atomicData, error: atomicError } = await supabase.rpc(
+    'upsert_tiktok_account_with_limit',
+    {
+      p_user_id: params.userId,
+      p_account_limit: Number.isFinite(limit) ? limit : null,
+      p_tiktok_open_id: params.profile.open_id,
+      p_tiktok_union_id: params.profile.union_id ?? null,
+      p_display_name: params.profile.display_name ?? null,
+      p_avatar_url: params.profile.avatar_url ?? null,
+      p_access_token: accessToken,
+      p_refresh_token: refreshToken,
+      p_expires_at: expiresAt,
+      p_refresh_expires_at: refreshExpiresAt,
+      p_scopes: scopes,
+      p_environment: row.environment,
+    },
+  );
 
-  if (error) {
-    console.error('[tiktok-accounts] account_upsert_failed', { code: error.code });
+  let accountId: string | null = null;
+  if (!atomicError) {
+    const result = Array.isArray(atomicData) ? atomicData[0] : atomicData;
+    if (!result || typeof result.allowed !== 'boolean') {
+      console.error('[tiktok-accounts] atomic_upsert_invalid_result');
+      return { ok: false as const, code: 'db_error', message: 'Connexion TikTok temporairement indisponible.' };
+    }
+
+    if (!result.allowed) {
+      const current = typeof result.current_count === 'number' ? result.current_count : limit;
+      return {
+        ok: false as const,
+        code: 'limit_reached',
+        message: `Limite TikTok atteinte pour ton plan (${formatTikTokAccountLimit(limit)} compte${limit > 1 ? 's' : ''}).`,
+        limit,
+        current,
+      };
+    }
+
+    if (typeof result.account_id !== 'string' || !result.account_id) {
+      console.error('[tiktok-accounts] atomic_upsert_missing_account_id');
+      return { ok: false as const, code: 'db_error', message: 'Connexion TikTok temporairement indisponible.' };
+    }
+    accountId = result.account_id;
+  } else if (atomicError.code === 'PGRST202') {
+    // Temporary compatibility path for Previews whose database migration has
+    // not been pushed yet. Never downgrade a real RPC/database error to this
+    // non-atomic fallback.
+    console.warn('[tiktok-accounts] atomic_upsert_rpc_missing_using_temporary_fallback');
+    const eligibility = await canConnectTikTokAccount(params.userId, plan, {
+      excludingOpenId: params.profile.open_id,
+    });
+
+    if (!eligibility.allowed) {
+      return {
+        ok: false as const,
+        code: 'limit_reached',
+        message: `Limite TikTok atteinte pour ton plan (${formatTikTokAccountLimit(eligibility.limit)} compte${eligibility.limit > 1 ? 's' : ''}).`,
+        limit: eligibility.limit,
+        current: eligibility.current,
+      };
+    }
+
+    const { data, error } = await supabase
+      .from('tiktok_accounts')
+      .upsert(row, { onConflict: 'user_id,tiktok_open_id' })
+      .select('id')
+      .single();
+
+    if (error || typeof data?.id !== 'string') {
+      console.error('[tiktok-accounts] account_upsert_failed', { code: error?.code ?? 'invalid_result' });
+      return { ok: false as const, code: 'db_error', message: 'Connexion TikTok temporairement indisponible.' };
+    }
+    accountId = data.id;
+  } else {
+    console.error('[tiktok-accounts] atomic_upsert_failed', { code: atomicError.code ?? 'unknown' });
+    return { ok: false as const, code: 'db_error', message: 'Connexion TikTok temporairement indisponible.' };
+  }
+
+  if (!accountId) {
+    console.error('[tiktok-accounts] account_upsert_missing_account_id');
     return { ok: false as const, code: 'db_error', message: 'Connexion TikTok temporairement indisponible.' };
   }
 
@@ -322,13 +428,21 @@ export async function upsertTikTokAccountForUser(params: {
     })
     .eq('id', params.userId);
 
-  return { ok: true as const, accountId: data.id as string, scopes };
+  return { ok: true as const, accountId, scopes };
 }
 
 export async function disconnectTikTokAccount(userId: string, accountId: string) {
   const { error } = await supabase
     .from('tiktok_accounts')
-    .update({ status: 'revoked', access_token: '', refresh_token: null })
+    .update({
+      status: 'revoked',
+      access_token: '',
+      refresh_token: null,
+      expires_at: null,
+      refresh_expires_at: null,
+      sync_status: 'revoked',
+      sync_error: null,
+    })
     .eq('id', accountId)
     .eq('user_id', userId);
 
@@ -363,7 +477,6 @@ export async function updateTikTokAccountTokens(params: {
   const update: Record<string, unknown> = {
     access_token: accessToken,
     expires_at: expiresAt,
-    status: 'active',
     sync_error: null,
   };
 
@@ -371,13 +484,18 @@ export async function updateTikTokAccountTokens(params: {
   if (refreshExpiresAt) update.refresh_expires_at = refreshExpiresAt;
   if (params.tokens.scope) update.scopes = parseTikTokScopes(params.tokens.scope);
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('tiktok_accounts')
     .update(update)
     .eq('id', params.accountId)
-    .eq('user_id', params.userId);
+    .eq('user_id', params.userId)
+    .eq('status', 'active')
+    .select('id')
+    .maybeSingle();
 
-  return { ok: !error, error: error?.message, expiresAt };
+  if (error) return { ok: false as const, error: 'TOKEN_UPDATE_FAILED', expiresAt };
+  if (!data) return { ok: false as const, error: 'ACCOUNT_INACTIVE', expiresAt };
+  return { ok: true as const, expiresAt };
 }
 
 export async function getTikTokAccountLimitSummary(userId: string, plan: string) {

@@ -305,9 +305,9 @@ function TikTokRequiredAccess({ email }: { email: string }) {
             ))}
           </div>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            <Link href="/api/tiktok/connect" className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-gradient-to-r from-cyan-300 to-vn-indigo px-5 text-sm font-black text-white shadow-[0_18px_60px_-34px_rgba(34,211,238,0.95)] transition hover:brightness-110">
+            <a href="/api/tiktok/connect" className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-gradient-to-r from-cyan-300 to-vn-indigo px-5 text-sm font-black text-white shadow-[0_18px_60px_-34px_rgba(34,211,238,0.95)] transition hover:brightness-110">
               Connecter mon TikTok
-            </Link>
+            </a>
             <Link href="/dashboard" className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-white/[0.09] bg-white/[0.045] px-5 text-sm font-black text-white transition hover:bg-white/[0.07]">
               Retour au dashboard
             </Link>
@@ -341,9 +341,9 @@ function TikTokCreatorMemoryCard({ connected, email }: { connected: boolean; ema
           : 'Teste sans connexion. En Pro, TikTok ajoute historique contenu, suivi long terme, multi-comptes et signaux de progression.'}
       </p>
       {!connected && (
-        <Link href="/api/tiktok/connect" className="mt-4 inline-flex min-h-[42px] w-full items-center justify-center rounded-xl border border-cyan-300/20 bg-cyan-300/10 px-4 text-xs font-black text-cyan-50 transition hover:bg-cyan-300/14">
+        <a href="/api/tiktok/connect" className="mt-4 inline-flex min-h-[42px] w-full items-center justify-center rounded-xl border border-cyan-300/20 bg-cyan-300/10 px-4 text-xs font-black text-cyan-50 transition hover:bg-cyan-300/14">
           Connecter TikTok plus tard
-        </Link>
+        </a>
       )}
     </div>
   );
@@ -1262,9 +1262,9 @@ function TikTokVideoPicker({
       <div className="rounded-[18px] border border-cyan-200/14 bg-cyan-300/[0.055] p-4">
         <p className="text-[0.92rem] font-black text-white">Connecte TikTok pour analyser une vidéo déjà publiée.</p>
         <p className="mt-2 text-[0.82rem] leading-5 text-slate-400">Viralynz affichera seulement les vidéos réellement synchronisées.</p>
-        <Link href="/api/tiktok/connect?review=1" className="mt-4 inline-flex h-11 items-center rounded-[14px] bg-[linear-gradient(135deg,#22d3ee,#3b82f6,#8b5cf6)] px-4 text-[0.84rem] font-black text-white">
+        <a href="/api/tiktok/connect?review=1" className="mt-4 inline-flex h-11 items-center rounded-[14px] bg-[linear-gradient(135deg,#22d3ee,#3b82f6,#8b5cf6)] px-4 text-[0.84rem] font-black text-white">
           Connecter TikTok
-        </Link>
+        </a>
       </div>
     );
   }

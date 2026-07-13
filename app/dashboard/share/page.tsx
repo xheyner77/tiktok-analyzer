@@ -398,9 +398,9 @@ export default async function DashboardSharePage() {
           </div>
 
           {!activeTikTok ? (
-            <Link href="/api/tiktok/connect" className={`${secondaryButton} mt-5 w-full`}>
+            <a href="/api/tiktok/connect" className={`${secondaryButton} mt-5 w-full`}>
               Connecter TikTok
-            </Link>
+            </a>
           ) : null}
         </aside>
       </section>

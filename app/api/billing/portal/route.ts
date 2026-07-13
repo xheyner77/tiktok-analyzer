@@ -5,11 +5,14 @@ import { getSession } from '@/lib/session';
 import { getSiteUrl } from '@/lib/site-url';
 import { blockTestStripeSecretInProduction } from '@/lib/stripe-prod-guard';
 import { privateJson, rejectCrossSiteMutation } from '@/lib/api-route-security';
+import { getStripePortalConfigurationId, getStripeSecretKey } from '@/lib/stripe-runtime';
+import {
+  ensureStripeCustomerOwnership,
+  StripeCheckoutSafetyError,
+} from '@/lib/stripe-checkout-safety';
 
 function getStripe(): Stripe {
-  const stripeSecret = process.env.STRIPE_SECRET_KEY?.trim();
-  if (!stripeSecret) throw new Error('STRIPE_SECRET_KEY manquant');
-  return new Stripe(stripeSecret);
+  return new Stripe(getStripeSecretKey().value);
 }
 
 export async function POST(request: NextRequest) {
@@ -36,13 +39,27 @@ export async function POST(request: NextRequest) {
     }
 
     const baseUrl = getSiteUrl(request.headers.get('origin'));
-    const portalSession = await getStripe().billingPortal.sessions.create({
-      customer: user.stripe_customer_id,
+    const stripe = getStripe();
+    const customerId = await ensureStripeCustomerOwnership(stripe, {
+      customerId: user.stripe_customer_id,
+      userId: session.userId,
+      email: session.email,
+    });
+    const portalSession = await stripe.billingPortal.sessions.create({
+      customer: customerId,
+      configuration: getStripePortalConfigurationId().value,
       return_url: `${baseUrl}/dashboard/billing`,
     });
 
     return privateJson({ url: portalSession.url });
   } catch (err) {
+    if (err instanceof StripeCheckoutSafetyError) {
+      console.error('[billing-portal] Customer Stripe refuse.', { code: err.code });
+      return privateJson(
+        { error: 'La facturation de ce compte doit etre verifiee.', code: 'BILLING_STATE_CONFLICT' },
+        { status: 409 },
+      );
+    }
     console.error('[billing-portal] Impossible de créer la session Stripe.', {
       kind: err instanceof Error ? err.name : 'unknown',
     });

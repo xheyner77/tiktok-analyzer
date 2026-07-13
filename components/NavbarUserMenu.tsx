@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import type { AppPlan } from '@/lib/plans';
 
 type Plan = AppPlan;
-type UpgradePlan = 'creator' | 'pro' | 'scale';
+type UpgradePlan = 'starter' | 'pro';
 
 const PLAN_LABELS: Record<Plan, string> = {
   free:  'Plan Free',
@@ -39,9 +39,13 @@ export default function NavbarUserMenu({ email, plan }: NavbarUserMenuProps) {
   const [upgradeError, setUpgradeError] = useState<string | null>(null);
 
   const initials = email.slice(0, 2).toUpperCase();
-  const upgradeTarget: UpgradePlan | null = plan === 'free' ? 'creator' : plan === 'creator' ? 'pro' : plan === 'pro' ? 'scale' : null;
+  const upgradeTarget: UpgradePlan | null = plan === 'free'
+    ? 'starter'
+    : plan === 'starter' || plan === 'creator'
+      ? 'pro'
+      : null;
   const upgradeLabel = upgradeTarget
-    ? `Passer à ${upgradeTarget === 'creator' ? 'Starter' : upgradeTarget === 'pro' ? 'Pro' : 'Lifetime'}`
+    ? `Passer à ${upgradeTarget === 'starter' ? 'Starter' : 'Pro'}`
     : null;
 
   const handleLogout = async () => {
@@ -75,7 +79,8 @@ export default function NavbarUserMenu({ email, plan }: NavbarUserMenuProps) {
       const data = await res.json();
 
       if (data.url) {
-        localStorage.setItem('pendingPlan', upgradeTarget);
+        if (data.flow === 'portal') localStorage.removeItem('pendingPlan');
+        else localStorage.setItem('pendingPlan', upgradeTarget);
         window.location.href = data.url;
         return;
       }

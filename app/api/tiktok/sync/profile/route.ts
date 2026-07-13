@@ -1,9 +1,13 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { rejectCrossSiteMutation } from '@/lib/api-route-security';
 import { getSession } from '@/lib/session';
 import { listActiveTikTokPrivateAccountsForUser } from '@/lib/tiktok-accounts';
 import { syncTikTokAccountProfile } from '@/lib/tiktok-sync';
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  const crossSiteResponse = rejectCrossSiteMutation(request);
+  if (crossSiteResponse) return crossSiteResponse;
+
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: 'Non connecté.' }, { status: 401 });

@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import type { DashboardData } from '@/lib/dashboard-data';
+import { isTikTokConnectHref } from '@/lib/tiktok-navigation';
 
 type IconName =
   | 'home'
@@ -214,9 +215,15 @@ function HeroCard({ dashboard, states }: { dashboard: DashboardData; states: Das
             {primaryLabel}
             <Icon name="chevron" className="h-[18px] w-[18px]" />
           </Link>
-          <Link href={secondaryHref} className={cn(secondaryCta, 'w-full sm:w-auto')}>
-            {secondaryLabel}
-          </Link>
+          {isTikTokConnectHref(secondaryHref) ? (
+            <a href={secondaryHref} className={cn(secondaryCta, 'w-full sm:w-auto')}>
+              {secondaryLabel}
+            </a>
+          ) : (
+            <Link href={secondaryHref} className={cn(secondaryCta, 'w-full sm:w-auto')}>
+              {secondaryLabel}
+            </Link>
+          )}
         </div>
       </div>
     </section>
@@ -469,14 +476,14 @@ function TikTokAccountCard({
 
   if (!connected) {
     return (
-      <Link href="/api/tiktok/connect?review=1" className={cn(card, 'mt-5 flex min-h-[104px] items-center gap-3 p-4 transition active:scale-[0.99] min-[1024px]:mt-0')}>
+      <a href="/api/tiktok/connect?review=1" className={cn(card, 'mt-5 flex min-h-[104px] items-center gap-3 p-4 transition active:scale-[0.99] min-[1024px]:mt-0')}>
         <span className="grid h-12 w-12 shrink-0 place-items-center rounded-[14px] border border-cyan-200/18 bg-cyan-300/10 text-[0.78rem] font-black text-cyan-100">TT</span>
         <div className="min-w-0 flex-1">
           <p className="text-[0.96rem] font-black text-white">Connecter TikTok</p>
           <p className="mt-1 text-[0.8rem] leading-5 text-slate-400">Ajoute tes vraies métriques au cockpit.</p>
         </div>
         <Icon name="chevron" className="h-[18px] w-[18px] text-slate-500" />
-      </Link>
+      </a>
     );
   }
 

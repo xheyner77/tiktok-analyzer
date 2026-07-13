@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import BrandLogo from '@/components/BrandLogo';
@@ -17,10 +17,14 @@ function ResetPasswordForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  // Le client qui échange le code PKCE doit être exactement celui qui appelle
+  // updateUser : avec persistSession=false, un second client perdrait la session recovery.
+  const supabaseRef = useRef<ReturnType<typeof createBrowserSupabaseClient> | null>(null);
 
   useEffect(() => {
     let alive = true;
-    const supabase = createBrowserSupabaseClient();
+    const supabase = supabaseRef.current ?? createBrowserSupabaseClient();
+    supabaseRef.current = supabase;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!alive || !session) return;
@@ -86,14 +90,21 @@ function ResetPasswordForm() {
     }
     setLoading(true);
     try {
-      const supabase = createBrowserSupabaseClient();
+      const supabase = supabaseRef.current;
+      if (!supabase) {
+        setError('Le lien de récupération doit être validé à nouveau.');
+        setLoading(false);
+        return;
+      }
       const { error: upErr } = await supabase.auth.updateUser({ password });
       if (upErr) {
         setError(upErr.message.includes('session') ? 'Session expirée. Redemande un lien.' : 'Impossible de mettre à jour le mot de passe.');
         setLoading(false);
         return;
       }
-      await supabase.auth.signOut();
+      // Révoque les refresh tokens Supabase sur tous les appareils après ce
+      // changement sensible, puis supprime aussi les cookies HttpOnly de l'app.
+      await supabase.auth.signOut({ scope: 'global' });
       await fetch('/api/auth/logout', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },

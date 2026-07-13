@@ -187,7 +187,13 @@ export default function SignupPage() {
         onComplete={() => {
           const pendingPlan = localStorage.getItem(PENDING_PLAN_KEY);
           localStorage.removeItem(PENDING_PLAN_KEY);
-          if (pendingPlan === 'creator' || pendingPlan === 'pro' || pendingPlan === 'scale') {
+          if (
+            pendingPlan === 'starter'
+            || pendingPlan === 'pro'
+            || pendingPlan === 'lifetime'
+            || pendingPlan === 'creator'
+            || pendingPlan === 'scale'
+          ) {
             // User chose a paid plan from GuestGate → pricing page
             window.location.href = '/dashboard/billing';
           } else {

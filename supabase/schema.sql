@@ -83,7 +83,13 @@ AS $$
         OR p_subscription_status IN ('active', 'trialing')
       )
       THEN 150
-    WHEN p_plan IN ('lifetime', 'scale') THEN 2147483647
+    WHEN p_plan = 'lifetime'
+      AND p_subscription_status = 'lifetime'
+      THEN 2147483647
+    WHEN p_plan = 'scale'
+      AND NULLIF(BTRIM(p_stripe_subscription_id), '') IS NOT NULL
+      AND p_subscription_status IN ('active', 'trialing')
+      THEN 2147483647
     WHEN p_plan = 'elite'
       AND p_subscription_status IN ('active', 'trialing')
       AND NULLIF(BTRIM(p_stripe_subscription_id), '') IS NOT NULL
@@ -116,7 +122,13 @@ AS $$
         OR p_subscription_status IN ('active', 'trialing')
       )
       THEN 250
-    WHEN p_plan IN ('lifetime', 'scale') THEN 2147483647
+    WHEN p_plan = 'lifetime'
+      AND p_subscription_status = 'lifetime'
+      THEN 2147483647
+    WHEN p_plan = 'scale'
+      AND NULLIF(BTRIM(p_stripe_subscription_id), '') IS NOT NULL
+      AND p_subscription_status IN ('active', 'trialing')
+      THEN 2147483647
     WHEN p_plan = 'elite'
       AND p_subscription_status IN ('active', 'trialing')
       AND NULLIF(BTRIM(p_stripe_subscription_id), '') IS NOT NULL
@@ -142,7 +154,13 @@ AS $$
         OR p_subscription_status IN ('active', 'trialing')
       )
       THEN 30
-    WHEN p_plan IN ('lifetime', 'scale') THEN 30
+    WHEN p_plan = 'lifetime'
+      AND p_subscription_status = 'lifetime'
+      THEN 30
+    WHEN p_plan = 'scale'
+      AND NULLIF(BTRIM(p_stripe_subscription_id), '') IS NOT NULL
+      AND p_subscription_status IN ('active', 'trialing')
+      THEN 30
     WHEN p_plan = 'elite'
       AND p_subscription_status IN ('active', 'trialing')
       AND NULLIF(BTRIM(p_stripe_subscription_id), '') IS NOT NULL
@@ -418,6 +436,11 @@ GRANT EXECUTE ON FUNCTION public.refund_reconstruction_quota(UUID, INTEGER) TO s
 --    All writes come from the server using the service-role key,
 --    so we only need a permissive policy for that role.
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+
+-- Billing entitlements, quota counters and legacy OAuth columns are managed
+-- exclusively by server routes using the service-role client.
+REVOKE ALL ON TABLE public.users FROM PUBLIC, anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.users TO service_role;
 
 -- Drop existing policies to make this script re-runnable
 DROP POLICY IF EXISTS "Service role full access" ON public.users;

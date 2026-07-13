@@ -1,8 +1,7 @@
 import { NextRequest } from 'next/server';
-import { cookies } from 'next/headers';
-import { supabaseAuth } from '@/lib/supabase';
+import { getSupabaseAuth } from '@/lib/supabase';
 import { ensureUserProfile } from '@/lib/auth';
-import { COOKIE_NAME, COOKIE_OPTIONS, createSessionToken } from '@/lib/session';
+import { setSessionCookies } from '@/lib/session';
 import { privateJson, readJsonObject, rejectCrossSiteMutation } from '@/lib/api-route-security';
 
 // Supabase error messages that indicate the email hasn't been confirmed yet.
@@ -63,13 +62,16 @@ export async function POST(request: NextRequest) {
       return privateJson({ error: 'Email ou mot de passe incorrect.' }, { status: 401 });
     }
 
-    const { data, error } = await supabaseAuth.auth.signInWithPassword({
+    const auth = getSupabaseAuth();
+    const { data, error } = await auth.auth.signInWithPassword({
       email,
       password,
     });
 
     if (error || !data.session) {
-      console.error('[login] provider_request_failed', {
+      const providerUnavailable = !error || (typeof error.status === 'number' && error.status >= 500);
+      const log = providerUnavailable ? console.error : console.warn;
+      log(providerUnavailable ? '[login] provider_request_failed' : '[login] authentication_rejected', {
         status: error?.status,
         name: error?.name,
         code: error?.code,
@@ -102,10 +104,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create a custom JWT (signed with JWT_SECRET, valid 7 days) instead of
-    // storing the Supabase access token (which expires after only 1 hour).
-    const sessionToken = await createSessionToken(data.user.id, data.user.email ?? email);
-    (await cookies()).set(COOKIE_NAME, sessionToken, COOKIE_OPTIONS);
+    // Rotation complète après authentification : aucune valeur de session fournie
+    // avant le login ne survit, ce qui empêche la fixation de session.
+    await setSessionCookies({
+      accessToken: data.session.access_token,
+      refreshToken: data.session.refresh_token,
+    });
 
     return privateJson({ success: true });
   } catch (error) {

@@ -8,6 +8,7 @@ import {
 } from '@/lib/stripe-billing';
 
 const touchedEnv = [
+  'VERCEL_ENV',
   'STRIPE_STARTER_PRICE_ID',
   'STRIPE_PRO_PRICE_ID',
   'STRIPE_LIFETIME_PRICE_ID',
@@ -20,6 +21,8 @@ const touchedEnv = [
   'STRIPE_PRICE_SCALE_MONTHLY',
   'STRIPE_PRICE_SCALE_YEARLY',
   'STRIPE_PRICE_ELITE',
+  'STRIPE_TEST_PRICE_SCALE_MONTHLY',
+  'STRIPE_LIVE_PRICE_SCALE_MONTHLY',
 ] as const;
 
 const previousEnv = Object.fromEntries(
@@ -79,6 +82,21 @@ describe('stripe price mapping', () => {
 
     expect(planFromStripePriceId('price_lifetime_149')).toBe('lifetime');
     expect(resolveStripePrice('price_lifetime_149')).toMatchObject({ plan: 'lifetime', legacy: false });
+  });
+
+  it('keeps legacy Scale mapping isolated to the active Vercel mode', () => {
+    process.env.VERCEL_ENV = 'preview';
+    process.env.STRIPE_PRICE_SCALE_MONTHLY = 'price_shared_legacy';
+    process.env.STRIPE_TEST_PRICE_SCALE_MONTHLY = 'price_test_scale_legacy';
+    process.env.STRIPE_LIVE_PRICE_SCALE_MONTHLY = 'price_live_scale_legacy';
+
+    expect(resolveStripePrice('price_test_scale_legacy')).toMatchObject({
+      envVar: 'STRIPE_TEST_PRICE_SCALE_MONTHLY',
+      plan: 'scale',
+      legacy: true,
+    });
+    expect(resolveStripePrice('price_shared_legacy')).toBeNull();
+    expect(resolveStripePrice('price_live_scale_legacy')).toBeNull();
   });
 
   it('keeps aliases that map the same Price ID to the same normalized plan', () => {

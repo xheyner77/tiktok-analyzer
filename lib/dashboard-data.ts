@@ -183,16 +183,12 @@ type DashboardHookHistoryRow = {
 };
 
 type DashboardMemoryProfileRow = {
-  summary?: string | null;
-  prompt_context?: string | null;
-  memory_json?: unknown;
   creator_style_summary?: string | null;
   hook_style_summary?: string | null;
   common_mistakes_summary?: string | null;
   strongest_formats_summary?: string | null;
   weak_patterns_summary?: string | null;
   v2_opportunities_summary?: string | null;
-  source_analysis_count?: number | null;
   analyses_learned?: number | null;
   active_facts_count?: number | null;
 };
@@ -583,7 +579,7 @@ function collectMemoryStrings(value: unknown, output: string[] = []): string[] {
 async function getDashboardMemory(userId: string): Promise<OverviewMemoryInsight> {
   const { data, error } = await supabase
     .from('creator_memory_profiles')
-    .select('summary,prompt_context,memory_json,source_analysis_count')
+    .select('creator_style_summary,hook_style_summary,common_mistakes_summary,strongest_formats_summary,weak_patterns_summary,v2_opportunities_summary,analyses_learned,active_facts_count')
     .eq('user_id', userId)
     .maybeSingle();
 
@@ -597,11 +593,19 @@ async function getDashboardMemory(userId: string): Promise<OverviewMemoryInsight
   }
 
   const row = data as DashboardMemoryProfileRow | null;
-  const sourceCount = row?.source_analysis_count ?? 0;
-  const description = firstText([row?.summary, row?.prompt_context]);
-  const memoryItems = collectMemoryStrings(row?.memory_json)
+  const sourceCount = row?.analyses_learned ?? 0;
+  const memoryItems = [
+    row?.creator_style_summary,
+    row?.hook_style_summary,
+    row?.common_mistakes_summary,
+    row?.strongest_formats_summary,
+    row?.weak_patterns_summary,
+    row?.v2_opportunities_summary,
+  ]
+    .flatMap((value) => collectMemoryStrings(value))
     .filter((item, index, list) => list.findIndex((candidate) => candidate === item) === index)
     .slice(0, 3);
+  const description = memoryItems[0] ?? null;
 
   if (!description && memoryItems.length === 0 && sourceCount <= 0) {
     return {

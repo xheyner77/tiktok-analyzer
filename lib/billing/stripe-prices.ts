@@ -1,4 +1,6 @@
-export type StripeMappedPlan = 'starter' | 'pro' | 'lifetime';
+import { getStripePriceRuntimeEnv } from '@/lib/stripe-runtime';
+
+export type StripeMappedPlan = 'starter' | 'pro' | 'lifetime' | 'scale';
 
 export type StripePriceMapping = {
   priceId: string;
@@ -25,23 +27,21 @@ const PRICE_ENV_MAPPINGS: EnvPlanMapping[] = [
   { envVar: 'STRIPE_PRICE_PRO_YEARLY', plan: 'pro', legacy: true },
   { envVar: 'STRIPE_PRICE_PRO', plan: 'pro', legacy: true },
   { envVar: 'STRIPE_PRICE_LIFETIME_ONETIME', plan: 'lifetime', legacy: true },
-  { envVar: 'STRIPE_PRICE_SCALE_MONTHLY', plan: 'lifetime', legacy: true },
-  { envVar: 'STRIPE_PRICE_SCALE_YEARLY', plan: 'lifetime', legacy: true },
+  // Scale reste un abonnement historique : droits hauts tant qu'il est actif,
+  // mais jamais un achat Lifetime irrévocable.
+  { envVar: 'STRIPE_PRICE_SCALE_MONTHLY', plan: 'scale', legacy: true },
+  { envVar: 'STRIPE_PRICE_SCALE_YEARLY', plan: 'scale', legacy: true },
   { envVar: 'STRIPE_PRICE_ELITE', plan: 'pro', legacy: true },
 ];
-
-function cleanEnv(name: string): string | null {
-  const value = process.env[name]?.trim();
-  return value ? value : null;
-}
 
 export function listStripePriceMappings(): StripePriceMapping[] {
   const mappingsByPriceId = new Map<string, StripePriceMapping>();
   const conflictedPriceIds = new Set<string>();
 
   for (const mapping of PRICE_ENV_MAPPINGS) {
-    const priceId = cleanEnv(mapping.envVar);
-    if (!priceId || conflictedPriceIds.has(priceId)) continue;
+    const configured = getStripePriceRuntimeEnv(mapping.envVar);
+    if (!configured || conflictedPriceIds.has(configured.value)) continue;
+    const priceId = configured.value;
 
     const existing = mappingsByPriceId.get(priceId);
     if (existing) {
@@ -59,7 +59,7 @@ export function listStripePriceMappings(): StripePriceMapping[] {
       priceId,
       plan: mapping.plan,
       legacy: mapping.legacy ?? false,
-      envVar: mapping.envVar,
+      envVar: configured.envVar,
     });
   }
 
@@ -75,8 +75,10 @@ export function getConfiguredStripePriceId(envVars: string[]): { priceId: string
   const validPriceIds = new Set(listStripePriceMappings().map((mapping) => mapping.priceId));
 
   for (const envVar of envVars) {
-    const priceId = cleanEnv(envVar);
-    if (priceId && validPriceIds.has(priceId)) return { priceId, envVar };
+    const configured = getStripePriceRuntimeEnv(envVar);
+    if (configured && validPriceIds.has(configured.value)) {
+      return { priceId: configured.value, envVar: configured.envVar };
+    }
   }
   return null;
 }

@@ -2,7 +2,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 /**
  * Client Supabase côté navigateur — uniquement pour le flux recovery (reset password).
- * La session applicative principale reste le cookie JWT custom (/api/auth/login).
+ * La session applicative principale utilise les tokens Supabase en cookies HttpOnly.
  */
 export function createBrowserSupabaseClient(): SupabaseClient {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

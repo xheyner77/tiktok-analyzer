@@ -8,6 +8,24 @@ export const DISPLAY_CATALOG_PRO_EUR = '29';
 export const DISPLAY_CATALOG_SCALE_EUR = '149';
 export const DISPLAY_CATALOG_LIFETIME_EUR = DISPLAY_CATALOG_SCALE_EUR;
 
+export const STRIPE_CATALOG = {
+  starter: {
+    currency: 'eur',
+    unitAmount: 1_000,
+    recurringInterval: 'month',
+  },
+  pro: {
+    currency: 'eur',
+    unitAmount: 2_900,
+    recurringInterval: 'month',
+  },
+  lifetime: {
+    currency: 'eur',
+    unitAmount: 14_900,
+    recurringInterval: null,
+  },
+} as const;
+
 /** Libellés produit sur la facture / reçu Stripe (Checkout utilise les Prices du Dashboard). */
 export const STRIPE_PRODUCT_NAME_CREATOR = 'Viralynz — Plan Starter';
 export const STRIPE_PRODUCT_NAME_PRO = 'Viralynz — Plan Pro';

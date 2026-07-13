@@ -1,16 +1,18 @@
 import Stripe from 'stripe';
 import type { NextRequest } from 'next/server';
 import { getSession } from '@/lib/session';
-import { isLifetimePlan } from '@/lib/plans';
 import { supabase } from '@/lib/supabase';
 import { blockTestStripeSecretInProduction } from '@/lib/stripe-prod-guard';
+import { getStripeSecretKey } from '@/lib/stripe-runtime';
 import { privateJson, rejectCrossSiteMutation } from '@/lib/api-route-security';
-
-const stripeSecret = process.env.STRIPE_SECRET_KEY?.trim();
+import {
+  assertStripeSubscriptionOwnership,
+  ensureStripeCustomerOwnership,
+  StripeCheckoutSafetyError,
+} from '@/lib/stripe-checkout-safety';
 
 function getStripe(): Stripe {
-  if (!stripeSecret) throw new Error('STRIPE_SECRET_KEY manquant');
-  return new Stripe(stripeSecret);
+  return new Stripe(getStripeSecretKey().value);
 }
 
 export async function POST(request: NextRequest) {
@@ -31,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     const { data: currentUser, error: readError } = await supabase
       .from('users')
-      .select('id, plan, stripe_subscription_id, subscription_status')
+      .select('id, plan, stripe_customer_id, stripe_subscription_id, subscription_status')
       .eq('id', session.userId)
       .maybeSingle();
 
@@ -46,7 +48,7 @@ export async function POST(request: NextRequest) {
       return privateJson({ error: 'Tu es déjà sur le plan Free.', code: 'ALREADY_FREE' }, { status: 400 });
     }
 
-    if (isLifetimePlan(currentUser.plan) || currentUser.subscription_status === 'lifetime') {
+    if (currentUser.plan === 'lifetime' || currentUser.subscription_status === 'lifetime') {
       return privateJson(
         { error: 'Lifetime est un accès à vie et ne peut pas être annulé comme un abonnement mensuel.', code: 'LIFETIME_ACCESS' },
         { status: 400 }
@@ -55,12 +57,42 @@ export async function POST(request: NextRequest) {
 
     // Abonnement Stripe : résiliation en fin de période (accès jusqu’à la date de facturation)
     if (currentUser.stripe_subscription_id) {
+      if (!currentUser.stripe_customer_id) {
+        return privateJson(
+          {
+            error: 'Le compte de facturation doit etre verifie avant toute resiliation.',
+            code: 'BILLING_STATE_CONFLICT',
+          },
+          { status: 409 },
+        );
+      }
+
       try {
         const stripe = getStripe();
+        const customerId = await ensureStripeCustomerOwnership(stripe, {
+          customerId: currentUser.stripe_customer_id,
+          userId: session.userId,
+          email: session.email,
+        });
+        const subscription = await stripe.subscriptions.retrieve(currentUser.stripe_subscription_id);
+        assertStripeSubscriptionOwnership(subscription, {
+          customerId,
+          userId: session.userId,
+        });
         await stripe.subscriptions.update(currentUser.stripe_subscription_id, {
           cancel_at_period_end: true,
         });
       } catch (stripeErr) {
+        if (stripeErr instanceof StripeCheckoutSafetyError) {
+          console.error('[cancel-plan] Ownership Stripe refuse.', { code: stripeErr.code });
+          return privateJson(
+            {
+              error: 'La facturation de ce compte doit etre verifiee avant toute resiliation.',
+              code: 'BILLING_STATE_CONFLICT',
+            },
+            { status: 409 },
+          );
+        }
         console.error('[cancel-plan] Stripe a refusé la résiliation.', {
           kind: stripeErr instanceof Error ? stripeErr.name : 'unknown',
         });

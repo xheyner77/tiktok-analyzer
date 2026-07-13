@@ -1,19 +1,17 @@
 import { NextRequest } from 'next/server';
 import Stripe from 'stripe';
 import { getSession } from '@/lib/session';
-import { normalizePlan } from '@/lib/plans';
 import { blockTestStripeSecretInProduction } from '@/lib/stripe-prod-guard';
+import { getStripeSecretKey, isStripeLiveRuntime } from '@/lib/stripe-runtime';
+import { isLifetimeCheckoutPaymentStatusConfirmed } from '@/lib/stripe-payment-status';
 import {
   privateJson,
   readJsonObject,
   rejectCrossSiteMutation,
 } from '@/lib/api-route-security';
 
-const stripeSecret = process.env.STRIPE_SECRET_KEY?.trim();
-
 function getStripe(): Stripe {
-  if (!stripeSecret) throw new Error('STRIPE_SECRET_KEY manquant');
-  return new Stripe(stripeSecret);
+  return new Stripe(getStripeSecretKey().value);
 }
 
 /**
@@ -43,10 +41,10 @@ export async function POST(request: NextRequest) {
     const plan = typeof body.plan === 'string' ? body.plan : undefined;
     const sessionId = typeof body.sessionId === 'string' ? body.sessionId.trim() : '';
 
-    if (plan !== 'starter' && plan !== 'creator' && plan !== 'pro' && plan !== 'lifetime' && plan !== 'scale') {
+    if (plan !== 'starter' && plan !== 'pro' && plan !== 'lifetime') {
       return privateJson({ error: 'Plan invalide.' }, { status: 400 });
     }
-    const normalizedPlan = normalizePlan(plan);
+    const normalizedPlan = plan;
 
     if (!/^cs_[A-Za-z0-9_]{3,255}$/.test(sessionId)) {
       return privateJson({ error: 'Session de paiement invalide.' }, { status: 400 });
@@ -64,13 +62,23 @@ export async function POST(request: NextRequest) {
       return privateJson({ error: 'Session Stripe introuvable.' }, { status: 400 });
     }
 
+    if (checkoutSession.livemode !== isStripeLiveRuntime()) {
+      console.error('[upgrade-plan] Session Stripe issue du mauvais environnement.');
+      return privateJson({ error: 'Session Stripe incoherente.' }, { status: 400 });
+    }
+
     const expectedMode = normalizedPlan === 'lifetime' ? 'payment' : 'subscription';
     if (checkoutSession.mode !== expectedMode) {
       console.error('[upgrade-plan] Mode de paiement incohérent.');
       return privateJson({ error: 'Session Stripe incohérente.' }, { status: 400 });
     }
 
-    if (checkoutSession.payment_status !== 'paid') {
+    const paymentConfirmed = checkoutSession.payment_status === 'paid'
+      || (
+        normalizedPlan === 'lifetime'
+        && isLifetimeCheckoutPaymentStatusConfirmed(checkoutSession.payment_status)
+      );
+    if (!paymentConfirmed) {
       return privateJson({ error: 'Paiement non confirmé.' }, { status: 402 });
     }
 
@@ -79,7 +87,7 @@ export async function POST(request: NextRequest) {
       return privateJson({ error: 'Session invalide.' }, { status: 403 });
     }
 
-    if (normalizePlan(checkoutSession.metadata?.plan) !== normalizedPlan) {
+    if (checkoutSession.metadata?.plan !== normalizedPlan) {
       console.error('[upgrade-plan] Plan de paiement incohérent.');
       return privateJson({ error: 'Plan incohérent.' }, { status: 400 });
     }

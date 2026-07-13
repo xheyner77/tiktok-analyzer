@@ -15,7 +15,7 @@ import { DISPLAY_CATALOG_CREATOR_EUR, DISPLAY_CATALOG_PRO_EUR, DISPLAY_CATALOG_S
 export const PENDING_URL_KEY  = 'pending_tiktok_url';
 export const PENDING_PLAN_KEY = 'pending_plan_after_signup';
 
-type PlanVariant = 'creator' | 'pro' | 'scale';
+type PlanVariant = 'starter' | 'pro' | 'lifetime';
 
 /* ── Shared icon helpers ───────────────────────────────────────────────── */
 
@@ -169,7 +169,7 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
 
                 <button
                   type="button"
-                  onClick={() => handlePlanSelect('creator')}
+                  onClick={() => handlePlanSelect('starter')}
                   className="w-full text-center py-3 rounded-xl font-semibold text-[13px] text-gray-300 bg-white/[0.05] border border-white/[0.09] hover:bg-white/[0.09] hover:text-white transition-all mb-5"
                 >
                   Commencer avec Starter
@@ -310,7 +310,7 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
 
                 <button
                   type="button"
-                  onClick={() => handlePlanSelect('scale')}
+                  onClick={() => handlePlanSelect('lifetime')}
                   className="relative w-full py-3.5 rounded-xl font-bold text-[13px] text-white bg-gradient-to-r from-violet-600 to-vn-fuchsia hover:opacity-90 active:scale-[0.98] transition-all shadow-[0_8px_32px_-8px_rgba(139,92,246,0.4)] mb-1 ring-1 ring-white/10"
                 >
                   Débloquer Lifetime →

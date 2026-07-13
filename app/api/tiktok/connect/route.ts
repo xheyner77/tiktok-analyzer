@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { randomBytes } from 'crypto';
 import { getSession, COOKIE_OPTIONS } from '@/lib/session';
 import { canConnectTikTokAccount } from '@/lib/tiktok-account-limits';
 import { getEffectivePlan, getUserById } from '@/lib/auth';
@@ -9,6 +8,7 @@ import {
   TIKTOK_OAUTH_RETURN_TO_COOKIE,
   TIKTOK_REVIEW_SCOPES,
   buildTikTokAuthorizeUrl,
+  createTikTokOAuthState,
   getTikTokOAuthSecrets,
   getTikTokRedirectUri,
   logTikTokOAuthConfig,
@@ -72,16 +72,16 @@ export async function GET(request: NextRequest) {
   const redirectUri = getTikTokRedirectUri(request.headers.get('origin'));
   const scopes = shouldUseSandboxReviewScopes(request) ? TIKTOK_REVIEW_SCOPES : TIKTOK_LOGIN_SCOPES;
   logTikTokOAuthConfig({ clientKey: secrets.clientKey, redirectUri, scopes });
-  const state = randomBytes(24).toString('hex');
+  const oauthState = createTikTokOAuthState(session.userId, secrets.clientSecret);
   const authorizeUrl = buildTikTokAuthorizeUrl({
     clientKey: secrets.clientKey,
     redirectUri,
-    state,
+    state: oauthState.state,
     scopes,
   });
 
   const res = NextResponse.redirect(authorizeUrl);
-  res.cookies.set(TIKTOK_OAUTH_STATE_COOKIE, state, {
+  res.cookies.set(TIKTOK_OAUTH_STATE_COOKIE, oauthState.cookieValue, {
     ...COOKIE_OPTIONS,
     maxAge: 600,
   });

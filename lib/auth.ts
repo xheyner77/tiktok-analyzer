@@ -200,6 +200,61 @@ export interface QuotaReservation {
   limit: number;
 }
 
+async function reconcileQuotaRpcReservation(params: {
+  data: unknown;
+  expectedLimit: number;
+  previousUsed: number;
+  amount: number;
+  quota: 'analysis' | 'hook' | 'reconstruction';
+  refund: () => Promise<boolean>;
+}): Promise<QuotaReservation> {
+  const candidate: unknown = Array.isArray(params.data) ? params.data[0] : params.data;
+  const row = candidate && typeof candidate === 'object'
+    ? candidate as Record<string, unknown>
+    : null;
+  const allowed = row?.allowed;
+  const used = row?.used;
+  const rpcLimit = row?.limit_value;
+  const usedIsValid = typeof used === 'number' && Number.isFinite(used) && used >= 0;
+  const shapeIsValid =
+    typeof allowed === 'boolean'
+    && usedIsValid
+    && typeof rpcLimit === 'number'
+    && Number.isFinite(rpcLimit)
+    && rpcLimit >= 0;
+  const entitlementMatches = shapeIsValid && rpcLimit === params.expectedLimit;
+
+  if (entitlementMatches) {
+    return {
+      allowed,
+      used,
+      limit: params.expectedLimit,
+    };
+  }
+
+  let adjustedUsed = usedIsValid ? used : params.previousUsed;
+  let refunded = false;
+  if (allowed === true && usedIsValid) {
+    try {
+      refunded = await params.refund();
+      if (refunded) adjustedUsed = Math.max(0, used - params.amount);
+    } catch (error) {
+      console.error('[quota] entitlement mismatch refund failed', {
+        quota: params.quota,
+        errorType: error instanceof Error ? error.name : 'UnknownError',
+      });
+    }
+  }
+
+  console.error('[quota] RPC entitlement mismatch', {
+    quota: params.quota,
+    expectedLimit: params.expectedLimit,
+    receivedLimit: typeof rpcLimit === 'number' ? rpcLimit : 'invalid',
+    reservationRefunded: refunded,
+  });
+  return { allowed: false, used: adjustedUsed, limit: params.expectedLimit };
+}
+
 async function reserveAnalysisQuotaFallback(user: UserProfile, limit: number): Promise<QuotaReservation> {
   const { data: freshRow, error: readError } = await supabase
     .from('users')
@@ -261,12 +316,14 @@ export async function reserveAnalysisQuota(user: UserProfile): Promise<QuotaRese
     return reserveAnalysisQuotaFallback(user, limit);
   }
 
-  const row = Array.isArray(data) ? data[0] : data;
-  return {
-    allowed: Boolean(row?.allowed),
-    used: typeof row?.used === 'number' ? row.used : user.analyses_count,
-    limit: typeof row?.limit_value === 'number' ? row.limit_value : limit,
-  };
+  return reconcileQuotaRpcReservation({
+    data,
+    expectedLimit: limit,
+    previousUsed: user.analyses_count,
+    amount: 1,
+    quota: 'analysis',
+    refund: () => refundAnalysisQuota(user.id),
+  });
 }
 
 export async function refundAnalysisQuota(userId: string): Promise<boolean> {
@@ -285,14 +342,21 @@ export async function refundAnalysisQuota(userId: string): Promise<boolean> {
     return false;
   }
 
-  const nextCount = Math.max(0, ((row as { analyses_count?: number }).analyses_count ?? 0) - 1);
-  const { error: writeErr } = await supabase
+  const current = (row as { analyses_count?: number }).analyses_count ?? 0;
+  const nextCount = Math.max(0, current - 1);
+  const { data: updated, error: writeErr } = await supabase
     .from('users')
     .update({ analyses_count: nextCount })
-    .eq('id', userId);
+    .eq('id', userId)
+    .eq('analyses_count', current)
+    .select('analyses_count')
+    .maybeSingle();
 
-  if (writeErr) {
-    console.error('[refundAnalysisQuota] Fallback write failed:', writeErr.message);
+  if (writeErr || !updated) {
+    console.error(
+      '[refundAnalysisQuota] Fallback write failed or lost a concurrent update:',
+      writeErr?.message ?? 'conflict',
+    );
     return false;
   }
 
@@ -360,12 +424,14 @@ export async function reserveHookQuota(user: UserProfile, amount: number): Promi
     return reserveHookQuotaFallback(user, safeAmount, limit);
   }
 
-  const row = Array.isArray(data) ? data[0] : data;
-  return {
-    allowed: Boolean(row?.allowed),
-    used: typeof row?.used === 'number' ? row.used : user.hooks_count,
-    limit: typeof row?.limit_value === 'number' ? row.limit_value : limit,
-  };
+  return reconcileQuotaRpcReservation({
+    data,
+    expectedLimit: limit,
+    previousUsed: user.hooks_count,
+    amount: safeAmount,
+    quota: 'hook',
+    refund: () => refundHookQuota(user.id, safeAmount),
+  });
 }
 
 export async function refundHookQuota(userId: string, amount: number): Promise<boolean> {
@@ -455,6 +521,15 @@ export async function reserveReconstructionQuota(
     return { allowed: false, used: user.reconstructions_count, limit };
   }
 
+  if (!Number.isFinite(limit)) {
+    await incrementReconstructionsCount(user.id, safeAmount);
+    return {
+      allowed: true,
+      used: user.reconstructions_count + safeAmount,
+      limit,
+    };
+  }
+
   const { data, error } = await supabase.rpc('reserve_reconstruction_quota', {
     p_user_id: user.id,
     p_amount: safeAmount,
@@ -465,12 +540,14 @@ export async function reserveReconstructionQuota(
     return reserveReconstructionQuotaFallback(user, safeAmount, limit);
   }
 
-  const row = Array.isArray(data) ? data[0] : data;
-  return {
-    allowed: Boolean(row?.allowed),
-    used: typeof row?.used === 'number' ? row.used : user.reconstructions_count,
-    limit: typeof row?.limit_value === 'number' ? row.limit_value : limit,
-  };
+  return reconcileQuotaRpcReservation({
+    data,
+    expectedLimit: limit,
+    previousUsed: user.reconstructions_count,
+    amount: safeAmount,
+    quota: 'reconstruction',
+    refund: () => refundReconstructionQuota(user.id, safeAmount),
+  });
 }
 
 export async function refundReconstructionQuota(userId: string, amount = 1): Promise<boolean> {

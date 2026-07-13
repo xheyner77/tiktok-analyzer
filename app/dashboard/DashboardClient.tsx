@@ -705,8 +705,13 @@ export default function DashboardClient({
 
   useEffect(() => {
     if (!stripeSessionId) return;
-    const pendingPlan = localStorage.getItem('pendingPlan');
-    if (!pendingPlan || (pendingPlan !== 'pro' && pendingPlan !== 'scale')) { router.replace('/dashboard'); return; }
+    const rawPendingPlan = localStorage.getItem('pendingPlan');
+    const pendingPlan = rawPendingPlan === 'creator'
+      ? 'starter'
+      : rawPendingPlan === 'scale'
+        ? 'lifetime'
+        : rawPendingPlan;
+    if (!pendingPlan || (pendingPlan !== 'starter' && pendingPlan !== 'pro' && pendingPlan !== 'lifetime')) { router.replace('/dashboard'); return; }
     setUpgradeStatus('loading');
     fetch('/api/upgrade-plan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ plan: pendingPlan, sessionId: stripeSessionId }) })
       .then(r => r.json())
@@ -715,7 +720,7 @@ export default function DashboardClient({
           localStorage.removeItem('pendingPlan');
           setUpgradedPlan(pendingPlan);
           setUpgradeStatus('success');
-          const ok = await waitForBillingPlan(pendingPlan as 'pro' | 'scale');
+          const ok = await waitForBillingPlan(pendingPlan);
           if (!ok) console.warn('[Dashboard] billingPlan pas encore à jour — reload.');
           window.location.href = '/dashboard';
         } else { setUpgradeStatus('error'); }
@@ -803,12 +808,16 @@ export default function DashboardClient({
   async function handleScaleUpgrade() {
     setScaleUpgradeLoading(true);
     try {
-      const res = await fetch('/api/upgrade-subscription', { method: 'POST' });
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: 'lifetime', interval: 'month' }),
+      });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) { alert(data.error ?? 'Mise à niveau impossible.'); return; }
-      const synced = await waitForBillingPlan('scale');
-      if (!synced) console.warn('[Dashboard] Lifetime webhook lent.');
-      window.location.href = '/dashboard?t=' + Date.now();
+      if (!data.url) { alert('Le paiement est temporairement indisponible.'); return; }
+      localStorage.setItem('pendingPlan', 'lifetime');
+      window.location.href = data.url;
     } catch (e) { console.error(e); alert('Erreur réseau.'); }
     finally { setScaleUpgradeLoading(false); }
   }
@@ -890,7 +899,7 @@ export default function DashboardClient({
             </div>
             <div>
               <p className="text-sm font-semibold text-emerald-400">Paiement réussi — compte mis à jour !</p>
-              <p className="text-xs text-emerald-600 mt-0.5">Plan {upgradedPlan === 'scale' ? 'Lifetime' : 'Pro'} actif.</p>
+              <p className="text-xs text-emerald-600 mt-0.5">Plan {upgradedPlan === 'lifetime' ? 'Lifetime' : upgradedPlan === 'starter' ? 'Starter' : 'Pro'} actif.</p>
             </div>
           </div>
         )}

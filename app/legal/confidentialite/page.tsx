@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: 'Politique de confidentialité et traitement des données personnelles de Viralynz.',
 };
 
-const LAST_UPDATE = '2 avril 2026';
+const LAST_UPDATE = '13 juillet 2026';
 
 export default function ConfidentialitePage() {
   return (
@@ -39,6 +39,7 @@ export default function ConfidentialitePage() {
             <ul>
               <li><strong className="text-white">Données de compte</strong> — adresse email, mot de passe hashé (via Supabase Auth), date d&apos;inscription</li>
               <li><strong className="text-white">Données d&apos;utilisation</strong> — nombre d&apos;analyses effectuées, historique des analyses (scores, résultats), historique des hooks générés</li>
+              <li><strong className="text-white">Données TikTok (connexion facultative)</strong> — identifiant TikTok, nom d&apos;affichage, avatar, statistiques de profil, vidéos publiques et métriques rendues accessibles par les autorisations accordées. Les jetons OAuth sont stockés chiffrés côté serveur. Viralynz ne reçoit jamais votre mot de passe TikTok ni vos contenus privés.</li>
               <li><strong className="text-white">Données de paiement</strong> — gérées exclusivement par Stripe. Viralynz ne stocke aucune donnée bancaire.</li>
               <li><strong className="text-white">Données de navigation</strong> — logs techniques (adresse IP, navigateur, pages visitées) à des fins de sécurité et d&apos;amélioration du service</li>
               <li><strong className="text-white">Contenus uploadés</strong> — vidéos soumises à analyse, traitées temporairement et non conservées au-delà de la durée de traitement</li>
@@ -50,6 +51,7 @@ export default function ConfidentialitePage() {
             <ul>
               <li>Gérer votre compte et votre authentification</li>
               <li>Fournir les analyses IA et le hook generator</li>
+              <li>Synchroniser, avec votre autorisation, votre profil TikTok, vos vidéos publiques et leurs métriques réelles afin d&apos;alimenter le diagnostic Viralynz</li>
               <li>Gérer votre abonnement et la facturation via Stripe</li>
               <li>Améliorer la qualité du service (statistiques agrégées anonymisées)</li>
               <li>Vous envoyer des communications liées au service (mises à jour, changements de conditions)</li>
@@ -63,16 +65,18 @@ export default function ConfidentialitePage() {
               <li>L&apos;<strong className="text-white">exécution du contrat</strong> (gestion du compte, fourniture du service, facturation)</li>
               <li>Notre <strong className="text-white">intérêt légitime</strong> (sécurité, prévention des fraudes, amélioration du service)</li>
               <li>Votre <strong className="text-white">consentement</strong> (communications marketing, si applicable)</li>
+              <li>Votre <strong className="text-white">autorisation TikTok</strong>, que vous pouvez retirer à tout moment en déconnectant le compte</li>
             </ul>
           </Section>
 
           <Section title="5. Sous-traitants et transferts">
-            <p>Viralynz fait appel aux sous-traitants suivants, liés par des garanties contractuelles appropriées :</p>
+            <p>Viralynz fait appel aux prestataires et services externes suivants, dans la limite nécessaire au fonctionnement du produit :</p>
             <ul>
               <li><strong className="text-white">Supabase</strong> — stockage des données utilisateurs et historiques (UE / USA, Privacy Shield)</li>
               <li><strong className="text-white">Stripe</strong> — traitement des paiements (USA, Privacy Shield)</li>
               <li><strong className="text-white">OpenAI</strong> — traitement des vidéos pour l&apos;analyse IA (USA). Les vidéos sont transmises pour traitement et ne sont pas utilisées pour entraîner les modèles OpenAI (API usage policy)</li>
               <li><strong className="text-white">Vercel</strong> — hébergement de l&apos;application (USA, Privacy Shield)</li>
+              <li><strong className="text-white">TikTok</strong> — source des données de profil, vidéos publiques et métriques que vous choisissez de connecter via OAuth. Les échanges dépendent exclusivement des autorisations accordées dans TikTok.</li>
             </ul>
           </Section>
 
@@ -82,6 +86,7 @@ export default function ConfidentialitePage() {
               <li><strong className="text-white">Historique des analyses</strong> — conservé selon les limites de votre plan, puis supprimé automatiquement</li>
               <li><strong className="text-white">Vidéos uploadées</strong> — supprimées immédiatement après traitement (max. 10 minutes)</li>
               <li><strong className="text-white">Données de facturation</strong> — conservées 10 ans conformément aux obligations légales comptables</li>
+              <li><strong className="text-white">Connexion TikTok</strong> — les jetons OAuth sont révoqués auprès de TikTok puis supprimés de Viralynz lors d&apos;une déconnexion confirmée. Les données publiques déjà synchronisées restent dans votre historique jusqu&apos;à la suppression de votre compte ou à une demande d&apos;effacement.</li>
             </ul>
           </Section>
 
@@ -96,6 +101,7 @@ export default function ConfidentialitePage() {
               <li><strong className="text-white">Droit à la limitation</strong> — restreindre le traitement de vos données</li>
             </ul>
             <p>Pour exercer ces droits, contactez-nous à <a href="mailto:contact@viralynz.com" className="text-vn-fuchsia hover:underline">contact@viralynz.com</a>. Nous nous engageons à répondre dans un délai d&apos;un mois.</p>
+            <p>Vous pouvez également retirer l&apos;accès TikTok depuis les paramètres de Viralynz. Une déconnexion n&apos;est affichée comme réussie qu&apos;après confirmation de la révocation par TikTok.</p>
             <p>Vous pouvez également introduire une réclamation auprès de la <strong className="text-white">CNIL</strong> (Commission Nationale de l&apos;Informatique et des Libertés) — <a href="https://www.cnil.fr" target="_blank" rel="noopener noreferrer" className="text-vn-fuchsia hover:underline">www.cnil.fr</a></p>
           </Section>
 
@@ -104,7 +110,7 @@ export default function ConfidentialitePage() {
           </Section>
 
           <Section title="9. Sécurité">
-            <p>Nous mettons en œuvre des mesures techniques et organisationnelles appropriées pour protéger vos données : chiffrement HTTPS, hashage des mots de passe, accès restreint aux données en production.</p>
+            <p>Nous mettons en œuvre des mesures techniques et organisationnelles appropriées pour protéger vos données : chiffrement HTTPS, hashage des mots de passe, chiffrement des jetons OAuth TikTok et accès restreint aux données en production.</p>
           </Section>
 
           <Section title="10. Modifications">

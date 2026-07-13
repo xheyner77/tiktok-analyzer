@@ -805,13 +805,48 @@ function ResultProofPhone() {
 
         <div className="relative isolate mx-auto w-full max-w-[18.75rem] sm:max-w-[22rem]">
           <div className="absolute -inset-7 rounded-[3rem] bg-[radial-gradient(circle_at_50%_28%,rgba(168,85,247,0.2),transparent_55%),radial-gradient(circle_at_72%_68%,rgba(34,211,238,0.12),transparent_46%)] blur-2xl" aria-hidden />
-          <div className="relative overflow-hidden [mask-image:radial-gradient(ellipse_64%_76%_at_50%_50%,black_58%,rgba(0,0,0,0.82)_73%,transparent_100%)] [-webkit-mask-image:radial-gradient(ellipse_64%_76%_at_50%_50%,black_58%,rgba(0,0,0,0.82)_73%,transparent_100%)]">
-            <img
-              src="/ChatGPT Image 15 mai 2026, 13_58_30.png"
-              alt="Aperçu TikTok Analytics avec vues, engagement et récompenses estimées"
-              className="block w-[108%] max-w-none -translate-x-[3.8%] mix-blend-lighten drop-shadow-[0_28px_70px_rgba(168,85,247,0.24)]"
-              style={{ filter: 'drop-shadow(0 0 1.5px rgba(255,255,255,0.86)) drop-shadow(0 0 16px rgba(168,85,247,0.22)) drop-shadow(0 24px 64px rgba(168,85,247,0.18))' }}
-            />
+          <div className="relative overflow-hidden rounded-[2.8rem] border border-white/[0.16] bg-[#050711] p-2 shadow-[0_32px_90px_-46px_rgba(168,85,247,0.62)]">
+            <div className="relative min-h-[34rem] overflow-hidden rounded-[2.35rem] border border-white/[0.08] bg-[radial-gradient(circle_at_50%_0%,rgba(168,85,247,0.18),transparent_34%),linear-gradient(180deg,#0a0d18,#050711_72%)] px-4 pb-5 pt-4">
+              <div className="mx-auto h-5 w-24 rounded-full bg-black/80" aria-hidden />
+
+              <div className="mt-7 flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200/70">Données TikTok</p>
+                  <h3 className="mt-1 text-xl font-black text-white">Aucune donnée importée</h3>
+                </div>
+                <span className="shrink-0 rounded-full border border-white/10 bg-white/[0.06] px-2.5 py-1 text-[10px] font-black text-white/55">
+                  Non connecté
+                </span>
+              </div>
+
+              <p className="mt-3 text-sm font-semibold leading-5 text-slate-300/75">
+                Viralynz n&rsquo;invente pas tes vues, ton engagement ou ton watch time.
+              </p>
+
+              <div className="mt-5 grid grid-cols-2 gap-2.5" aria-label="Métriques indisponibles tant que TikTok n’est pas connecté">
+                {['Vues', 'Engagement', 'Watch time', 'Vidéos'].map((label) => (
+                  <div key={label} className="rounded-2xl border border-white/[0.09] bg-white/[0.045] p-3.5">
+                    <p className="text-[10px] font-black uppercase tracking-[0.13em] text-white/40">{label}</p>
+                    <p className="mt-3 text-2xl font-black text-white/70">—</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 rounded-2xl border border-cyan-300/15 bg-cyan-300/[0.055] p-4">
+                <p className="text-xs font-black text-cyan-100">Deux chemins possibles</p>
+                <p className="mt-1.5 text-xs font-semibold leading-5 text-slate-300/72">
+                  Connecte TikTok pour lire les données autorisées, ou analyse directement un fichier vidéo.
+                </p>
+              </div>
+
+              <Link
+                href="/signup"
+                className="mt-4 flex min-h-11 w-full items-center justify-center rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo px-4 text-sm font-black text-white shadow-[0_18px_48px_-28px_rgba(168,85,247,0.9)] transition hover:brightness-110"
+              >
+                Analyser une vidéo
+              </Link>
+              <p className="mt-3 text-center text-[10px] font-bold text-white/38">Les données absentes restent « — ».</p>
+            </div>
           </div>
         </div>
       </div>

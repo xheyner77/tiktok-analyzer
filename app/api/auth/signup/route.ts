@@ -1,7 +1,8 @@
 import { NextRequest } from 'next/server';
-import { supabaseAuth, supabase } from '@/lib/supabase';
+import { getSupabaseAuth, supabase } from '@/lib/supabase';
 import { getAuthEmailCallbackUrl } from '@/lib/site-url';
 import { privateJson, readJsonObject, rejectCrossSiteMutation } from '@/lib/api-route-security';
+import { setSessionCookies } from '@/lib/session';
 
 /**
  * Converts raw Supabase Auth error messages into user-friendly French strings.
@@ -71,7 +72,8 @@ export async function POST(request: NextRequest) {
 
     const emailRedirectTo = getAuthEmailCallbackUrl(request.headers.get('origin'));
 
-    const { data, error } = await supabaseAuth.auth.signUp({
+    const auth = getSupabaseAuth();
+    const { data, error } = await auth.auth.signUp({
       email,
       password,
       options: {
@@ -112,6 +114,13 @@ export async function POST(request: NextRequest) {
       if (dbError) {
         console.error('[signup] profile_upsert_failed', { code: dbError.code });
       }
+    }
+
+    if (data.session) {
+      await setSessionCookies({
+        accessToken: data.session.access_token,
+        refreshToken: data.session.refresh_token,
+      });
     }
 
     return privateJson({ success: true, needsEmailConfirmation });

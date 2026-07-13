@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { after, NextRequest, NextResponse } from 'next/server';
 import { getSession, COOKIE_OPTIONS } from '@/lib/session';
 import {
   TIKTOK_OAUTH_RETURN_TO_COOKIE,
@@ -8,10 +8,36 @@ import {
   fetchTikTokUserInfoBasic,
   getTikTokOAuthSecrets,
   getTikTokRedirectUri,
+  revokeTikTokAccess,
+  type TikTokOAuthSecrets,
+  TikTokApiRequestError,
+  TikTokRevokeError,
   TikTokUserInfoFetchError,
+  verifyTikTokOAuthState,
 } from '@/lib/tiktok-oauth';
 import { hasVideoListScope, upsertTikTokAccountForUser } from '@/lib/tiktok-accounts';
-import { syncTikTokAccountProfile, syncTikTokAccountVideos } from '@/lib/tiktok-sync';
+import { syncTikTokAccountProfile } from '@/lib/tiktok-sync';
+
+export const maxDuration = 60;
+
+async function revokeUnstoredTikTokGrant(params: {
+  accessToken: string;
+  secrets: TikTokOAuthSecrets;
+  cleanupContext: 'profile_fetch_failed' | 'account_save_failed';
+}) {
+  try {
+    await revokeTikTokAccess(params.accessToken, params.secrets);
+    console.info('[tiktok/callback] unstored_grant_revoked', {
+      cleanupContext: params.cleanupContext,
+    });
+  } catch (error) {
+    console.warn('[tiktok/callback] unstored_grant_revocation_failed', {
+      cleanupContext: params.cleanupContext,
+      reason: error instanceof TikTokRevokeError ? error.reason : 'unknown',
+      providerStatus: error instanceof TikTokRevokeError ? error.status : null,
+    });
+  }
+}
 
 function redirectDashboard(request: NextRequest, query: Record<string, string>) {
   const u = new URL('/dashboard', request.url);
@@ -43,14 +69,6 @@ export async function GET(request: NextRequest) {
     return clearState(r);
   }
 
-  const err = request.nextUrl.searchParams.get('error');
-  const errDesc = request.nextUrl.searchParams.get('error_description');
-  if (err) {
-    console.warn('[tiktok/callback] OAuth error:', err, errDesc);
-    const r = redirectAfterTikTok(request, { tiktok: 'denied' });
-    return clearState(r);
-  }
-
   const code = request.nextUrl.searchParams.get('code');
   const state = request.nextUrl.searchParams.get('state');
   const cookieState = request.cookies.get(TIKTOK_OAUTH_STATE_COOKIE)?.value;
@@ -61,7 +79,7 @@ export async function GET(request: NextRequest) {
     hasCookieState: Boolean(cookieState),
   });
 
-  if (!code || !state || !cookieState || state !== cookieState) {
+  if (!state || !cookieState) {
     const r = redirectAfterTikTok(request, { tiktok: 'state' });
     return clearState(r);
   }
@@ -69,6 +87,33 @@ export async function GET(request: NextRequest) {
   const secrets = getTikTokOAuthSecrets();
   if (!secrets) {
     const r = redirectAfterTikTok(request, { tiktok: 'config' });
+    return clearState(r);
+  }
+
+  if (!verifyTikTokOAuthState({
+    state,
+    cookieValue: cookieState,
+    userId: session.userId,
+    clientSecret: secrets.clientSecret,
+  })) {
+    const r = redirectAfterTikTok(request, { tiktok: 'state' });
+    return clearState(r);
+  }
+
+  const err = request.nextUrl.searchParams.get('error');
+  const errDesc = request.nextUrl.searchParams.get('error_description');
+  if (err) {
+    const safeErrorCode = /^[A-Za-z0-9_.-]{1,64}$/.test(err) ? err : 'unknown_error';
+    console.warn('[tiktok/callback] OAuth error', {
+      code: safeErrorCode,
+      hasDescription: Boolean(errDesc),
+    });
+    const r = redirectAfterTikTok(request, { tiktok: 'denied' });
+    return clearState(r);
+  }
+
+  if (!code) {
+    const r = redirectAfterTikTok(request, { tiktok: 'state' });
     return clearState(r);
   }
 
@@ -87,7 +132,7 @@ export async function GET(request: NextRequest) {
     console.error('[tiktok/callback] token exchange:', {
       step: 'token_exchange',
       tokenExchangeStatus: 'error',
-      message: e instanceof Error ? e.message : 'unknown_error',
+      errorType: e instanceof TikTokApiRequestError ? e.reason : e instanceof Error ? e.name : 'unknown_error',
     });
     const r = redirectAfterTikTok(request, { tiktok: 'token' });
     return clearState(r);
@@ -105,13 +150,18 @@ export async function GET(request: NextRequest) {
       hasAvatarUrl: Boolean(profile.avatar_url),
     });
   } catch (e) {
+    await revokeUnstoredTikTokGrant({
+      accessToken: tokens.access_token,
+      secrets,
+      cleanupContext: 'profile_fetch_failed',
+    });
     console.error('[tiktok/callback] user info:', {
       step: 'profile_fetch',
       profileFetchStatus: 'error',
       fields: TIKTOK_USER_INFO_BASIC_FIELDS,
       profileErrorCode: e instanceof TikTokUserInfoFetchError ? e.code : null,
       profileFetchStatusCode: e instanceof TikTokUserInfoFetchError ? e.status : null,
-      profileErrorMessage: e instanceof Error ? e.message : 'unknown_error',
+      profileErrorType: e instanceof Error ? e.name : 'unknown_error',
     });
     const r = redirectAfterTikTok(request, { tiktok: 'profile' });
     return clearState(r);
@@ -119,7 +169,12 @@ export async function GET(request: NextRequest) {
 
   const saved = await upsertTikTokAccountForUser({ userId: session.userId, profile, tokens });
   if (!saved.ok) {
-    console.error('[tiktok/callback] account save:', saved);
+    await revokeUnstoredTikTokGrant({
+      accessToken: tokens.access_token,
+      secrets,
+      cleanupContext: 'account_save_failed',
+    });
+    console.error('[tiktok/callback] account save failed', { code: saved.code });
     const r = redirectAfterTikTok(request, { tiktok: saved.code === 'limit_reached' ? 'limit' : 'db' });
     return clearState(r);
   }
@@ -133,33 +188,29 @@ export async function GET(request: NextRequest) {
     canSyncVideos,
   });
 
-  const profileSyncResult = await syncTikTokAccountProfile(session.userId, saved.accountId);
-  console.info('[tiktok/callback] post-connect profile sync', {
-    step: 'post_connect_profile_sync',
-    ok: profileSyncResult.ok,
-    status: profileSyncResult.status,
-    error: profileSyncResult.ok ? null : 'error' in profileSyncResult ? profileSyncResult.error : null,
+  after(async () => {
+    try {
+      const profileSyncResult = await syncTikTokAccountProfile(session.userId, saved.accountId);
+      console.info('[tiktok/callback] post-connect profile sync', {
+        step: 'post_connect_profile_sync',
+        ok: profileSyncResult.ok,
+        status: profileSyncResult.status,
+        error: profileSyncResult.ok ? null : 'profile_sync_incomplete',
+      });
+    } catch (error) {
+      console.warn('[tiktok/callback] post-connect profile sync failed', {
+        step: 'post_connect_profile_sync',
+        errorType: error instanceof Error ? error.name : 'unknown_error',
+      });
+    }
   });
 
-  if (canSyncVideos) {
-    const syncResult = await syncTikTokAccountVideos(session.userId, saved.accountId);
-    console.info('[tiktok/callback] post-connect sync', {
-      step: 'post_connect_sync',
-      attempted: true,
-      ok: syncResult.ok,
-      status: syncResult.status,
-      videosFound: syncResult.videosFound,
-      missingScope: 'missingScope' in syncResult ? syncResult.missingScope : null,
-      error: syncResult.ok ? null : syncResult.error,
-    });
-  } else {
-    console.info('[tiktok/callback] post-connect sync', {
-      step: 'post_connect_sync',
-      attempted: false,
-      reason: 'missing_video_list_scope',
-      scopes: saved.scopes,
-    });
-  }
+  console.info('[tiktok/callback] post-connect video sync', {
+    step: 'post_connect_video_sync',
+    attempted: false,
+    reason: canSyncVideos ? 'deferred_to_explicit_sync' : 'missing_video_list_scope',
+    scopes: saved.scopes,
+  });
 
   const r = redirectAfterTikTok(request, { tiktok: 'connected' });
   return clearState(r);

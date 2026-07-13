@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
 const DISMISS_KEY = 'viralynz_tiktok_popup_dismissed';
@@ -207,7 +206,7 @@ export default function TikTokConnectModal({
             ))}
           </div>
 
-          <Link
+          <a
             href={connectUrl}
             className="mt-5 flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-[linear-gradient(135deg,rgba(217,70,239,0.96)_0%,rgba(139,92,246,0.98)_48%,rgba(34,211,238,0.92)_100%)] px-5 text-sm font-black text-white shadow-[0_20px_54px_-32px_rgba(34,211,238,0.95),inset_0_1px_0_rgba(255,255,255,0.20)] transition hover:-translate-y-0.5 hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-violet-300/[0.45]"
           >
@@ -216,7 +215,7 @@ export default function TikTokConnectModal({
               <path d="M3.5 8h8.2" strokeLinecap="round" />
               <path d="m8.7 4.6 3.4 3.4-3.4 3.4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-          </Link>
+          </a>
 
           <div className="mt-3 text-center">
             <button

@@ -88,7 +88,7 @@ export default function TrendRadarClient({
             </div>
             <div className="flex flex-wrap gap-2">
               <Link href="/dashboard/analyze" className="rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo px-4 py-3 text-sm font-black text-white transition hover:brightness-110">Analyser une vidéo</Link>
-              <Link href="/api/tiktok/connect" className="rounded-xl border border-cyan-300/25 bg-cyan-300/10 px-4 py-3 text-sm font-black text-cyan-200 transition hover:bg-cyan-300/15">Connecter TikTok</Link>
+              <a href="/api/tiktok/connect" className="rounded-xl border border-cyan-300/25 bg-cyan-300/10 px-4 py-3 text-sm font-black text-cyan-200 transition hover:bg-cyan-300/15">Connecter TikTok</a>
               <Link href="/dashboard/hooks" className="rounded-xl border border-white/[0.08] bg-white/[0.045] px-4 py-3 text-sm font-black text-white transition hover:bg-white/[0.07]">Générer des hooks</Link>
             </div>
           </div>

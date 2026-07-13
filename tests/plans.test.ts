@@ -37,12 +37,32 @@ describe('plans', () => {
     expect(getPlanLimits('scale').hooks).toBe(Number.POSITIVE_INFINITY);
   });
 
-  it('treats legacy Scale as effective Lifetime without an active Stripe subscription', () => {
+  it('does not keep recurring legacy Scale after its subscription ends', () => {
     expect(getEffectivePlan({
       plan: 'scale',
       stripe_subscription_id: null,
       subscription_status: null,
-    })).toBe('lifetime');
+    })).toBe('free');
+
+    expect(getEffectivePlan({
+      plan: 'scale',
+      stripe_subscription_id: 'sub_scale_legacy',
+      subscription_status: 'active',
+    })).toBe('scale');
+
+    expect(getEffectivePlan({
+      plan: 'scale',
+      stripe_subscription_id: 'sub_scale_legacy',
+      subscription_status: 'trialing',
+    })).toBe('scale');
+
+    for (const subscriptionStatus of ['past_due', 'unpaid', 'paused', 'canceled']) {
+      expect(getEffectivePlan({
+        plan: 'scale',
+        stripe_subscription_id: 'sub_scale_legacy',
+        subscription_status: subscriptionStatus,
+      })).toBe('free');
+    }
   });
 
   it('only falls back to free for unknown plans', () => {

@@ -1,100 +1,140 @@
 import { cookies } from 'next/headers';
-import { SignJWT, jwtVerify } from 'jose';
 import type { SessionPayload } from './auth';
-import { supabase } from './supabase';
-import { COOKIE_NAME } from './session-constants';
+import { getSupabaseAuth } from './supabase';
+import {
+  ACCESS_TOKEN_COOKIE_NAME,
+  LEGACY_SESSION_COOKIE_NAME,
+  REFRESH_TOKEN_COOKIE_NAME,
+  SESSION_COOKIE_MAX_AGE_SECONDS,
+} from './session-constants';
 
-export { COOKIE_NAME } from './session-constants';
+export {
+  ACCESS_TOKEN_COOKIE_NAME,
+  LEGACY_SESSION_COOKIE_NAME,
+  REFRESH_TOKEN_COOKIE_NAME,
+} from './session-constants';
 
-export const COOKIE_OPTIONS = {
+export interface SupabaseSessionTokens {
+  accessToken: string;
+  refreshToken: string;
+}
+
+export type SessionVerificationResult =
+  | { status: 'authenticated'; session: SessionPayload }
+  | { status: 'missing' }
+  | { status: 'invalid' }
+  | { status: 'unavailable' };
+
+interface SessionTokenState {
+  accessToken: string | null;
+  refreshToken: string | null;
+}
+
+export const SESSION_COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
   sameSite: 'lax' as const,
-  maxAge: 60 * 60 * 24 * 7, // 7 days
+  maxAge: SESSION_COOKIE_MAX_AGE_SECONDS,
   path: '/',
 };
 
-/**
- * Returns the HMAC secret used to sign and verify session JWTs.
- * Returns null if JWT_SECRET is not configured (instead of throwing),
- * so legacy Supabase token fallback can still work.
- */
-function getJwtSecret(): Uint8Array | null {
-  const secret = process.env.JWT_SECRET;
-  if (!secret || secret.length < 32) return null;
-  return new TextEncoder().encode(secret);
+// Compatibilité des cookies OAuth TikTok existants ; leur maxAge est toujours
+// remplacé par 600 secondes dans les routes concernées.
+export const COOKIE_OPTIONS = SESSION_COOKIE_OPTIONS;
+
+const EXPIRED_COOKIE_OPTIONS = {
+  ...SESSION_COOKIE_OPTIONS,
+  maxAge: 0,
+};
+
+/** Lit uniquement les nouveaux cookies Supabase. Le JWT applicatif historique est ignoré. */
+async function getSessionTokenState(): Promise<SessionTokenState> {
+  const cookieStore = await cookies();
+  return {
+    accessToken: cookieStore.get(ACCESS_TOKEN_COOKIE_NAME)?.value ?? null,
+    refreshToken: cookieStore.get(REFRESH_TOKEN_COOKIE_NAME)?.value ?? null,
+  };
+}
+
+export async function getSessionTokens(): Promise<SupabaseSessionTokens | null> {
+  const { accessToken, refreshToken } = await getSessionTokenState();
+
+  if (!accessToken || !refreshToken) return null;
+  return { accessToken, refreshToken };
 }
 
 /**
- * Creates a signed HS256 JWT containing { userId, email }, valid for 7 days.
- * Store this value in the session cookie instead of the Supabase access token.
+ * Remplace intégralement la session après authentification. L'effacement préalable
+ * empêche qu'un ancien refresh token ou le cookie JWT historique soit conservé.
  */
-export async function createSessionToken(userId: string, email: string): Promise<string> {
-  const secret = getJwtSecret();
-  if (!secret) {
-    throw new Error(
-      'JWT_SECRET env var is missing or too short (must be ≥ 32 chars). ' +
-      'Add it in Vercel Dashboard → Settings → Environment Variables.'
-    );
+export async function setSessionCookies(tokens: SupabaseSessionTokens): Promise<void> {
+  if (!tokens.accessToken || !tokens.refreshToken) {
+    throw new TypeError('Supabase n’a pas retourné une session complète.');
   }
-  return new SignJWT({ userId, email })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime('7d')
-    .sign(secret);
+
+  const cookieStore = await cookies();
+  cookieStore.set(LEGACY_SESSION_COOKIE_NAME, '', EXPIRED_COOKIE_OPTIONS);
+  cookieStore.set(ACCESS_TOKEN_COOKIE_NAME, '', EXPIRED_COOKIE_OPTIONS);
+  cookieStore.set(REFRESH_TOKEN_COOKIE_NAME, '', EXPIRED_COOKIE_OPTIONS);
+  cookieStore.set(ACCESS_TOKEN_COOKIE_NAME, tokens.accessToken, SESSION_COOKIE_OPTIONS);
+  cookieStore.set(REFRESH_TOKEN_COOKIE_NAME, tokens.refreshToken, SESSION_COOKIE_OPTIONS);
+}
+
+export async function clearSessionCookies(): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.set(LEGACY_SESSION_COOKIE_NAME, '', EXPIRED_COOKIE_OPTIONS);
+  cookieStore.set(ACCESS_TOKEN_COOKIE_NAME, '', EXPIRED_COOKIE_OPTIONS);
+  cookieStore.set(REFRESH_TOKEN_COOKIE_NAME, '', EXPIRED_COOKIE_OPTIONS);
 }
 
 /**
- * Reads and verifies the session cookie.
- *
- * Strategy (two attempts for backward compatibility):
- *  1. Try to verify as our custom HS256 JWT (new sessions, 7-day expiry).
- *  2. If that fails, fall back to validating as a Supabase access token
- *     (old sessions created before the JWT migration).
- *
- * Returns { userId, email } or null if not authenticated.
+ * Vérifie chaque requête auprès de Supabase Auth. Aucun claim local ni ancien JWT
+ * autonome n'est utilisé pour autoriser l'accès aux données de l'utilisateur.
  */
-export async function getSession(): Promise<SessionPayload | null> {
+export async function getSessionVerification(): Promise<SessionVerificationResult> {
   try {
-    const token = (await cookies()).get(COOKIE_NAME)?.value;
-    if (!token) return null;
+    const { accessToken, refreshToken } = await getSessionTokenState();
+    if (!accessToken && !refreshToken) return { status: 'missing' };
+    if (!accessToken || !refreshToken) return { status: 'invalid' };
 
-    // ── Attempt 1: custom HS256 JWT (new sessions) ────────────────────────────
-    const secret = getJwtSecret();
-    if (secret) {
-      try {
-        const { payload } = await jwtVerify(token, secret);
-        const userId = payload.userId as string | undefined;
-        const email  = payload.email  as string | undefined;
-        if (userId && email) {
-          return { userId, email };
-        }
-      } catch {
-        // Not our JWT — fall through to legacy check
+    const auth = getSupabaseAuth();
+    const { data: { user }, error } = await auth.auth.getUser(accessToken);
+
+    if (error) {
+      if (
+        error.status === 400
+        || error.status === 401
+        || error.code === 'session_not_found'
+        || error.code === 'user_not_found'
+      ) {
+        return { status: 'invalid' };
       }
-    }
 
-    // ── Attempt 2: legacy Supabase access token (old sessions) ───────────────
-    // Handles cookies created before the JWT migration.
-    // These expire after Supabase's 1-hour window, so users will be prompted
-    // to re-login naturally after that.
-    const { data: { user }, error } = await supabase.auth.getUser(token);
-    if (!error && user) {
-      return { userId: user.id, email: user.email ?? '' };
-    }
-
-    return null;
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    if (
-      !message.includes('expired') &&
-      !message.includes('invalid') &&
-      !message.includes('Dynamic server usage')
-    ) {
-      console.error('[getSession] unexpected_error', {
-        name: err instanceof Error ? err.name : 'UnknownError',
+      console.error('[getSession] verification_unavailable', {
+        name: error.name,
+        status: error.status,
       });
+      return { status: 'unavailable' };
     }
-    return null;
+
+    if (!user) return { status: 'invalid' };
+
+    return {
+      status: 'authenticated',
+      session: {
+        userId: user.id,
+        email: user.email ?? '',
+      },
+    };
+  } catch (error) {
+    console.error('[getSession] verification_unavailable', {
+      name: error instanceof Error ? error.name : 'UnknownError',
+    });
+    return { status: 'unavailable' };
   }
+}
+
+export async function getSession(): Promise<SessionPayload | null> {
+  const result = await getSessionVerification();
+  return result.status === 'authenticated' ? result.session : null;
 }

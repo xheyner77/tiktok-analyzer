@@ -225,10 +225,18 @@ function PlanAction({
     );
   }
 
-  if (hasActiveStripeSubscription && plan.id !== 'lifetime' && hasStripeCustomer) {
+  if (effectivePlan === 'starter' && plan.id === 'pro' && hasActiveStripeSubscription) {
+    return (
+      <BillingActionButton action="checkout" plan="pro" fullWidth className={`${primaryButton} ${checkoutButtonStyles.pro} w-full`}>
+        Passer à Pro — prorata Stripe
+      </BillingActionButton>
+    );
+  }
+
+  if (hasActiveStripeSubscription && hasStripeCustomer) {
     return (
       <BillingActionButton action="portal" fullWidth className={`${secondaryButton} w-full`}>
-        Gérer la facturation
+        {plan.id === 'lifetime' ? 'Gérer l’abonnement avant Lifetime' : 'Gérer la facturation'}
       </BillingActionButton>
     );
   }

@@ -35,8 +35,10 @@ export default function CheckoutButton({ plan, interval = 'month', className, ch
       const data = await res.json();
 
       if (data.url) {
-        // Persist the chosen plan so /dashboard can apply it after Stripe redirect
-        localStorage.setItem('pendingPlan', plan);
+        // Checkout returns with a Session ID; a Portal upgrade is synchronized
+        // only by Stripe's webhook and must not imitate a Checkout success.
+        if (data.flow === 'portal') localStorage.removeItem('pendingPlan');
+        else localStorage.setItem('pendingPlan', plan);
         window.location.href = data.url;
         return;
       }

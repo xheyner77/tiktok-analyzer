@@ -22,6 +22,7 @@ import DashboardOverviewRedesign from '@/components/dashboard-v2/DashboardOvervi
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useLanguage } from '@/lib/i18n/useLanguage';
 import { translateKnownPhrase } from '@/lib/i18n/translations';
+import { isTikTokConnectHref } from '@/lib/tiktok-navigation';
 
 type IconName =
   | 'home'
@@ -562,10 +563,10 @@ function DashboardTopBar({
             <span className="truncate">{tiktokLabel}</span>
           </button>
         ) : (
-          <Link href="/api/tiktok/connect" className="hidden h-[38px] items-center gap-2 rounded-[9px] border border-cyan-300/18 bg-cyan-300/10 px-3 text-[12px] font-bold text-cyan-100 transition hover:border-cyan-200/30 hover:bg-cyan-300/14 min-[1180px]:flex min-[1440px]:h-[40px]">
+          <a href="/api/tiktok/connect" className="hidden h-[38px] items-center gap-2 rounded-[9px] border border-cyan-300/18 bg-cyan-300/10 px-3 text-[12px] font-bold text-cyan-100 transition hover:border-cyan-200/30 hover:bg-cyan-300/14 min-[1180px]:flex min-[1440px]:h-[40px]">
             <span className="text-[16px] leading-none">♪</span>
             Connecter TikTok
-          </Link>
+          </a>
         )}
         <Link href="/dashboard/analyze" className={`flex h-[38px] items-center gap-2 px-3 text-[12px] min-[1440px]:h-[40px] min-[1440px]:px-4 min-[1440px]:text-[13px] ${primaryButton}`}>
           <Icon name="plus" className="h-4 w-4" />
@@ -661,10 +662,10 @@ function MobileDrawer({
 
         <div className="mt-6 grid gap-3">
           {!states.hasTikTokConnection && (
-            <Link href="/api/tiktok/connect" onClick={onClose} className="flex h-[44px] items-center justify-center gap-2 rounded-[9px] border border-cyan-300/18 bg-cyan-300/10 px-4 text-[13px] font-bold text-cyan-100 transition hover:border-cyan-200/30 hover:bg-cyan-300/14">
+            <a href="/api/tiktok/connect" onClick={onClose} className="flex h-[44px] items-center justify-center gap-2 rounded-[9px] border border-cyan-300/18 bg-cyan-300/10 px-4 text-[13px] font-bold text-cyan-100 transition hover:border-cyan-200/30 hover:bg-cyan-300/14">
               <span className="text-[16px] leading-none">♪</span>
               Connecter TikTok
-            </Link>
+            </a>
           )}
           {states.hasTikTokConnection && <TikTokConnectedBadge connection={tiktokConnection} compact />}
         </div>
@@ -694,10 +695,10 @@ function ResponsiveIntro({ user, states, tiktokConnection }: { user: DashboardDa
       )}
       <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
         {!states.hasTikTokConnection && (
-          <Link href="/api/tiktok/connect" className="flex h-[46px] items-center justify-center gap-2 rounded-[9px] border border-cyan-300/18 bg-cyan-300/10 px-4 text-[13px] font-bold text-cyan-100 transition hover:border-cyan-200/30 hover:bg-cyan-300/14">
+          <a href="/api/tiktok/connect" className="flex h-[46px] items-center justify-center gap-2 rounded-[9px] border border-cyan-300/18 bg-cyan-300/10 px-4 text-[13px] font-bold text-cyan-100 transition hover:border-cyan-200/30 hover:bg-cyan-300/14">
             <span className="text-[16px] leading-none">♪</span>
             Connecter TikTok
-          </Link>
+          </a>
         )}
         <Link href="/dashboard/analyze" className={`flex h-[46px] items-center justify-center gap-2 px-5 text-[14px] ${primaryButton} ${!states.hasTikTokConnection ? '' : 'sm:col-span-2'}`}>
           <Icon name="plus" className="h-4 w-4" />
@@ -956,9 +957,15 @@ function EmptyState({
       <p className="relative mt-3 text-[14px] font-semibold leading-snug text-white sm:text-[15px]">{title}</p>
       <p className="relative mt-2 max-w-[360px] text-[12.5px] leading-relaxed text-slate-400 sm:text-[13px]">{message}</p>
       {cta && href ? (
-        <Link href={href} className={`relative mt-4 inline-flex h-9 items-center px-4 text-[12px] ${primaryButton}`}>
-          {cta}
-        </Link>
+        isTikTokConnectHref(href) ? (
+          <a href={href} className={`relative mt-4 inline-flex h-9 items-center px-4 text-[12px] ${primaryButton}`}>
+            {cta}
+          </a>
+        ) : (
+          <Link href={href} className={`relative mt-4 inline-flex h-9 items-center px-4 text-[12px] ${primaryButton}`}>
+            {cta}
+          </Link>
+        )
       ) : null}
     </div>
   );
@@ -1505,10 +1512,10 @@ function TikTokStatusBanner({
               Tu peux utiliser Viralynz sans TikTok. Le cockpit n’affichera aucune métrique inventée tant que la connexion n’est pas réelle.
             </p>
           </div>
-          <Link href="/api/tiktok/connect" className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-[9px] border border-cyan-200/18 bg-cyan-300/10 px-4 text-[12.5px] font-black text-cyan-100 transition hover:border-cyan-200/30 hover:bg-cyan-300/[0.14]">
+          <a href="/api/tiktok/connect" className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-[9px] border border-cyan-200/18 bg-cyan-300/10 px-4 text-[12.5px] font-black text-cyan-100 transition hover:border-cyan-200/30 hover:bg-cyan-300/[0.14]">
             <span className="text-[16px] leading-none">♪</span>
             Connecter TikTok
-          </Link>
+          </a>
         </div>
       </section>
     );
@@ -1851,10 +1858,10 @@ function MobilePrimaryActions({ states }: { states: DashboardData['states'] }) {
       {!states.hasTikTokConnection ? (
         <div className="rounded-[18px] border border-cyan-200/[0.13] bg-cyan-300/[0.055] p-3">
           <p className="text-[0.78rem] leading-5 text-cyan-50/82">{t('dashboard.connectTikTokForAnalyses')}</p>
-          <Link href="/api/tiktok/connect" className="mt-2 inline-flex h-9 items-center gap-2 rounded-[11px] border border-cyan-200/18 bg-cyan-300/10 px-3 text-[0.76rem] font-black text-cyan-100">
+          <a href="/api/tiktok/connect" className="mt-2 inline-flex h-9 items-center gap-2 rounded-[11px] border border-cyan-200/18 bg-cyan-300/10 px-3 text-[0.76rem] font-black text-cyan-100">
             <span className="text-[0.95rem] leading-none">♪</span>
             {t('dashboard.connectTikTok')}
-          </Link>
+          </a>
         </div>
       ) : null}
     </section>
@@ -2384,7 +2391,7 @@ function MobileTikTokConnectionCard({
 }) {
   if (!states.hasTikTokConnection) {
     return (
-      <Link href="/api/tiktok/connect?review=1" className={`${mobileShellCard} mt-3 flex min-h-[92px] items-center gap-4 rounded-[22px] border-cyan-300/22 p-4 transition active:scale-[0.99]`}>
+      <a href="/api/tiktok/connect?review=1" className={`${mobileShellCard} mt-3 flex min-h-[92px] items-center gap-4 rounded-[22px] border-cyan-300/22 p-4 transition active:scale-[0.99]`}>
         <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full border border-cyan-200/20 bg-cyan-300/10 text-cyan-100">
           <span className="text-[1.25rem] font-black">TT</span>
         </div>
@@ -2393,7 +2400,7 @@ function MobileTikTokConnectionCard({
           <p className="mt-1 text-[0.84rem] leading-5 text-slate-400">Connecte ton compte pour enrichir ton cockpit.</p>
         </div>
         <Icon name="chevron" className="h-6 w-6 shrink-0 text-slate-300" />
-      </Link>
+      </a>
     );
   }
 

@@ -4,13 +4,25 @@ import {
   downgradeToFreeBySubscriptionId,
   invoiceSubscriptionId,
   resetMonthlyCountersForSubscription,
+  revokeLifetimeAccessByCustomerId,
+  suspendSubscriptionForDispute,
   syncUserFromPaidLifetimeCheckout,
   syncUserFromPaidSubscriptionCheckout,
   syncUserRowFromStripeSubscription,
 } from '@/lib/stripe-subscription-sync';
+import {
+  LIFETIME_CHECKOUT_CUSTOMER_METADATA_KEY,
+  REVOKED_LIFETIME_CHECKOUT_CUSTOMER_METADATA_KEY,
+} from '@/lib/stripe-customer-metadata';
 import { blockTestStripeSecretInProduction } from '@/lib/stripe-prod-guard';
 import { supabase } from '@/lib/supabase';
 import { privateJson } from '@/lib/api-route-security';
+import {
+  getStripeSecretKey,
+  getStripeWebhookSecret,
+  isStripeLiveRuntime,
+} from '@/lib/stripe-runtime';
+import { isLifetimeCheckoutPaymentStatusConfirmed } from '@/lib/stripe-payment-status';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -30,9 +42,7 @@ class WebhookProcessingError extends Error {
 }
 
 function getStripe(): Stripe {
-  const stripeSecret = process.env.STRIPE_SECRET_KEY?.trim();
-  if (!stripeSecret) throw new Error('stripe_not_configured');
-  return new Stripe(stripeSecret);
+  return new Stripe(getStripeSecretKey().value);
 }
 
 async function reclaimStripeWebhookEvent(
@@ -170,12 +180,297 @@ async function syncInvoiceSubscription(stripe: Stripe, invoice: Stripe.Invoice):
   if (!subscriptionId) return;
 
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-  const result = await syncUserRowFromStripeSubscription(subscription);
-  assertSyncResult('invoice_subscription_sync_failed', result);
+  await applyCurrentSubscription(stripe, subscription, 'invoice_subscription_sync_failed');
 
   if (invoice.billing_reason === 'subscription_cycle') {
-    await resetMonthlyCountersForSubscription(subscriptionId);
+    const periodStartSeconds = (invoice as Stripe.Invoice & { period_start?: number }).period_start;
+    if (!Number.isFinite(periodStartSeconds)) {
+      throw new WebhookProcessingError('invoice_period_start_missing');
+    }
+    await resetMonthlyCountersForSubscription(
+      subscriptionId,
+      new Date(periodStartSeconds * 1_000).toISOString(),
+    );
   }
+}
+
+async function applyCurrentSubscription(
+  stripe: Stripe,
+  current: Stripe.Subscription,
+  failurePrefix: string,
+): Promise<void> {
+  if (current.status === 'canceled') {
+    await downgradeToFreeBySubscriptionId(current.id);
+    return;
+  }
+
+  if (await customerHasStoredLifetimeAccess(current)) {
+    // A recurring subscription already scheduled to end belongs to the normal
+    // Pro -> Lifetime transition. Any still-renewing subscription is a lost
+    // cross-mode race and must be stopped before it can bill again.
+    if (!current.cancel_at_period_end) {
+      await stripe.subscriptions.cancel(current.id);
+      await downgradeToFreeBySubscriptionId(current.id);
+    }
+    return;
+  }
+
+  const result = await syncUserRowFromStripeSubscription(current);
+  assertSyncResult(failurePrefix, result);
+}
+
+async function syncCurrentSubscription(
+  stripe: Stripe,
+  eventSubscription: Stripe.Subscription,
+): Promise<void> {
+  const current = await stripe.subscriptions.retrieve(eventSubscription.id);
+  await applyCurrentSubscription(stripe, current, 'subscription_sync_failed');
+}
+
+function checkoutCustomerId(checkout: Stripe.Checkout.Session): string | null {
+  const customer = checkout.customer;
+  return typeof customer === 'string' ? customer : customer?.id ?? null;
+}
+
+function chargePaymentIntentId(charge: Stripe.Charge): string | null {
+  const paymentIntent = charge.payment_intent;
+  return typeof paymentIntent === 'string' ? paymentIntent : paymentIntent?.id ?? null;
+}
+
+async function lifetimeCheckoutForCharge(
+  stripe: Stripe,
+  charge: Stripe.Charge,
+): Promise<Stripe.Checkout.Session | null> {
+  const paymentIntent = chargePaymentIntentId(charge);
+  if (!paymentIntent) return null;
+
+  const sessions = await stripe.checkout.sessions.list({ payment_intent: paymentIntent, limit: 10 });
+  return sessions.data.find((session) => (
+    session.mode === 'payment'
+    && session.payment_status === 'paid'
+    && (session.metadata?.plan === 'lifetime' || session.metadata?.plan === 'scale')
+  )) ?? null;
+}
+
+async function revokeLifetimeForCharge(stripe: Stripe, charge: Stripe.Charge): Promise<void> {
+  const checkout = await lifetimeCheckoutForCharge(stripe, charge);
+  if (!checkout) return;
+
+  const customerId = checkoutCustomerId(checkout);
+  if (!customerId) throw new WebhookProcessingError('lifetime_refund_customer_missing');
+
+  const customer = await stripe.customers.retrieve(customerId);
+  if ('deleted' in customer && customer.deleted) {
+    throw new WebhookProcessingError('lifetime_refund_customer_deleted');
+  }
+  const activeLifetimeCheckout = customer.metadata?.[LIFETIME_CHECKOUT_CUSTOMER_METADATA_KEY] ?? null;
+  await stripe.customers.update(customerId, {
+    metadata: { [REVOKED_LIFETIME_CHECKOUT_CUSTOMER_METADATA_KEY]: checkout.id },
+  });
+  if (activeLifetimeCheckout && activeLifetimeCheckout !== checkout.id) {
+    console.warn('[webhook] Ancien remboursement Lifetime ignore face a un achat plus recent.');
+    return;
+  }
+
+  const revoked = await revokeLifetimeAccessByCustomerId(customerId);
+  if (!revoked.ok) {
+    throw new WebhookProcessingError(`lifetime_revoke_failed:${revoked.reason}`);
+  }
+
+  if (revoked.subscriptionId) {
+    const subscription = await stripe.subscriptions.retrieve(revoked.subscriptionId);
+    if (subscription.status === 'canceled') {
+      await downgradeToFreeBySubscriptionId(subscription.id);
+    } else {
+      const syncResult = await syncUserRowFromStripeSubscription(subscription);
+      assertSyncResult('post_lifetime_revoke_subscription_sync_failed', syncResult);
+    }
+  }
+}
+
+function customerId(
+  customer: string | Stripe.Customer | Stripe.DeletedCustomer | null,
+): string | null {
+  if (typeof customer === 'string') return customer;
+  return customer?.id ?? null;
+}
+
+function invoiceId(
+  invoice: string | Stripe.Invoice | Stripe.DeletedInvoice,
+): string {
+  return typeof invoice === 'string' ? invoice : invoice.id;
+}
+
+function usableInvoice(
+  invoice: Stripe.Invoice | Stripe.DeletedInvoice,
+): Stripe.Invoice | null {
+  return 'deleted' in invoice && invoice.deleted ? null : invoice as Stripe.Invoice;
+}
+
+async function invoiceForCharge(
+  stripe: Stripe,
+  charge: Stripe.Charge,
+): Promise<Stripe.Invoice | null> {
+  const legacyInvoice = (charge as unknown as {
+    invoice?: string | Stripe.Invoice | Stripe.DeletedInvoice | null;
+  }).invoice;
+  if (legacyInvoice) {
+    if (typeof legacyInvoice !== 'string') return usableInvoice(legacyInvoice);
+    return stripe.invoices.retrieve(legacyInvoice);
+  }
+
+  const paymentIntentId = chargePaymentIntentId(charge);
+  if (!paymentIntentId) return null;
+
+  const payments = await stripe.invoicePayments.list({
+    payment: { type: 'payment_intent', payment_intent: paymentIntentId },
+    limit: 10,
+  });
+  const invoiceIds = [...new Set(payments.data.map((payment) => invoiceId(payment.invoice)))];
+  if (invoiceIds.length === 0) return null;
+  if (invoiceIds.length !== 1) {
+    throw new WebhookProcessingError('dispute_invoice_ambiguous');
+  }
+
+  const expanded = payments.data.find(
+    (payment) => typeof payment.invoice !== 'string' && payment.invoice.id === invoiceIds[0],
+  )?.invoice;
+  if (expanded && typeof expanded !== 'string') {
+    const currentInvoice = usableInvoice(expanded);
+    if (!currentInvoice) throw new WebhookProcessingError('dispute_invoice_deleted');
+    return currentInvoice;
+  }
+
+  return stripe.invoices.retrieve(invoiceIds[0]);
+}
+
+async function recurringSubscriptionForCharge(
+  stripe: Stripe,
+  charge: Stripe.Charge,
+): Promise<Stripe.Subscription | null> {
+  const invoice = await invoiceForCharge(stripe, charge);
+  if (!invoice) return null;
+
+  const subscriptionId = invoiceSubscriptionId(invoice);
+  if (!subscriptionId) return null;
+
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const chargeCustomerId = customerId(charge.customer);
+  const invoiceCustomerId = customerId(invoice.customer);
+  const subscriptionCustomerId = customerId(subscription.customer);
+  if (!chargeCustomerId || !invoiceCustomerId || !subscriptionCustomerId) {
+    throw new WebhookProcessingError('dispute_customer_missing');
+  }
+  if (
+    chargeCustomerId !== invoiceCustomerId
+    || chargeCustomerId !== subscriptionCustomerId
+  ) {
+    throw new WebhookProcessingError('dispute_customer_mismatch');
+  }
+
+  return subscription;
+}
+
+async function customerHasStoredLifetimeAccess(subscription: Stripe.Subscription): Promise<boolean> {
+  const subscriptionCustomerId = customerId(subscription.customer);
+  if (!subscriptionCustomerId) {
+    throw new WebhookProcessingError('subscription_customer_missing');
+  }
+
+  const { data: user, error } = await supabase
+    .from('users')
+    .select('plan, subscription_status')
+    .eq('stripe_customer_id', subscriptionCustomerId)
+    .maybeSingle();
+  if (error) {
+    throw new WebhookProcessingError('lifetime_customer_lookup_failed');
+  }
+
+  return user?.plan === 'lifetime' && user?.subscription_status === 'lifetime';
+}
+
+async function suspendRecurringDispute(
+  stripe: Stripe,
+  dispute: Stripe.Dispute,
+  charge: Stripe.Charge,
+): Promise<boolean> {
+  const subscription = await recurringSubscriptionForCharge(stripe, charge);
+  if (!subscription) return false;
+  if (subscription.status === 'canceled') {
+    await downgradeToFreeBySubscriptionId(subscription.id);
+    return true;
+  }
+
+  const result = await suspendSubscriptionForDispute(subscription);
+  assertSyncResult('subscription_dispute_suspend_failed', result);
+  await stripe.subscriptions.update(subscription.id, {
+    cancel_at_period_end: true,
+    metadata: {
+      viralynz_dispute_status: 'open',
+      viralynz_dispute_id: dispute.id,
+    },
+  });
+  return true;
+}
+
+async function closeRecurringDispute(
+  stripe: Stripe,
+  dispute: Stripe.Dispute,
+  charge: Stripe.Charge,
+): Promise<boolean> {
+  const subscription = await recurringSubscriptionForCharge(stripe, charge);
+  if (!subscription) return false;
+
+  if (dispute.status === 'won' && !charge.refunded) {
+    if (await customerHasStoredLifetimeAccess(subscription)) {
+      // Winning a dispute must never reactivate recurring billing beside a
+      // distinct Lifetime purchase. Close the old subscription and let the
+      // normal cleanup preserve Lifetime in the user row.
+      if (subscription.status !== 'canceled') {
+        await stripe.subscriptions.cancel(subscription.id);
+      }
+      await downgradeToFreeBySubscriptionId(subscription.id);
+      return true;
+    }
+
+    const markerMatches =
+      subscription.metadata?.viralynz_dispute_status === 'open'
+      && subscription.metadata?.viralynz_dispute_id === dispute.id;
+    const current = markerMatches && subscription.status !== 'canceled'
+      ? await stripe.subscriptions.update(subscription.id, {
+          // Never undo a cancellation that the user may have confirmed while
+          // the dispute was open. Rights can resume until the scheduled end;
+          // recurring billing must be reactivated explicitly by the user.
+          metadata: {
+            viralynz_dispute_status: '',
+            viralynz_dispute_id: '',
+          },
+        })
+      : subscription;
+
+    if (current.status === 'canceled') {
+      await downgradeToFreeBySubscriptionId(current.id);
+    } else {
+      const result = await syncUserRowFromStripeSubscription(current);
+      assertSyncResult('subscription_dispute_restore_failed', result);
+    }
+    return true;
+  }
+
+  // Un event closed peut arriver sans created. On retire donc d'abord les
+  // droits localement, puis on arrête définitivement la facturation.
+  const suspended = await suspendSubscriptionForDispute(subscription);
+  assertSyncResult('subscription_dispute_close_suspend_failed', suspended);
+  if (subscription.status !== 'canceled') {
+    await stripe.subscriptions.cancel(subscription.id);
+  }
+  await downgradeToFreeBySubscriptionId(subscription.id);
+  return true;
+}
+
+async function disputeCharge(stripe: Stripe, dispute: Stripe.Dispute): Promise<Stripe.Charge> {
+  if (typeof dispute.charge !== 'string') return dispute.charge;
+  return stripe.charges.retrieve(dispute.charge);
 }
 
 async function syncCompletedCheckout(
@@ -203,8 +498,10 @@ export async function POST(request: NextRequest) {
     return privateJson({ error: 'Webhook indisponible.' }, { status: 503 });
   }
 
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
-  if (!webhookSecret || webhookSecret === 'whsec_your_webhook_secret_here') {
+  let webhookSecret: string;
+  try {
+    webhookSecret = getStripeWebhookSecret().value;
+  } catch (error) {
     console.error('[webhook] Secret de signature Stripe absent.');
     return privateJson({ error: 'Webhook indisponible.' }, { status: 503 });
   }
@@ -244,6 +541,13 @@ export async function POST(request: NextRequest) {
     return privateJson({ error: 'Signature invalide.' }, { status: 400 });
   }
 
+  if (event.livemode !== isStripeLiveRuntime()) {
+    console.error('[webhook] Event Stripe recu depuis le mauvais environnement.', {
+      eventType: event.type,
+    });
+    return privateJson({ error: 'Environnement Stripe invalide.' }, { status: 400 });
+  }
+
   const claim = await claimStripeWebhookEvent(event);
   if (!claim.ok) {
     return privateJson({ error: 'Webhook temporairement indisponible.' }, { status: claim.status });
@@ -259,7 +563,10 @@ export async function POST(request: NextRequest) {
         // Un moyen de paiement différé peut terminer Checkout avant que les
         // fonds soient confirmés. On accuse réception sans accorder de droit ;
         // async_payment_succeeded effectuera la synchronisation définitive.
-        if (checkout.payment_status !== 'paid') break;
+        const isConfirmedLifetime = checkout.mode === 'payment'
+          && (checkout.metadata?.plan === 'lifetime' || checkout.metadata?.plan === 'scale')
+          && isLifetimeCheckoutPaymentStatusConfirmed(checkout.payment_status);
+        if (checkout.payment_status !== 'paid' && !isConfirmedLifetime) break;
         await syncCompletedCheckout(stripe, checkout);
         break;
       }
@@ -277,14 +584,13 @@ export async function POST(request: NextRequest) {
       case 'customer.subscription.created':
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription;
-        const result = await syncUserRowFromStripeSubscription(subscription);
-        assertSyncResult('subscription_sync_failed', result);
+        await syncCurrentSubscription(stripe, subscription);
         break;
       }
 
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
-        await downgradeToFreeBySubscriptionId(subscription.id);
+        await syncCurrentSubscription(stripe, subscription);
         break;
       }
 
@@ -303,6 +609,50 @@ export async function POST(request: NextRequest) {
           const subscription = await stripe.subscriptions.retrieve(subscriptionId);
           const result = await syncUserRowFromStripeSubscription(subscription);
           assertSyncResult('payment_failed_subscription_sync_failed', result);
+        }
+        break;
+      }
+
+      case 'charge.refunded': {
+        const charge = event.data.object as Stripe.Charge;
+        if (charge.refunded && charge.amount_refunded >= charge.amount) {
+          await revokeLifetimeForCharge(stripe, charge);
+        }
+        break;
+      }
+
+      case 'charge.dispute.created': {
+        const dispute = event.data.object as Stripe.Dispute;
+        const charge = await disputeCharge(stripe, dispute);
+        const lifetimeCheckout = await lifetimeCheckoutForCharge(stripe, charge);
+        if (lifetimeCheckout) {
+          await revokeLifetimeForCharge(stripe, charge);
+        } else {
+          await suspendRecurringDispute(stripe, dispute, charge);
+        }
+        break;
+      }
+
+      case 'charge.dispute.closed': {
+        const dispute = event.data.object as Stripe.Dispute;
+        const charge = await disputeCharge(stripe, dispute);
+        if (dispute.status === 'won' && !charge.refunded) {
+          const checkout = await lifetimeCheckoutForCharge(stripe, charge);
+          if (checkout) {
+            const result = await syncUserFromPaidLifetimeCheckout(stripe, checkout, {
+              restoreRevoked: true,
+            });
+            assertSyncResult('lifetime_dispute_restore_failed', result);
+          } else {
+            await closeRecurringDispute(stripe, dispute, charge);
+          }
+        } else {
+          const checkout = await lifetimeCheckoutForCharge(stripe, charge);
+          if (checkout) {
+            await revokeLifetimeForCharge(stripe, charge);
+          } else {
+            await closeRecurringDispute(stripe, dispute, charge);
+          }
         }
         break;
       }

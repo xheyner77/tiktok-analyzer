@@ -54,6 +54,14 @@ function firstText(values: Array<string | undefined>) {
   return values.find((value) => value && value.trim())?.trim();
 }
 
+function isUnavailableLegacyMemorySchema(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  if (error.code === 'PGRST205') return true;
+  const message = error.message ?? '';
+  return message.includes("public.video_analysis_snapshots")
+    || /creator_memory_profiles\.(summary|prompt_context|memory_json|source_analysis_count)/.test(message);
+}
+
 function slugifyProject(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'project';
 }
@@ -197,7 +205,9 @@ export async function getCreatorMemoryForAnalysis(userId: string, plan: Plan): P
     .limit(limit);
 
   if (snapshotsError) {
-    console.warn('[creator-memory] snapshots unavailable:', snapshotsError.message);
+    if (!isUnavailableLegacyMemorySchema(snapshotsError)) {
+      console.warn('[creator-memory] snapshots unavailable:', snapshotsError.message);
+    }
     return null;
   }
 
@@ -246,7 +256,9 @@ export async function getStoredCreatorMemoryProfile(userId: string, plan: Plan):
     .maybeSingle();
 
   if (error) {
-    console.warn('[creator-memory] profile read failed:', error.message);
+    if (!isUnavailableLegacyMemorySchema(error)) {
+      console.warn('[creator-memory] profile read failed:', error.message);
+    }
     return null;
   }
   if (!data) return null;
@@ -293,7 +305,9 @@ export async function persistAnalysisSnapshotAndMemory(input: {
     }, { onConflict: 'user_id,video_id' });
 
   if (snapshotError) {
-    console.warn('[creator-memory] snapshot save failed:', snapshotError.message);
+    if (!isUnavailableLegacyMemorySchema(snapshotError)) {
+      console.warn('[creator-memory] snapshot save failed:', snapshotError.message);
+    }
     return;
   }
 

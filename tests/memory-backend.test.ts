@@ -1,9 +1,20 @@
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { calculateMemoryScore, getMemoryPlanLimits } from '@/lib/memory/limits';
 import { sanitizeExtractedFacts } from '@/lib/memory/quality';
 import { isSimilarMemoryFact } from '@/lib/memory/similarity';
 
 describe('memory backend limits', () => {
+  it('lit le schéma mémoire canonique dans le dashboard', () => {
+    const source = readFileSync(path.join(process.cwd(), 'lib/dashboard-data.ts'), 'utf8');
+    const dashboardQuery = source.match(/\.from\('creator_memory_profiles'\)[\s\S]*?\.maybeSingle\(\)/)?.[0] ?? '';
+
+    expect(dashboardQuery).toContain('creator_style_summary');
+    expect(dashboardQuery).toContain('analyses_learned');
+    expect(dashboardQuery).not.toContain(".select('summary,prompt_context,memory_json,source_analysis_count')");
+  });
+
   it('keeps Free locked and does not allow memory learning', () => {
     const free = getMemoryPlanLimits('free');
     expect(free.canLearn).toBe(false);

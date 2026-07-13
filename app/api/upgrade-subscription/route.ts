@@ -4,7 +4,7 @@ import { privateJson } from '@/lib/api-route-security';
 /**
  * Legacy endpoint conservé pour compatibilité.
  * Lifetime n'est plus une mise à niveau d'abonnement : c'est un Checkout `payment`
- * via /api/checkout avec plan=scale.
+ * via /api/checkout avec plan=lifetime.
  */
 export async function POST() {
   try {

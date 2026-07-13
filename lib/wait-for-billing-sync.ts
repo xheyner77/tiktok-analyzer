@@ -1,8 +1,10 @@
+import { normalizePlan } from './plans';
+
 /**
  * Côté client uniquement — attend que `/api/auth/me` reflète le plan après webhook Stripe.
  */
 export async function waitForBillingPlan(
-  expected: 'pro' | 'scale',
+  expected: 'starter' | 'pro' | 'lifetime',
   maxMs = 25000,
   intervalMs = 500
 ): Promise<boolean> {
@@ -13,7 +15,11 @@ export async function waitForBillingPlan(
       const j = await r.json();
       const bp = j.user?.billingPlan as string | undefined;
       const st = j.user?.subscriptionStatus as string | undefined;
-      if (bp === expected && (st === 'active' || st === 'trialing')) return true;
+      const planMatches = normalizePlan(bp) === expected;
+      const statusAllowsAccess = expected === 'lifetime'
+        ? st === 'lifetime' || st === 'active' || st === 'trialing'
+        : st === 'active' || st === 'trialing';
+      if (planMatches && statusAllowsAccess) return true;
     } catch {
       /* retry */
     }

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import CopyHookButton from '@/components/analysis-detail/CopyHookButton';
 import {
   getAnalysisDetailData,
@@ -39,46 +39,14 @@ export default async function AnalysisDetailPage({
   }
 
   if (result.status === 'not_found' || result.status === 'forbidden') {
-    return <AnalysisUnavailable status={result.status} />;
+    notFound();
   }
 
   if (!result.data) {
-    return <AnalysisUnavailable status="not_found" />;
+    notFound();
   }
 
   return <AnalysisDetailView analysis={result.data} />;
-}
-
-function AnalysisUnavailable({ status }: { status: 'not_found' | 'forbidden' }) {
-  const title = status === 'forbidden' ? 'Analyse non accessible' : 'Analyse introuvable';
-  const body = status === 'forbidden'
-    ? 'Cette analyse appartient à un autre espace Viralynz. Pour protéger les données créateur, elle ne peut pas être affichée ici.'
-    : 'Cette analyse n’existe pas ou n’est plus disponible. Relance une analyse pour générer un diagnostic complet.';
-
-  return (
-    <main className={pageBg}>
-      <div className="mx-auto flex min-h-screen max-w-5xl items-center justify-center px-5 py-10">
-        <section className={`${shell} w-full p-8 text-center sm:p-10`}>
-          <div className="pointer-events-none absolute inset-0 opacity-50 [background-image:linear-gradient(rgba(139,92,246,.12)_1px,transparent_1px),linear-gradient(90deg,rgba(139,92,246,.12)_1px,transparent_1px)] [background-size:36px_36px]" />
-          <div className="relative mx-auto max-w-2xl">
-            <span className="inline-flex rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-amber-200">
-              Accès protégé
-            </span>
-            <h1 className="mt-5 text-4xl font-black tracking-[-0.04em]">{title}</h1>
-            <p className="mx-auto mt-4 max-w-xl text-[15px] leading-7 text-slate-300">{body}</p>
-            <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Link href="/dashboard" className={primaryButton}>
-                Retour au dashboard
-              </Link>
-              <Link href="/dashboard/analyze" className={secondaryButton}>
-                Analyser une vidéo
-              </Link>
-            </div>
-          </div>
-        </section>
-      </div>
-    </main>
-  );
 }
 
 function AnalysisDetailView({ analysis }: { analysis: AnalysisDetailData }) {
