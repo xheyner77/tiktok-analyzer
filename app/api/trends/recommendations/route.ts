@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
   const cluster = (await listTrendClusters({ limit: 100 })).find((item) => item.id === body.clusterId);
   if (!cluster) return NextResponse.json({ error: 'Tendance introuvable.' }, { status: 404 });
 
-  await supabase.from('trend_user_recommendations').insert({
+  const { error } = await supabase.from('trend_user_recommendations').insert({
     user_id: session.userId,
     cluster_id: cluster.id,
     verdict: cluster.recommendation.verdict,
@@ -22,6 +22,14 @@ export async function POST(request: NextRequest) {
     recommended_angle: cluster.recommendation.recommendedAngle,
     recommended_format: cluster.recommendation.recommendedFormat,
   });
+
+  if (error) {
+    console.error('[trends/recommendations] insert_failed', { code: error.code });
+    return NextResponse.json(
+      { error: 'Impossible d’enregistrer cette recommandation pour le moment.' },
+      { status: 500 },
+    );
+  }
 
   return NextResponse.json({ recommendation: cluster.recommendation });
 }

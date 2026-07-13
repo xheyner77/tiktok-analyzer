@@ -36,19 +36,34 @@ function cleanEnv(name: string): string | null {
 }
 
 export function listStripePriceMappings(): StripePriceMapping[] {
-  const seen = new Set<string>();
+  const mappingsByPriceId = new Map<string, StripePriceMapping>();
+  const conflictedPriceIds = new Set<string>();
 
-  return PRICE_ENV_MAPPINGS.flatMap((mapping) => {
+  for (const mapping of PRICE_ENV_MAPPINGS) {
     const priceId = cleanEnv(mapping.envVar);
-    if (!priceId || seen.has(priceId)) return [];
-    seen.add(priceId);
-    return [{
+    if (!priceId || conflictedPriceIds.has(priceId)) continue;
+
+    const existing = mappingsByPriceId.get(priceId);
+    if (existing) {
+      // Plusieurs alias du meme plan restent compatibles. En revanche, un
+      // Price ID partage entre deux plans est retire de la resolution : aucun
+      // droit ne doit dependre de l'ordre des variables d'environnement.
+      if (existing.plan !== mapping.plan) {
+        mappingsByPriceId.delete(priceId);
+        conflictedPriceIds.add(priceId);
+      }
+      continue;
+    }
+
+    mappingsByPriceId.set(priceId, {
       priceId,
       plan: mapping.plan,
       legacy: mapping.legacy ?? false,
       envVar: mapping.envVar,
-    }];
-  });
+    });
+  }
+
+  return [...mappingsByPriceId.values()];
 }
 
 export function resolveStripePrice(priceId: string | null | undefined): StripePriceMapping | null {
@@ -57,9 +72,11 @@ export function resolveStripePrice(priceId: string | null | undefined): StripePr
 }
 
 export function getConfiguredStripePriceId(envVars: string[]): { priceId: string; envVar: string } | null {
+  const validPriceIds = new Set(listStripePriceMappings().map((mapping) => mapping.priceId));
+
   for (const envVar of envVars) {
     const priceId = cleanEnv(envVar);
-    if (priceId) return { priceId, envVar };
+    if (priceId && validPriceIds.has(priceId)) return { priceId, envVar };
   }
   return null;
 }

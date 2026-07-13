@@ -33,7 +33,7 @@ function result(overrides: Partial<AnalysisResult> = {}): AnalysisResult {
       transcript: { available: false, confidence: 0, source: 'none', limitations: [] },
       frames: { sampled: true, count: 8, timestamps: [0, 3, 6], quality: 'bonne', limitations: [] },
       onScreenText: { available: true, text: ['Preuve'], textDensity: 30, confidence: 78, source: 'vision_ocr', limitations: [] },
-      visualSignals: { available: true, visualEnergy: 62, motionEstimate: 60, cutDensityEstimate: 58, cutRhythm: 'moyen', facePresence: 'detected', limitations: [] },
+      visualSignals: { available: true, visualEnergy: 62, motionEstimate: 60, cutDensityEstimate: 58, cutRhythm: 'moyen', facePresence: 'detected', textDensityEstimate: 30, limitations: [] },
       audioSignals: { available: false, speechDetected: false, speechDensity: 0, limitations: [] },
       confidence: { score: 82, level: 'élevée', signalsUsed: ['frame_sampling'], missingSignals: [] },
       limitations: [],

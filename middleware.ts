@@ -1,8 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { COOKIE_NAME } from '@/lib/session';
+import { COOKIE_NAME } from '@/lib/session-constants';
 
 export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
+
+  if (pathname.startsWith('/api/')) {
+    const isMutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method);
+
+    if (isMutation) {
+      const fetchSite = request.headers.get('sec-fetch-site');
+      const origin = request.headers.get('origin');
+      const isCrossSite = fetchSite === 'cross-site'
+        || (origin !== null && origin !== request.nextUrl.origin);
+
+      if (isCrossSite) {
+        return NextResponse.json(
+          { error: 'Requête non autorisée.' },
+          {
+            status: 403,
+            headers: { 'Cache-Control': 'private, no-store, max-age=0' },
+          },
+        );
+      }
+    }
+
+    const response = NextResponse.next();
+    response.headers.set('Cache-Control', 'private, no-store, max-age=0');
+    response.headers.set('Pragma', 'no-cache');
+    return response;
+  }
 
   if (pathname === '/analyses') {
     const dashboardUrl = new URL('/dashboard/analyze', request.url);
@@ -60,6 +86,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    '/api/:path*',
     '/dashboard/:path*',
     '/dashboard-v2/:path*',
     '/analyzer/:path*',

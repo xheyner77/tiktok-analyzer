@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Nouveaut\u00e9s Viralynz',
+  title: 'Nouveaut\u00e9s',
   description: 'Les derni\u00e8res releases Viralynz, publi\u00e9es chaque semaine pour construire le TikTok Growth OS.',
 };
 

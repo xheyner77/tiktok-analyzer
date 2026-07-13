@@ -2,8 +2,9 @@ import { cookies } from 'next/headers';
 import { SignJWT, jwtVerify } from 'jose';
 import type { SessionPayload } from './auth';
 import { supabase } from './supabase';
+import { COOKIE_NAME } from './session-constants';
 
-export const COOKIE_NAME = 'tiktok_auth';
+export { COOKIE_NAME } from './session-constants';
 
 export const COOKIE_OPTIONS = {
   httpOnly: true,
@@ -79,7 +80,6 @@ export async function getSession(): Promise<SessionPayload | null> {
     // to re-login naturally after that.
     const { data: { user }, error } = await supabase.auth.getUser(token);
     if (!error && user) {
-      console.log('[getSession] Legacy Supabase token accepted for user:', user.id);
       return { userId: user.id, email: user.email ?? '' };
     }
 
@@ -91,7 +91,9 @@ export async function getSession(): Promise<SessionPayload | null> {
       !message.includes('invalid') &&
       !message.includes('Dynamic server usage')
     ) {
-      console.error('[getSession] Unexpected error:', message);
+      console.error('[getSession] unexpected_error', {
+        name: err instanceof Error ? err.name : 'UnknownError',
+      });
     }
     return null;
   }

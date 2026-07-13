@@ -20,6 +20,7 @@ function isShortSharePath(pathname: string): boolean {
 export function isTikTokVideoUrl(value: string): boolean {
   try {
     const u = new URL(value);
+    if (u.protocol !== 'https:' || u.port || u.username || u.password) return false;
     if (!isTikTokHostname(u.hostname)) return false;
 
     const p = u.pathname;

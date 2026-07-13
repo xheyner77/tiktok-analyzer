@@ -1,12 +1,12 @@
-import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
+import { privateJson } from '@/lib/api-route-security';
 
 export async function GET() {
   try {
     const session = await getSession();
     if (!session) {
-      return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
+      return privateJson({ error: 'Non authentifié' }, { status: 401 });
     }
 
     const { data, error } = await supabase
@@ -17,22 +17,14 @@ export async function GET() {
       .limit(60);
 
     if (error) {
-      console.error('[hooks/history] SELECT failed:', {
-        code:    error.code,
-        message: error.message,
-        details: error.details,
-        hint:    error.hint,
-        userId:  session.userId,
-      });
-      return NextResponse.json({ error: 'Erreur base de données', hooks: [] }, { status: 500 });
+      console.error('[hooks/history] select_failed', { code: error.code });
+      return privateJson({ error: 'Historique temporairement indisponible.', hooks: [] }, { status: 500 });
     }
 
-    console.log(`[hooks/history] ${data?.length ?? 0} hooks returned for user ${session.userId}`);
-    return NextResponse.json({ hooks: data ?? [] });
+    return privateJson({ hooks: data ?? [] });
 
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error('[hooks/history] Unexpected error:', message);
-    return NextResponse.json({ error: 'Erreur serveur', hooks: [] }, { status: 500 });
+  } catch (error) {
+    console.error('[hooks/history] request_failed', { name: error instanceof Error ? error.name : 'UnknownError' });
+    return privateJson({ error: 'Historique temporairement indisponible.', hooks: [] }, { status: 500 });
   }
 }

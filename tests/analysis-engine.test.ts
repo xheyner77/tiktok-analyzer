@@ -293,8 +293,8 @@ describe('analysis enrichment output adaptation', () => {
     });
 
     const analysisText = JSON.stringify(result.coachAnalysis);
-    expect(result.coachAnalysis?.formatConfidence.level).toBe('moyenne');
-    expect(result.coachAnalysis?.formatConfidence.score).toBeLessThanOrEqual(69);
+    expect(result.coachAnalysis?.formatConfidence?.level).toBe('moyenne');
+    expect(result.coachAnalysis?.formatConfidence?.score).toBeLessThanOrEqual(69);
     expect(result.coachAnalysis?.transcriptAnalysis?.available).toBe(false);
     expect(analysisText).not.toMatch(/texte parlé|hook vocal|stop verbal|la voix|diagnostics vocaux/i);
   });
@@ -373,7 +373,7 @@ describe('analysis enrichment output adaptation', () => {
       ...(result.repostVersion?.hookVariants ?? []),
       ...(result.repostVersion?.structure ?? []),
       ...(result.repostVersion?.onScreenText ?? []),
-      ...(result.coachAnalysis?.timeline.map((item) => item.insight) ?? []),
+      ...(result.coachAnalysis?.timeline?.map((item) => item.insight) ?? []),
     ].join(' ');
 
     expect(userFacing).toContain('SDF');

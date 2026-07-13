@@ -1,5 +1,7 @@
 export function isTrendDemoMode(): boolean {
-  return process.env.NEXT_PUBLIC_TRENDS_DEMO_MODE === 'true';
+  // Les jeux locaux ne doivent jamais pouvoir alimenter l'app de production.
+  return process.env.NODE_ENV !== 'production'
+    && process.env.NEXT_PUBLIC_TRENDS_DEMO_MODE === 'true';
 }
 
 export function hasApifyTrendConfig(): boolean {

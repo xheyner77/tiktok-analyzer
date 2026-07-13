@@ -1,18 +1,34 @@
-import { afterEach, describe, expect, it } from 'vitest';
-import { resolveStripePrice } from '@/lib/billing/stripe-prices';
-import { getEffectivePlan, isLegacyStripePriceId, planFromStripePriceId } from '@/lib/stripe-billing';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { listStripePriceMappings, resolveStripePrice } from '@/lib/billing/stripe-prices';
+import {
+  getEffectivePlan,
+  getStripePriceId,
+  isLegacyStripePriceId,
+  planFromStripePriceId,
+} from '@/lib/stripe-billing';
 
 const touchedEnv = [
   'STRIPE_STARTER_PRICE_ID',
   'STRIPE_PRO_PRICE_ID',
   'STRIPE_LIFETIME_PRICE_ID',
   'STRIPE_LEGACY_PRO_PRICE_ID',
+  'STRIPE_PRICE_CREATOR_MONTHLY',
+  'STRIPE_PRICE_PRO_MONTHLY',
+  'STRIPE_PRICE_PRO_YEARLY',
+  'STRIPE_PRICE_PRO',
+  'STRIPE_PRICE_LIFETIME_ONETIME',
+  'STRIPE_PRICE_SCALE_MONTHLY',
+  'STRIPE_PRICE_SCALE_YEARLY',
   'STRIPE_PRICE_ELITE',
 ] as const;
 
 const previousEnv = Object.fromEntries(
   touchedEnv.map((key) => [key, process.env[key]])
 );
+
+beforeEach(() => {
+  for (const key of touchedEnv) delete process.env[key];
+});
 
 afterEach(() => {
   for (const key of touchedEnv) {
@@ -63,6 +79,31 @@ describe('stripe price mapping', () => {
 
     expect(planFromStripePriceId('price_lifetime_149')).toBe('lifetime');
     expect(resolveStripePrice('price_lifetime_149')).toMatchObject({ plan: 'lifetime', legacy: false });
+  });
+
+  it('keeps aliases that map the same Price ID to the same normalized plan', () => {
+    process.env.STRIPE_PRO_PRICE_ID = 'price_shared_pro';
+    process.env.STRIPE_PRICE_ELITE = 'price_shared_pro';
+
+    expect(planFromStripePriceId('price_shared_pro')).toBe('pro');
+    expect(resolveStripePrice('price_shared_pro')).toMatchObject({
+      envVar: 'STRIPE_PRO_PRICE_ID',
+      plan: 'pro',
+      legacy: false,
+    });
+    expect(listStripePriceMappings().filter(({ priceId }) => priceId === 'price_shared_pro')).toHaveLength(1);
+  });
+
+  it('fails closed when one Price ID is assigned to different normalized plans', () => {
+    process.env.STRIPE_LIFETIME_PRICE_ID = 'price_conflicting_plan';
+    process.env.STRIPE_PRICE_ELITE = 'price_conflicting_plan';
+
+    expect(resolveStripePrice('price_conflicting_plan')).toBeNull();
+    expect(planFromStripePriceId('price_conflicting_plan')).toBeNull();
+    expect(listStripePriceMappings()).not.toContainEqual(
+      expect.objectContaining({ priceId: 'price_conflicting_plan' }),
+    );
+    expect(() => getStripePriceId('lifetime')).toThrow(/STRIPE_LIFETIME_PRICE_ID manquant/);
   });
 
   it('treats active legacy Elite users as Pro', () => {

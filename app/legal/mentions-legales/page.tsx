@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Mentions Légales – Viralynz',
+  title: 'Mentions légales',
   description: 'Mentions légales obligatoires de la plateforme Viralynz.',
 };
 

@@ -4,8 +4,8 @@ import { getSession } from '@/lib/session';
 import {
   getUserById,
   checkAndResetMonthly,
-  incrementHooksCount,
-  canGenerateHook,
+  refundHookQuota,
+  reserveHookQuota,
   HOOK_LIMITS,
   getEffectivePlan,
 } from '@/lib/auth';
@@ -13,17 +13,21 @@ import { supabase } from '@/lib/supabase';
 import { HOOK_GENERATION_MAX_TOKENS, OPENAI_CHAT_MODEL } from '@/lib/openai-models';
 import { estimateAnalysisCost } from '@/lib/analysis-quality';
 import {
-  generateFallbackHookPacks,
-  generatedHooksToHookPacks,
   hookPacksToGeneratedHooks,
-  normalizeGeneratedHooks,
   normalizeHookPacks,
 } from '@/lib/hook-engine';
 import { getMemoryContextForUser } from '@/lib/memory/memory-context';
 import type { HookGenerationInput } from '@/lib/hook-engine';
 import type { HookObjective, HookPack, VideoFormat } from '@/lib/types';
+import { exceedsDeclaredBodyLimit, privateJson, readJsonObject } from '@/lib/api-route-security';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+function getOpenAIClient(): OpenAI {
+  const apiKey = process.env.OPENAI_API_KEY?.trim();
+  if (!apiKey || apiKey === 'sk-your-key-here') {
+    throw new Error('OPENAI_API_KEY is not configured');
+  }
+  return new OpenAI({ apiKey });
+}
 
 function normalizeFormat(value: unknown): VideoFormat {
   const allowed: VideoFormat[] = [
@@ -157,7 +161,7 @@ Structure JSON attendue :
   });
   console.info('[hooks-cost] estimate', costEstimate);
 
-  const response = await openai.chat.completions.create({
+  const response = await getOpenAIClient().chat.completions.create({
     model: OPENAI_CHAT_MODEL,
     temperature: 0.72,
     max_tokens: HOOK_GENERATION_MAX_TOKENS,
@@ -177,6 +181,10 @@ Structure JSON attendue :
 
 export async function POST(request: NextRequest) {
   try {
+    if (exceedsDeclaredBodyLimit(request, 64 * 1024)) {
+      return privateJson({ error: 'Payload trop volumineux.' }, { status: 413 });
+    }
+
     const session = await getSession();
 
     if (!session) {
@@ -194,13 +202,13 @@ export async function POST(request: NextRequest) {
 
     if (hookLimit === 0) {
       return NextResponse.json(
-        { error: 'Le Hook Studio est disponible à partir du plan Pro.', plan: tier },
+        { error: 'Le Hook Studio est disponible à partir du plan Starter.', plan: tier },
         { status: 403 }
       );
     }
 
     const remaining = Math.max(0, hookLimit - user.hooks_count);
-    if (!canGenerateHook(user) || remaining === 0) {
+    if (remaining === 0) {
       return NextResponse.json(
         {
           error: `Tu as utilisé tes ${hookLimit} hooks pour cette période de facturation.`,
@@ -225,7 +233,8 @@ export async function POST(request: NextRequest) {
     let useMemory = true;
 
     try {
-      const body = await request.json();
+      const body = await readJsonObject(request, 64 * 1024);
+      if (!body) throw new Error('INVALID_JSON');
       context = typeof body.context === 'string' ? body.context.trim() : '';
       scene = typeof body.scene === 'string' ? body.scene.trim() : '';
       person = typeof body.person === 'string' ? body.person.trim() : '';
@@ -237,9 +246,11 @@ export async function POST(request: NextRequest) {
       intensity = typeof body.intensity === 'number' ? Math.min(Math.max(1, body.intensity), 10) : 7;
       format = normalizeFormat(body.format);
       objective = normalizeObjective(body.objective);
-      count = typeof body.count === 'number' ? Math.min(Math.max(1, body.count), 12) : 10;
+      count = typeof body.count === 'number'
+        ? Math.floor(Math.min(Math.max(1, body.count), 12))
+        : 10;
     } catch {
-      // Keep defaults.
+      return privateJson({ error: 'Payload JSON invalide.' }, { status: 400 });
     }
 
     if (!context) {
@@ -257,6 +268,41 @@ export async function POST(request: NextRequest) {
     if (count > remaining) count = remaining;
 
     const input = { context, scene, person, tone, count, format, objective, niche, hookMode, mode, intensity };
+    const hasOpenAI = Boolean(
+      process.env.OPENAI_API_KEY
+      && process.env.OPENAI_API_KEY !== 'sk-your-key-here',
+    );
+
+    if (!hasOpenAI) {
+      return NextResponse.json(
+        {
+          error: 'La génération de hooks est temporairement indisponible.',
+          code: 'AI_PROVIDER_NOT_CONFIGURED',
+        },
+        { status: 503 },
+      );
+    }
+
+    const reservation = await reserveHookQuota(user, count);
+    if (!reservation.allowed) {
+      return NextResponse.json(
+        {
+          error: `Ton quota de ${hookLimit} hooks est atteint pour cette période de facturation.`,
+          used: reservation.used,
+          limit: reservation.limit,
+        },
+        { status: 429 },
+      );
+    }
+
+    let reservationActive = true;
+    const releaseReservation = async () => {
+      if (!reservationActive) return;
+      reservationActive = false;
+      await refundHookQuota(session.userId, count);
+    };
+
+    try {
     const creatorMemory = useMemory
       ? await getMemoryContextForUser({
           userId: session.userId,
@@ -266,29 +312,16 @@ export async function POST(request: NextRequest) {
         })
       : null;
     const creatorMemoryContext = creatorMemory?.enabled ? creatorMemory.prompt : '';
-    const hasOpenAI = !!process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'sk-your-key-here';
+    const hookPacks: HookPack[] = (await generateHookPacksWithAI({
+      ...input,
+      creatorMemoryContext: useMemory ? creatorMemoryContext : '',
+    })).slice(0, count);
 
-    let hookPacks: HookPack[] = [];
-    if (hasOpenAI) {
-      try {
-        hookPacks = await generateHookPacksWithAI({ ...input, creatorMemoryContext: useMemory ? creatorMemoryContext : '' });
-      } catch (err) {
-        console.warn('[hooks/generate] OpenAI HookPacks failed, using fallback:', err instanceof Error ? err.message : err);
-      }
-    }
-
-    if (!hookPacks.length) {
-      hookPacks = generateFallbackHookPacks(input);
-    }
-
-    let richHooks = hookPacksToGeneratedHooks(hookPacks);
-    if (!richHooks.length) {
-      richHooks = normalizeGeneratedHooks([], input);
-      hookPacks = generatedHooksToHookPacks(richHooks, input, 'local_fallback');
-    }
+    const richHooks = hookPacksToGeneratedHooks(hookPacks);
 
     const hooks = richHooks.map((item) => item.hook).filter(Boolean);
     if (hooks.length === 0 || hookPacks.length === 0) {
+      await releaseReservation();
       return NextResponse.json(
         { error: 'Impossible de générer des ouvertures pour ce contexte. Réessaie avec plus de détails.' },
         { status: 422 }
@@ -309,33 +342,44 @@ export async function POST(request: NextRequest) {
     const { error: insertError } = await supabase.from('hooks_history').insert(rows).select('id');
 
     if (insertError) {
-      console.error('[hooks/generate] INSERT hooks_history FAILED:', {
-        code: insertError.code,
-        message: insertError.message,
-        details: insertError.details,
-        hint: insertError.hint,
-        userId: session.userId,
-        rows,
-      });
+      console.error('[hooks/generate] hooks_history insert failed:', insertError.code ?? 'unknown');
+      await releaseReservation();
       return NextResponse.json(
         { error: "Impossible d'enregistrer les ouvertures. Réessaie dans un instant." },
         { status: 500 }
       );
     }
 
-    await incrementHooksCount(session.userId, consumed);
+    let quotaUsed = reservation.used;
+    if (consumed < count) {
+      const refunded = await refundHookQuota(session.userId, count - consumed);
+      if (refunded && Number.isFinite(quotaUsed)) quotaUsed -= count - consumed;
+    }
+    reservationActive = false;
 
-    return NextResponse.json({
+    return privateJson({
       hooks,
       richHooks,
       hookPacks,
       quotaUnit: '1 HookPack = 1 hook',
-      used: user.hooks_count + consumed,
-      limit: hookLimit,
+      used: quotaUsed,
+      limit: Number.isFinite(hookLimit) ? hookLimit : null,
+      unlimited: !Number.isFinite(hookLimit),
       historySaved: true,
     });
+    } catch (error) {
+      await releaseReservation();
+      console.error('[hooks/generate] AI generation failed:', error instanceof Error ? error.name : 'unknown');
+      return NextResponse.json(
+        {
+          error: 'La génération a échoué. Ton quota n’a pas été consommé, tu peux réessayer.',
+          code: 'AI_GENERATION_FAILED',
+        },
+        { status: 502 },
+      );
+    }
   } catch (err) {
-    console.error('[hooks/generate] Unexpected error:', err);
+    console.error('[hooks/generate] Unexpected error:', err instanceof Error ? err.name : 'unknown');
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

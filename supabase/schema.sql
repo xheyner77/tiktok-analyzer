@@ -71,8 +71,18 @@ SET search_path = ''
 AS $$
   SELECT CASE
     WHEN p_plan = 'free' THEN 3
-    WHEN p_plan IN ('starter', 'creator') THEN 30
-    WHEN p_plan = 'pro' THEN 150
+    WHEN p_plan IN ('starter', 'creator')
+      AND (
+        NULLIF(BTRIM(p_stripe_subscription_id), '') IS NULL
+        OR p_subscription_status IN ('active', 'trialing')
+      )
+      THEN 30
+    WHEN p_plan = 'pro'
+      AND (
+        NULLIF(BTRIM(p_stripe_subscription_id), '') IS NULL
+        OR p_subscription_status IN ('active', 'trialing')
+      )
+      THEN 150
     WHEN p_plan IN ('lifetime', 'scale') THEN 2147483647
     WHEN p_plan = 'elite'
       AND p_subscription_status IN ('active', 'trialing')
@@ -94,8 +104,18 @@ SET search_path = ''
 AS $$
   SELECT CASE
     WHEN p_plan = 'free' THEN 0
-    WHEN p_plan IN ('starter', 'creator') THEN 50
-    WHEN p_plan = 'pro' THEN 250
+    WHEN p_plan IN ('starter', 'creator')
+      AND (
+        NULLIF(BTRIM(p_stripe_subscription_id), '') IS NULL
+        OR p_subscription_status IN ('active', 'trialing')
+      )
+      THEN 50
+    WHEN p_plan = 'pro'
+      AND (
+        NULLIF(BTRIM(p_stripe_subscription_id), '') IS NULL
+        OR p_subscription_status IN ('active', 'trialing')
+      )
+      THEN 250
     WHEN p_plan IN ('lifetime', 'scale') THEN 2147483647
     WHEN p_plan = 'elite'
       AND p_subscription_status IN ('active', 'trialing')
@@ -116,7 +136,13 @@ STABLE
 SET search_path = ''
 AS $$
   SELECT CASE
-    WHEN p_plan IN ('pro', 'lifetime', 'scale') THEN 30
+    WHEN p_plan = 'pro'
+      AND (
+        NULLIF(BTRIM(p_stripe_subscription_id), '') IS NULL
+        OR p_subscription_status IN ('active', 'trialing')
+      )
+      THEN 30
+    WHEN p_plan IN ('lifetime', 'scale') THEN 30
     WHEN p_plan = 'elite'
       AND p_subscription_status IN ('active', 'trialing')
       AND NULLIF(BTRIM(p_stripe_subscription_id), '') IS NOT NULL
@@ -185,16 +211,26 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.refund_analysis_quota(p_user_id UUID)
+CREATE OR REPLACE FUNCTION public.refund_analysis_quota(
+  p_user_id UUID,
+  p_amount INTEGER DEFAULT 1
+)
 RETURNS INT
-LANGUAGE sql
+LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = ''
 AS $$
+DECLARE
+  v_next INTEGER;
+  v_amount INTEGER := GREATEST(1, COALESCE(p_amount, 1));
+BEGIN
   UPDATE public.users
-  SET analyses_count = GREATEST(analyses_count - 1, 0)
+  SET analyses_count = GREATEST(analyses_count - v_amount, 0)
   WHERE id = p_user_id
-  RETURNING analyses_count;
+  RETURNING analyses_count INTO v_next;
+
+  RETURN COALESCE(v_next, 0);
+END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.increment_reconstructions_count_by(p_user_id UUID, p_amount INT)
@@ -206,6 +242,76 @@ AS $$
   UPDATE public.users
   SET reconstructions_count = reconstructions_count + GREATEST(1, p_amount)
   WHERE id = p_user_id;
+$$;
+
+CREATE OR REPLACE FUNCTION public.increment_hooks_count_by(p_user_id UUID, p_amount INT)
+RETURNS void
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  UPDATE public.users
+  SET hooks_count = hooks_count + GREATEST(1, p_amount)
+  WHERE id = p_user_id;
+$$;
+
+CREATE OR REPLACE FUNCTION public.reserve_hook_quota(p_user_id UUID, p_amount INTEGER DEFAULT 1)
+RETURNS TABLE(allowed BOOLEAN, used INTEGER, limit_value INTEGER)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_plan TEXT;
+  v_subscription_status TEXT;
+  v_stripe_subscription_id TEXT;
+  v_current INTEGER;
+  v_limit INTEGER;
+  v_amount INTEGER := GREATEST(1, COALESCE(p_amount, 1));
+BEGIN
+  SELECT u.plan, u.subscription_status, u.stripe_subscription_id, u.hooks_count
+  INTO v_plan, v_subscription_status, v_stripe_subscription_id, v_current
+  FROM public.users AS u
+  WHERE u.id = p_user_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RETURN QUERY SELECT false, 0, 0;
+    RETURN;
+  END IF;
+
+  v_limit := public.quota_hook_limit_for_plan(v_plan, v_subscription_status, v_stripe_subscription_id);
+  IF v_current + v_amount > v_limit THEN
+    RETURN QUERY SELECT false, v_current, v_limit;
+    RETURN;
+  END IF;
+
+  UPDATE public.users AS u
+  SET hooks_count = u.hooks_count + v_amount
+  WHERE u.id = p_user_id
+  RETURNING u.hooks_count INTO v_current;
+
+  RETURN QUERY SELECT true, v_current, v_limit;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.refund_hook_quota(p_user_id UUID, p_amount INTEGER DEFAULT 1)
+RETURNS INTEGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_next INTEGER;
+  v_amount INTEGER := GREATEST(1, COALESCE(p_amount, 1));
+BEGIN
+  UPDATE public.users AS u
+  SET hooks_count = GREATEST(u.hooks_count - v_amount, 0)
+  WHERE u.id = p_user_id
+  RETURNING u.hooks_count INTO v_next;
+
+  RETURN COALESCE(v_next, 0);
+END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.reserve_reconstruction_quota(p_user_id UUID, p_amount INTEGER DEFAULT 1)
@@ -256,6 +362,56 @@ BEGIN
   RETURN QUERY SELECT true, v_current, v_limit;
 END;
 $$;
+
+CREATE OR REPLACE FUNCTION public.refund_reconstruction_quota(
+  p_user_id UUID,
+  p_amount INTEGER DEFAULT 1
+)
+RETURNS INTEGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_next INTEGER;
+  v_amount INTEGER := GREATEST(1, COALESCE(p_amount, 1));
+BEGIN
+  UPDATE public.users AS u
+  SET reconstructions_count = GREATEST(u.reconstructions_count - v_amount, 0)
+  WHERE u.id = p_user_id
+  RETURNING u.reconstructions_count INTO v_next;
+
+  RETURN COALESCE(v_next, 0);
+END;
+$$;
+
+-- These RPCs receive a user id because they are called exclusively by the
+-- server-side service-role client. SECURITY DEFINER functions are executable
+-- by PUBLIC by default in Postgres, so their privileges must be narrowed
+-- explicitly to prevent a browser client from changing another user's quota.
+REVOKE ALL ON FUNCTION public.handle_updated_at() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.quota_analysis_limit_for_plan(TEXT, TEXT, TEXT) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.quota_hook_limit_for_plan(TEXT, TEXT, TEXT) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.quota_reconstruction_limit_for_plan(TEXT, TEXT, TEXT) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.increment_analyses_count(UUID) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.reserve_analysis_quota(UUID, INTEGER) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.refund_analysis_quota(UUID, INTEGER) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.increment_hooks_count_by(UUID, INTEGER) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.reserve_hook_quota(UUID, INTEGER) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.refund_hook_quota(UUID, INTEGER) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.increment_reconstructions_count_by(UUID, INTEGER) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.reserve_reconstruction_quota(UUID, INTEGER) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.refund_reconstruction_quota(UUID, INTEGER) FROM PUBLIC, anon, authenticated;
+
+GRANT EXECUTE ON FUNCTION public.increment_analyses_count(UUID) TO service_role;
+GRANT EXECUTE ON FUNCTION public.reserve_analysis_quota(UUID, INTEGER) TO service_role;
+GRANT EXECUTE ON FUNCTION public.refund_analysis_quota(UUID, INTEGER) TO service_role;
+GRANT EXECUTE ON FUNCTION public.increment_hooks_count_by(UUID, INTEGER) TO service_role;
+GRANT EXECUTE ON FUNCTION public.reserve_hook_quota(UUID, INTEGER) TO service_role;
+GRANT EXECUTE ON FUNCTION public.refund_hook_quota(UUID, INTEGER) TO service_role;
+GRANT EXECUTE ON FUNCTION public.increment_reconstructions_count_by(UUID, INTEGER) TO service_role;
+GRANT EXECUTE ON FUNCTION public.reserve_reconstruction_quota(UUID, INTEGER) TO service_role;
+GRANT EXECUTE ON FUNCTION public.refund_reconstruction_quota(UUID, INTEGER) TO service_role;
 
 
 -- 5. Row Level Security

@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { cookies } from 'next/headers';
 import { supabaseAuth } from '@/lib/supabase';
 import { ensureUserProfile } from '@/lib/auth';
 import { COOKIE_NAME, COOKIE_OPTIONS, createSessionToken } from '@/lib/session';
+import { privateJson, readJsonObject, rejectCrossSiteMutation } from '@/lib/api-route-security';
 
 // Supabase error messages that indicate the email hasn't been confirmed yet.
 const EMAIL_NOT_CONFIRMED_MSGS = [
@@ -35,10 +36,6 @@ function translateLoginError(message: string): string {
     return 'Email ou mot de passe incorrect.';
   }
 
-  if (msg.includes('user not found') || msg.includes('no user found')) {
-    return 'Aucun compte trouvé avec cette adresse email.';
-  }
-
   if (msg.includes('network') || msg.includes('fetch failed')) {
     return 'Erreur de connexion. Vérifiez votre connexion et réessayez.';
   }
@@ -48,13 +45,22 @@ function translateLoginError(message: string): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
+    const rejected = rejectCrossSiteMutation(request);
+    if (rejected) return rejected;
+
+    const body = await readJsonObject(request);
+    const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
+    const password = typeof body?.password === 'string' ? body.password : '';
 
     if (!email || !password) {
-      return NextResponse.json(
+      return privateJson(
         { error: 'Email et mot de passe requis.' },
         { status: 400 }
       );
+    }
+
+    if (email.length > 254 || password.length > 128) {
+      return privateJson({ error: 'Email ou mot de passe incorrect.' }, { status: 401 });
     }
 
     const { data, error } = await supabaseAuth.auth.signInWithPassword({
@@ -63,16 +69,16 @@ export async function POST(request: NextRequest) {
     });
 
     if (error || !data.session) {
-      console.error('[login] Supabase error:', {
-        message: error?.message,
+      console.error('[login] provider_request_failed', {
         status: error?.status,
         name: error?.name,
+        code: error?.code,
       });
 
       // Translate the "email not confirmed" error to a user-friendly message
       // with a dedicated code so the frontend can offer the resend button.
       if (error?.message && isEmailNotConfirmedError(error.message)) {
-        return NextResponse.json(
+        return privateJson(
           {
             error: 'Ton email n\'a pas encore été confirmé. Vérifie ta boîte mail (et tes spams) ou renvoie le lien de confirmation.',
             code: 'EMAIL_NOT_CONFIRMED',
@@ -81,24 +87,29 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      return NextResponse.json(
+      return privateJson(
         { error: translateLoginError(error?.message ?? '') },
         { status: 401 }
       );
     }
 
-    await ensureUserProfile({ userId: data.user.id, email: data.user.email ?? email });
+    const profile = await ensureUserProfile({ userId: data.user.id, email: data.user.email ?? email });
+    if (!profile) {
+      console.error('[login] profile_unavailable');
+      return privateJson(
+        { error: 'Connexion temporairement indisponible. Réessaie dans un instant.' },
+        { status: 503 },
+      );
+    }
 
     // Create a custom JWT (signed with JWT_SECRET, valid 7 days) instead of
     // storing the Supabase access token (which expires after only 1 hour).
     const sessionToken = await createSessionToken(data.user.id, data.user.email ?? email);
     (await cookies()).set(COOKIE_NAME, sessionToken, COOKIE_OPTIONS);
 
-    console.log('[login] Success — user id:', data.user.id);
-    return NextResponse.json({ success: true });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error('[login] Unexpected error:', message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return privateJson({ success: true });
+  } catch (error) {
+    console.error('[login] request_failed', { name: error instanceof Error ? error.name : 'UnknownError' });
+    return privateJson({ error: 'Connexion temporairement indisponible.' }, { status: 500 });
   }
 }

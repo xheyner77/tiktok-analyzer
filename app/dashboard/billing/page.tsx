@@ -5,6 +5,12 @@ import { normalizePlan, type AppPlan } from '@/lib/plans';
 import { getSession } from '@/lib/session';
 import { isSubscriptionStatusAllowingAccess, type PaidStripePlan } from '@/lib/stripe-billing';
 import {
+  MAX_ANALYSES_PRO,
+  MAX_ANALYSES_STARTER,
+  MAX_HOOKS_PRO,
+  MAX_HOOKS_STARTER,
+} from '@/lib/plan-limits';
+import {
   DISPLAY_CATALOG_CREATOR_EUR,
   DISPLAY_CATALOG_LIFETIME_EUR,
   DISPLAY_CATALOG_PRO_EUR,
@@ -38,10 +44,10 @@ const plans: PlanCard[] = [
     cadence: '/mois',
     subtitle: 'Pour découvrir Viralynz et comprendre pourquoi tes vidéos flop.',
     features: [
-      '30 analyses vidéo / mois',
-      '50 hooks générés / mois',
+      `${MAX_ANALYSES_STARTER} analyses vidéo / mois`,
+      `${MAX_HOOKS_STARTER} hooks générés / mois`,
       'Analyse complète',
-      'Score de viralité',
+      'Diagnostic du hook, du rythme et du CTA',
       'Historique limité',
       { label: 'Radar tendances inclus', available: false },
     ],
@@ -57,11 +63,11 @@ const plans: PlanCard[] = [
     cadence: '/mois',
     subtitle: 'Pour améliorer tes vidéos et obtenir une version prête à reposter.',
     features: [
-      '100 analyses vidéo / mois',
-      '200 hooks générés / mois',
+      `${MAX_ANALYSES_PRO} analyses vidéo / mois`,
+      `${MAX_HOOKS_PRO} hooks générés / mois`,
       'Analyse complète détaillée',
       'Version corrigée prête à reposter',
-      'Radar tendances inclus',
+      { label: 'Radar tendances — en préparation', available: false },
       'Historique complet',
     ],
     cta: `Débloquer Pro — ${DISPLAY_CATALOG_PRO_EUR}€/mois`,
@@ -78,11 +84,11 @@ const plans: PlanCard[] = [
     features: [
       'Analyses vidéo illimitées à vie',
       'Hooks générés illimités à vie',
-      'Analyse avancée complète',
+      'Diagnostic complet et décisions de montage',
       'Version corrigée prête à reposter',
-      'Radar tendances inclus',
+      { label: 'Radar tendances — en préparation', available: false },
       'Plus jamais de paiement mensuel',
-      'Priorité nouvelles features',
+      'Priorité sur les nouvelles fonctionnalités',
     ],
     cta: `Prendre Lifetime — ${DISPLAY_CATALOG_LIFETIME_EUR}€`,
   },

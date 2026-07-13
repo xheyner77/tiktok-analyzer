@@ -38,7 +38,7 @@ const navLinks = [
   {
     href: '/#fonctionnalites',
     label: 'Fonctionnalités',
-    description: 'Découvre le coach de repost et les analyses IA',
+    description: 'Découvre le diagnostic et le plan de repost',
   },
   {
     href: '/#comment-ca-marche',
@@ -159,6 +159,7 @@ export default function NavbarMobileMenu({ isLoggedIn, email, plan = 'free' }: N
       />
 
       <aside
+        id="mobile-navigation"
         data-mobile-menu-panel="true"
         role="dialog"
         aria-modal="true"
@@ -212,9 +213,9 @@ export default function NavbarMobileMenu({ isLoggedIn, email, plan = 'free' }: N
 
           <section className="mt-4 overflow-hidden rounded-[1.5rem] border border-vn-fuchsia/15 bg-[radial-gradient(circle_at_10%_0%,rgba(232,121,249,0.16),transparent_38%),radial-gradient(circle_at_100%_18%,rgba(34,211,238,0.12),transparent_36%),rgba(255,255,255,0.045)] p-4 shadow-[0_28px_90px_-70px_rgba(232,121,249,0.9)] backdrop-blur-xl">
             <p className="text-[0.66rem] font-black uppercase tracking-[0.2em] text-vn-fuchsia/78">Cockpit créateur</p>
-            <h3 className="mt-1.5 text-[1.12rem] font-black leading-6 text-white">Prêt à booster tes reposts ?</h3>
+            <h3 className="mt-1.5 text-[1.12rem] font-black leading-6 text-white">Prêt à corriger ton prochain repost ?</h3>
             <p className="mt-2 text-[0.8rem] font-semibold leading-5 text-slate-400">
-              Accède à ton cockpit Viralynz et retrouve tes analyses, insights et contenus à republier.
+              Retrouve tes analyses, les décisions de montage et les V2 à tester.
             </p>
 
             {isLoggedIn ? (
@@ -312,6 +313,7 @@ export default function NavbarMobileMenu({ isLoggedIn, email, plan = 'free' }: N
         className="grid h-10 w-10 place-items-center rounded-full border border-white/[0.08] bg-white/[0.035] text-gray-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition hover:border-white/15 hover:bg-white/[0.065] hover:text-white"
         aria-label={open ? 'Fermer le menu' : 'Ouvrir le menu'}
         aria-expanded={open}
+        aria-controls="mobile-navigation"
       >
         {open ? <CloseIcon /> : <MenuIcon />}
       </button>

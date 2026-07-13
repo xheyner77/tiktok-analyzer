@@ -18,6 +18,7 @@ import type {
 import TikTokConnectModal from '@/components/dashboard-v2/TikTokConnectModal';
 import { TikTokConnectionManager } from '@/components/dashboard-v2/TikTokConnectionManager';
 import { TikTokConnectedSuccessModal } from '@/components/dashboard-v2/TikTokConnectedSuccessModal';
+import DashboardOverviewRedesign from '@/components/dashboard-v2/DashboardOverviewRedesign';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useLanguage } from '@/lib/i18n/useLanguage';
 import { translateKnownPhrase } from '@/lib/i18n/translations';
@@ -70,13 +71,13 @@ const insightStyleByType: Record<DashboardInsight['type'], { color: string; icon
 };
 
 const connectedTikTokMessages: Record<string, string> = {
-  config: 'Connexion TikTok a configurer : ajoute les cles TikTok serveur, puis redemarre le serveur.',
+  config: 'Connexion TikTok temporairement indisponible. Réessaie plus tard ou contacte le support.',
   limit: 'Ton plan bloque un compte TikTok different. Pour reconnecter ce compte, relance avec le meme compte TikTok.',
   setup: 'Connexion TikTok indisponible cote serveur. Reessaie dans quelques minutes.',
   session: 'Ta session Viralynz a expire. Reconnecte-toi, puis relance TikTok.',
   state: 'Session TikTok expiree. Clique a nouveau sur Reconnecter TikTok.',
   denied: 'Autorisation TikTok annulee avant la fin.',
-  token: 'TikTok n’a pas valide le code OAuth. Verifie la callback URL configuree cote TikTok.',
+  token: 'TikTok n’a pas validé la connexion. Relance l’autorisation depuis Viralynz.',
   profile: 'TikTok a autorise le compte, mais le profil reste inaccessible.',
   profile_error: 'TikTok a autorise le compte, mais le profil reste inaccessible.',
   db: 'La connexion TikTok n’a pas pu etre enregistree en base.',
@@ -90,8 +91,8 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Mémoire IA', href: '/dashboard/insights', icon: 'insights' },
   { label: 'Générateur de hooks', href: '/dashboard/hooks', icon: 'pen' },
   { label: 'Rewrite / V2', href: '/dashboard/rewrite', icon: 'spark' },
-  { label: 'Publication', href: '/dashboard/share', icon: 'share' },
-  { label: 'Radar tendances', href: '/dashboard/radar', icon: 'radar' },
+  { label: 'Publication', href: '/dashboard/share', icon: 'share', badge: 'Bientôt' },
+  { label: 'Radar tendances', href: '/dashboard/radar', icon: 'radar', badge: 'Bientôt' },
   { label: 'Bibliothèque contenu', href: '/dashboard/library', icon: 'folder' },
   { label: 'Paramètres', href: '/dashboard/settings', icon: 'settings' },
   { label: 'Pricing', href: '/dashboard/billing', icon: 'crown', freeOnly: true },
@@ -3235,6 +3236,7 @@ function MobileOverviewDashboard({
 
 function DashboardV2Client({ dashboard, children }: { dashboard: DashboardData; children?: ReactNode }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [managerOpen, setManagerOpen] = useState(false);
   const [locallyDisconnected, setLocallyDisconnected] = useState(false);
@@ -3285,6 +3287,7 @@ function DashboardV2Client({ dashboard, children }: { dashboard: DashboardData; 
     : dashboard.tiktokConnection;
   const showOverview = pathname === '/dashboard';
   const showAnalyzeMobileChrome = pathname === '/dashboard/analyze';
+  const hasTikTokStatusMessage = Boolean(searchParams?.get('tiktok'));
 
   useEffect(() => {
     document.body.setAttribute('data-dashboard-v2', 'true');
@@ -3320,7 +3323,7 @@ function DashboardV2Client({ dashboard, children }: { dashboard: DashboardData; 
           user={dashboard.user}
           tiktokConnection={visibleTikTokConnection}
         />
-        {!visibleStates.hasTikTokConnection && !locallyDisconnected && (
+        {!visibleStates.hasTikTokConnection && !locallyDisconnected && (!showOverview || hasTikTokStatusMessage) && (
           <TikTokConnectModal
             isTikTokConnected={visibleStates.hasTikTokConnection}
             connectUrl="/api/tiktok/connect"
@@ -3353,16 +3356,12 @@ function DashboardV2Client({ dashboard, children }: { dashboard: DashboardData; 
 
           <div data-dashboard-content="true" className="relative mx-auto w-full min-w-0 max-w-[1180px] px-4 pb-8 pt-5 sm:px-5 md:px-6 lg:px-8 min-[1024px]:mx-0 min-[1024px]:max-w-none min-[1024px]:flex-1 min-[1024px]:overflow-y-auto min-[1024px]:overscroll-contain min-[1024px]:px-5 min-[1024px]:pb-7 min-[1024px]:pt-4 min-[1440px]:px-6 min-[1680px]:px-8">
             {showOverview ? (
-              <>
-                <MobileOverviewDashboard dashboard={dashboard} states={visibleStates} tiktokConnection={visibleTikTokConnection} />
-
-                <DesktopOverviewDashboard
-                  dashboard={dashboard}
-                  states={visibleStates}
-                  tiktokConnection={visibleTikTokConnection}
-                  onManageTikTok={() => setManagerOpen(true)}
-                />
-              </>
+              <DashboardOverviewRedesign
+                dashboard={dashboard}
+                states={visibleStates}
+                tiktokConnection={visibleTikTokConnection}
+                onManageTikTok={() => setManagerOpen(true)}
+              />
             ) : children}
           </div>
         </div>

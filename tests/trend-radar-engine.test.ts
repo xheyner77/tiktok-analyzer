@@ -49,7 +49,7 @@ describe('trend-radar-engine', () => {
   });
 
   it('builds creator-data opportunities from saved analyses', () => {
-    const analyses: AnalysisRow[] = [{ id: 'a', user_id: 'u', video_url: 'https://tiktok.com/a', created_at: new Date().toISOString(), result: result() }];
+    const analyses: AnalysisRow[] = [{ id: 'a', user_id: 'u', video_url: 'https://tiktok.com/a', created_at: new Date().toISOString(), result: result(), reconstruction: null, reconstruction_created_at: null, reconstruction_plan_used: null }];
     const radar = trendRadarEngine({ analyses, tiktok, plan: 'pro' });
     expect(radar.hasPersonalData).toBe(true);
     expect(radar.opportunities[0].source).toBe('creator_data');
@@ -58,7 +58,7 @@ describe('trend-radar-engine', () => {
   });
 
   it('uses tiktok_sync source only when synced videos exist', () => {
-    const analyses: AnalysisRow[] = [{ id: 'a', user_id: 'u', video_url: 'https://tiktok.com/a', created_at: new Date().toISOString(), result: result() }];
+    const analyses: AnalysisRow[] = [{ id: 'a', user_id: 'u', video_url: 'https://tiktok.com/a', created_at: new Date().toISOString(), result: result(), reconstruction: null, reconstruction_created_at: null, reconstruction_plan_used: null }];
     const radar = trendRadarEngine({ analyses, tiktok: { ...tiktok, active: 1, totalVideos: 4 }, plan: 'pro' });
     const repost = radar.opportunities.find((item): item is TrendOpportunity => item.type === 'repost');
     expect(repost?.source).toBe('tiktok_sync');
@@ -66,7 +66,7 @@ describe('trend-radar-engine', () => {
   });
 
   it('keeps free radar limited without making it useless', () => {
-    const analyses: AnalysisRow[] = [{ id: 'a', user_id: 'u', video_url: 'https://tiktok.com/a', created_at: new Date().toISOString(), result: result() }];
+    const analyses: AnalysisRow[] = [{ id: 'a', user_id: 'u', video_url: 'https://tiktok.com/a', created_at: new Date().toISOString(), result: result(), reconstruction: null, reconstruction_created_at: null, reconstruction_plan_used: null }];
     const radar = trendRadarEngine({ analyses, tiktok, plan: 'free' });
     expect(radar.opportunities.length).toBeLessThanOrEqual(3);
     expect(radar.opportunities[0].hookExample).toBeTruthy();

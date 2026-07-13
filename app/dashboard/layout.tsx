@@ -5,8 +5,9 @@ import { getDashboardData } from '@/lib/dashboard-data';
 import { getSession } from '@/lib/session';
 
 export const metadata: Metadata = {
-  title: 'Dashboard | Viralynz',
+  title: 'Dashboard',
   description: 'Dashboard Viralynz pour prioriser les vidéos à corriger, suivre la mémoire créateur et préparer les prochains plans de remontage.',
+  robots: { index: false, follow: false },
 };
 
 export const dynamic = 'force-dynamic';

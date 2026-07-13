@@ -269,6 +269,11 @@ function Timeline({ moments }: { moments: AnalysisMoment[] }) {
         </div>
         <p className="max-w-xs text-sm leading-6 text-slate-400">Chaque timestamp devient une correction de montage, pas une note de rapport.</p>
       </div>
+      {moments.length === 0 ? (
+        <div className="mt-6 rounded-[18px] border border-dashed border-white/[0.10] bg-white/[0.025] p-5 text-sm leading-6 text-slate-400">
+          Aucun timestamp fiable n’est disponible dans cette analyse. Viralynz n’invente pas de moment de drop.
+        </div>
+      ) : null}
       <div className="relative mt-6 space-y-4">
         <div className="absolute bottom-5 left-[38px] top-5 hidden w-px bg-gradient-to-b from-violet-300/40 via-cyan-300/20 to-transparent md:block" />
         {moments.map((moment, index) => (
@@ -331,17 +336,15 @@ function RecommendedV2({ analysis }: { analysis: AnalysisDetailData }) {
           <div>
             <p className={eyebrow}>V2 recommandée</p>
             <h2 className="mt-3 max-w-2xl text-4xl font-black leading-none tracking-[-0.055em] text-white">
-              Une structure plus courte, plus directe, prête à tester.
+              {analysis.recommendedV2.length > 0 ? 'Le plan de remontage issu de ton analyse.' : 'Aucune structure V2 calculée.'}
             </h2>
             <p className="mt-4 max-w-xl text-[15px] leading-7 text-slate-300">
-              La V1 explique. La V2 montre d’abord pourquoi il faut rester. C’est la version à republier.
+              {analysis.recommendedV2.length > 0
+                ? 'Chaque étape ci-dessous provient du diagnostic enregistré pour cette vidéo.'
+                : 'Relance une analyse exploitable pour obtenir des décisions de montage liées à ta vidéo.'}
             </p>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:max-w-xl">
-              <BeforeAfter label="Avant" body="Contexte, attente, payoff trop tardif." />
-              <BeforeAfter label="Apres" body="Resultat, preuve, relance, CTA clair." highlight />
-            </div>
             <div className="mt-6 flex flex-wrap gap-3">
-              <CopyHookButton value={structureText} label="Copier la structure" />
+              {analysis.recommendedV2.length > 0 ? <CopyHookButton value={structureText} label="Copier la structure" /> : null}
               <Link href={analysis.prepareHref} className={primaryButton}>
                 Préparer ma V2
               </Link>
@@ -349,7 +352,12 @@ function RecommendedV2({ analysis }: { analysis: AnalysisDetailData }) {
           </div>
 
           <div className="grid gap-3">
-            {ensureFiveV2Steps(analysis.recommendedV2).map((step, index) => (
+            {analysis.recommendedV2.length === 0 ? (
+              <div className="rounded-[18px] border border-dashed border-white/[0.12] bg-black/20 p-5 text-sm leading-6 text-slate-400">
+                Structure indisponible dans cette analyse. Aucun segment générique n’a été ajouté.
+              </div>
+            ) : null}
+            {analysis.recommendedV2.map((step, index) => (
               <V2StepCard key={`${step.title}-${index}`} step={step} index={index} />
             ))}
           </div>
@@ -364,6 +372,11 @@ function EditingDecisions({ decisions }: { decisions: EditingDecision[] }) {
     <section className={`${card} p-5 sm:p-6`}>
       <p className={eyebrow}>Montage</p>
       <h2 className="mt-2 text-2xl font-black tracking-[-0.035em]">Ce que tu changes avant de republier</h2>
+      {decisions.length === 0 ? (
+        <p className="mt-6 rounded-[18px] border border-dashed border-white/[0.10] bg-white/[0.025] p-4 text-sm leading-6 text-slate-400">
+          Aucune décision de montage fiable n’est disponible dans cette analyse.
+        </p>
+      ) : null}
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
         {decisions.map((decision) => (
           <article key={decision.label} className="rounded-[18px] border border-white/[0.07] bg-white/[0.032] p-4">
@@ -388,6 +401,11 @@ function HooksSection({ analysis }: { analysis: AnalysisDetailData }) {
           Générer 5 hooks
         </Link>
       </div>
+      {analysis.hooks.length === 0 ? (
+        <p className="mt-6 rounded-[18px] border border-dashed border-white/[0.10] bg-white/[0.025] p-4 text-sm leading-6 text-slate-400">
+          Aucun hook alternatif n’a été enregistré. Génère-en à partir de cette analyse.
+        </p>
+      ) : null}
       <div className="mt-6 grid gap-3">
         {analysis.hooks.map((item, index) => (
           <article key={item.hook} className="rounded-[18px] border border-white/[0.075] bg-white/[0.032] p-4">
@@ -407,6 +425,18 @@ function HooksSection({ analysis }: { analysis: AnalysisDetailData }) {
 }
 
 function CtaCard({ analysis }: { analysis: AnalysisDetailData }) {
+  if (analysis.cta.main === '—') {
+    return (
+      <section className={`${card} p-5 sm:p-6`}>
+        <p className={eyebrow}>CTA recommandé</p>
+        <h2 className="mt-2 text-2xl font-black tracking-[-0.035em]">CTA non disponible</h2>
+        <p className="mt-6 rounded-[18px] border border-dashed border-white/[0.10] bg-white/[0.025] p-4 text-sm leading-6 text-slate-400">
+          Cette analyse ne contient aucun CTA calculé. Viralynz n’en ajoute pas un générique.
+        </p>
+      </section>
+    );
+  }
+
   return (
     <section className={`${card} p-5 sm:p-6`}>
       <p className={eyebrow}>CTA recommandé</p>
@@ -432,6 +462,11 @@ function RepostPlan({ analysis }: { analysis: AnalysisDetailData }) {
     <section className={`${card} p-5 sm:p-6`}>
       <p className={eyebrow}>Plan de repost</p>
       <h2 className="mt-2 text-2xl font-black tracking-[-0.035em]">Checklist avant de republier</h2>
+      {analysis.repostPlan.length === 0 ? (
+        <p className="mt-6 rounded-[18px] border border-dashed border-white/[0.10] bg-white/[0.025] p-4 text-sm leading-6 text-slate-400">
+          Aucun plan de repost fiable n’est disponible dans cette analyse.
+        </p>
+      ) : null}
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
         {analysis.repostPlan.map((item, index) => (
           <div key={`${index}-${item}`} className="flex gap-3 rounded-[18px] border border-white/[0.07] bg-white/[0.032] p-4">
@@ -449,7 +484,7 @@ function FooterActions({ analysis }: { analysis: AnalysisDetailData }) {
     <footer className="mt-5 flex flex-col gap-4 rounded-[22px] border border-white/[0.08] bg-white/[0.035] p-5 lg:flex-row lg:items-center lg:justify-between">
       <div>
         <p className="text-sm font-black text-white">Prochaine action</p>
-        <p className="mt-1 text-sm text-slate-400">Coupe, avance la preuve, republie une V2 plus tendue.</p>
+        <p className="mt-1 text-sm text-slate-400">Consulte les décisions enregistrées avant de préparer ta V2.</p>
       </div>
       <div className="flex flex-wrap gap-3">
         <Link href={analysis.prepareHref} className={primaryButton}>
@@ -507,15 +542,6 @@ function InsightBlock({ label, body, accent = false }: { label: string; body: st
   );
 }
 
-function BeforeAfter({ label, body, highlight = false }: { label: string; body: string; highlight?: boolean }) {
-  return (
-    <div className={`rounded-2xl border p-4 ${highlight ? 'border-cyan-300/18 bg-cyan-300/[0.07]' : 'border-white/[0.08] bg-black/18'}`}>
-      <p className={`text-[11px] font-black uppercase tracking-[0.15em] ${highlight ? 'text-cyan-100' : 'text-slate-500'}`}>{label}</p>
-      <p className="mt-2 text-sm font-semibold leading-6 text-slate-200">{body}</p>
-    </div>
-  );
-}
-
 function V2StepCard({ step, index }: { step: RecommendedV2Step; index: number }) {
   return (
     <article className="grid gap-3 rounded-[18px] border border-white/[0.10] bg-black/22 p-4 sm:grid-cols-[92px_1fr]">
@@ -568,27 +594,10 @@ function primaryDecision(analysis: AnalysisDetailData): string {
   const cut = analysis.editingDecisions.find((item) => item.label === 'À couper')?.decision;
 
   if (cut && advance) {
-    return 'Coupe l’intro, avance le payoff, republie une V2 plus tendue.';
+    return `${cut} ${advance}`;
   }
 
-  return analysis.verdict || 'Coupe l’intro, avance le payoff, republie une V2 plus tendue.';
-}
-
-function ensureFiveV2Steps(steps: RecommendedV2Step[]): RecommendedV2Step[] {
-  const defaults: RecommendedV2Step[] = [
-    { timing: '0-2 sec', title: 'Ouvrir avec le résultat', detail: 'Commence par ce que le viewer gagne ou par le problème exact.' },
-    { timing: '2-5 sec', title: 'Donner la preuve', detail: 'Montre l element qui prouve ton point avant de l expliquer.' },
-    { timing: '5-12 sec', title: 'Couper l’intro inutile', detail: 'Supprime les secondes qui posent le contexte sans tension.' },
-    { timing: '12-20 sec', title: 'Ajouter une relance', detail: 'Remets une question ou une contradiction avant que l’attention tombe.' },
-    { timing: '20-25 sec', title: 'CTA clair', detail: 'Termine avec une action simple liée à la promesse de la vidéo.' },
-  ];
-
-  const merged = [...steps];
-  for (const fallback of defaults) {
-    if (merged.length >= 5) break;
-    merged.push(fallback);
-  }
-  return merged.slice(0, 5);
+  return advance ?? cut ?? analysis.verdict ?? 'Diagnostic non disponible.';
 }
 
 function shortenAction(value: string): string {

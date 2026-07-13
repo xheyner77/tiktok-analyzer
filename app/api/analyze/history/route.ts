@@ -1,32 +1,33 @@
-import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 import { getUserById, getEffectivePlan } from '@/lib/auth';
 import { getAnalyses } from '@/lib/analyses';
+import { privateJson } from '@/lib/api-route-security';
 
 export async function GET() {
   try {
     const session = await getSession();
     if (!session) {
-      return NextResponse.json({ analyses: [], locked: true });
+      return privateJson({ analyses: [], locked: true }, { status: 401 });
     }
 
     const user = await getUserById(session.userId);
     if (!user) {
-      return NextResponse.json({ analyses: [], locked: true });
+      return privateJson({ analyses: [], locked: true }, { status: 404 });
     }
 
     const tier = getEffectivePlan(user);
     const analyses = await getAnalyses(session.userId, tier);
     const dashboardCap = tier === 'lifetime' ? analyses.length : Math.min(analyses.length, 30);
-    return NextResponse.json({
+    return privateJson({
       analyses: analyses.slice(0, dashboardCap),
       locked: tier === 'free',
       plan: tier,
       billingPlan: user.plan,
     });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error('[analyze/history] Unexpected error:', message);
-    return NextResponse.json({ analyses: [], locked: true }, { status: 500 });
+  } catch (error) {
+    console.error('[analyze/history] Erreur inattendue.', {
+      kind: error instanceof Error ? error.name : 'unknown',
+    });
+    return privateJson({ analyses: [], locked: true }, { status: 500 });
   }
 }

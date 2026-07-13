@@ -228,16 +228,9 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
                     </p>
                   </div>
 
-                  {/* Social proof */}
-                  <div className="flex items-center gap-2">
-                    <div className="flex -space-x-2">
-                      {[11, 47, 12, 44, 15].map((n) => (
-                        <img key={n} src={`https://i.pravatar.cc/40?img=${n}`} alt="" width={22} height={22}
-                          className="w-[22px] h-[22px] rounded-full border-2 border-[#0a0810] object-cover" />
-                      ))}
-                    </div>
-                    <span className="text-[10px] text-gray-500">Pensé pour <span className="text-gray-300 font-semibold">construire une boucle de reconstruction</span></span>
-                  </div>
+                  <p className="text-[10px] leading-4 text-gray-500">
+                    Pensé pour construire une boucle de reconstruction à partir de tes propres analyses.
+                  </p>
                 </div>
 
                 <button

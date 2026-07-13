@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { consolidateMemoryForUser } from '@/lib/memory/consolidate-memory';
 import { supabase } from '@/lib/supabase';
+import { privateJson } from '@/lib/api-route-security';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +13,7 @@ function authorize(request: NextRequest): boolean {
 
 async function runConsolidation(request: NextRequest) {
   if (!authorize(request)) {
-    return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    return privateJson({ error: 'Non autorisé' }, { status: 401 });
   }
 
   const { data, error } = await supabase
@@ -23,7 +24,8 @@ async function runConsolidation(request: NextRequest) {
     .limit(20);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('[cron/memory-consolidation] profiles_read_failed', { code: error.code });
+    return privateJson({ error: 'Consolidation temporairement indisponible.' }, { status: 500 });
   }
 
   let processed = 0;
@@ -33,7 +35,7 @@ async function runConsolidation(request: NextRequest) {
     if (ok) processed += 1;
   }
 
-  return NextResponse.json({ ok: true, processed });
+  return privateJson({ ok: true, processed });
 }
 
 export async function GET(request: NextRequest) {

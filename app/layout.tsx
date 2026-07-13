@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from 'next';
-import Script from 'next/script';
 import { Inter, Plus_Jakarta_Sans, Syne } from 'next/font/google';
 import Navbar from '@/components/Navbar';
 import FooterWrapper from '@/components/FooterWrapper';
@@ -32,20 +31,32 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
+  colorScheme: 'dark',
+  themeColor: '#020611',
 };
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.viralynz.com'),
+  applicationName: 'Viralynz',
   title: {
-    default: 'Viralynz — Comprends pourquoi tes TikToks décrochent',
+    default: 'Viralynz — Comprends pourquoi tes vidéos décrochent',
     template: '%s | Viralynz',
   },
   description:
-    'Viralynz analyse tes vidéos, repère les moments faibles et prépare une structure optimisée à remonter avec hook, rétention, CTA, mémoire créateur et priorités actionnables.',
+    'Viralynz transforme chaque analyse TikTok, Reels ou Shorts en décisions de montage : quoi couper, avancer, réécrire, garder et republier dans une V2.',
+  category: 'technology',
+  creator: 'Viralynz',
+  publisher: 'Viralynz',
+  referrer: 'origin-when-cross-origin',
+  formatDetection: {
+    address: false,
+    email: false,
+    telephone: false,
+  },
   openGraph: {
-    title: 'Viralynz — Analyse, mémoire créateur et reconstruction TikTok',
+    title: 'Viralynz — Du diagnostic à la V2 à republier',
     description:
-      'Comprends pourquoi ta vidéo performe ou non : diagnostic structuré, moins de publication au hasard. Pour créateurs, e‑com, UGC, agences.',
+      'Repère ce qui fait décrocher, transforme le diagnostic en décisions de montage et prépare une V2 plus tendue.',
     url: 'https://www.viralynz.com',
     siteName: 'Viralynz',
     locale: 'fr_FR',
@@ -53,8 +64,13 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
+    title: 'Viralynz — Du diagnostic à la V2',
+    description: 'Chaque score devient une décision de montage : couper, avancer, réécrire, garder ou republier.',
+  },
+  appleWebApp: {
+    capable: true,
     title: 'Viralynz',
-    description: 'Comprends pourquoi tes TikToks décrochent, corrige le hook et prépare une structure optimisée avec une mémoire créateur persistante.',
+    statusBarStyle: 'black-translucent',
   },
 };
 
@@ -67,13 +83,6 @@ export default function RootLayout({
     <html lang="fr" className={`${jakarta.variable} ${syne.variable} ${interHero.variable}`}>
       <body className={`${jakarta.className} font-sans bg-vn-bg text-white antialiased`}>
         <LanguageProvider>
-          <Script id="microsoft-clarity" strategy="afterInteractive">
-            {`(function(c,l,a,r,i,t,y){
-    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-})(window, document, "clarity", "script", "w84s4jmhgx");`}
-          </Script>
           <StarsBackdrop />
           <Navbar />
           <div className="relative z-[1] pt-[4.25rem] min-h-dvh overflow-x-hidden">{children}</div>

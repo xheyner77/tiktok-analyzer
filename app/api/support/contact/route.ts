@@ -1,8 +1,17 @@
-import { NextResponse, type NextRequest } from 'next/server';
+import { type NextRequest } from 'next/server';
 import { Resend } from 'resend';
 import { getDashboardData } from '@/lib/dashboard-data';
 import { getUserById } from '@/lib/auth';
 import { getSession } from '@/lib/session';
+import {
+  privateJson,
+  readJsonObject,
+  rejectCrossSiteMutation,
+} from '@/lib/api-route-security';
+import {
+  BEST_EFFORT_EMAIL_LIMITS,
+  consumeBestEffortEmailRateLimits,
+} from '@/lib/email-abuse-protection';
 
 const requestTypes = {
   account: 'Compte & accès',
@@ -51,13 +60,19 @@ function buildMailto(to: string, subject: string, message: string, context: stri
 }
 
 export async function POST(request: NextRequest) {
+  const crossSite = rejectCrossSiteMutation(request);
+  if (crossSite) return crossSite;
+
   try {
     const session = await getSession();
     if (!session) {
-      return NextResponse.json({ error: 'Non authentifié.' }, { status: 401 });
+      return privateJson({ error: 'Non authentifié.' }, { status: 401 });
     }
 
-    const body = await request.json();
+    const body = await readJsonObject(request, 64 * 1024);
+    if (!body) {
+      return privateJson({ error: 'Corps de requête invalide.' }, { status: 400 });
+    }
     const typeRaw = cleanText(body.type, 40);
     const priorityRaw = cleanText(body.priority, 40);
     const subject = cleanText(body.subject, 140);
@@ -68,16 +83,48 @@ export async function POST(request: NextRequest) {
     const issueReference = cleanText(body.issueReference, 500);
 
     if (!isRequestType(typeRaw)) {
-      return NextResponse.json({ error: 'Type de demande invalide.' }, { status: 400 });
+      return privateJson({ error: 'Type de demande invalide.' }, { status: 400 });
     }
     if (!isPriority(priorityRaw)) {
-      return NextResponse.json({ error: 'Priorité invalide.' }, { status: 400 });
+      return privateJson({ error: 'Priorité invalide.' }, { status: 400 });
     }
     if (subject.length < 3) {
-      return NextResponse.json({ error: 'Ajoute un sujet clair.' }, { status: 400 });
+      return privateJson({ error: 'Ajoute un sujet clair.' }, { status: 400 });
     }
     if (message.length < 12) {
-      return NextResponse.json({ error: 'Décris le problème avec un peu plus de contexte.' }, { status: 400 });
+      return privateJson({ error: 'Décris le problème avec un peu plus de contexte.' }, { status: 400 });
+    }
+
+    const supportEmail = process.env.SUPPORT_EMAIL?.trim();
+    const resendKey = process.env.RESEND_API_KEY?.trim();
+    const resendFrom = process.env.RESEND_FROM_EMAIL?.trim();
+    const fallbackEmail = supportEmail || 'support@viralynz.com';
+
+    if (supportEmail && resendKey && resendFrom) {
+      const rateLimit = consumeBestEffortEmailRateLimits([{
+        scope: 'support-contact:user',
+        identifier: session.userId,
+        ...BEST_EFFORT_EMAIL_LIMITS.supportPerUser,
+      }]);
+      if (!rateLimit.allowed) {
+        const limitedContext = [
+          `Email: ${session.email}`,
+          `User ID: ${session.userId}`,
+          `Route: ${currentRoute || '/dashboard/support'}`,
+          `Signal: ${feedbackSignal || requestTypes[typeRaw]}`,
+        ].join('\n');
+        return privateJson(
+          {
+            error: 'Trop de demandes envoyées. Réessaie dans quelques minutes ou ouvre l’email prérempli.',
+            code: 'RATE_LIMITED',
+            mailto: buildMailto(fallbackEmail, subject, message, limitedContext),
+          },
+          {
+            status: 429,
+            headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) },
+          },
+        );
+      }
     }
 
     const [profile, dashboard] = await Promise.all([
@@ -85,10 +132,6 @@ export async function POST(request: NextRequest) {
       getDashboardData(),
     ]);
 
-    const supportEmail = process.env.SUPPORT_EMAIL?.trim();
-    const resendKey = process.env.RESEND_API_KEY?.trim();
-    const resendFrom = process.env.RESEND_FROM_EMAIL?.trim();
-    const fallbackEmail = supportEmail || 'support@viralynz.com';
     const planLabel = dashboard.user.planLabel || (profile?.plan ? profile.plan.toUpperCase() : 'Non disponible');
     const subscriptionStatus = profile?.subscription_status || 'none';
     const tiktokStatus = dashboard.tiktokConnection.connected ? 'connecté' : 'non connecté';
@@ -107,10 +150,10 @@ export async function POST(request: NextRequest) {
     ].filter(Boolean).join('\n');
 
     if (!resendFrom) {
-      return NextResponse.json(
+      return privateJson(
         {
-          error: 'Configuration email expéditeur manquante. Ouvre l’email prérempli pour envoyer la demande.',
-          code: 'RESEND_FROM_EMAIL_NOT_CONFIGURED',
+          error: 'Le support automatique est indisponible. Ouvre l’email prérempli pour envoyer la demande.',
+          code: 'SUPPORT_UNAVAILABLE',
           mailto: buildMailto(fallbackEmail, subject, message, accountContext),
         },
         { status: 503 }
@@ -118,12 +161,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (!supportEmail || !resendKey) {
-      return NextResponse.json(
+      return privateJson(
         {
-          error: !supportEmail
-            ? 'Email support non configuré. Ouvre l’email prérempli pour envoyer la demande.'
-            : 'Configuration email support manquante. Ouvre l’email prérempli pour envoyer la demande.',
-          code: !supportEmail ? 'SUPPORT_EMAIL_NOT_CONFIGURED' : 'EMAIL_NOT_CONFIGURED',
+          error: 'Le support automatique est indisponible. Ouvre l’email prérempli pour envoyer la demande.',
+          code: 'SUPPORT_UNAVAILABLE',
           mailto: buildMailto(fallbackEmail, subject, message, accountContext),
         },
         { status: 503 }
@@ -132,7 +173,7 @@ export async function POST(request: NextRequest) {
 
     const resend = new Resend(resendKey);
 
-    await resend.emails.send({
+    const { error: sendError } = await resend.emails.send({
       from: resendFrom,
       to: supportEmail,
       replyTo: session.email,
@@ -160,10 +201,26 @@ export async function POST(request: NextRequest) {
       `,
     });
 
-    return NextResponse.json({ ok: true });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error('[support/contact] error:', message);
-    return NextResponse.json({ error: 'Impossible d’envoyer la demande pour le moment.' }, { status: 500 });
+    if (sendError) {
+      console.error('[support/contact] Envoi refusé par le fournisseur email.', {
+        name: sendError.name,
+        statusCode: sendError.statusCode,
+      });
+      return privateJson(
+        {
+          error: 'Le support automatique est indisponible. Ouvre l’email prérempli pour envoyer la demande.',
+          code: 'SUPPORT_UNAVAILABLE',
+          mailto: buildMailto(fallbackEmail, subject, message, accountContext),
+        },
+        { status: 502 },
+      );
+    }
+
+    return privateJson({ ok: true });
+  } catch (error) {
+    console.error('[support/contact] Erreur inattendue.', {
+      kind: error instanceof Error ? error.name : 'unknown',
+    });
+    return privateJson({ error: 'Impossible d’envoyer la demande pour le moment.' }, { status: 500 });
   }
 }

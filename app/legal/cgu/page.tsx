@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: "Conditions Générales d'Utilisation – Viralynz",
+  title: "Conditions générales d'utilisation",
   description: "Conditions générales d'utilisation de la plateforme Viralynz.",
 };
 

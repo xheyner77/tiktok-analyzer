@@ -81,7 +81,7 @@ export async function getTrendSourceStatus(): Promise<TrendSourceStatus> {
       label: isTrendDemoMode() ? 'Mode demo' : 'Source non connectee',
       detail: isTrendDemoMode()
         ? 'Le cockpit utilise un echantillon local signale comme demo.'
-        : 'Applique la migration Supabase et configure APIFY_TOKEN pour scanner TikTok.',
+        : 'Le Radar n’est pas encore relié à une source de tendances.',
       provider: isTrendDemoMode() ? 'demo' : 'none',
       lastScanAt: null,
       totalRawItems: 0,
@@ -108,7 +108,7 @@ export async function getTrendSourceStatus(): Promise<TrendSourceStatus> {
     status: !configured ? 'not_configured' : (rawCount ?? 0) === 0 ? 'empty' : isStale ? 'stale' : 'connected',
     label: !configured ? 'Source non connectee' : isStale ? 'Scan recommande' : 'Donnees reelles',
     detail: !configured
-      ? 'APIFY_TOKEN et au moins un actor TikTok sont requis.'
+      ? 'Le Radar n’est pas encore relié à une source de tendances.'
       : (rawCount ?? 0) === 0
         ? 'Source configuree, aucun scan stocke.'
         : `Dernier scan ${formatRelativeTime(lastScanAt)}.`,

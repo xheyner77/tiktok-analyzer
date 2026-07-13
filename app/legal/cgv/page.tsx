@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Conditions Générales de Vente – Viralynz',
+  title: 'Conditions générales de vente',
   description: 'Conditions générales de vente des abonnements Viralynz.',
 };
 
@@ -38,9 +38,9 @@ export default function CGVPage() {
           <Section title="2. Plans et tarifs">
             <p>Viralynz propose les plans suivants (prix TTC) :</p>
             <ul>
-              <li><strong className="text-white">Starter</strong> — 10 €/mois, 30 analyses/mois, 150 hooks/mois</li>
-              <li><strong className="text-white">Pro</strong> — 29 €/mois, expérience complète Viralynz</li>
-              <li><strong className="text-white">Lifetime</strong> — 149 € en paiement unique, accès à vie</li>
+              <li><strong className="text-white">Starter</strong> — 10 €/mois, 30 analyses/mois, 50 hooks/mois</li>
+              <li><strong className="text-white">Pro</strong> — 29 €/mois, 150 analyses/mois, 250 hooks/mois et 30 reconstructions V2/mois</li>
+              <li><strong className="text-white">Lifetime</strong> — 149 € en paiement unique, analyses et hooks illimités, 30 reconstructions V2</li>
             </ul>
             <p>Tous les prix sont indiqués en euros TTC. Viralynz se réserve le droit de modifier ses tarifs avec un préavis de 30 jours. Les modifications tarifaires ne s&apos;appliquent pas aux abonnements en cours pendant leur période de facturation.</p>
           </Section>

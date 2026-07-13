@@ -1423,25 +1423,9 @@ function AnalyzeSourceCard({
       </button>
       <p className="mt-3 flex items-center justify-center gap-2 text-center text-[0.78rem] font-semibold text-slate-400">
         <AnalyzeIcon name="shield" className="h-4 w-4 text-slate-500" />
-        Analyse 100% automatique · Sécurisée et privée
+        Vidéo traitée pour le diagnostic · jamais publiée
       </p>
     </section>
-  );
-}
-
-function MiniSparkline({ tone = 'cyan' }: { tone?: 'cyan' | 'violet' | 'green' }) {
-  const stroke = tone === 'green' ? '#86efac' : tone === 'violet' ? '#a78bfa' : '#22d3ee';
-  return (
-    <svg viewBox="0 0 120 34" className="mt-3 h-8 w-full" fill="none" aria-hidden>
-      <path d="M2 25 C18 23 22 14 34 19 C46 24 54 24 66 13 C78 2 84 18 95 16 C106 14 110 9 118 11" stroke={stroke} strokeWidth="2.2" strokeLinecap="round" />
-      <path d="M2 25 C18 23 22 14 34 19 C46 24 54 24 66 13 C78 2 84 18 95 16 C106 14 110 9 118 11 V34 H2 Z" fill={`url(#spark-${tone})`} opacity=".28" />
-      <defs>
-        <linearGradient id={`spark-${tone}`} x1="60" y1="0" x2="60" y2="34">
-          <stop stopColor={stroke} />
-          <stop offset="1" stopColor={stroke} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-    </svg>
   );
 }
 
@@ -1454,7 +1438,7 @@ function InsightMetricCard({ icon, label, value, tone }: { icon: AnalyzeIconName
       </div>
       <p className="mt-3 text-[0.76rem] font-semibold text-slate-400">{label}</p>
       <p className="mt-1 truncate text-[0.98rem] font-black text-white" title={value}>{value}</p>
-      <MiniSparkline tone={tone} />
+      <div className="mt-3 h-px bg-gradient-to-r from-white/[0.10] to-transparent" aria-hidden />
     </div>
   );
 }
@@ -1481,13 +1465,13 @@ function RealtimeInsights({ latest }: { latest: AnalysisHistoryItem | null }) {
 
 function ScoreRing({ score, compact = false }: { score: number | null; compact?: boolean }) {
   const display = score === null ? '--' : String(score);
-  const angle = score === null ? 52 : Math.max(8, Math.min(100, score)) * 3.6;
+  const angle = score === null ? 0 : Math.max(8, Math.min(100, score)) * 3.6;
   const outer = compact ? 'h-16 w-16' : 'h-28 w-28';
   const inner = compact ? 'h-12 w-12' : 'h-[86px] w-[86px]';
   const scoreSize = compact ? 'text-[1.15rem]' : 'text-[2rem]';
   const suffixSize = compact ? 'text-[0.58rem]' : 'text-[0.78rem]';
   return (
-    <div className={`relative grid shrink-0 place-items-center rounded-full ${outer}`} style={{ background: `conic-gradient(#22d3ee 0deg, #3b82f6 ${Math.max(0, angle - 60)}deg, #8b5cf6 ${angle}deg, rgba(255,255,255,0.08) ${angle}deg 360deg)` }}>
+    <div className={`relative grid shrink-0 place-items-center rounded-full ${outer}`} style={{ background: score === null ? 'rgba(255,255,255,0.08)' : `conic-gradient(#22d3ee 0deg, #3b82f6 ${Math.max(0, angle - 60)}deg, #8b5cf6 ${angle}deg, rgba(255,255,255,0.08) ${angle}deg 360deg)` }}>
       <div className={`grid place-items-center rounded-full bg-[#070b18] shadow-[inset_0_0_28px_rgba(15,23,42,0.9)] ${inner}`}>
         <div className="text-center">
           <p className={`${scoreSize} font-black leading-none text-white`}>{display}</p>
@@ -1498,21 +1482,8 @@ function ScoreRing({ score, compact = false }: { score: number | null; compact?:
   );
 }
 
-function RetentionPreviewLine({ hasData }: { hasData: boolean }) {
-  return (
-    <svg viewBox="0 0 132 92" className="h-24 w-full" fill="none" aria-hidden>
-      <path d="M14 8v72h110" stroke="rgba(148,163,184,0.22)" strokeWidth="1" />
-      <path d="M14 28h110M14 54h110" stroke="rgba(148,163,184,0.12)" strokeWidth="1" />
-      <path d={hasData ? 'M16 18 C25 30 32 37 43 40 C58 44 68 45 80 54 C94 65 108 66 122 78' : 'M18 66 C42 66 48 42 66 46 C82 49 91 33 118 33'} stroke={hasData ? '#3b82f6' : 'rgba(148,163,184,0.55)'} strokeWidth="3" strokeLinecap="round" />
-      <text x="0" y="12" fill="rgba(203,213,225,0.72)" fontSize="10">100%</text>
-      <text x="4" y="84" fill="rgba(203,213,225,0.72)" fontSize="10">0%</text>
-    </svg>
-  );
-}
-
 function ResultPreviewCard({ latest }: { latest: AnalysisHistoryItem | null }) {
   const score = getAnalysisScore(latest);
-  const hasData = Boolean(latest);
   const description = latest?.result?.hook?.analysis || latest?.result?.coachAnalysis?.openingAnalysis?.exactCorrection || 'Lance une analyse pour transformer le score en décisions de montage concrètes.';
   const checklist = latest?.result?.actionPlan?.slice(0, 3) ?? latest?.result?.analyzerMeta?.recommendations?.slice(0, 3) ?? [
     'Détecter le hook et le rythme',
@@ -1541,8 +1512,10 @@ function ResultPreviewCard({ latest }: { latest: AnalysisHistoryItem | null }) {
         </div>
       </div>
       <div className="mt-4 rounded-[17px] border border-white/[0.06] bg-white/[0.025] p-3">
-        <p className="mb-2 text-[0.74rem] font-bold text-slate-500">Rétention</p>
-        <RetentionPreviewLine hasData={hasData} />
+        <p className="text-[0.74rem] font-bold text-slate-500">Courbe de rétention TikTok</p>
+        <p className="mt-2 text-[0.8rem] font-semibold leading-5 text-slate-300">
+          Aucune série de rétention autorisée n’est disponible. Viralynz n’invente pas de courbe.
+        </p>
       </div>
     </section>
   );
@@ -1608,7 +1581,7 @@ function MobileBottomNav() {
     { label: 'Compte', href: '/dashboard/settings', icon: 'user' },
   ];
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-[430px] px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+    <nav className="fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-[430px] px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:hidden">
       <div className="grid h-[76px] grid-cols-4 rounded-[24px] border border-white/[0.085] bg-[#06101f]/86 px-2 py-2 shadow-[0_-18px_52px_-34px_rgba(34,211,238,0.8),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl">
         {items.map((item) => (
           <Link key={item.href} href={item.href} className={`flex flex-col items-center justify-center gap-1 rounded-[18px] text-[0.74rem] font-semibold transition ${item.active ? 'bg-[linear-gradient(135deg,rgba(59,130,246,0.24),rgba(139,92,246,0.28))] text-cyan-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]' : 'text-slate-400'}`}>
@@ -1930,7 +1903,7 @@ function ReconstructionIASection({ result, repost, plan }: { result: AnalyzerRes
 
         <div className="mt-5 grid gap-3 lg:grid-cols-[1.1fr_0.9fr]">
           <motion.div whileHover={cardHover} className="rounded-2xl border border-white/[0.08] bg-white/[0.035] p-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-100/80">Pourquoi cette structure performera mieux</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-100/80">Pourquoi cette structure mérite un test</p>
             <div className="mt-3 space-y-3 text-sm leading-6 text-gray-300">
               <p>{reconstruction?.whyThisStructureWorks?.retentionLogic ?? 'Le résultat final est déplacé au début pour réduire la perte des viewers durant les 3 premières secondes.'}</p>
               <p>{reconstruction?.whyThisStructureWorks?.viewerPsychology ?? 'Le viewer reçoit une preuve avant l’explication, ce qui augmente la tension et la curiosité.'}</p>
@@ -1940,15 +1913,15 @@ function ReconstructionIASection({ result, repost, plan }: { result: AnalyzerRes
           <motion.div whileHover={cardHover} className="rounded-2xl border border-vn-fuchsia/18 bg-vn-fuchsia/[0.055] p-4">
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-vn-fuchsia/80">Simulation IA</p>
             <div className="mt-3 grid grid-cols-2 gap-2">
-              {[
-                ['Rétention', prediction?.retentionPotential ?? Math.min(96, result.viralityScore + 16)],
-                ['Watch time', prediction?.watchTimePotential ?? Math.min(96, result.retention.score + 18)],
-                ['Engagement', prediction?.engagementPotential ?? 78],
-                ['Commentaires', prediction?.commentPotential ?? 74],
-              ].map(([label, value]) => (
+              {([
+                ['Rétention', prediction?.retentionPotential ?? null],
+                ['Watch time', prediction?.watchTimePotential ?? null],
+                ['Engagement', prediction?.engagementPotential ?? null],
+                ['Commentaires', prediction?.commentPotential ?? null],
+              ] satisfies Array<[string, number | null]>).map(([label, value]) => (
                 <div key={label} className="rounded-xl border border-white/[0.07] bg-black/18 p-3 text-center">
                   <p className="text-[10px] font-black uppercase tracking-[0.12em] text-gray-500">{label}</p>
-                  <p className="mt-1 text-2xl font-black text-white">{value}<span className="text-xs text-gray-500">/100</span></p>
+                  <p className="mt-1 text-2xl font-black text-white">{value ?? '—'}{value === null ? null : <span className="text-xs text-gray-500">/100</span>}</p>
                 </div>
               ))}
             </div>
@@ -3275,7 +3248,7 @@ export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientP
   const premiumAnalyzeContent = (
     <>
       <GuestGate show={showGuestGate} pendingUrl={uploadTiktokUrl} onClose={() => setShowGuestGate(false)} />
-      <div className="relative mx-auto min-h-dvh w-full max-w-[430px] overflow-hidden bg-[radial-gradient(circle_at_78%_8%,rgba(59,130,246,0.18),transparent_28%),radial-gradient(circle_at_14%_18%,rgba(139,92,246,0.16),transparent_30%),linear-gradient(180deg,#050711_0%,#070a18_48%,#050711_100%)] px-4 pb-[calc(7.5rem+env(safe-area-inset-bottom))] pt-5 text-white shadow-[0_0_90px_-60px_rgba(34,211,238,0.95)]">
+      <div className={`relative mx-auto min-h-dvh w-full overflow-hidden bg-[radial-gradient(circle_at_78%_8%,rgba(59,130,246,0.18),transparent_28%),radial-gradient(circle_at_14%_18%,rgba(139,92,246,0.16),transparent_30%),linear-gradient(180deg,#050711_0%,#070a18_48%,#050711_100%)] px-4 pb-[calc(7.5rem+env(safe-area-inset-bottom))] pt-5 text-white shadow-[0_0_90px_-60px_rgba(34,211,238,0.95)] ${embedded ? 'max-w-[900px] sm:px-6 sm:pb-10 lg:px-8' : 'max-w-[430px]'}`}>
         <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(circle_at_50%_0%,rgba(34,211,238,0.09),transparent_62%)]" />
         <div className="relative">
           <AnalyzePageHeader authUser={authUser} />

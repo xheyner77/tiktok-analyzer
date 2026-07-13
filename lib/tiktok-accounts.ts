@@ -1,6 +1,6 @@
 import { getEffectivePlan, getUserById } from './auth';
 import { supabase } from './supabase';
-import { protectTikTokToken, revealTikTokToken } from './tiktok-crypto';
+import { isProtectedTikTokToken, protectTikTokToken, revealTikTokToken } from './tiktok-crypto';
 import { canConnectTikTokAccount, formatTikTokAccountLimit, getTikTokAccountLimitForPlan } from './tiktok-account-limits';
 import type { TikTokTokenResponse, TikTokUserInfoBasic } from './tiktok-oauth';
 import {
@@ -114,6 +114,32 @@ function toPrivateAccount(row: TikTokAccountRow): TikTokAccountPrivate {
   };
 }
 
+async function migrateLegacyPlaintextTokens(row: TikTokAccountRow): Promise<void> {
+  const rawAccess = row.access_token;
+  const rawRefresh = row.refresh_token;
+  const accessNeedsMigration = Boolean(rawAccess) && !isProtectedTikTokToken(rawAccess);
+  const refreshNeedsMigration = Boolean(rawRefresh) && !isProtectedTikTokToken(rawRefresh);
+  if (!accessNeedsMigration && !refreshNeedsMigration) return;
+
+  try {
+    const update: Record<string, string | null> = {};
+    if (accessNeedsMigration) update.access_token = protectTikTokToken(rawAccess);
+    if (refreshNeedsMigration) update.refresh_token = protectTikTokToken(rawRefresh);
+
+    const { error } = await supabase
+      .from('tiktok_accounts')
+      .update(update)
+      .eq('id', row.id)
+      .eq('user_id', row.user_id);
+
+    if (error) console.error('[tiktok-accounts] legacy_token_migration_failed', { code: error.code });
+  } catch (error) {
+    console.error('[tiktok-accounts] legacy_token_migration_failed', {
+      name: error instanceof Error ? error.name : 'UnknownError',
+    });
+  }
+}
+
 export async function listTikTokAccountsForUser(userId: string): Promise<TikTokAccountSafe[]> {
   const { data, error } = await supabase
     .from('tiktok_accounts')
@@ -122,7 +148,7 @@ export async function listTikTokAccountsForUser(userId: string): Promise<TikTokA
     .order('connected_at', { ascending: false });
 
   if (error) {
-    console.warn('[tiktok-accounts] list failed:', error.message);
+    console.warn('[tiktok-accounts] list_failed', { code: error.code });
     return [];
   }
 
@@ -139,7 +165,7 @@ export async function getTikTokDashboardState(userId: string, plan: string): Pro
       .eq('tiktok_account_id', account.id);
 
     if (error) {
-      console.warn('[tiktok-accounts] video count failed:', error.message);
+      console.warn('[tiktok-accounts] video_count_failed', { code: error.code });
     }
 
     const { data: latest } = await supabase
@@ -183,7 +209,9 @@ export async function getTikTokAccountForUser(userId: string, accountId: string)
     .maybeSingle();
 
   if (error || !data) return null;
-  return toPrivateAccount(data as TikTokAccountRow);
+  const row = data as TikTokAccountRow;
+  await migrateLegacyPlaintextTokens(row);
+  return toPrivateAccount(row);
 }
 
 export async function listActiveTikTokPrivateAccountsForUser(userId: string): Promise<TikTokAccountPrivate[]> {
@@ -194,11 +222,15 @@ export async function listActiveTikTokPrivateAccountsForUser(userId: string): Pr
     .eq('status', 'active');
 
   if (error) {
-    console.warn('[tiktok-accounts] private list failed:', error.message);
+    console.warn('[tiktok-accounts] private_list_failed', { code: error.code });
     return [];
   }
 
-  return (data ?? []).map((row) => toPrivateAccount(row as TikTokAccountRow));
+  return Promise.all((data ?? []).map(async (rawRow) => {
+    const row = rawRow as TikTokAccountRow;
+    await migrateLegacyPlaintextTokens(row);
+    return toPrivateAccount(row);
+  }));
 }
 
 export async function upsertTikTokAccountForUser(params: {
@@ -234,10 +266,13 @@ export async function upsertTikTokAccountForUser(params: {
     accessToken = protectTikTokToken(params.tokens.access_token);
     refreshToken = protectTikTokToken(params.tokens.refresh_token);
   } catch (error) {
+    console.error('[tiktok-accounts] token_encryption_failed', {
+      name: error instanceof Error ? error.name : 'UnknownError',
+    });
     return {
       ok: false as const,
       code: 'token_encryption_failed',
-      message: error instanceof Error ? error.message : 'TikTok token encryption failed.',
+      message: 'Connexion TikTok temporairement indisponible.',
     };
   }
 
@@ -268,7 +303,8 @@ export async function upsertTikTokAccountForUser(params: {
     .single();
 
   if (error) {
-    return { ok: false as const, code: 'db_error', message: error.message };
+    console.error('[tiktok-accounts] account_upsert_failed', { code: error.code });
+    return { ok: false as const, code: 'db_error', message: 'Connexion TikTok temporairement indisponible.' };
   }
 
   await supabase
@@ -311,9 +347,12 @@ export async function updateTikTokAccountTokens(params: {
     accessToken = protectTikTokToken(params.tokens.access_token);
     refreshToken = protectTikTokToken(params.tokens.refresh_token);
   } catch (error) {
+    console.error('[tiktok/accounts] token_encryption_failed', {
+      name: error instanceof Error ? error.name : 'UnknownError',
+    });
     return {
       ok: false as const,
-      error: error instanceof Error ? error.message : 'TikTok token encryption failed.',
+      error: 'TOKEN_ENCRYPTION_FAILED',
     };
   }
 

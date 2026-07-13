@@ -152,11 +152,23 @@ describe('billing Lifetime protections', () => {
 
     expect(response.status).toBe(200);
     expect(body.url).toBe('https://checkout.stripe.test/session');
-    expect(createSession).toHaveBeenCalledWith(expect.objectContaining({
-      mode: 'payment',
-      customer: 'cus_pro',
-      metadata: expect.objectContaining({ plan: 'lifetime' }),
-    }));
+    expect(createSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mode: 'payment',
+        customer: 'cus_pro',
+        client_reference_id: 'user_lifetime',
+        metadata: expect.objectContaining({ plan: 'lifetime' }),
+        payment_intent_data: {
+          metadata: expect.objectContaining({
+            userId: 'user_lifetime',
+            plan: 'lifetime',
+          }),
+        },
+      }),
+      expect.objectContaining({
+        idempotencyKey: expect.stringContaining('viralynz-checkout:user_lifetime:lifetime:month:'),
+      }),
+    );
   });
 
   it('does not cancel Lifetime access as a recurring subscription', async () => {
@@ -170,12 +182,57 @@ describe('billing Lifetime protections', () => {
     });
 
     const { POST } = await import('@/app/api/cancel-plan/route');
-    const response = await POST();
+    const response = await POST(jsonRequest({}) as unknown as NextRequest);
     const body = await response.json();
 
     expect(response.status).toBe(400);
     expect(body.code).toBe('LIFETIME_ACCESS');
+    expect(response.headers.get('cache-control')).toContain('private');
+    expect(response.headers.get('cache-control')).toContain('no-store');
     expect(query.update).not.toHaveBeenCalled();
+  });
+
+  it('rejects cross-site cancellation before reading the session', async () => {
+    const getSession = vi.fn(async () => ({ userId: 'user_lifetime', email: 'creator@viralynz.test' }));
+    vi.doMock('@/lib/session', () => ({ getSession }));
+    mockProdGuard();
+    createSupabaseReadMock({ id: 'user_lifetime', plan: 'lifetime' });
+
+    const { POST } = await import('@/app/api/cancel-plan/route');
+    const request = new Request('https://www.viralynz.com/api/cancel-plan', {
+      method: 'POST',
+      headers: {
+        origin: 'https://example.invalid',
+        'sec-fetch-site': 'cross-site',
+      },
+    });
+    const response = await POST(request as unknown as NextRequest);
+
+    expect(response.status).toBe(403);
+    expect(response.headers.get('cache-control')).toContain('private');
+    expect(response.headers.get('cache-control')).toContain('no-store');
+    expect(getSession).not.toHaveBeenCalled();
+  });
+
+  it('rejects cross-site billing portal access before reading the session', async () => {
+    const getSession = vi.fn(async () => ({ userId: 'user_lifetime', email: 'creator@viralynz.test' }));
+    const getUserById = vi.fn();
+    vi.doMock('@/lib/session', () => ({ getSession }));
+    vi.doMock('@/lib/auth', () => ({ getUserById }));
+    mockProdGuard();
+
+    const { POST } = await import('@/app/api/billing/portal/route');
+    const request = new Request('https://www.viralynz.com/api/billing/portal', {
+      method: 'POST',
+      headers: { origin: 'https://example.invalid' },
+    });
+    const response = await POST(request as unknown as NextRequest);
+
+    expect(response.status).toBe(403);
+    expect(response.headers.get('cache-control')).toContain('private');
+    expect(response.headers.get('cache-control')).toContain('no-store');
+    expect(getSession).not.toHaveBeenCalled();
+    expect(getUserById).not.toHaveBeenCalled();
   });
 
   it('accepts canonical Lifetime in upgrade-plan verification without direct DB writes', async () => {
@@ -256,5 +313,48 @@ describe('billing Lifetime protections', () => {
 
     expect(result).toEqual({ ok: true });
     expect(query.update).not.toHaveBeenCalled();
+  });
+
+  it('keeps the previous subscription addressable after a paid Lifetime upgrade', async () => {
+    process.env.STRIPE_LIFETIME_PRICE_ID = 'price_lifetime_149';
+    const { query } = createSupabaseReadMock({
+      id: 'user_lifetime',
+      plan: 'pro',
+      stripe_subscription_id: 'sub_previous_pro',
+    });
+    const cancelPreviousSubscription = vi.fn(async () => ({ id: 'sub_previous_pro' }));
+    const stripe = {
+      checkout: {
+        sessions: {
+          listLineItems: vi.fn(async () => ({
+            data: [{ price: { id: 'price_lifetime_149' } }],
+          })),
+        },
+      },
+      subscriptions: { update: cancelPreviousSubscription },
+    } as unknown as Stripe;
+    const checkout = {
+      id: 'cs_paid_lifetime',
+      mode: 'payment',
+      payment_status: 'paid',
+      customer: 'cus_lifetime',
+      metadata: { userId: 'user_lifetime', plan: 'lifetime' },
+    } as unknown as Stripe.Checkout.Session;
+
+    const { syncUserFromPaidLifetimeCheckout } = await import('@/lib/stripe-subscription-sync');
+    const result = await syncUserFromPaidLifetimeCheckout(stripe, checkout);
+
+    expect(result).toEqual({ ok: true });
+    expect(cancelPreviousSubscription).toHaveBeenCalledWith(
+      'sub_previous_pro',
+      expect.objectContaining({ cancel_at_period_end: true }),
+    );
+    expect(query.update).toHaveBeenCalledWith(expect.objectContaining({
+      plan: 'lifetime',
+      stripe_subscription_id: 'sub_previous_pro',
+      stripe_price_id: 'price_lifetime_149',
+      subscription_status: 'lifetime',
+      subscription_cancel_at_period_end: true,
+    }));
   });
 });

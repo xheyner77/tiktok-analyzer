@@ -59,7 +59,7 @@ export default function TikTokConnectCard({
               <>
                 <p className="text-base font-bold text-white">Connecte ton TikTok</p>
                 <p className="text-[12px] text-gray-500 mt-0.5 leading-snug">
-                  Lie ton compte pour préparer stats profil, import vidéos et la suite des features.
+                  Lie ton compte pour préparer les statistiques du profil, l’import vidéo et les prochaines fonctionnalités.
                 </p>
               </>
             )}

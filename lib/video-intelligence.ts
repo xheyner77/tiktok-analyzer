@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { normalizePlan } from './plans';
 import type { Plan } from './supabase';
 import type { VideoIntelligenceResult } from './types';
 import { OPENAI_CHAT_MODEL } from './openai-models';
@@ -241,7 +242,8 @@ export async function extractTranscriptFromVideo(input: {
 }): Promise<VideoIntelligenceResult['transcript']> {
   const { audioBase64, mimeType = 'audio/webm', plan, timeoutMs = 25_000 } = input;
 
-  if (plan === 'free') {
+  const normalizedPlan = normalizePlan(plan);
+  if (normalizedPlan !== 'pro' && normalizedPlan !== 'lifetime') {
     return {
       available: false,
       confidence: 0,
@@ -319,7 +321,9 @@ export async function extractTranscriptFromVideo(input: {
       limitations: text ? [] : ['Whisper n’a pas retourné de transcript exploitable.'],
     };
   } catch (err) {
-    console.warn('[video-intelligence] transcription failed:', err instanceof Error ? err.message : err);
+    console.warn('[video-intelligence] transcription_failed', {
+      name: err instanceof Error ? err.name : 'UnknownError',
+    });
     return {
       available: false,
       confidence: 0,

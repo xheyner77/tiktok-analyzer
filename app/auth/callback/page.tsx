@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
+import type { EmailOtpType } from '@supabase/supabase-js';
 import BrandLogo from '@/components/BrandLogo';
+import { createBrowserSupabaseClient } from '@/lib/supabase-browser';
 
 /*
  * /auth/callback — landing page after Supabase email confirmation.
@@ -14,8 +16,8 @@ import BrandLogo from '@/components/BrandLogo';
  *   - Query params: ?token_hash=...&type=signup  (PKCE flow, newer Supabase)
  *   - Hash params:  #access_token=...&type=signup (implicit flow, older)
  *
- * For this app we don't auto-login here; we simply show a clear success
- * message so the user knows their email is confirmed and can log in.
+ * The provider token is verified before any success state is displayed. The
+ * app still asks the user to log in through its HttpOnly application session.
  */
 
 function CallbackContent() {
@@ -24,16 +26,83 @@ function CallbackContent() {
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
-    // Check for error param from Supabase (e.g. expired link)
-    const error = searchParams?.get('error') ?? searchParams?.get('error_description');
-    if (error) {
-      setErrorMsg(error);
-      setStatus('error');
-      return;
-    }
+    let active = true;
 
-    // Any other landing here (token_hash present or hash fragment) = success
-    setStatus('success');
+    const fail = () => {
+      if (!active) return;
+      setErrorMsg('La confirmation n’a pas pu être vérifiée. Demande un nouveau lien depuis la connexion.');
+      setStatus('error');
+    };
+
+    const verify = async () => {
+      const providerError = searchParams?.get('error') ?? searchParams?.get('error_description');
+      if (providerError) {
+        fail();
+        return;
+      }
+
+      try {
+        const supabase = createBrowserSupabaseClient();
+        const code = searchParams?.get('code');
+        const tokenHash = searchParams?.get('token_hash');
+        const otpType = searchParams?.get('type');
+        let verificationError: Error | null = null;
+
+        if (code) {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          verificationError = error;
+        } else if (tokenHash && otpType) {
+          const allowedTypes: EmailOtpType[] = [
+            'signup',
+            'email',
+            'email_change',
+            'invite',
+            'magiclink',
+            'recovery',
+          ];
+          if (!allowedTypes.includes(otpType as EmailOtpType)) {
+            fail();
+            return;
+          }
+          const { error } = await supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: otpType as EmailOtpType,
+          });
+          verificationError = error;
+        } else {
+          const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+          const accessToken = hash.get('access_token');
+          const refreshToken = hash.get('refresh_token');
+          if (accessToken && refreshToken) {
+            const { error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+            verificationError = error;
+          }
+        }
+
+        if (verificationError) {
+          fail();
+          return;
+        }
+
+        const { data, error } = await supabase.auth.getUser();
+        if (error || !data.user) {
+          fail();
+          return;
+        }
+
+        if (active) setStatus('success');
+      } catch {
+        fail();
+      }
+    };
+
+    void verify();
+    return () => {
+      active = false;
+    };
   }, [searchParams]);
 
   if (status === 'loading') {

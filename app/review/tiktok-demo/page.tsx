@@ -6,8 +6,9 @@ import ReviewTikTokDemoClient, { type ReviewTikTokDemoData } from './ReviewTikTo
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Démo d’intégration TikTok | Viralynz',
+  title: 'Démo d’intégration TikTok',
   description: 'Page de review TikTok pour démontrer le flux OAuth Viralynz en lecture seule.',
+  robots: { index: false, follow: false },
 };
 
 type TikTokAccountRow = {

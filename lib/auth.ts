@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import type { Plan } from './supabase';
 import { HOOK_LIMITS, PLAN_LIMITS, RECONSTRUCTION_LIMITS } from './plan-limits';
+import { getNextMonthlyResetAt } from './plans';
 import { getEffectivePlan } from './stripe-billing';
 
 export {
@@ -125,36 +126,41 @@ export async function getUserById(id: string): Promise<UserProfile | null> {
 // ── Monthly reset ─────────────────────────────────────────────────────────────
 
 /**
- * Si l’utilisateur est en plan payant **sans** abonnement Stripe (legacy), reset des compteurs
- * à chaque changement de mois calendaire.
- *
- * Avec `stripe_subscription_id`, le reset des quotas est déclenché par le webhook `invoice.paid`
- * (billing_reason `subscription_cycle`) pour coller à la période de facturation.
+ * Reset rolling monthly quotas for recurring paid plans. Stripe monthly
+ * renewals also reset them via `invoice.paid`; annual subscriptions use this
+ * path so a monthly product quota never becomes an accidental annual quota.
  */
 export async function checkAndResetMonthly(user: UserProfile): Promise<UserProfile> {
-  if (user.stripe_subscription_id) return user;
+  const tier = getEffectivePlan(user);
 
-  const lastReset = new Date(user.last_reset_at);
-  const now       = new Date();
+  // Free is a lifetime trial (3 analyses total), not a monthly allowance.
+  // Lifetime is intentionally not reset either.
+  if (tier === 'free' || tier === 'lifetime') return user;
 
-  const sameMonth =
-    lastReset.getUTCFullYear() === now.getUTCFullYear() &&
-    lastReset.getUTCMonth()    === now.getUTCMonth();
-
-  if (sameMonth) return user;
+  const now = new Date();
+  const nextReset = getNextMonthlyResetAt(user.last_reset_at);
+  if (nextReset && now < nextReset) return user;
 
   const nowIso = now.toISOString();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('users')
     .update({ analyses_count: 0, hooks_count: 0, reconstructions_count: 0, last_reset_at: nowIso })
-    .eq('id', user.id);
+    .eq('id', user.id)
+    .eq('last_reset_at', user.last_reset_at)
+    .select('id')
+    .maybeSingle();
 
   if (error) {
-    console.error('[checkAndResetMonthly] Reset failed:', error.message);
+    console.error('[checkAndResetMonthly] Reset failed:', error.name || 'database_error');
     return user;
   }
 
-  console.log('[checkAndResetMonthly] Monthly counters reset (legacy calendar) for:', user.id);
+  if (!data) {
+    // Another request already performed the reset. Return the current row so
+    // a stale request cannot overwrite counters reserved after that reset.
+    return (await getUserById(user.id)) ?? user;
+  }
+
   return { ...user, analyses_count: 0, hooks_count: 0, reconstructions_count: 0, last_reset_at: nowIso };
 }
 
@@ -291,6 +297,209 @@ export async function refundAnalysisQuota(userId: string): Promise<boolean> {
   }
 
   return true;
+}
+
+async function reserveHookQuotaFallback(
+  user: UserProfile,
+  amount: number,
+  limit: number,
+): Promise<QuotaReservation> {
+  const { data: freshRow, error: readError } = await supabase
+    .from('users')
+    .select('hooks_count')
+    .eq('id', user.id)
+    .single();
+
+  if (readError || !freshRow) {
+    console.error('[reserveHookQuotaFallback] Read failed:', readError?.code ?? 'unknown');
+    return { allowed: false, used: user.hooks_count, limit };
+  }
+
+  const current = (freshRow as { hooks_count?: number }).hooks_count ?? user.hooks_count;
+  if (current + amount > limit) return { allowed: false, used: current, limit };
+
+  const { data: updatedRow, error: updateError } = await supabase
+    .from('users')
+    .update({ hooks_count: current + amount })
+    .eq('id', user.id)
+    .eq('hooks_count', current)
+    .select('hooks_count')
+    .maybeSingle();
+
+  if (updateError || !updatedRow) {
+    console.error('[reserveHookQuotaFallback] Concurrent update or write failure:', updateError?.code ?? 'conflict');
+    return { allowed: false, used: current, limit };
+  }
+
+  return {
+    allowed: true,
+    used: (updatedRow as { hooks_count?: number }).hooks_count ?? current + amount,
+    limit,
+  };
+}
+
+/** Atomically reserves HookPacks before the external AI call is started. */
+export async function reserveHookQuota(user: UserProfile, amount: number): Promise<QuotaReservation> {
+  const safeAmount = Math.max(1, Math.floor(amount));
+  const tier = getEffectivePlan(user);
+  const limit = HOOK_LIMITS[tier] ?? 0;
+  if (limit <= 0) return { allowed: false, used: user.hooks_count, limit };
+
+  if (!Number.isFinite(limit)) {
+    await incrementHooksCount(user.id, safeAmount);
+    return { allowed: true, used: user.hooks_count + safeAmount, limit };
+  }
+
+  const { data, error } = await supabase.rpc('reserve_hook_quota', {
+    p_user_id: user.id,
+    p_amount: safeAmount,
+  });
+
+  if (error) {
+    console.error('[reserveHookQuota] RPC failed:', error.code ?? 'unknown');
+    return reserveHookQuotaFallback(user, safeAmount, limit);
+  }
+
+  const row = Array.isArray(data) ? data[0] : data;
+  return {
+    allowed: Boolean(row?.allowed),
+    used: typeof row?.used === 'number' ? row.used : user.hooks_count,
+    limit: typeof row?.limit_value === 'number' ? row.limit_value : limit,
+  };
+}
+
+export async function refundHookQuota(userId: string, amount: number): Promise<boolean> {
+  const safeAmount = Math.max(1, Math.floor(amount));
+  const { error } = await supabase.rpc('refund_hook_quota', {
+    p_user_id: userId,
+    p_amount: safeAmount,
+  });
+  if (!error) return true;
+
+  console.error('[refundHookQuota] RPC failed:', error.code ?? 'unknown');
+  const { data: row, error: readError } = await supabase
+    .from('users')
+    .select('hooks_count')
+    .eq('id', userId)
+    .single();
+
+  if (readError || !row) return false;
+  const current = (row as { hooks_count?: number }).hooks_count ?? 0;
+  const nextCount = Math.max(0, current - safeAmount);
+  const { data: updated, error: writeError } = await supabase
+    .from('users')
+    .update({ hooks_count: nextCount })
+    .eq('id', userId)
+    .eq('hooks_count', current)
+    .select('hooks_count')
+    .maybeSingle();
+
+  return !writeError && Boolean(updated);
+}
+
+async function reserveReconstructionQuotaFallback(
+  user: UserProfile,
+  amount: number,
+  limit: number,
+): Promise<QuotaReservation> {
+  const { data: freshRow, error: readError } = await supabase
+    .from('users')
+    .select('reconstructions_count')
+    .eq('id', user.id)
+    .single();
+
+  if (readError || !freshRow) {
+    console.error('[reserveReconstructionQuotaFallback] Read failed:', readError?.code ?? 'unknown');
+    return { allowed: false, used: user.reconstructions_count, limit };
+  }
+
+  const current =
+    (freshRow as { reconstructions_count?: number }).reconstructions_count
+    ?? user.reconstructions_count;
+  if (current + amount > limit) return { allowed: false, used: current, limit };
+
+  const { data: updatedRow, error: updateError } = await supabase
+    .from('users')
+    .update({ reconstructions_count: current + amount })
+    .eq('id', user.id)
+    .eq('reconstructions_count', current)
+    .select('reconstructions_count')
+    .maybeSingle();
+
+  if (updateError || !updatedRow) {
+    console.error(
+      '[reserveReconstructionQuotaFallback] Concurrent update or write failure:',
+      updateError?.code ?? 'conflict',
+    );
+    return { allowed: false, used: current, limit };
+  }
+
+  return {
+    allowed: true,
+    used:
+      (updatedRow as { reconstructions_count?: number }).reconstructions_count
+      ?? current + amount,
+    limit,
+  };
+}
+
+/** Atomically reserves reconstruction quota before constructing the V2. */
+export async function reserveReconstructionQuota(
+  user: UserProfile,
+  amount = 1,
+): Promise<QuotaReservation> {
+  const safeAmount = Math.max(1, Math.floor(amount));
+  const tier = getEffectivePlan(user);
+  const limit = RECONSTRUCTION_LIMITS[tier] ?? 0;
+  if (limit <= 0) {
+    return { allowed: false, used: user.reconstructions_count, limit };
+  }
+
+  const { data, error } = await supabase.rpc('reserve_reconstruction_quota', {
+    p_user_id: user.id,
+    p_amount: safeAmount,
+  });
+
+  if (error) {
+    console.error('[reserveReconstructionQuota] RPC failed:', error.code ?? 'unknown');
+    return reserveReconstructionQuotaFallback(user, safeAmount, limit);
+  }
+
+  const row = Array.isArray(data) ? data[0] : data;
+  return {
+    allowed: Boolean(row?.allowed),
+    used: typeof row?.used === 'number' ? row.used : user.reconstructions_count,
+    limit: typeof row?.limit_value === 'number' ? row.limit_value : limit,
+  };
+}
+
+export async function refundReconstructionQuota(userId: string, amount = 1): Promise<boolean> {
+  const safeAmount = Math.max(1, Math.floor(amount));
+  const { error } = await supabase.rpc('refund_reconstruction_quota', {
+    p_user_id: userId,
+    p_amount: safeAmount,
+  });
+  if (!error) return true;
+
+  console.error('[refundReconstructionQuota] RPC failed:', error.code ?? 'unknown');
+  const { data: row, error: readError } = await supabase
+    .from('users')
+    .select('reconstructions_count')
+    .eq('id', userId)
+    .single();
+  if (readError || !row) return false;
+
+  const current = (row as { reconstructions_count?: number }).reconstructions_count ?? 0;
+  const nextCount = Math.max(0, current - safeAmount);
+  const { data: updated, error: writeError } = await supabase
+    .from('users')
+    .update({ reconstructions_count: nextCount })
+    .eq('id', userId)
+    .eq('reconstructions_count', current)
+    .select('reconstructions_count')
+    .maybeSingle();
+
+  return !writeError && Boolean(updated);
 }
 
 export async function incrementAnalysesCount(userId: string): Promise<void> {

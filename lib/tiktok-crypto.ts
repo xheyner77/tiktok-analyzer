@@ -2,8 +2,14 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'crypt
 
 const PREFIX = 'v1:';
 
+export function isProtectedTikTokToken(value: string | null | undefined): boolean {
+  return Boolean(value?.startsWith(PREFIX));
+}
+
 function getKey() {
-  const raw = process.env.TIKTOK_TOKEN_ENCRYPTION_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  // A dedicated stable key is mandatory. Reusing the Supabase service-role
+  // key couples OAuth token readability to an unrelated credential rotation.
+  const raw = process.env.TIKTOK_TOKEN_ENCRYPTION_KEY || '';
   if (!raw) return null;
   return createHash('sha256').update(raw).digest();
 }
@@ -12,7 +18,7 @@ export function protectTikTokToken(token: string | null | undefined): string | n
   if (!token) return null;
   const key = getKey();
   if (!key) {
-    throw new Error('TIKTOK_TOKEN_ENCRYPTION_KEY or SUPABASE_SERVICE_ROLE_KEY is required to store TikTok tokens.');
+    throw new Error('TIKTOK_TOKEN_ENCRYPTION_KEY is required to store TikTok tokens.');
   }
 
   const iv = randomBytes(12);

@@ -1,3 +1,5 @@
+import { isTikTokVideoUrl } from './tiktok-url';
+
 export interface TikTokPublicStats {
   views?: number;
   likes?: number;
@@ -9,6 +11,42 @@ export interface TikTokPublicStats {
   publishedAt?: string;
   caption?: string;
   source?: 'page_json' | 'oembed';
+}
+
+const TIKTOK_FETCH_TIMEOUT_MS = 8_000;
+const MAX_TIKTOK_REDIRECTS = 4;
+
+async function fetchTikTokPage(initialUrl: string): Promise<Response | null> {
+  let currentUrl = initialUrl;
+
+  for (let redirectCount = 0; redirectCount <= MAX_TIKTOK_REDIRECTS; redirectCount += 1) {
+    if (!isTikTokVideoUrl(currentUrl)) return null;
+
+    const response = await fetch(currentUrl, {
+      headers: {
+        'user-agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36',
+        accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      },
+      cache: 'no-store',
+      redirect: 'manual',
+      signal: AbortSignal.timeout(TIKTOK_FETCH_TIMEOUT_MS),
+    });
+
+    if (![301, 302, 303, 307, 308].includes(response.status)) return response;
+    if (redirectCount === MAX_TIKTOK_REDIRECTS) return null;
+
+    const location = response.headers.get('location');
+    if (!location) return null;
+
+    try {
+      currentUrl = new URL(location, currentUrl).toString();
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
 }
 
 function extractJsonByScriptId(html: string, scriptId: string): unknown | null {
@@ -80,14 +118,8 @@ function parseFromSigiState(data: any): TikTokPublicStats | null {
 
 export async function fetchTikTokPublicStats(videoUrl: string): Promise<TikTokPublicStats | null> {
   try {
-    const response = await fetch(videoUrl, {
-      headers: {
-        'user-agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36',
-        accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      },
-      cache: 'no-store',
-    });
+    const response = await fetchTikTokPage(videoUrl);
+    if (!response) return null;
 
     if (!response.ok) {
       console.error('[tiktok] page fetch failed:', response.status);
@@ -122,7 +154,11 @@ export async function fetchTikTokPublicStats(videoUrl: string): Promise<TikTokPu
 async function fetchFromOEmbed(videoUrl: string): Promise<TikTokPublicStats | null> {
   try {
     const endpoint = `https://www.tiktok.com/oembed?url=${encodeURIComponent(videoUrl)}`;
-    const res = await fetch(endpoint, { cache: 'no-store' });
+    const res = await fetch(endpoint, {
+      cache: 'no-store',
+      redirect: 'error',
+      signal: AbortSignal.timeout(TIKTOK_FETCH_TIMEOUT_MS),
+    });
     if (!res.ok) return null;
     const data = await res.json();
     // oEmbed is limited: author + title/caption-like + publish_date sometimes.

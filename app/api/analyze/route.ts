@@ -1,18 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AnalysisResult, Rating, Improvement, AnalysisSection } from '@/lib/types';
+import { AnalysisResult } from '@/lib/types';
 import { getSession } from '@/lib/session';
 import {
   getUserById,
-  incrementReconstructionsCount,
   checkAndResetMonthly,
-  canGenerateReconstruction,
   reserveAnalysisQuota,
   refundAnalysisQuota,
+  reserveReconstructionQuota,
+  refundReconstructionQuota,
   PLAN_LIMITS,
   RECONSTRUCTION_LIMITS,
   getEffectivePlan,
   type UserProfile,
 } from '@/lib/auth';
+import { getNextMonthlyResetAt } from '@/lib/plans';
 import { getRecentAnalysesForMemory, saveAnalysis } from '@/lib/analyses';
 import { enrichAnalysisResult, type AnalysisEngineContext } from '@/lib/analysis-engine';
 import { analyzeWithOpenAI, analyzeWithOpenAIVision } from '@/lib/openai';
@@ -31,6 +32,7 @@ import { getCreatorMemoryLimit } from '@/lib/plan-limits';
 import { createMemoryJob, processMemoryJob } from '@/lib/memory';
 import { buildReconstructionIA as buildReconstructionIAOutput } from '@/lib/ai-reconstruction-engine';
 import { buildStructuredReconstruction } from '@/lib/reconstruction/engine';
+import { exceedsDeclaredBodyLimit, privateJson, readJsonObject } from '@/lib/api-route-security';
 
 /** Vision + reprises 429 : plusieurs appels OpenAI (plafond plan Vercel). */
 export const maxDuration = 60;
@@ -40,6 +42,50 @@ interface ObservedMetrics {
   likes?: number;
   comments?: number;
   shares?: number;
+}
+
+class AnalysisUnavailableError extends Error {
+  readonly status: number;
+  readonly code: string;
+  readonly publicMessage: string;
+
+  constructor(options?: { status?: number; code?: string; publicMessage?: string }) {
+    super(options?.code ?? 'ANALYSIS_TEMPORARILY_UNAVAILABLE');
+    this.name = 'AnalysisUnavailableError';
+    this.status = options?.status ?? 503;
+    this.code = options?.code ?? 'ANALYSIS_TEMPORARILY_UNAVAILABLE';
+    this.publicMessage = options?.publicMessage
+      ?? 'Le service d’analyse est temporairement indisponible. Aucun résultat n’a été enregistré : réessaie dans quelques minutes.';
+  }
+}
+
+function safeErrorDescriptor(error: unknown): { name: string; status?: number } {
+  if (!error || typeof error !== 'object') return { name: 'UnknownError' };
+  const candidate = error as { name?: unknown; status?: unknown };
+  return {
+    name: typeof candidate.name === 'string' ? candidate.name.slice(0, 80) : 'UnknownError',
+    status: typeof candidate.status === 'number' && Number.isFinite(candidate.status)
+      ? candidate.status
+      : undefined,
+  };
+}
+
+function analysisErrorResponse(error: unknown, quotaRestored?: boolean): NextResponse {
+  if (error instanceof AnalysisUnavailableError) {
+    return NextResponse.json(
+      { error: error.publicMessage, code: error.code, quotaRestored: quotaRestored === true },
+      { status: error.status }
+    );
+  }
+
+  return NextResponse.json(
+    {
+      error: 'Analyse interrompue pour une raison technique. Aucun résultat n’a été enregistré : réessaie dans quelques minutes.',
+      code: 'ANALYSIS_TECHNICAL_ERROR',
+      quotaRestored: quotaRestored === true,
+    },
+    { status: 500 }
+  );
 }
 
 function sanitizeShortString(value: unknown, max = 120): string | undefined {
@@ -71,17 +117,18 @@ async function enqueueMemoryLearning(input: {
     if (job && process.env.MEMORY_PROCESS_SYNC === 'true') {
       const result = await processMemoryJob(job, input.plan);
       if (!result.ok) {
-        console.warn('[analyze] memory sync job failed:', result.error);
+        console.warn('[analyze] memory_sync_job_failed');
       }
     }
   } catch (error) {
-    console.warn('[analyze] memory job enqueue failed:', error instanceof Error ? error.message : error);
+    console.warn('[analyze] memory_job_enqueue_failed', safeErrorDescriptor(error));
   }
 }
 
 function getMonthlyResetAt(user?: { stripe_subscription_id?: string | null; subscription_current_period_end?: string | null; last_reset_at?: string | null }): string {
-  if (user?.stripe_subscription_id && user.subscription_current_period_end) {
-    return new Date(user.subscription_current_period_end).toISOString();
+  if (user?.last_reset_at) {
+    const next = getNextMonthlyResetAt(user.last_reset_at);
+    if (next) return next.toISOString();
   }
   const now = new Date();
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1, 0, 0, 0)).toISOString();
@@ -576,342 +623,6 @@ function applyQualityGate(result: AnalysisResult, analysisContext: ReturnType<ty
   return validated;
 }
 
-function simpleHash(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash = hash & hash;
-  }
-  return Math.abs(hash);
-}
-
-function getRating(score: number): Rating {
-  if (score >= 80) return 'Excellent';
-  if (score >= 60) return 'Bon';
-  if (score >= 40) return 'Moyen';
-  return 'Faible';
-}
-
-// rating is not stored in the profile — it is computed dynamically in buildMockResult
-type MockSection = Omit<AnalysisSection, 'rating'>;
-
-interface MockProfile {
-  viralityScore: number;
-  hook: MockSection;
-  editing: MockSection;
-  retention: MockSection;
-  improvements: { priority: 'haute' | 'moyenne' | 'basse'; tip: string }[];
-  strategy: string;
-  viralTips: string[];
-}
-
-const profiles: MockProfile[] = [
-  // ── Profil A — Haute performance (~83%) ─────────────────────────────────
-  {
-    viralityScore: 83,
-    hook: {
-      score: 86,
-      analysis:
-        "Ton hook montre un signal de structure fort. Le pattern interrupt visuel à 00:01 combiné à la question directe au viewer peut aider à stopper le scroll. Point à tester : tu arrives au vrai sujet à 00:04 — c'est 1,5 seconde de trop pour une ouverture très directe.",
-      strengths: [
-        "Coupure brutale à 00:01 qui stoppe physiquement le scroll",
-        "Question posée directement au viewer dans les 2 premières secondes",
-        "Expression de choc ou visuel fort dès la première frame",
-      ],
-      weaknesses: [
-        "Le sujet réel arrive à 00:04 — ramène-le à 00:02 maximum pour éviter le drop-off précoce",
-        "Aucun sous-titre dans les 2 premières secondes : -30% de rétention sur audience mobile sans son",
-      ],
-    },
-    editing: {
-      score: 81,
-      analysis:
-        "Rythme solide — tes cuts sont en moyenne à 2,4s, dans la zone optimale TikTok (2-3s). Problème identifié : le plan entre 00:08 et 00:13 est statique sur 5 secondes, c'est exactement là que ta courbe de rétention chute. Découpe-le en 2 plans ou insère un zoom progressif à 110% sur ce segment.",
-      strengths: [
-        "Rythme de coupe à 2,4s de moyenne — dans la zone de performance optimale",
-        "Cuts synchronisés sur les temps forts musicaux",
-        "Aucune transition décorative inutile qui alourdit le flux",
-      ],
-      weaknesses: [
-        "Plan statique de 5s entre 00:08-00:13 — c'est ton point de drop-off principal",
-        "Volume musique de fond trop élevé : la voix doit dominer à 70% du mix audio",
-      ],
-    },
-    retention: {
-      score: 79,
-      analysis:
-        "Bonne courbe de rétention jusqu'à la mi-vidéo. La structure 'promesse → build-up → révélation' fonctionne. Mais ta fin est trop douce : les viewers regardent jusqu'à ~00:27 puis quittent sans action. Il te manque un twist ou une déclaration choc dans les 3 dernières secondes pour provoquer le commentaire.",
-      strengths: [
-        "Micro-hook toutes les 6-7s qui reset l'attention — structure correcte",
-        "Taux de complétion estimé à 65-70% — hypothèse IA à confirmer avec les données TikTok",
-        "Promesse du hook tenue jusqu'à la fin sans trahison du viewer",
-      ],
-      weaknesses: [
-        "Creux de rétention détecté à mi-vidéo — insère une stat choc ou un changement de plan brutal",
-        "CTA final trop mou ('n'hésite pas à...') — ça ne déclenche aucune action mesurable",
-      ],
-    },
-    improvements: [
-      {
-        priority: 'haute',
-        tip: "Ajoute des sous-titres animés sur les 3 premières secondes UNIQUEMENT — une part importante de l'audience découvre sans son sur mobile. C'est une zone à améliorer sans retourner la vidéo.",
-      },
-      {
-        priority: 'haute',
-        tip: "Découpe le plan statique à 00:08 : ajoute un zoom à 110% + son 'whoosh'. Ce seul changement peut récupérer 10-15 points de taux de complétion.",
-      },
-      {
-        priority: 'moyenne',
-        tip: "Remplace ton CTA final par : 'Commente [MOT CLÉ] si t'as vécu ça.' Les commentaires sont un signal d'engagement utile à tester.",
-      },
-      {
-        priority: 'moyenne',
-        tip: "Insère un texte overlay rouge type '⚠️ Ce que personne ne dit' en overlay à 00:01 — capture les viewers sans son dès la première seconde.",
-      },
-      {
-        priority: 'basse',
-        tip: "Teste une version raccourcie à 18s en coupant après la révélation principale — les vidéos <20s ont un taux de complétion 40% plus élevé selon les benchmarks creators.",
-      },
-      {
-        priority: 'moyenne',
-        tip: "Lance une série de 3 à 5 épisodes en partant du sujet de cette vidéo. Les séries augmentent le taux de retour sur ton profil de 60% et signalent à l'algorithme que tu es un créateur à pousser dans la durée.",
-      },
-      {
-        priority: 'moyenne',
-        tip: "Engage chaque commentaire dans les 30 premières minutes après publication. Ce signal d'activité est le deuxième levier le plus puissant après le taux de complétion pour déclencher la distribution élargie.",
-      },
-      {
-        priority: 'basse',
-        tip: "Crée une version 'derrière les coulisses' de cette vidéo — comment tu l'as construite, quel était ton objectif. Les vidéos making-of sur du contenu performant génèrent en moyenne 40% de l'engagement de la vidéo originale.",
-      },
-    ],
-    strategy: "Ton contenu montre des signaux solides, mais ces hypothèses doivent être confirmées avec tes données TikTok. Pour tester la croissance, publie 4 à 5 fois par semaine si ton rythme de production le permet. Format recommandé : mix 60% vidéos éducatives, 30% behind-the-scenes et 10% trends à adapter à ta niche. Cible les créneaux 7h-9h et 18h-21h en semaine comme tests de publication. Sur les 30 prochains jours, lance une série de 5 épisodes sur ton sujet phare avec un teaser en première vidéo. Engage chaque commentaire dans les 30 premières minutes après publication pour renforcer les signaux d'activité.",
-    viralTips: [
-      "Signal détecté fréquent : un 'pattern interrupt' visuel dans la première seconde, par exemple cut brutal, zoom ou changement de fond soudain.",
-      "Les créateurs qui dépassent 1M de vues systématiquement terminent toujours avec une question ouverte ou une affirmation polémique. Jamais un 'merci d'avoir regardé' — ça tue l'engagement.",
-      "Le taux de repartage est 3× plus élevé sur les vidéos qui contiennent une stat contre-intuitive dans les 5 premières secondes. Le cerveau humain partage ce qui le surprend.",
-      "Les hooks qui convertissent le plus commencent par la CONCLUSION, pas par l'introduction. Montre le résultat en premier, construis le mystère autour de comment tu y es arrivé.",
-    ],
-  },
-
-  // ── Profil B — Performance moyenne (~55%) ───────────────────────────────
-  {
-    viralityScore: 55,
-    hook: {
-      score: 57,
-      analysis:
-        "Ton hook explique avant de donner une raison de rester. Tu commences avec une introduction générique — 'Aujourd'hui je vais vous parler de...' — et le viewer peut quitter avant la première preuve. Le sujet est exploitable, mais la porte d'entrée doit être reconstruite.",
-      strengths: [
-        "Le sujet traité montre un potentiel de rétention estimé dans sa niche",
-        "Qualité audio correcte — la voix est claire et audible",
-      ],
-      weaknesses: [
-        "Première phrase générique — supprime entièrement les 2 premières secondes",
-        "Aucune image choc, zoom brutal ou coupure franche dans les 3 premières secondes",
-        "Ton plat et monocorde sans urgence — parle comme si tu racontais ça à 23h à un ami",
-        "Zéro texte overlay : -45% de rétention sur l'audience sans son",
-      ],
-    },
-    editing: {
-      score: 53,
-      analysis:
-        "Ton montage est calqué sur un format YouTube ou LinkedIn, pas TikTok. Tes plans durent en moyenne 5-6 secondes — c'est 2x trop long. Au-delà de 4s sans changement visuel, l'algorithme enregistre un signal de désengagement et réduit ta distribution. Résultat : tu parles à de moins en moins de personnes à chaque seconde.",
-      strengths: [
-        "Stabilité et cadrage corrects — aucun problème technique bloquant",
-        "Son propre sans écho ni bruit parasite",
-      ],
-      weaknesses: [
-        "Plans à 5-6s de moyenne — objectif : 2-3s max, surtout dans les 10 premières secondes",
-        "Zéro zoom, zéro effet de vitesse — le visuel est mort entre les coupes",
-        "Musique de fond absente : sans ambiance sonore, la vidéo paraît froide et décroche l'audience",
-      ],
-    },
-    retention: {
-      score: 50,
-      analysis:
-        "Tu perds 50% de ton audience avant la mi-vidéo. Cause : après le hook raté, tu déroules ton contenu à plat sans jamais replanter un clou de curiosité. Le viewer sait où tu vas dès les 5 premières secondes — il n'a aucune raison de rester.",
-      strengths: [
-        "Le contenu a une valeur informative réelle si le viewer reste jusqu'au bout",
-        "Durée de 30-45s adaptée — ni trop courte ni trop longue",
-      ],
-      weaknesses: [
-        "Drop-off à 50% estimé avant la mi-vidéo — aucun micro-hook intermédiaire pour retenir",
-        "Structure plate : même rythme, même ton, même énergie du début à la fin",
-        "Fin abrupte sans CTA ni question posée au viewer — aucune action déclenchée",
-      ],
-    },
-    improvements: [
-      {
-        priority: 'haute',
-        tip: "Supprime tes 2 premières secondes. Commence directement par la stat la plus choquante ou la conclusion — laisse le viewer se demander 'comment il en est arrivé là ?' Exemple : 'J'ai multiplié mon audience par 10 en faisant l'inverse de tout le monde.'",
-      },
-      {
-        priority: 'haute',
-        tip: "Coupe chaque plan à 3s max dans les 10 premières secondes. Passe de 2 cuts à 6 cuts minimum — c'est non-négociable pour rester dans la zone de distribution optimale.",
-      },
-      {
-        priority: 'haute',
-        tip: "Insère un micro-hook toutes les 7s : une question brutale ('et le pire c'est que...'), une stat choc ('92% des créateurs ratent ça'), ou un changement d'angle inattendu.",
-      },
-      {
-        priority: 'moyenne',
-        tip: "Ajoute une musique en tendance à -18dB en fond — teste plusieurs sons adaptés à ta niche au lieu de chercher une promesse de distribution.",
-      },
-      {
-        priority: 'basse',
-        tip: "Termine par 'Suite en partie 2 👇' — les séries augmentent le retour sur profil de 60% et forcent l'algorithme à te recommander à la même audience.",
-      },
-      {
-        priority: 'haute',
-        tip: "Refais intégralement les 3 premières secondes : supprime toute intro et commence directement par la stat ou l'affirmation la plus choquante. Ce seul changement peut multiplier ton taux de rétention à 3 secondes par 2.",
-      },
-      {
-        priority: 'moyenne',
-        tip: "Teste la même vidéo avec 3 hooks différents en republiant à 48h d'intervalle. Le hook qui performe le mieux devient ton template pour les 30 prochaines vidéos.",
-      },
-      {
-        priority: 'basse',
-        tip: "Publie uniquement entre 18h et 21h du mardi au jeudi — les créateurs dans ta niche qui respectent ces créneaux ont un reach initial 35% supérieur à ceux qui publient de manière aléatoire.",
-      },
-    ],
-    strategy: "Priorité absolue sur les 30 prochains jours : refondre ton approche des 3 premières secondes. Publie 3 fois par semaine minimum — la régularité construit le momentum algorithmique. Mix idéal : 50% vidéos éducatives courtes (15-25s), 30% réactions à des trends et 20% vidéos backstage. Cible les créneaux 19h-21h du mardi au jeudi pour maximiser la portée initiale. Commence chaque vidéo par ta conclusion ou ton résultat — montre la fin en premier, explique après. Sur les 7 prochains jours, reprends tes 3 meilleures vidéos et refais uniquement les 5 premières secondes avec un hook choc. En 30 jours avec ce format, tu peux atteindre un taux de complétion de 55%+ et sortir de la zone de distribution limitée.",
-    viralTips: [
-      "Hypothèse IA : dans cette catégorie, 8 à 12 cuts dans les 15 premières secondes peuvent rendre le rythme plus lisible.",
-      "Les sons en tendance sont un signal audio à tester, sans garantie de distribution.",
-      "Les sous-titres animés augmentent le taux de complétion de 28% en moyenne — 85% de l'audience mobile regarde sans son lors de la première découverte.",
-      "Les créateurs qui passent de 0 à 100K abonnés en moins de 6 mois publient quasi exclusivement entre 18h et 21h du mardi au jeudi et répondent à chaque commentaire dans l'heure.",
-    ],
-  },
-
-  // ── Profil C — Faible performance (~29%) ────────────────────────────────
-  {
-    viralityScore: 29,
-    hook: {
-      score: 27,
-      analysis:
-        "Cette vidéo risque de perdre l'attention très tôt. Il n'y a aucun signal visuel ou auditif fort dans les 3 premières secondes. Ta première frame est statique et vide — c'est une zone à améliorer avant de conclure sur la distribution réelle.",
-      strengths: [
-        "Le sujet traité peut devenir exploitable s'il est entièrement reconstruit",
-      ],
-      weaknesses: [
-        "Première frame sans élément choc — le pouce ne s'arrête pas, il n'y a aucune friction",
-        "Zéro pattern interrupt : pas de son fort, pas de mouvement, pas de texte dans les 3 premières secondes",
-        "Première phrase prévisible et générique — à remplacer intégralement par une déclaration choc",
-        "Aucun sous-titre, aucun overlay — vidéo silencieuse invisible pour 85% de l'audience",
-        "Expression faciale neutre ou absente dès le départ — l'émotion attire l'humain",
-      ],
-    },
-    editing: {
-      score: 30,
-      analysis:
-        "Le montage est la cause directe d'un taux de complétion estimé sous les 20%. Tes plans durent entre 6 et 12 secondes — c'est un format reportage TV, pas TikTok. Au-delà de 4s sans coupe, le cerveau du viewer enregistre 'contenu lent' et le pouce bouge automatiquement. Ce montage est à refaire intégralement.",
-      strengths: [
-        "L'image est stable — base technique suffisante pour tout reconstruire dessus",
-      ],
-      weaknesses: [
-        "Plans de 6 à 12s — cible zéro plan au-delà de 3s dans les 15 premières secondes",
-        "Aucune dynamique visuelle : pas un seul zoom, ralenti, accéléré ou changement de plan impactant",
-        "Pas de musique de fond : l'absence d'ambiance sonore peut rendre la vidéo moins dynamique",
-        "Éclairage plat ou insuffisant — une lumière plus stable peut améliorer la qualité perçue à contenu égal",
-      ],
-    },
-    retention: {
-      score: 24,
-      analysis:
-        "Taux de complétion estimé inférieur à 20% — tu perds l'audience dans les 3-4 premières secondes. C'est catastrophique : TikTok utilise le taux de complétion comme signal #1 de distribution. En dessous de 30%, la vidéo n'est quasiment pas diffusée hors de tes abonnés existants. Elle est algorithmiquement morte.",
-      strengths: [
-        "Le contenu, entièrement restructuré, pourrait atteindre 60-70% de complétion",
-      ],
-      weaknesses: [
-        "Taux de complétion estimé <20% — hypothèse IA de risque élevé sur la rétention",
-        "Aucun teasing ni promesse dans le hook qui forcerait le viewer à rester",
-        "Structure plate sans tension : le viewer devine la fin dès la 3ème seconde",
-        "Pas de CTA, pas de question posée, pas de moment de récompense en fin de vidéo",
-      ],
-    },
-    improvements: [
-      {
-        priority: 'haute',
-        tip: "Refais entièrement les 3 premières secondes. Commence par montrer le résultat final ou l'élément le plus choquant en PREMIER. Le viewer doit se demander 'comment il en est arrivé là ?' dès la 1ère seconde — pas à la 10ème.",
-      },
-      {
-        priority: 'haute',
-        tip: "Raccourcis à 15-22 secondes maximum. Au-delà, ton taux de complétion ne peut pas atteindre le seuil de distribution (30%+). Chaque seconde en trop est une pénalité algorithmique.",
-      },
-      {
-        priority: 'haute',
-        tip: "Remplace ta première phrase par une déclaration choc en 5 mots max. Exemples : 'J'ai perdu 3 ans à faire ça.' / 'Personne ne te dira jamais ça.' / 'J'ai failli tout arrêter.' Zéro intro, zéro bonjour.",
-      },
-      {
-        priority: 'haute',
-        tip: "Ajoute une musique adaptée à -15dB + des sous-titres animés sur chaque phrase parlée. C'est une zone à améliorer pour les viewers qui découvrent sans son.",
-      },
-      {
-        priority: 'moyenne',
-        tip: "Filme face à une fenêtre ou avec une ring light à 30€. La qualité visuelle perçue peut influencer la confiance et le follow intent.",
-      },
-      {
-        priority: 'haute',
-        tip: "Supprime intégralement les 3 premières secondes actuelles et remplace par une seule phrase choc en 5 mots max : 'J'ai failli tout perdre' / 'Personne ne te dit ça' / 'J'ai eu tort pendant 2 ans'. Aucun bonjour, aucune intro.",
-      },
-      {
-        priority: 'haute',
-        tip: "Raccourcis cette vidéo à 15-20 secondes maximum en ne gardant que le point le plus percutant. C'est une simulation non mesurée par TikTok pour améliorer le potentiel de rétention.",
-      },
-      {
-        priority: 'moyenne',
-        tip: "Ajoute une musique en tendance en fond à -15dB. C'est un signal audio à tester, pas un levier garanti de distribution.",
-      },
-    ],
-    strategy: "Cette vidéo nécessite une refonte forte, mais certains signaux peuvent être retravaillés. Plan d'action sur 30 jours : les 7 premiers jours, regarde 20 vidéos de ta niche et décortique leur structure (hook, rythme, fin). Semaines 2-3 : remonte un format ultra-court (15s max) avec uniquement la partie la plus impactante de tes vidéos existantes. Semaine 4 : lance un nouveau format avec un hook choc dès la première seconde. Publie régulièrement pour obtenir assez de données de test. Cible le créneau 19h-21h en début de semaine comme hypothèse de publication. Objectif de test : améliorer le taux de complétion estimé, sans garantie de distribution.",
-    viralTips: [
-      "Hypothèse IA : un élément de curiosité non résolu dès le début peut donner au viewer une raison de rester.",
-      "Simulation non mesurée par TikTok : 15-22 secondes peut être une durée testable pour renforcer la complétion.",
-      "Une ring light peut améliorer la qualité visuelle perçue — c'est un signal de crédibilité instantané que le viewer évalue très vite.",
-      "Les créateurs qui explosent utilisent un 'hook en 3 temps' : déclaration choc → élément visuellement fort → question implicite au viewer dans les 3 premières secondes.",
-    ],
-  },
-];
-
-function buildMockResult(url: string, plan: string = 'free'): AnalysisResult {
-  const hash = simpleHash(url);
-  const profile = profiles[hash % profiles.length];
-  const variation = (hash % 11) - 5;
-  const clamp = (n: number) => Math.min(100, Math.max(0, n));
-
-  const result: AnalysisResult = {
-    viralityScore: clamp(profile.viralityScore + variation),
-    structureScore: clamp(profile.viralityScore + variation),
-    hook: {
-      ...profile.hook,
-      score: clamp(profile.hook.score + variation),
-      rating: getRating(clamp(profile.hook.score + variation)),
-    },
-    editing: {
-      ...profile.editing,
-      score: clamp(profile.editing.score + variation),
-      rating: getRating(clamp(profile.editing.score + variation)),
-    },
-    retention: {
-      ...profile.retention,
-      score: clamp(profile.retention.score + variation),
-      rating: getRating(clamp(profile.retention.score + variation)),
-    },
-    improvements: profile.improvements.map((item): Improvement => ({
-      priority: item.priority,
-      tip: item.tip,
-    })),
-  };
-
-  if (plan === 'lifetime') {
-    result.strategy = profile.strategy;
-    result.viralTips = profile.viralTips;
-  }
-
-  return result;
-}
-
 function sanitizeMetrics(input: unknown): ObservedMetrics | undefined {
   if (!input || typeof input !== 'object') return undefined;
   const src = input as Record<string, unknown>;
@@ -1257,7 +968,6 @@ async function postVisionAnalyze(
   if (dbUser && reservedQuota) {
     dbUser = { ...dbUser, analyses_count: reservedQuota.used };
     console.info('[analyze] quota_reserved', {
-      userId: dbUser.id,
       plan: effective,
       used: reservedQuota.used,
       limit: reservedQuota.limit,
@@ -1265,10 +975,19 @@ async function postVisionAnalyze(
     });
   }
 
+  let reconstructionQuotaReserved = false;
   try {
   const plan = effective;
-  const reconstructionAllowed = dbUser ? canGenerateReconstruction(dbUser) : false;
-  const reconstructionUsed = dbUser?.reconstructions_count ?? 0;
+  const reconstructionReservation = dbUser
+    ? await reserveReconstructionQuota(dbUser)
+    : null;
+  const reconstructionAllowed = Boolean(reconstructionReservation?.allowed);
+  const reconstructionUsed =
+    reconstructionReservation?.used ?? dbUser?.reconstructions_count ?? 0;
+  if (dbUser && reconstructionReservation?.allowed) {
+    reconstructionQuotaReserved = true;
+    dbUser = { ...dbUser, reconstructions_count: reconstructionReservation.used };
+  }
   const [creatorMemory, creatorMemoryV2] = session
     ? await Promise.all([
         getCreatorMemoryForAnalysis(session.userId, plan),
@@ -1281,6 +1000,12 @@ async function postVisionAnalyze(
   ].filter(Boolean).join('\n\n');
   const hasOpenAI =
     !!process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'sk-your-key-here';
+  if (!hasOpenAI) {
+    throw new AnalysisUnavailableError({
+      code: 'ANALYSIS_PROVIDER_NOT_CONFIGURED',
+      publicMessage: 'Le service d’analyse n’est pas disponible pour le moment. Aucun résultat n’a été enregistré : réessaie plus tard.',
+    });
+  }
 
   const durationSec =
     typeof body.durationSec === 'number' && Number.isFinite(body.durationSec) && body.durationSec > 0
@@ -1313,7 +1038,7 @@ async function postVisionAnalyze(
       .eq('video_url', tiktokUrl)
       .maybeSingle();
     if (cacheReadErr) {
-      console.warn('[analyze/vision] tiktok_stats_cache read error:', cacheReadErr.message);
+      console.warn('[analyze/vision] tiktok_stats_cache_read_failed', { code: cacheReadErr.code });
     } else if (cached?.stats_json && cached?.fetched_at) {
       const ageMs = Date.now() - new Date(cached.fetched_at).getTime();
       if (ageMs < 6 * 60 * 60 * 1000) {
@@ -1322,7 +1047,7 @@ async function postVisionAnalyze(
       }
     }
   } catch (err) {
-    console.warn('[analyze/vision] tiktok_stats_cache read threw:', err instanceof Error ? err.message : err);
+    console.warn('[analyze/vision] tiktok_stats_cache_read_failed', safeErrorDescriptor(err));
   }
   if (!detected) {
     detected = await fetchTikTokPublicStatsV2(tiktokUrl);
@@ -1337,10 +1062,10 @@ async function postVisionAnalyze(
             { onConflict: 'video_url', ignoreDuplicates: false }
           );
         if (cacheWriteErr) {
-          console.warn('[analyze/vision] tiktok_stats_cache write error:', cacheWriteErr.message);
+          console.warn('[analyze/vision] tiktok_stats_cache_write_failed', { code: cacheWriteErr.code });
         }
       } catch (err) {
-        console.warn('[analyze/vision] tiktok_stats_cache write threw:', err instanceof Error ? err.message : err);
+        console.warn('[analyze/vision] tiktok_stats_cache_write_failed', safeErrorDescriptor(err));
       }
     }
   }
@@ -1358,7 +1083,7 @@ async function postVisionAnalyze(
   const fileSizeMb = typeof body.fileSizeMb === 'number' && Number.isFinite(body.fileSizeMb)
     ? Math.max(0, Math.round(body.fileSizeMb * 10) / 10)
     : undefined;
-  const onScreenText = await extractOnScreenTextFromFrames(frames);
+  const onScreenText = await extractOnScreenTextFromFrames(frames, { timeoutMs: 8_000 });
   const videoIntelligence = buildVideoIntelligenceResult({
     frames,
     durationSec,
@@ -1403,32 +1128,18 @@ async function postVisionAnalyze(
   console.info('[analysis-cost] estimate', costEstimate);
 
   let result: AnalysisResult;
-  let analysisMode: 'vision' | 'fallback' = 'vision';
-  let analysisWarning: string | undefined;
-  if (hasOpenAI) {
-    try {
-      result = await analyzeWithOpenAIVision(frames, plan, detectedObserved, {
-        durationSec,
-        tiktokUrl: tiktokUrl || undefined,
-        fileName,
-        transcript,
-        analysisContext,
-      });
-    } catch (e) {
-      console.warn('[analyze] vision OpenAI failed, falling back to local analysis:', e instanceof Error ? e.message : e);
-      result = buildMockResult(`upload:${fileName || 'video'}`, plan);
-      analysisMode = 'fallback';
-      analysisWarning = 'Analyse vision indisponible : diagnostic degrade base sur signaux locaux et hypotheses.';
-      result.comparativeInsight = 'Analyse vision complète indisponible sur cette tentative : Viralynz utilise les signaux extraits localement pour produire un diagnostic prudent.';
-      result.comparativePriority = 'Relance l’analyse si tu veux une lecture vision plus précise, mais tu peux déjà corriger le hook et le rythme avec le plan ci-dessous.';
-    }
-  } else {
-    console.warn('[analyze] vision OpenAI disabled, using local video-intelligence fallback');
-    result = buildMockResult(`upload:${fileName || 'video'}`, plan);
-    analysisMode = 'fallback';
-    analysisWarning = 'Analyse vision serveur non configuree : diagnostic degrade base sur signaux locaux et hypotheses.';
-    result.comparativeInsight = 'Analyse vision serveur non configurée : diagnostic basé sur metadata, frames échantillonnées, transcript éventuel et heuristiques Viralynz.';
-    result.comparativePriority = 'Priorité : utiliser un hook lisible sans son et avancer la preuve avant 0:05.';
+  const analysisMode = 'vision' as const;
+  try {
+    result = await analyzeWithOpenAIVision(frames, plan, detectedObserved, {
+      durationSec,
+      tiktokUrl: tiktokUrl || undefined,
+      fileName,
+      transcript,
+      analysisContext,
+    });
+  } catch (error) {
+    console.warn('[analyze] vision_provider_unavailable', safeErrorDescriptor(error));
+    throw new AnalysisUnavailableError();
   }
 
   result = sanitizeVisionResultForPlan(result, plan);
@@ -1474,7 +1185,7 @@ async function postVisionAnalyze(
   };
   applyAnalysisTransparency(result, {
     mode: analysisMode,
-    confidenceScore: analysisMode === 'vision' ? videoIntelligence.confidence.score : Math.min(55, videoIntelligence.confidence.score),
+    confidenceScore: videoIntelligence.confidence.score,
     observedData: [
       `${videoIntelligence.metadata.frameCount} frames echantillonnees`,
       ...(videoIntelligence.transcript.available ? ['Transcription audio disponible'] : []),
@@ -1483,8 +1194,7 @@ async function postVisionAnalyze(
     ],
     aiHypotheses: ['Diagnostic hook', 'Risque de retention', 'Priorites de remontage'],
     simulations: ['Score de diagnostic', 'Potentiel apres correction'],
-    previews: analysisMode === 'fallback' ? ['Recommandations prudentes en mode degrade'] : [],
-    warning: analysisWarning,
+    previews: [],
   });
 
   const persistUrl = tiktokUrl || `upload:${fileName || 'video'}-${Date.now()}`;
@@ -1504,7 +1214,6 @@ async function postVisionAnalyze(
       creatorMemoryUsed: creatorMemoryV2?.profile_summary || creatorMemory?.summary,
     });
     await Promise.all([
-      ...(result.reconstructionIA ? [incrementReconstructionsCount(session.userId)] : []),
       persistAnalysisSnapshotAndMemory({
         userId: session.userId,
         plan,
@@ -1526,43 +1235,57 @@ async function postVisionAnalyze(
         videoUrl: persistUrl,
       }),
     ]);
+
+    if (reconstructionQuotaReserved) {
+      if (result.reconstructionIA) {
+        reconstructionQuotaReserved = false;
+      } else {
+        await refundReconstructionQuota(session.userId);
+        reconstructionQuotaReserved = false;
+      }
+    }
   }
 
-  console.info(`[analyze] ${analysisMode === 'fallback' ? 'fallback_returned' : 'analysis_completed'}`, {
-    userId: session?.userId ?? null,
+  console.info('[analyze] analysis_completed', {
     plan,
     source: 'vision_upload',
     mode: result.analyzerMeta?.analysisMode ?? analysisMode,
   });
   return NextResponse.json(result);
   } catch (err) {
+    let quotaRestored: boolean | undefined;
+    if (session && reconstructionQuotaReserved) {
+      await refundReconstructionQuota(session.userId);
+      reconstructionQuotaReserved = false;
+    }
     if (session && reservedQuota?.allowed) {
       const refundReason = 'technical_error_after_quota_reservation';
       const refunded = await refundAnalysisQuota(session.userId);
+      quotaRestored = refunded;
       console.info('[analyze] quota_refunded', {
-        userId: session.userId,
         source: 'vision_upload',
         refunded,
         refund_reason: refundReason,
       });
     }
-    console.error('[analyze/vision] Unexpected error:', err instanceof Error ? err.message : err);
-    return NextResponse.json(
-      { error: 'Analyse interrompue pour une raison technique. Si un quota avait ete reserve, il a ete restaure.' },
-      { status: 500 }
-    );
+    console.error('[analyze/vision] request_failed', safeErrorDescriptor(err));
+    return analysisErrorResponse(err, quotaRestored);
   }
 }
 
 export async function POST(request: NextRequest) {
   let refundableQuotaUserId: string | null = null;
   let quotaRefundedOrCompleted = false;
+  let refundableReconstructionQuotaUserId: string | null = null;
+  let reconstructionQuotaRefundedOrCompleted = false;
   try {
-    let body: Record<string, unknown>;
-    try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json({ error: 'Payload JSON invalide.' }, { status: 400 });
+    if (exceedsDeclaredBodyLimit(request, 4 * 1024 * 1024)) {
+      return privateJson({ error: 'Payload trop volumineux.' }, { status: 413 });
+    }
+
+    const body = await readJsonObject(request, 4 * 1024 * 1024);
+    if (!body) {
+      return privateJson({ error: 'Payload JSON invalide.' }, { status: 400 });
     }
     const visionFrames = normalizeVisionFrames(body.frames);
     if (visionFrames) {
@@ -1634,7 +1357,7 @@ export async function POST(request: NextRequest) {
         tiktok_avatar_url: null,
         tiktok_connected_at: null,
       };
-      console.log('[analyze] profile row created on-the-fly for:', session.userId);
+      console.info('[analyze] profile_row_created');
     }
 
     // Reset monthly counters if we've crossed a calendar-month boundary
@@ -1690,7 +1413,6 @@ export async function POST(request: NextRequest) {
     dbUser = { ...dbUser, analyses_count: reservedQuota.used };
     refundableQuotaUserId = session.userId;
     console.info('[analyze] quota_reserved', {
-      userId: session.userId,
       plan: effectivePlan,
       used: reservedQuota.used,
       limit: reservedQuota.limit,
@@ -1709,7 +1431,7 @@ export async function POST(request: NextRequest) {
         .eq('video_url', url)
         .maybeSingle();
       if (cacheReadErr) {
-        console.warn('[analyze] tiktok_stats_cache read error:', cacheReadErr.message);
+        console.warn('[analyze] tiktok_stats_cache_read_failed', { code: cacheReadErr.code });
       } else if (cached?.stats_json && cached?.fetched_at) {
         const ageMs = Date.now() - new Date(cached.fetched_at).getTime();
         if (ageMs < 6 * 60 * 60 * 1000) {
@@ -1718,7 +1440,7 @@ export async function POST(request: NextRequest) {
         }
       }
     } catch (err) {
-      console.warn('[analyze] tiktok_stats_cache read threw:', err instanceof Error ? err.message : err);
+      console.warn('[analyze] tiktok_stats_cache_read_failed', safeErrorDescriptor(err));
     }
 
     // 2) If no valid cache, fetch live and write cache
@@ -1736,10 +1458,10 @@ export async function POST(request: NextRequest) {
               { onConflict: 'video_url', ignoreDuplicates: false }
             );
           if (cacheWriteErr) {
-            console.warn('[analyze] tiktok_stats_cache write error:', cacheWriteErr.message);
+            console.warn('[analyze] tiktok_stats_cache_write_failed', { code: cacheWriteErr.code });
           }
         } catch (err) {
-          console.warn('[analyze] tiktok_stats_cache write threw:', err instanceof Error ? err.message : err);
+          console.warn('[analyze] tiktok_stats_cache_write_failed', safeErrorDescriptor(err));
         }
       }
     }
@@ -1769,8 +1491,16 @@ export async function POST(request: NextRequest) {
 
     // ── Analysis ─────────────────────────────────────────────────────────────
     const plan = dbUser ? getEffectivePlan(dbUser) : 'free';
-    const reconstructionAllowed = dbUser ? canGenerateReconstruction(dbUser) : false;
-    const reconstructionUsed = dbUser?.reconstructions_count ?? 0;
+    const reconstructionReservation = dbUser
+      ? await reserveReconstructionQuota(dbUser)
+      : null;
+    const reconstructionAllowed = Boolean(reconstructionReservation?.allowed);
+    const reconstructionUsed =
+      reconstructionReservation?.used ?? dbUser?.reconstructions_count ?? 0;
+    if (reconstructionReservation?.allowed) {
+      dbUser = { ...dbUser, reconstructions_count: reconstructionReservation.used };
+      refundableReconstructionQuotaUserId = session.userId;
+    }
     const [creatorMemory, creatorMemoryV2] = session
       ? await Promise.all([
           getCreatorMemoryForAnalysis(session.userId, plan),
@@ -1782,39 +1512,32 @@ export async function POST(request: NextRequest) {
       buildCreatorMemoryContext(creatorMemoryV2),
     ].filter(Boolean).join('\n\n');
     const useOpenAI =
-      plan !== 'free' &&
       !!process.env.OPENAI_API_KEY &&
       process.env.OPENAI_API_KEY !== 'sk-your-key-here';
-
-    let result: AnalysisResult;
-    let analysisMode: 'metadata' | 'fallback' | 'demo' = useOpenAI ? 'metadata' : 'demo';
-    let analysisWarning: string | undefined = useOpenAI
-      ? undefined
-      : 'Preview demo : diagnostic base sur URL, metadata disponibles et hypotheses, sans lecture vision complete.';
-
-    if (useOpenAI) {
-      try {
-        result = await analyzeWithOpenAI(url, plan === 'lifetime' ? 'lifetime' : 'pro', observedMetrics, detected
-          ? {
-              caption: detected.caption,
-              authorUsername: detected.authorUsername,
-              durationSec: detected.durationSec,
-              memoryPrompt: creatorMemoryPrompt || undefined,
-            }
-          : creatorMemoryPrompt ? { memoryPrompt: creatorMemoryPrompt } : undefined);
-        console.log(`[analyze] OpenAI (${plan}) — viralityScore:`, result.viralityScore);
-      } catch (aiErr) {
-        console.error('[analyze] OpenAI failed, falling back to mock:', aiErr);
-        result = buildMockResult(url, plan);
-        analysisMode = 'fallback';
-        analysisWarning = 'Analyse IA indisponible : diagnostic degrade base sur metadata et hypotheses.';
-      }
-    } else {
-      // Free plan or no API key — deterministic mock
-      await new Promise((resolve) => setTimeout(resolve, 1800 + Math.random() * 1200));
-      result = buildMockResult(url, plan);
+    if (!useOpenAI) {
+      throw new AnalysisUnavailableError({
+        code: 'ANALYSIS_PROVIDER_NOT_CONFIGURED',
+        publicMessage: 'Le service d’analyse n’est pas disponible pour le moment. Aucun résultat n’a été enregistré : réessaie plus tard.',
+      });
     }
 
+    let result: AnalysisResult;
+    const analysisMode = 'metadata' as const;
+    try {
+      result = await analyzeWithOpenAI(url, plan === 'lifetime' ? 'lifetime' : 'pro', observedMetrics, detected
+        ? {
+            caption: detected.caption,
+            authorUsername: detected.authorUsername,
+            durationSec: detected.durationSec,
+            memoryPrompt: creatorMemoryPrompt || undefined,
+          }
+        : creatorMemoryPrompt ? { memoryPrompt: creatorMemoryPrompt } : undefined);
+    } catch (error) {
+      console.warn('[analyze] metadata_provider_unavailable', safeErrorDescriptor(error));
+      throw new AnalysisUnavailableError();
+    }
+
+    result = sanitizeVisionResultForPlan(result, plan);
     result.analysisSource = 'url';
     const structureScore = result.structureScore ?? result.viralityScore;
     const observed = computeObservedPerformance(observedMetrics);
@@ -1876,7 +1599,7 @@ export async function POST(request: NextRequest) {
     // ── Persist for authenticated users ──────────────────────────────────────
     applyAnalysisTransparency(result, {
       mode: analysisMode,
-      confidenceScore: analysisMode === 'metadata' ? 62 : 45,
+      confidenceScore: 62,
       observedData: [
         ...(detectedObserved ? ['Metrics TikTok detectees'] : []),
         ...(detected?.caption ? ['Caption TikTok disponible'] : []),
@@ -1884,8 +1607,7 @@ export async function POST(request: NextRequest) {
       ],
       aiHypotheses: ['Diagnostic hook', 'Risque de retention', 'Priorites de remontage'],
       simulations: ['Score de diagnostic', 'Potentiel apres correction'],
-      previews: analysisMode === 'demo' ? ['Exemple de sortie pour plan gratuit ou API indisponible'] : [],
-      warning: analysisWarning,
+      previews: [],
     });
 
     if (session && dbUser) {
@@ -1903,7 +1625,6 @@ export async function POST(request: NextRequest) {
         creatorMemoryUsed: creatorMemoryV2?.profile_summary || creatorMemory?.summary,
       });
       await Promise.all([
-        ...(result.reconstructionIA ? [incrementReconstructionsCount(session.userId)] : []),
         persistAnalysisSnapshotAndMemory({
           userId: session.userId,
           plan,
@@ -1925,29 +1646,45 @@ export async function POST(request: NextRequest) {
           videoUrl: url,
         }),
       ]);
+
+      if (refundableReconstructionQuotaUserId) {
+        if (result.reconstructionIA) {
+          reconstructionQuotaRefundedOrCompleted = true;
+        } else {
+          await refundReconstructionQuota(refundableReconstructionQuotaUserId);
+          reconstructionQuotaRefundedOrCompleted = true;
+        }
+      }
     }
 
     quotaRefundedOrCompleted = true;
-    console.info(`[analyze] ${analysisMode === 'fallback' || analysisMode === 'demo' ? 'fallback_returned' : 'analysis_completed'}`, {
-      userId: session.userId,
+    console.info('[analyze] analysis_completed', {
       plan,
       source: 'url',
       mode: result.analyzerMeta?.analysisMode ?? analysisMode,
     });
     return NextResponse.json(result);
   } catch (err) {
+    let quotaRestored: boolean | undefined;
+    if (
+      refundableReconstructionQuotaUserId
+      && !reconstructionQuotaRefundedOrCompleted
+    ) {
+      await refundReconstructionQuota(refundableReconstructionQuotaUserId);
+      reconstructionQuotaRefundedOrCompleted = true;
+    }
     if (refundableQuotaUserId && !quotaRefundedOrCompleted) {
       const refundReason = 'technical_error_after_quota_reservation';
       const refunded = await refundAnalysisQuota(refundableQuotaUserId);
+      quotaRestored = refunded;
       console.info('[analyze] quota_refunded', {
-        userId: refundableQuotaUserId,
         source: 'url',
         refunded,
         refund_reason: refundReason,
       });
       quotaRefundedOrCompleted = true;
     }
-    console.error('[analyze/POST] Unexpected error:', err instanceof Error ? err.message : err);
-    return NextResponse.json({ error: 'Erreur serveur. Si un quota avait ete reserve, il a ete restaure.' }, { status: 500 });
+    console.error('[analyze/POST] request_failed', safeErrorDescriptor(err));
+    return analysisErrorResponse(err, quotaRestored);
   }
 }

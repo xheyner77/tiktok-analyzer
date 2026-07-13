@@ -6,8 +6,9 @@ import {
   normalizeGeneratedHooks,
   normalizeHookPacks,
 } from '@/lib/hook-engine';
+import type { HookGenerationInput } from '@/lib/hook-engine';
 
-const baseInput = {
+const baseInput: HookGenerationInput = {
   context: 'Une vidéo business qui explique trop longtemps avant de montrer la preuve',
   scene: 'opening_3s',
   tone: 'direct',

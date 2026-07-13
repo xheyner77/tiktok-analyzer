@@ -1,19 +1,19 @@
-import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 import { getUserById, getEffectivePlan } from '@/lib/auth';
 import { listTikTokAccountsForUser } from '@/lib/tiktok-accounts';
+import { privateJson } from '@/lib/api-route-security';
 
 export async function GET() {
   const session = await getSession();
 
   if (!session) {
-    return NextResponse.json({ user: null });
+    return privateJson({ user: null });
   }
 
   const user = await getUserById(session.userId);
 
   if (!user) {
-    return NextResponse.json({
+    return privateJson({
       user: {
         id: session.userId,
         email: session.email,
@@ -35,7 +35,7 @@ export async function GET() {
   const tiktokAccounts = await listTikTokAccountsForUser(user.id);
   const activeTikTokAccounts = tiktokAccounts.filter((account) => account.status === 'active');
 
-  return NextResponse.json({
+  return privateJson({
     user: {
       id: user.id,
       email: user.email,

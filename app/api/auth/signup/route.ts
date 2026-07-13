@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { supabaseAuth, supabase } from '@/lib/supabase';
 import { getAuthEmailCallbackUrl } from '@/lib/site-url';
+import { privateJson, readJsonObject, rejectCrossSiteMutation } from '@/lib/api-route-security';
 
 /**
  * Converts raw Supabase Auth error messages into user-friendly French strings.
@@ -50,18 +51,25 @@ function translateAuthError(message: string): { message: string; code?: string }
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { email, password } = body;
+    const rejected = rejectCrossSiteMutation(request);
+    if (rejected) return rejected;
+
+    const body = await readJsonObject(request);
+    const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
+    const password = typeof body?.password === 'string' ? body.password : '';
 
     if (!email || !password) {
-      return NextResponse.json(
+      return privateJson(
         { error: 'Email et mot de passe requis.' },
         { status: 400 }
       );
     }
 
+    if (email.length > 254 || password.length > 128) {
+      return privateJson({ error: 'Identifiants invalides.' }, { status: 400 });
+    }
+
     const emailRedirectTo = getAuthEmailCallbackUrl(request.headers.get('origin'));
-    console.log('[signup] emailRedirectTo:', emailRedirectTo);
 
     const { data, error } = await supabaseAuth.auth.signUp({
       email,
@@ -73,21 +81,24 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-      console.error('[signup] Supabase error:', {
-        message: error.message,
+      console.error('[signup] provider_request_failed', {
         status: error.status,
         name: error.name,
+        code: error.code,
       });
       const { message, code } = translateAuthError(error.message);
-      return NextResponse.json({ error: message, ...(code ? { code } : {}) }, { status: 400 });
+      if (code === 'ALREADY_REGISTERED') {
+        // Keep the public response indistinguishable from a new signup so the
+        // endpoint cannot be used to enumerate registered addresses.
+        return privateJson({ success: true, needsEmailConfirmation: true });
+      }
+      return privateJson({ error: message, ...(code ? { code } : {}) }, { status: 400 });
     }
 
     const userId = data.user?.id;
 
     // data.session is null when Supabase requires email confirmation.
     const needsEmailConfirmation = !!data.user && !data.session;
-
-    console.log('[signup] Auth success — user id:', userId ?? 'null', '| needs confirmation:', needsEmailConfirmation);
 
     // Upsert profile row (ignoreDuplicates so a re-signup never crashes)
     if (userId) {
@@ -99,20 +110,16 @@ export async function POST(request: NextRequest) {
         );
 
       if (dbError) {
-        console.error('[signup] public.users upsert error:', {
-          message: dbError.message,
-          code: dbError.code,
-          details: dbError.details,
-        });
-      } else {
-        console.log('[signup] public.users row created for:', userId);
+        console.error('[signup] profile_upsert_failed', { code: dbError.code });
       }
     }
 
-    return NextResponse.json({ success: true, needsEmailConfirmation });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error('[signup] Unexpected error:', message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return privateJson({ success: true, needsEmailConfirmation });
+  } catch (error) {
+    console.error('[signup] request_failed', { name: error instanceof Error ? error.name : 'UnknownError' });
+    return privateJson(
+      { error: 'Impossible de créer le compte pour le moment. Réessaie plus tard.' },
+      { status: 500 },
+    );
   }
 }

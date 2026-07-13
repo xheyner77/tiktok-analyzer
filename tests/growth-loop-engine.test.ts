@@ -31,7 +31,16 @@ function analysis(): AnalysisRow {
     improvements: [{ priority: 'haute', tip: 'Avancer la preuve.' }],
     repostVersion: { hook: 'STOP cette erreur', structure: ['Hook', 'Preuve'], onScreenText: ['Erreur'], cta: 'A ou B ?', angle: 'Direct' },
   };
-  return { id: 'video_1', user_id: 'user_1', video_url: 'https://tiktok.com/@x/video/1', created_at: new Date().toISOString(), result };
+  return {
+    id: 'video_1',
+    user_id: 'user_1',
+    video_url: 'https://tiktok.com/@x/video/1',
+    created_at: new Date().toISOString(),
+    result,
+    reconstruction: null,
+    reconstruction_created_at: null,
+    reconstruction_plan_used: null,
+  };
 }
 
 const trend: TrendOpportunity = {

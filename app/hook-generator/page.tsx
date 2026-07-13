@@ -196,22 +196,6 @@ function packToText(pack: HookPack, hookMode: HookMode) {
   ].filter(Boolean).join('\n');
 }
 
-function scoreValue(pack: HookPack, hookMode: HookMode) {
-  if (hookMode === 'text') {
-    return Math.round((pack.scores.scrollStop * 0.32) + (pack.scores.clarity * 0.28) + (pack.scores.curiosity * 0.24) + (pack.scores.emotion * 0.16));
-  }
-  return Math.round((pack.scores.scrollStop * 0.25) + (pack.scores.emotion * 0.22) + (pack.scores.clarity * 0.18) + (pack.scores.watchtime * 0.35));
-}
-
-function ScorePill({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-[13px] border border-white/[0.07] bg-white/[0.035] px-3 py-2">
-      <p className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-600">{label}</p>
-      <p className="mt-1 text-sm font-black text-white">{value}/100</p>
-    </div>
-  );
-}
-
 function ProgressBar({ value }: { value: number }) {
   return (
     <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
@@ -501,7 +485,7 @@ export default function HookGeneratorPage() {
       const nextPacks: HookPack[] = Array.isArray(data.hookPacks) ? data.hookPacks : [];
       setPacks(nextPacks);
       setUsed(data.used ?? used);
-      setLimitUsed(data.limit ?? limitUsed);
+      setLimitUsed(data.unlimited === true ? Number.POSITIVE_INFINITY : (data.limit ?? limitUsed));
       setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
     } catch {
       setError('Erreur réseau. Réessaie dans un instant.');
@@ -856,7 +840,7 @@ export default function HookGeneratorPage() {
 
             {bestPack ? (
               <div className="mb-5 rounded-[24px] border border-violet-300/22 bg-violet-400/[0.075] p-5">
-                <p className={labelClass}>Meilleure ouverture</p>
+                <p className={labelClass}>Ouverture prioritaire à tester</p>
                 <p className="mt-2 text-[28px] font-black leading-tight tracking-[-0.04em] text-white">“{hookMode === 'text' ? bestPack.onScreenText : (bestPack.spokenHook || bestPack.onScreenText)}”</p>
                 <p className="mt-3 text-sm leading-6 text-slate-300">{bestPack.whyItWorks}</p>
               </div>
@@ -865,14 +849,12 @@ export default function HookGeneratorPage() {
             <div className="grid gap-5 xl:grid-cols-2">
               {packs.map((pack, index) => {
                 const mainHook = hookMode === 'text' ? pack.onScreenText : (pack.spokenHook || pack.onScreenText);
-                const globalScore = scoreValue(pack, hookMode);
                 return (
                   <article key={pack.id} className={`rounded-[24px] border bg-[#070d1c] p-4 shadow-[0_30px_100px_-82px_rgba(124,58,237,0.9),inset_0_1px_0_rgba(255,255,255,0.05)] sm:p-5 ${index === 0 ? 'border-violet-300/24' : 'border-white/[0.08]'}`}>
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <div className="flex flex-wrap gap-2">
                           <Badge tone="violet">#{index + 1}</Badge>
-                          <Badge tone="green">{globalScore}/100</Badge>
                           <Badge tone="slate">{hookMode === 'text' ? 'Textuel' : 'Parlé'}</Badge>
                         </div>
                         <h3 className="mt-4 text-[24px] font-black leading-tight tracking-[-0.04em] text-white">“{mainHook}”</h3>
@@ -897,22 +879,11 @@ export default function HookGeneratorPage() {
                     <p className="mt-4 text-sm leading-6 text-slate-400">{pack.whyItWorks}</p>
                     <p className="mt-2 text-sm leading-6 text-amber-100/80">Risque : {pack.risk || (hookMode === 'text' ? 'peut devenir trop long si tu ajoutes du contexte.' : 'peut sonner écrit si tu ne le dis pas naturellement.')}</p>
 
-                    <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                      {hookMode === 'text' ? (
-                        <>
-                          <ScorePill label="Scroll" value={pack.scores.scrollStop} />
-                          <ScorePill label="Lisibilité" value={pack.scores.clarity} />
-                          <ScorePill label="Curiosité" value={pack.scores.curiosity} />
-                          <ScorePill label="Punch" value={pack.scores.emotion} />
-                        </>
-                      ) : (
-                        <>
-                          <ScorePill label="Oral" value={pack.scores.clarity} />
-                          <ScorePill label="Rythme" value={pack.scores.watchtime} />
-                          <ScorePill label="Émotion" value={pack.scores.emotion} />
-                          <ScorePill label="Crédible" value={pack.scores.scrollStop} />
-                        </>
-                      )}
+                    <div className="mt-4 rounded-[16px] border border-white/[0.07] bg-white/[0.03] p-3.5">
+                      <p className={labelClass}>Repère éditorial</p>
+                      <p className="mt-2 text-xs font-semibold leading-5 text-slate-400">
+                        Proposition à tester en V2. Aucun score TikTok n’est déduit sans données de publication.
+                      </p>
                     </div>
 
                     <div className="mt-5 rounded-[16px] border border-cyan-300/14 bg-cyan-300/[0.055] p-3.5">

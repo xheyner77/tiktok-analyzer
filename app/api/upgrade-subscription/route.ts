@@ -1,8 +1,5 @@
-import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
-import { blockTestStripeSecretInProduction } from '@/lib/stripe-prod-guard';
-
-const stripeSecret = process.env.STRIPE_SECRET_KEY?.trim();
+import { privateJson } from '@/lib/api-route-security';
 
 /**
  * Legacy endpoint conservé pour compatibilité.
@@ -10,23 +7,20 @@ const stripeSecret = process.env.STRIPE_SECRET_KEY?.trim();
  * via /api/checkout avec plan=scale.
  */
 export async function POST() {
-  const skBlock = blockTestStripeSecretInProduction();
-  if (skBlock) return skBlock;
-
   try {
     const session = await getSession();
     if (!session) {
-      return NextResponse.json({ error: 'Non authentifié.' }, { status: 401 });
+      return privateJson({ error: 'Non authentifié.' }, { status: 401 });
     }
 
-    if (!stripeSecret) throw new Error('STRIPE_SECRET_KEY manquant');
-    return NextResponse.json(
+    return privateJson(
       { error: 'Lifetime est un paiement unique. Utilise le checkout Lifetime.', code: 'LIFETIME_CHECKOUT_REQUIRED' },
-      { status: 400 }
+      { status: 410 },
     );
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error('[upgrade-subscription]', message);
-    return NextResponse.json({ error: message }, { status: 500 });
+  } catch (error) {
+    console.error('[upgrade-subscription] Erreur inattendue.', {
+      kind: error instanceof Error ? error.name : 'unknown',
+    });
+    return privateJson({ error: 'Service de facturation indisponible.' }, { status: 500 });
   }
 }

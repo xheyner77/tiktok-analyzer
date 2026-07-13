@@ -8,18 +8,20 @@ import type { AnalysisResult, Rating, Priority, StructuredDiagnostic } from './t
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-  maxRetries: 4,
-  timeout: 120_000,
+  // Retries are controlled explicitly below so the total request stays below
+  // the 60 s Vercel function budget and quota refunds can still execute.
+  maxRetries: 0,
+  timeout: 20_000,
 });
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/** 429 / 503 : backoff exponentiel (2^n x base) + header Retry-After si present. Max 3 tentatives HTTP. */
+/** 429 / 503: one short retry, bounded by the route's total time budget. */
 function getOpenAIRetryDelayMs(e: unknown, attemptIndex: number): number | null {
-  if (attemptIndex >= 2) return null;
-  const baseMs = 2000;
+  if (attemptIndex >= 1) return null;
+  const baseMs = 1500;
   let delay = baseMs * Math.pow(2, attemptIndex);
   if (e instanceof APIError && e.headers) {
     const h = e.headers as Headers;
@@ -29,7 +31,7 @@ function getOpenAIRetryDelayMs(e: unknown, attemptIndex: number): number | null 
       if (!Number.isNaN(sec) && sec >= 0) delay = Math.max(delay, sec * 1000);
     }
   }
-  return Math.min(delay, 60_000);
+  return Math.min(delay, 3_000);
 }
 
 function isOpenAIRetryableTransient(e: unknown): boolean {
@@ -447,7 +449,7 @@ export async function analyzeWithOpenAIVision(
   };
 
   let response: ChatCompletion | undefined;
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < 2; attempt++) {
     try {
       response = await client.chat.completions.create(createParams);
       break;
@@ -456,7 +458,7 @@ export async function analyzeWithOpenAIVision(
       const delay = getOpenAIRetryDelayMs(e, attempt);
       if (delay == null) throw e;
       console.warn(
-        `[openai] vision retry after transient error (attempt ${attempt + 1}/3, wait ${delay}ms)`,
+        `[openai] vision retry after transient error (attempt ${attempt + 1}/2, wait ${delay}ms)`,
         e instanceof APIError ? e.status : e
       );
       await sleep(delay);

@@ -1,10 +1,24 @@
 import { describe, expect, it } from 'vitest';
-import { getPlanLimits, hasProOrLifetimeAccess, isLifetimePlan, normalizePlan } from '@/lib/plans';
+import {
+  getNextMonthlyResetAt,
+  getPlanLimits,
+  hasProOrLifetimeAccess,
+  isLifetimePlan,
+  normalizePlan,
+} from '@/lib/plans';
 import { getTikTokAccountLimitForPlan } from '@/lib/tiktok-plan-limits';
 import { HOOK_LIMITS, PLAN_LIMITS, RECONSTRUCTION_LIMITS } from '@/lib/plan-limits';
 import { getEffectivePlan } from '@/lib/stripe-billing';
 
 describe('plans', () => {
+  it('keeps recurring quotas monthly across short months', () => {
+    expect(getNextMonthlyResetAt('2024-01-31T10:30:00.000Z')?.toISOString())
+      .toBe('2024-02-29T10:30:00.000Z');
+    expect(getNextMonthlyResetAt('2025-01-31T10:30:00.000Z')?.toISOString())
+      .toBe('2025-02-28T10:30:00.000Z');
+    expect(getNextMonthlyResetAt('invalid')).toBeNull();
+  });
+
   it('normalizes legacy scale as Lifetime compatibility', () => {
     expect(normalizePlan('scale')).toBe('lifetime');
   });

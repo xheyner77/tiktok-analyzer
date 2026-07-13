@@ -98,25 +98,6 @@ export interface AnalysisDetailLoadResult {
   data: AnalysisDetailData | null;
 }
 
-const FALLBACK_HOOKS = [
-  'Ton idée n’est pas mauvaise. C’est l’ordre qui tue la rétention.',
-  'La preuve arrive trop tard, et c’est là que tu perds les viewers.',
-  'Avant de republier, coupe ces 3 secondes.',
-  'Si ta vidéo bloque à 300 vues, regarde ton payoff.',
-  'Le hook annonce le sujet, mais pas l’enjeu.',
-  'Avant de republier, coupe cette partie de ta vidéo.',
-];
-
-const FALLBACK_REPOST_PLAN = [
-  'Couper l’intro qui pose le contexte sans créer d’enjeu.',
-  'Avancer la preuve avant l’explication.',
-  'Réécrire le hook en 6 à 8 mots maximum.',
-  'Ajouter une relance claire autour de 0:06.',
-  'Remplacer le CTA final par une question simple.',
-  'Republier une V2 plus courte et plus tendue.',
-  'Comparer la rétention de la V1 et de la V2.',
-];
-
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
 }
@@ -231,9 +212,9 @@ function buildKeyMoments(result: DetailResult | null): AnalysisMoment[] {
       ?? problemByIdOrTitle(result, [item.type, item.label]);
 
     return {
-      time: cleanText(item.time) ?? '0:00',
+      time: cleanText(item.time) ?? '—',
       title: cleanText(item.label) ?? 'Moment clé',
-      diagnostic: cleanText(item.insight) ?? cleanText(relatedProblem?.explanation) ?? 'Le viewer comprend le thème, mais pas encore pourquoi rester.',
+      diagnostic: cleanText(item.insight) ?? cleanText(relatedProblem?.explanation) ?? 'Diagnostic non disponible pour ce moment.',
       correction: cleanText(relatedProblem?.action) ?? correctionForMoment(item.type),
       severity: item.severity ?? relatedProblem?.severity ?? 'important',
     };
@@ -242,45 +223,16 @@ function buildKeyMoments(result: DetailResult | null): AnalysisMoment[] {
   if (moments.length > 0) return moments.slice(0, 5);
 
   const problemMoments = problems.slice(0, 5).map((problem): AnalysisMoment => ({
-    time: cleanText(problem.timecode) ?? '0:00',
+    time: cleanText(problem.timecode) ?? '—',
     title: cleanText(problem.title) ?? 'Point de friction',
-    diagnostic: cleanText(problem.explanation) ?? 'La vidéo perd de la tension avant le moment important.',
-    correction: cleanText(problem.action) ?? 'Transforme ce passage en preuve ou coupe-le.',
+    diagnostic: cleanText(problem.explanation) ?? 'Diagnostic non disponible pour ce point.',
+    correction: cleanText(problem.action) ?? 'Correction non disponible dans cette analyse.',
     severity: problem.severity ?? 'important',
   }));
 
   if (problemMoments.length > 0) return problemMoments;
 
-  return [
-    {
-      time: '0:00',
-      title: 'Hook trop explicatif',
-      diagnostic: 'Tu présentes le contexte avant de donner une raison de rester.',
-      correction: 'Ouvre avec le résultat ou la tension principale.',
-      severity: 'critique',
-    },
-    {
-      time: '0:04',
-      title: 'Payoff trop tardif',
-      diagnostic: 'Le viewer comprend le sujet, mais pas encore pourquoi regarder.',
-      correction: 'Avance la preuve avant l’explication.',
-      severity: 'critique',
-    },
-    {
-      time: '0:07',
-      title: 'Séquence plate',
-      diagnostic: 'La vidéo répète l’idée au lieu de l’avancer.',
-      correction: 'Coupe ou transforme ce passage en preuve.',
-      severity: 'important',
-    },
-    {
-      time: '0:11',
-      title: 'CTA faible',
-      diagnostic: 'Le CTA demande une action sans créer de curiosité.',
-      correction: 'Formule une question ou une promesse claire.',
-      severity: 'important',
-    },
-  ];
+  return [];
 }
 
 function correctionForMoment(type: string): string {
@@ -288,7 +240,7 @@ function correctionForMoment(type: string): string {
   if (type === 'drop') return 'Avance la preuve avant la perte d’attention.';
   if (type === 'cta') return 'Pose une question simple ou demande un mot-clé.';
   if (type === 'rewatch') return 'Place le payoff plus tôt et garde une boucle ouverte.';
-  return 'Transforme ce moment en décision de montage claire.';
+  return 'Correction non disponible dans cette analyse.';
 }
 
 function buildDiagnostics(result: DetailResult | null): AnalysisDiagnostic[] {
@@ -303,32 +255,32 @@ function buildDiagnostics(result: DetailResult | null): AnalysisDiagnostic[] {
     {
       label: 'Hook',
       score: scores.hook,
-      problem: cleanText(hookProblem?.explanation) ?? firstText(result?.hook?.weaknesses?.[0], result?.hook?.analysis) ?? 'Le hook annonce le sujet, mais pas l’enjeu.',
-      correction: cleanText(hookProblem?.action) ?? 'Ouvre avec la tension principale.',
+      problem: cleanText(hookProblem?.explanation) ?? firstText(result?.hook?.weaknesses?.[0], result?.hook?.analysis) ?? 'Donnée non disponible dans cette analyse.',
+      correction: cleanText(hookProblem?.action) ?? 'Correction non disponible dans cette analyse.',
     },
     {
       label: 'Rythme',
       score: scores.rhythm,
-      problem: cleanText(rhythmProblem?.explanation) ?? firstText(result?.editing?.weaknesses?.[0], result?.editing?.analysis) ?? 'La vidéo ralentit avant le moment important.',
-      correction: cleanText(rhythmProblem?.action) ?? 'Coupe l’intro et ajoute une relance visuelle.',
+      problem: cleanText(rhythmProblem?.explanation) ?? firstText(result?.editing?.weaknesses?.[0], result?.editing?.analysis) ?? 'Donnée non disponible dans cette analyse.',
+      correction: cleanText(rhythmProblem?.action) ?? 'Correction non disponible dans cette analyse.',
     },
     {
       label: 'Clarté',
       score: scores.clarity,
-      problem: cleanText(clarityProblem?.explanation) ?? 'Le viewer comprend le thème, mais pas pourquoi rester.',
-      correction: cleanText(clarityProblem?.action) ?? 'Annonce le bénéfice concret avant le contexte.',
+      problem: cleanText(clarityProblem?.explanation) ?? 'Donnée non disponible dans cette analyse.',
+      correction: cleanText(clarityProblem?.action) ?? 'Correction non disponible dans cette analyse.',
     },
     {
       label: 'Preuve',
       score: scores.proof,
-      problem: cleanText(proofProblem?.explanation) ?? 'La preuve arrive après la perte d’attention.',
-      correction: cleanText(proofProblem?.action) ?? 'Montre l’élément qui prouve ton point avant d’expliquer.',
+      problem: cleanText(proofProblem?.explanation) ?? 'Donnée non disponible dans cette analyse.',
+      correction: cleanText(proofProblem?.action) ?? 'Correction non disponible dans cette analyse.',
     },
     {
       label: 'CTA',
       score: scores.cta,
-      problem: cleanText(ctaProblem?.explanation) ?? 'Ton CTA demande une action sans créer de raison.',
-      correction: cleanText(ctaProblem?.action) ?? 'Formule une question claire liée à la curiosité créée.',
+      problem: cleanText(ctaProblem?.explanation) ?? 'Donnée non disponible dans cette analyse.',
+      correction: cleanText(ctaProblem?.action) ?? 'Correction non disponible dans cette analyse.',
     },
   ];
 }
@@ -342,44 +294,21 @@ function buildEditingDecisions(result: DetailResult | null): EditingDecision[] {
   const hookProblem = problemByIdOrTitle(result, ['hook']);
   const ctaProblem = problemByIdOrTitle(result, ['cta']);
 
-  return [
-    {
-      label: 'À couper',
-      decision: cleanText(structuredCut?.recommendation)
-        ?? cleanText(cuts?.reason)
-        ?? 'Les secondes qui posent le contexte sans créer d’enjeu.',
-    },
-    {
-      label: 'À avancer',
-      decision: cleanText(structuredAdvance?.recommendation)
-        ?? cleanText(retentionFix?.fix)
-        ?? 'La preuve ou le bénéfice doit arriver avant l’explication.',
-    },
-    {
-      label: 'À garder',
-      decision: cleanText(structuredKeep?.recommendation)
-        ?? firstText(result?.hook?.strengths?.[0], result?.editing?.strengths?.[0])
-        ?? 'Le passage où tu montres le résultat concret.',
-    },
-    {
-      label: 'À réécrire',
-      decision: cleanText(hookProblem?.action)
-        ?? cleanText(ctaProblem?.action)
-        ?? 'Le hook et le CTA doivent donner une vraie raison d’agir.',
-    },
-    {
-      label: 'À republier',
-      decision: cleanText(result?.repostVersion?.shortVersion)
-        ?? cleanText(result?.coachAnalysis?.repostEngine.bestOpportunity?.action)
-        ?? 'Une version plus courte, ouverte sur le résultat, avec une relance à mi-vidéo.',
-    },
+  const candidates: Array<[EditingDecision['label'], string | null]> = [
+    ['À couper', cleanText(structuredCut?.recommendation) ?? cleanText(cuts?.reason)],
+    ['À avancer', cleanText(structuredAdvance?.recommendation) ?? cleanText(retentionFix?.fix)],
+    ['À garder', cleanText(structuredKeep?.recommendation) ?? firstText(result?.hook?.strengths?.[0], result?.editing?.strengths?.[0])],
+    ['À réécrire', cleanText(hookProblem?.action) ?? cleanText(ctaProblem?.action)],
+    ['À republier', cleanText(result?.repostVersion?.shortVersion) ?? cleanText(result?.coachAnalysis?.repostEngine.bestOpportunity?.action)],
   ];
+
+  return candidates.flatMap(([label, decision]) => decision ? [{ label, decision }] : []);
 }
 
 function structuredStepToV2(step: ReconstructionSequence): RecommendedV2Step {
   return {
     title: cleanText(step.title) ?? titleForMove(step.move, step.type),
-    detail: cleanText(step.recommendation) ?? cleanText(step.retentionGoal) ?? 'Rends cette étape plus directe et plus tendue.',
+    detail: cleanText(step.recommendation) ?? cleanText(step.retentionGoal) ?? 'Détail non disponible dans cette analyse.',
     timing: `${step.start} → ${step.end}`,
   };
 }
@@ -387,7 +316,7 @@ function structuredStepToV2(step: ReconstructionSequence): RecommendedV2Step {
 function legacyStepToV2(step: NonNullable<AnalysisResult['reconstructionIA']>['optimizedStructure'][number]): RecommendedV2Step {
   return {
     title: titleForMove(step.move, step.type),
-    detail: cleanText(step.recommendation) ?? cleanText(step.goal) ?? 'Rends cette étape plus directe et plus tendue.',
+    detail: cleanText(step.recommendation) ?? cleanText(step.goal) ?? 'Détail non disponible dans cette analyse.',
     timing: `${step.start} → ${step.end}`,
   };
 }
@@ -395,9 +324,9 @@ function legacyStepToV2(step: NonNullable<AnalysisResult['reconstructionIA']>['o
 function repostStepToV2(step: string, index: number): RecommendedV2Step {
   const [maybeTiming, ...rest] = step.split(':');
   return {
-    title: defaultV2Steps[index]?.title ?? `Étape ${index + 1}`,
-    detail: cleanText(rest.join(':')) ?? cleanText(step) ?? defaultV2Steps[index]?.detail ?? 'Raccourcis ce passage et garde la tension.',
-    timing: rest.length > 0 ? maybeTiming.trim() : defaultV2Steps[index]?.timing ?? `${index + 1}`,
+    title: `Étape ${index + 1}`,
+    detail: cleanText(rest.join(':')) ?? cleanText(step) ?? 'Détail non disponible dans cette analyse.',
+    timing: rest.length > 0 ? maybeTiming.trim() : '—',
   };
 }
 
@@ -413,49 +342,17 @@ function titleForMove(move: string | undefined, type: string): string {
   return 'Resserre la structure';
 }
 
-const defaultV2Steps: RecommendedV2Step[] = [
-  {
-    title: 'Ouvre avec le résultat',
-    detail: 'Commence par le bénéfice ou le problème fort, pas par le contexte.',
-    timing: '0:00',
-  },
-  {
-    title: 'Donne la preuve rapidement',
-    detail: 'Montre l’élément qui prouve ton point avant d’expliquer.',
-    timing: '0:02',
-  },
-  {
-    title: 'Coupe l’intro',
-    detail: 'Supprime les secondes où tu installes le sujet sans tension.',
-    timing: '0:03',
-  },
-  {
-    title: 'Ajoute une relance',
-    detail: 'À mi-vidéo, ajoute une phrase qui relance la curiosité.',
-    timing: '0:06',
-  },
-  {
-    title: 'Termine avec un CTA clair',
-    detail: 'Demande une action liée à la curiosité créée par la vidéo.',
-    timing: 'fin',
-  },
-];
-
 function buildRecommendedV2(result: DetailResult | null): RecommendedV2Step[] {
   const structured = result?.structuredReconstructionIA as ReconstructionPlan | undefined;
   const structuredSteps = structured?.optimizedStructure?.map(structuredStepToV2) ?? [];
   const legacySteps = result?.reconstructionIA?.optimizedStructure?.map(legacyStepToV2) ?? [];
   const repostSteps = result?.repostVersion?.structure?.map(repostStepToV2) ?? [];
-  const steps = [...structuredSteps, ...legacySteps, ...repostSteps];
-
-  if (steps.length >= 5) return steps.slice(0, 5);
-
-  const merged = [...steps];
-  for (const fallback of defaultV2Steps) {
-    if (merged.length >= 5) break;
-    if (!merged.some((step) => step.title === fallback.title)) merged.push(fallback);
-  }
-  return merged.slice(0, 5);
+  const steps = structuredSteps.length > 0
+    ? structuredSteps
+    : legacySteps.length > 0
+      ? legacySteps
+      : repostSteps;
+  return steps.slice(0, 5);
 }
 
 function buildHooks(result: DetailResult | null): HookAlternative[] {
@@ -467,7 +364,6 @@ function buildHooks(result: DetailResult | null): HookAlternative[] {
     ...(result?.coachAnalysis?.hookVariants ?? []),
     ...reconstructionHooks,
     ...structuredHooks,
-    ...FALLBACK_HOOKS,
   ]).slice(0, 5);
 
   return hooks.map((hook, index) => ({
@@ -475,8 +371,8 @@ function buildHooks(result: DetailResult | null): HookAlternative[] {
     why: hook === result?.repostVersion?.hook
       ? 'C’est le hook le plus proche de la V2 recommandée.'
       : index === 0
-        ? 'Ce hook met la tension avant le contexte.'
-        : 'Il donne une raison de rester avant d’expliquer le sujet.',
+        ? 'Première alternative enregistrée par l’analyse.'
+        : 'Alternative enregistrée par l’analyse.',
   }));
 }
 
@@ -500,17 +396,16 @@ function buildCta(result: DetailResult | null): CtaRecommendation {
     result?.coachAnalysis?.optimizedCtas?.[0],
     structuredCtas[0]?.cta,
     legacyCtas[0]?.cta,
-  ) ?? 'Commente “V2” si tu veux que je te montre la version corrigée.';
+  ) ?? '—';
 
   return {
     main,
     why: firstText(
       structuredCtas[0]?.why,
       legacyCtas[0]?.why,
-      'Ce CTA fonctionne parce qu’il transforme la curiosité en action simple.',
-    ) ?? 'Ce CTA fonctionne parce qu’il transforme la curiosité en action simple.',
-    directVariant: firstText(result?.coachAnalysis?.optimizedCtas?.[1], structuredCtas[1]?.cta) ?? 'Commente “V2” et je te donne la version courte.',
-    curiosityVariant: firstText(result?.coachAnalysis?.optimizedCtas?.[2], structuredCtas[2]?.cta) ?? 'Tu avais repéré ce détail avant la fin ?',
+    ) ?? 'Explication non disponible dans cette analyse.',
+    directVariant: firstText(result?.coachAnalysis?.optimizedCtas?.[1], structuredCtas[1]?.cta) ?? '—',
+    curiosityVariant: firstText(result?.coachAnalysis?.optimizedCtas?.[2], structuredCtas[2]?.cta) ?? '—',
   };
 }
 
@@ -518,7 +413,7 @@ function buildRepostPlan(result: DetailResult | null): string[] {
   const actionPlan = cleanTexts(result?.actionPlan);
   const problemActions = cleanTexts(result?.coachAnalysis?.detectedProblems?.map((item) => item.action));
   const improvements = cleanTexts(result?.improvements?.map((item) => item.tip));
-  return uniqueStrings([...actionPlan, ...problemActions, ...improvements, ...FALLBACK_REPOST_PLAN]).slice(0, 7);
+  return uniqueStrings([...actionPlan, ...problemActions, ...improvements]).slice(0, 7);
 }
 
 function normalizeAnalysis(row: AnalysisDetailRow): AnalysisDetailData {
@@ -531,11 +426,11 @@ function normalizeAnalysis(row: AnalysisDetailRow): AnalysisDetailData {
     result?.coachAnalysis?.verdict,
     result?.analyzerMeta?.verdictShort,
     result?.finalVerdict,
-    'À republier avec une structure plus directe.',
-  ) ?? 'À republier avec une structure plus directe.';
+    'Diagnostic non disponible.',
+  ) ?? 'Diagnostic non disponible.';
 
   const hooks = buildHooks(result);
-  const primaryHook = hooks[0]?.hook ?? FALLBACK_HOOKS[0];
+  const primaryHook = hooks[0]?.hook;
 
   return {
     id: row.id,
@@ -555,8 +450,8 @@ function normalizeAnalysis(row: AnalysisDetailRow): AnalysisDetailData {
       result?.hook?.analysis,
       transparentScoreExplanation,
     ) ?? transparentScoreExplanation,
-    objective: firstText(result?.analyzerMeta?.objectiveLabel, result?.analyzerMeta?.objective, 'Repost') ?? 'Repost',
-    niche: firstText(result?.analyzerMeta?.nicheLabel, result?.coachAnalysis?.patternLabel, result?.detectedVideoMeta?.authorUsername, 'TikTok') ?? 'TikTok',
+    objective: firstText(result?.analyzerMeta?.objectiveLabel, result?.analyzerMeta?.objective) ?? 'Non renseigné',
+    niche: firstText(result?.analyzerMeta?.nicheLabel, result?.coachAnalysis?.patternLabel, result?.detectedVideoMeta?.authorUsername) ?? 'Non renseignée',
     sourceLabel: getSourceLabel(result),
     keyMoments: buildKeyMoments(result),
     diagnostics: buildDiagnostics(result),
@@ -566,7 +461,9 @@ function normalizeAnalysis(row: AnalysisDetailRow): AnalysisDetailData {
     cta: buildCta(result),
     repostPlan: buildRepostPlan(result),
     prepareHref: `#v2-recommandee`,
-    hooksHref: `/dashboard/hooks?objective=repost&analysisId=${encodeURIComponent(row.id)}&trendHook=${encodeURIComponent(primaryHook)}&trendTitle=${encodeURIComponent(verdict)}`,
+    hooksHref: primaryHook
+      ? `/dashboard/hooks?objective=repost&analysisId=${encodeURIComponent(row.id)}&trendHook=${encodeURIComponent(primaryHook)}&trendTitle=${encodeURIComponent(verdict)}`
+      : `/dashboard/hooks?objective=repost&analysisId=${encodeURIComponent(row.id)}`,
     rawResult: result,
   };
 }
@@ -579,6 +476,7 @@ export async function getAnalysisDetailData(id: string): Promise<AnalysisDetailL
     .from('analyses')
     .select('id, user_id, video_url, result, created_at')
     .eq('id', id)
+    .eq('user_id', session.userId)
     .maybeSingle();
 
   if (error || !data) return { status: 'not_found', data: null };

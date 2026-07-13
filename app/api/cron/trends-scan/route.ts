@@ -6,7 +6,7 @@ function isAuthorized(request: NextRequest): boolean {
   const secret = process.env.CRON_SECRET;
   if (!secret) return false;
   const bearer = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
-  return bearer === secret || request.nextUrl.searchParams.get('secret') === secret;
+  return bearer === secret;
 }
 
 export async function GET(request: NextRequest) {

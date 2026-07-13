@@ -67,7 +67,7 @@ export default function Footer() {
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white mb-5">Viralynz</p>
             <ul className="space-y-3">
               {[
-                { label: 'Fonctionnalités', href: '/#features' },
+                { label: 'Fonctionnalités', href: '/#fonctionnalites' },
                 { label: 'FAQ',             href: '/#faq' },
                 { label: 'Nouveautés',      href: '/changelog' },
               ].map(({ label, href }) => (
@@ -78,12 +78,12 @@ export default function Footer() {
                 </li>
               ))}
               <li>
-                <button
-                  onClick={() => window.dispatchEvent(new CustomEvent('open-contact'))}
-                  className="text-[13px] text-gray-500 hover:text-white transition-colors text-left"
+                <a
+                  href="mailto:contact@viralynz.com"
+                  className="text-[13px] text-gray-500 hover:text-white transition-colors"
                 >
                   Nous contacter
-                </button>
+                </a>
               </li>
             </ul>
           </div>
@@ -93,7 +93,7 @@ export default function Footer() {
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white mb-5">Outils</p>
             <ul className="space-y-3">
               {[
-                { label: 'Fonctionnalités', href: '/#features' },
+                { label: 'Fonctionnalités', href: '/#fonctionnalites' },
                 { label: 'Nouveautés',      href: '/changelog' },
               ].map(({ label, href }) => (
                 <li key={label}>

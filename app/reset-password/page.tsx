@@ -94,6 +94,10 @@ function ResetPasswordForm() {
         return;
       }
       await supabase.auth.signOut();
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+      }).catch(() => null);
       window.location.href = '/login?reset=success';
     } catch {
       setError('Erreur réseau.');

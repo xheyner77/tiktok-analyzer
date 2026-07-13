@@ -314,7 +314,6 @@ export const phraseTranslations: Record<string, string> = {
   'Plateformes supportées': 'Supported platforms',
   'prochainement': 'coming soon',
   'Approuvé par': 'Trusted by',
-  '10K+ créateurs': '10K+ creators',
   'Comprends pourquoi ta vidéo décroche': 'Understand why your video loses viewers',
   'Chaque score devient une décision de montage.': 'Every score becomes an editing decision.',
   'Diagnostic concret': 'Concrete diagnosis',

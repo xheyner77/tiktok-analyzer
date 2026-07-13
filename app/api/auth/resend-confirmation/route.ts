@@ -1,6 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
 import { supabaseAuth } from '@/lib/supabase';
 import { getAuthEmailCallbackUrl } from '@/lib/site-url';
+import {
+  privateJson,
+  readJsonObject,
+  rejectCrossSiteMutation,
+} from '@/lib/api-route-security';
+import {
+  BEST_EFFORT_EMAIL_LIMITS,
+  consumeBestEffortEmailRateLimits,
+  getBestEffortRequestIdentifier,
+} from '@/lib/email-abuse-protection';
 
 /**
  * Converts raw Supabase Auth error messages into user-friendly French strings.
@@ -18,14 +28,6 @@ function translateResendError(message: string): string {
     return 'Trop d\'emails envoyés récemment. Veuillez patienter quelques minutes avant de renvoyer.';
   }
 
-  if (msg.includes('user not found') || msg.includes('no user')) {
-    return 'Aucun compte trouvé avec cette adresse email.';
-  }
-
-  if (msg.includes('already confirmed') || msg.includes('email already confirmed')) {
-    return 'Cet email a déjà été confirmé. Vous pouvez vous connecter directement.';
-  }
-
   if (msg.includes('network') || msg.includes('fetch failed')) {
     return 'Erreur de connexion. Vérifiez votre connexion et réessayez.';
   }
@@ -33,16 +35,52 @@ function translateResendError(message: string): string {
   return 'Impossible d\'envoyer l\'email de confirmation. Veuillez réessayer dans quelques instants.';
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    const { email } = await request.json();
+function shouldHideAccountState(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return normalized.includes('user not found')
+    || normalized.includes('no user')
+    || normalized.includes('already confirmed')
+    || normalized.includes('email already confirmed');
+}
 
-    if (!email || typeof email !== 'string') {
-      return NextResponse.json({ error: 'Email requis.' }, { status: 400 });
+export async function POST(request: NextRequest) {
+  const crossSite = rejectCrossSiteMutation(request);
+  if (crossSite) return crossSite;
+
+  try {
+    const body = await readJsonObject(request, 8 * 1024);
+    if (!body) {
+      return privateJson({ error: 'Requête invalide.' }, { status: 400 });
+    }
+    const rawEmail = body.email;
+
+    if (!rawEmail || typeof rawEmail !== 'string') {
+      return privateJson({ error: 'Email requis.' }, { status: 400 });
+    }
+    const email = rawEmail.trim().toLowerCase();
+    if (!email) {
+      return privateJson({ error: 'Email requis.' }, { status: 400 });
+    }
+
+    const clientIdentifier = getBestEffortRequestIdentifier(request);
+    const rateLimit = consumeBestEffortEmailRateLimits([
+      {
+        scope: 'auth-email:client',
+        identifier: clientIdentifier,
+        ...BEST_EFFORT_EMAIL_LIMITS.authEmailPerClient,
+      },
+      {
+        scope: 'resend-confirmation:target',
+        identifier: email,
+        ...BEST_EFFORT_EMAIL_LIMITS.authEmailPerTarget,
+      },
+    ]);
+    if (!rateLimit.allowed) {
+      // Succès volontairement générique : ne révèle ni l'existence du compte ni la règle déclenchée.
+      return privateJson({ success: true });
     }
 
     const emailRedirectTo = getAuthEmailCallbackUrl(request.headers.get('origin'));
-    console.log('[resend-confirmation] emailRedirectTo:', emailRedirectTo, '— email:', email);
 
     const { error } = await supabaseAuth.auth.resend({
       type: 'signup',
@@ -51,14 +89,25 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-      console.error('[resend-confirmation] Supabase error:', error.message);
-      return NextResponse.json({ error: translateResendError(error.message) }, { status: 400 });
+      if (shouldHideAccountState(error.message)) {
+        return privateJson({ success: true });
+      }
+      console.error('[resend-confirmation] provider_request_failed', {
+        name: error.name,
+        status: error.status,
+        code: error.code,
+      });
+      return privateJson({ error: translateResendError(error.message) }, { status: 400 });
     }
 
-    return NextResponse.json({ success: true });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error('[resend-confirmation] Unexpected error:', message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return privateJson({ success: true });
+  } catch (error) {
+    console.error('[resend-confirmation] request_failed', {
+      name: error instanceof Error ? error.name : 'UnknownError',
+    });
+    return privateJson(
+      { error: 'Impossible de traiter la demande pour le moment. Réessaie plus tard.' },
+      { status: 500 }
+    );
   }
 }

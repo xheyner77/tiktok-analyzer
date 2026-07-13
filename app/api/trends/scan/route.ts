@@ -32,7 +32,12 @@ export async function POST(request: NextRequest) {
     const result = await runTrendScan(asPayload(body), session.userId);
     return NextResponse.json(result);
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Scan impossible.';
-    return NextResponse.json({ error: message }, { status: 503 });
+    console.error('[trends/scan] request_failed', {
+      name: error instanceof Error ? error.name : 'UnknownError',
+    });
+    return NextResponse.json(
+      { error: 'Le Radar est temporairement indisponible. Aucune tendance n’a été inventée.' },
+      { status: 503 },
+    );
   }
 }

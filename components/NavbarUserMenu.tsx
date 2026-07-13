@@ -48,8 +48,7 @@ export default function NavbarUserMenu({ email, plan }: NavbarUserMenuProps) {
     setIsLoggingOut(true);
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
-      router.push('/');
-      router.refresh();
+      window.location.href = '/';
     } catch {
       setIsLoggingOut(false);
     }

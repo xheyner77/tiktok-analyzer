@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import type { NormalizedTrendSignal, RawTrendItem, TrendClusterScoringInput } from '@/lib/trends/types';
+import type { NormalizedTrendSignal, RawTrendItem } from '@/lib/trends/types';
 import { clusterTrendSignals } from '@/lib/trends/cluster';
 import { isTrendDemoMode } from '@/lib/trends/config';
 import { normalizeTrendItem } from '@/lib/trends/normalize';
 import { mapApifyItem } from '@/lib/trends/providers/apify-provider';
 import { buildTrendOverview } from '@/lib/trends/recommendations';
-import { calculateTrendScores, calculateTrendStage, calculateTrendVerdict, estimateWindowHours } from '@/lib/trends/scoring';
+import { calculateTrendScores, calculateTrendStage, calculateTrendVerdict, estimateWindowHours, type TrendClusterScoringInput } from '@/lib/trends/scoring';
 
 function raw(overrides: Partial<RawTrendItem> = {}): RawTrendItem {
   return {

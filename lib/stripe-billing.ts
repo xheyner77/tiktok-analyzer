@@ -12,11 +12,12 @@ export type BillingInterval = 'month' | 'year';
 
 export type PriceValidationResult =
   | { ok: true }
-  | { ok: false; code: 'PRICE_NOT_RECURRING' | 'PRICE_NOT_SUPPORTED_INTERVAL' | 'PRICE_NOT_ONETIME'; message: string };
+  | { ok: false; code: 'PRICE_NOT_RECURRING' | 'PRICE_NOT_SUPPORTED_INTERVAL' | 'PRICE_INTERVAL_MISMATCH' | 'PRICE_NOT_ONETIME'; message: string };
 
 export async function assertStripePriceIsMonthlySubscription(
   stripe: Stripe,
-  priceId: string
+  priceId: string,
+  expectedInterval?: BillingInterval,
 ): Promise<PriceValidationResult> {
   const price = await stripe.prices.retrieve(priceId);
   if (price.type !== 'recurring') {
@@ -32,6 +33,13 @@ export async function assertStripePriceIsMonthlySubscription(
       ok: false,
       code: 'PRICE_NOT_SUPPORTED_INTERVAL',
       message: `L'abonnement doit etre mensuel ou annuel. Price actuel : ${price.recurring?.interval ?? '?'}.`,
+    };
+  }
+  if (expectedInterval && price.recurring.interval !== expectedInterval) {
+    return {
+      ok: false,
+      code: 'PRICE_INTERVAL_MISMATCH',
+      message: `Le Price Stripe configuré est en ${price.recurring.interval}, mais le checkout demandé est en ${expectedInterval}.`,
     };
   }
   return { ok: true };

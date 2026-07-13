@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import AuthTransition from '@/components/AuthTransition';
 import BrandLogo from '@/components/BrandLogo';
 import StarsFullPage from '@/components/StarsFullPage';
+import { getSafeInternalPath } from '@/lib/internal-redirect';
 
 // Separated into its own component because useSearchParams() requires
 // a Suspense boundary in Next.js 14 App Router. Without it the page
@@ -13,8 +14,7 @@ import StarsFullPage from '@/components/StarsFullPage';
 function LoginForm() {
   const searchParams = useSearchParams();
   // Validate redirect to prevent open redirect — only allow internal relative paths
-  const rawRedirect = searchParams?.get('redirect') ?? '/dashboard';
-  const redirectTo = rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') ? rawRedirect : '/dashboard';
+  const redirectTo = getSafeInternalPath(searchParams?.get('redirect'));
   const passwordResetSuccess = searchParams?.get('reset') === 'success';
 
   const [email, setEmail] = useState('');
@@ -104,7 +104,7 @@ function LoginForm() {
       <div className="relative overflow-hidden rounded-[1.35rem] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.025))] p-5 shadow-[0_28px_100px_-70px_rgba(232,121,249,0.95),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur sm:p-6">
         <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-vn-fuchsia/70 to-transparent" aria-hidden />
         {passwordResetSuccess && (
-          <div className="mb-4 rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-3.5 py-2.5">
+          <div role="status" aria-live="polite" className="mb-4 rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-3.5 py-2.5">
             <p className="text-xs text-emerald-300">
               Mot de passe mis à jour. Tu peux te connecter avec ton nouveau mot de passe.
             </p>
@@ -113,35 +113,49 @@ function LoginForm() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Email */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-gray-400">Adresse email</label>
+            <label htmlFor="login-email" className="text-xs font-bold text-gray-400">Adresse email</label>
             <input
+              id="login-email"
+              name="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="vous@exemple.com"
               autoComplete="email"
+              inputMode="email"
+              autoCapitalize="none"
+              spellCheck={false}
+              required
+              aria-invalid={Boolean(error)}
+              aria-describedby={error ? 'login-error' : undefined}
               disabled={isLoading}
-              className="h-12 w-full rounded-xl border border-white/[0.09] bg-black/30 px-4 text-[13px] font-semibold text-white outline-none transition-all placeholder:text-gray-700 hover:border-white/[0.14] focus:border-vn-fuchsia/45 focus:bg-black/40 focus:ring-2 focus:ring-vn-fuchsia/10 disabled:opacity-50"
+              className="h-12 w-full rounded-xl border border-white/[0.09] bg-black/30 px-4 text-base font-semibold text-white outline-none transition-all placeholder:text-gray-700 hover:border-white/[0.14] focus:border-vn-fuchsia/45 focus:bg-black/40 focus:ring-2 focus:ring-vn-fuchsia/10 disabled:opacity-50 sm:text-[13px]"
             />
           </div>
 
           {/* Password */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-gray-400">Mot de passe</label>
+            <label htmlFor="login-password" className="text-xs font-bold text-gray-400">Mot de passe</label>
             <div className="relative">
               <input
+                id="login-password"
+                name="password"
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 autoComplete="current-password"
+                required
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? 'login-error' : undefined}
                 disabled={isLoading}
-                className="h-12 w-full rounded-xl border border-white/[0.09] bg-black/30 px-4 pr-11 text-[13px] font-semibold text-white outline-none transition-all placeholder:text-gray-700 hover:border-white/[0.14] focus:border-vn-fuchsia/45 focus:bg-black/40 focus:ring-2 focus:ring-vn-fuchsia/10 disabled:opacity-50"
+                className="h-12 w-full rounded-xl border border-white/[0.09] bg-black/30 px-4 pr-11 text-base font-semibold text-white outline-none transition-all placeholder:text-gray-700 hover:border-white/[0.14] focus:border-vn-fuchsia/45 focus:bg-black/40 focus:ring-2 focus:ring-vn-fuchsia/10 disabled:opacity-50 sm:text-[13px]"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
                 aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                aria-pressed={showPassword}
                 className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-gray-600 transition-colors hover:bg-white/[0.04] hover:text-gray-300"
               >
                 {showPassword ? (
@@ -169,7 +183,7 @@ function LoginForm() {
 
           {/* Error */}
           {error && (
-            <div className={`border rounded-xl px-3.5 py-3 ${
+            <div id="login-error" role="alert" aria-live="assertive" className={`border rounded-xl px-3.5 py-3 ${
               errorCode === 'EMAIL_NOT_CONFIRMED'
                 ? 'bg-amber-500/8 border-amber-500/25'
                 : 'bg-red-500/8 border-red-500/20'
@@ -214,7 +228,7 @@ function LoginForm() {
           >
             {isLoading ? (
               <span className="flex items-center justify-center gap-2">
-                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden>
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>

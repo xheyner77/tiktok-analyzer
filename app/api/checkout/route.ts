@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import Stripe from 'stripe';
 import { getSession } from '@/lib/session';
 import { getUserById } from '@/lib/auth';
@@ -6,7 +6,6 @@ import { getSiteUrl } from '@/lib/site-url';
 import {
   assertStripePriceIsMonthlySubscription,
   assertStripePriceIsOneTimePayment,
-  type BillingInterval,
   getStripePriceId,
   getEffectivePlan,
   isSubscriptionStatusAllowingAccess,
@@ -18,6 +17,11 @@ import {
   blockTestStripePublishableInProduction,
   blockTestStripeSecretInProduction,
 } from '@/lib/stripe-prod-guard';
+import {
+  privateJson,
+  readJsonObject,
+  rejectCrossSiteMutation,
+} from '@/lib/api-route-security';
 
 function getStripe(): Stripe {
   const stripeSecret = process.env.STRIPE_SECRET_KEY?.trim();
@@ -29,45 +33,70 @@ function isCheckoutPlan(plan: string | undefined): plan is PaidStripePlan {
   return plan === 'starter' || plan === 'creator' || plan === 'pro' || plan === 'lifetime' || plan === 'scale';
 }
 
+const CHECKOUT_IDEMPOTENCY_WINDOW_MS = 30 * 60 * 1000;
+
+function checkoutIdempotencyKey(input: {
+  userId: string;
+  plan: string;
+  interval: string;
+}): string {
+  const window = Math.floor(Date.now() / CHECKOUT_IDEMPOTENCY_WINDOW_MS);
+  return `viralynz-checkout:${input.userId}:${input.plan}:${input.interval}:${window}`;
+}
+
 export async function POST(request: NextRequest) {
+  const crossSite = rejectCrossSiteMutation(request);
+  if (crossSite) return crossSite;
+
   const skBlock = blockTestStripeSecretInProduction();
-  if (skBlock) return skBlock;
+  if (skBlock) {
+    return privateJson({ error: 'Le service de facturation est indisponible.' }, { status: 503 });
+  }
   const pkBlock = blockTestStripePublishableInProduction();
-  if (pkBlock) return pkBlock;
+  if (pkBlock) {
+    return privateJson({ error: 'Le service de facturation est indisponible.' }, { status: 503 });
+  }
 
   try {
     const session = await getSession();
 
     if (!session) {
-      return NextResponse.json({ error: 'Non authentifie.' }, { status: 401 });
+      return privateJson({ error: 'Non authentifié.' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { plan, interval = 'month' } = body as { plan?: string; interval?: BillingInterval };
+    const body = await readJsonObject(request);
+    if (!body) {
+      return privateJson({ error: 'Corps de requête invalide.' }, { status: 400 });
+    }
+    const plan = typeof body.plan === 'string' ? body.plan : undefined;
+    const interval = body.interval === undefined ? 'month' : body.interval;
 
     if (!isCheckoutPlan(plan)) {
-      return NextResponse.json({ error: 'Plan invalide. Valeurs acceptees : starter, pro, lifetime.' }, { status: 400 });
+      return privateJson({ error: 'Plan invalide.' }, { status: 400 });
     }
     if (interval !== 'month' && interval !== 'year') {
-      return NextResponse.json({ error: 'Intervalle invalide. Valeurs acceptees : month, year.' }, { status: 400 });
+      return privateJson({ error: 'Intervalle invalide.' }, { status: 400 });
     }
 
     const normalizedPlan = normalizePlan(plan);
     if (normalizedPlan === 'starter' && interval === 'year') {
-      return NextResponse.json({ error: 'Le plan Starter est disponible uniquement en mensuel.' }, { status: 400 });
+      return privateJson({ error: 'Le plan Starter est disponible uniquement en mensuel.' }, { status: 400 });
     }
     if (normalizedPlan === 'lifetime' && interval !== 'month') {
-      return NextResponse.json({ error: 'Le plan Lifetime est un paiement unique.' }, { status: 400 });
+      return privateJson({ error: 'Le plan Lifetime est un paiement unique.' }, { status: 400 });
     }
 
     const userProfile = await getUserById(session.userId);
+    if (!userProfile) {
+      return privateJson({ error: 'Compte utilisateur introuvable.' }, { status: 404 });
+    }
     const hasActiveStripeSub =
-      Boolean(userProfile?.stripe_subscription_id) &&
-      isSubscriptionStatusAllowingAccess(userProfile?.subscription_status);
-    const currentPlan = userProfile ? getEffectivePlan(userProfile) : 'free';
+      Boolean(userProfile.stripe_subscription_id) &&
+      isSubscriptionStatusAllowingAccess(userProfile.subscription_status);
+    const currentPlan = getEffectivePlan(userProfile);
 
     if (isLifetimePlan(currentPlan)) {
-      return NextResponse.json(
+      return privateJson(
         { error: 'Tu es deja sur le plan Lifetime.', code: 'ALREADY_ON_PLAN' },
         { status: 400 }
       );
@@ -78,7 +107,7 @@ export async function POST(request: NextRequest) {
 
     if (currentRank >= targetRank) {
       const isSamePlan = currentRank === targetRank;
-      return NextResponse.json(
+      return privateJson(
         {
           error: isSamePlan
             ? `Tu es deja sur le plan ${getPlanLabel(plan)}.`
@@ -90,7 +119,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (hasActiveStripeSub && normalizedPlan !== 'lifetime') {
-      return NextResponse.json(
+      return privateJson(
         {
           error: 'Tu as deja un abonnement Stripe actif. Gere-le depuis le dashboard ou contacte le support.',
           code: 'ALREADY_SUBSCRIBED',
@@ -107,15 +136,19 @@ export async function POST(request: NextRequest) {
 
     const priceCheck = checkoutMode === 'payment'
       ? await assertStripePriceIsOneTimePayment(stripe, priceId)
-      : await assertStripePriceIsMonthlySubscription(stripe, priceId);
+      : await assertStripePriceIsMonthlySubscription(stripe, priceId, interval);
 
     if (!priceCheck.ok) {
-      console.error('[checkout] Price invalide:', priceCheck.code, priceId, priceCheck.message);
-      return NextResponse.json({ error: priceCheck.message, code: priceCheck.code }, { status: 400 });
+      console.error('[checkout] Configuration de prix Stripe invalide.', { code: priceCheck.code });
+      return privateJson(
+        { error: 'Le paiement est temporairement indisponible.', code: 'BILLING_CONFIGURATION_ERROR' },
+        { status: 503 },
+      );
     }
 
     const params: Stripe.Checkout.SessionCreateParams = {
       mode: checkoutMode,
+      client_reference_id: session.userId,
       line_items: [{ price: priceId, quantity: 1 }],
       metadata: {
         userId: session.userId,
@@ -135,33 +168,59 @@ export async function POST(request: NextRequest) {
           interval,
         },
       };
+    } else {
+      params.payment_intent_data = {
+        metadata: {
+          userId: session.userId,
+          plan: normalizedPlan,
+          interval,
+        },
+      };
     }
 
-    if (userProfile?.stripe_customer_id) {
+    if (userProfile.stripe_customer_id) {
       params.customer = userProfile.stripe_customer_id;
     } else {
       params.customer_email = session.email;
+      if (checkoutMode === 'payment') {
+        // Checkout payment mode no longer creates a Customer by default.
+        // Lifetime fulfillment requires a stable Customer id so the webhook
+        // can bind the purchase to exactly one Viralynz account.
+        params.customer_creation = 'always';
+      }
     }
 
-    const checkoutSession = await stripe.checkout.sessions.create(params);
-
-    console.log('[checkout] Session creee', {
-      sessionId: checkoutSession.id,
-      mode: checkoutSession.mode,
-      priceId,
-      userId: session.userId,
-      plan: normalizedPlan,
-      interval,
-      customer: params.customer ?? '(nouveau via customer_email)',
+    const checkoutSession = await stripe.checkout.sessions.create(params, {
+      // A double click, a second tab or a network retry within the same short
+      // window must resolve to the same Stripe Checkout Session.
+      idempotencyKey: checkoutIdempotencyKey({
+        userId: session.userId,
+        plan: normalizedPlan,
+        interval,
+      }),
     });
 
-    return NextResponse.json({ url: checkoutSession.url });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error('[checkout] Error:', message);
-    return NextResponse.json(
-      { error: message.includes('STRIPE_') ? message : 'Erreur lors de la creation du paiement.' },
-      { status: 500 }
+    if (!checkoutSession.url) {
+      console.error('[checkout] Stripe n’a retourné aucune URL de paiement.');
+      return privateJson({ error: 'Le paiement est temporairement indisponible.' }, { status: 502 });
+    }
+
+    console.log('[checkout] Session de paiement créée.', {
+      mode: checkoutSession.mode,
+      plan: normalizedPlan,
+      interval,
+    });
+
+    return privateJson({ url: checkoutSession.url });
+  } catch (error) {
+    const unavailable = error instanceof Error && /manquant|missing/i.test(error.message);
+    console.error('[checkout] Erreur de paiement.', {
+      kind: error instanceof Error ? error.name : 'unknown',
+      configurationUnavailable: unavailable,
+    });
+    return privateJson(
+      { error: 'Le paiement est temporairement indisponible.' },
+      { status: unavailable ? 503 : 502 },
     );
   }
 }

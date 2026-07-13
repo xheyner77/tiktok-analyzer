@@ -33,7 +33,7 @@ export default function FeaturesSection() {
       <div className="relative mx-auto max-w-3xl text-center">
         <p className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-300/80">Fonctionnalités</p>
         <h2 className="mt-3 text-[1.72rem] font-black leading-[1.02] tracking-tight text-white sm:text-5xl">
-          Viralynz ne te donne pas des features. Il te donne quoi changer.
+          Viralynz ne te donne pas des graphiques décoratifs. Il te dit quoi changer.
         </h2>
         <p className="mx-auto mt-3 max-w-2xl text-sm font-medium leading-6 text-gray-400 sm:text-base sm:leading-7">
           Chaque analyse transforme ta vidéo en décisions de montage : où l’attention casse, quoi couper, quoi avancer et quelle V2 republier.
