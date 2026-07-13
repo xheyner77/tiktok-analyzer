@@ -2,97 +2,34 @@ import { redirect } from 'next/navigation';
 import BillingActionButton from '@/components/dashboard-v2/BillingActionButton';
 import { getEffectivePlan, getUserById } from '@/lib/auth';
 import { normalizePlan, type AppPlan } from '@/lib/plans';
+import { PAID_PUBLIC_PLANS, type PaidCommercialPlanId, type PaidPublicPlan } from '@/lib/public-plans';
 import { getSession } from '@/lib/session';
-import { isSubscriptionStatusAllowingAccess, type PaidStripePlan } from '@/lib/stripe-billing';
-import {
-  MAX_ANALYSES_PRO,
-  MAX_ANALYSES_STARTER,
-  MAX_HOOKS_PRO,
-  MAX_HOOKS_STARTER,
-} from '@/lib/plan-limits';
-import {
-  DISPLAY_CATALOG_CREATOR_EUR,
-  DISPLAY_CATALOG_LIFETIME_EUR,
-  DISPLAY_CATALOG_PRO_EUR,
-} from '@/lib/stripe-pricing';
+import { isSubscriptionStatusAllowingAccess } from '@/lib/stripe-billing';
 
 export const dynamic = 'force-dynamic';
 
-type PlanCard = {
-  id: PaidStripePlan;
+type PlanPresentation = {
   rank: number;
-  name: string;
-  badge?: string;
   icon: 'bolt' | 'crown' | 'infinity';
-  price: string;
-  cadence: string;
-  subtitle?: string;
   benefit?: string;
-  features: Array<string | { label: string; available: boolean }>;
-  cta: string;
 };
 
 const planRank: Record<AppPlan, number> = { free: 0, starter: 1, creator: 1, pro: 2, lifetime: 3, scale: 3 };
 
-const plans: PlanCard[] = [
-  {
-    id: 'starter',
+const BILLING_PLAN_PRESENTATION: Record<PaidCommercialPlanId, PlanPresentation> = {
+  starter: {
     rank: 1,
-    name: 'Starter',
     icon: 'bolt',
-    price: `${DISPLAY_CATALOG_CREATOR_EUR}€`,
-    cadence: '/mois',
-    subtitle: 'Pour découvrir Viralynz et comprendre pourquoi tes vidéos flop.',
-    features: [
-      `${MAX_ANALYSES_STARTER} analyses vidéo / mois`,
-      `${MAX_HOOKS_STARTER} hooks générés / mois`,
-      'Analyse complète',
-      'Diagnostic du hook, du rythme et du CTA',
-      'Historique limité',
-      { label: 'Radar tendances inclus', available: false },
-    ],
-    cta: `Commencer — ${DISPLAY_CATALOG_CREATOR_EUR}€/mois`,
   },
-  {
-    id: 'pro',
+  pro: {
     rank: 2,
-    name: 'Pro',
-    badge: '⭐ ⭐ Populaire',
     icon: 'crown',
-    price: `${DISPLAY_CATALOG_PRO_EUR}€`,
-    cadence: '/mois',
-    subtitle: 'Pour améliorer tes vidéos et obtenir une version prête à reposter.',
-    features: [
-      `${MAX_ANALYSES_PRO} analyses vidéo / mois`,
-      `${MAX_HOOKS_PRO} hooks générés / mois`,
-      'Analyse complète détaillée',
-      'Version corrigée prête à reposter',
-      { label: 'Radar tendances — en préparation', available: false },
-      'Historique complet',
-    ],
-    cta: `Débloquer Pro — ${DISPLAY_CATALOG_PRO_EUR}€/mois`,
   },
-  {
-    id: 'lifetime',
+  lifetime: {
     rank: 3,
-    name: 'Lifetime',
-    badge: '∞ ∞ À vie',
     icon: 'infinity',
-    price: `${DISPLAY_CATALOG_LIFETIME_EUR}€`,
-    cadence: 'une seule fois',
-    benefit: 'Économise +199€/an vs mensuel',
-    features: [
-      'Analyses vidéo illimitées à vie',
-      'Hooks générés illimités à vie',
-      'Diagnostic complet et décisions de montage',
-      'Version corrigée prête à reposter',
-      { label: 'Radar tendances — en préparation', available: false },
-      'Plus jamais de paiement mensuel',
-      'Priorité sur les nouvelles fonctionnalités',
-    ],
-    cta: `Prendre Lifetime — ${DISPLAY_CATALOG_LIFETIME_EUR}€`,
   },
-];
+};
 
 const primaryButton =
   'inline-flex min-h-[40px] items-center justify-center rounded-[7px] px-4 text-[13px] font-black transition duration-200 hover:-translate-y-0.5 hover:brightness-110 focus:outline-none focus:ring-2';
@@ -106,7 +43,7 @@ const checkoutButtonStyles: Record<string, string> = {
   lifetime: 'bg-[linear-gradient(135deg,#facc15_0%,#fb923c_100%)] text-[#070811] shadow-[0_18px_48px_-30px_rgba(251,191,36,0.95),inset_0_1px_0_rgba(255,255,255,0.22)] focus:ring-amber-300/45',
 };
 
-function PlanIcon({ icon, tone }: { icon: PlanCard['icon']; tone: 'starter' | 'pro' | 'lifetime' }) {
+function PlanIcon({ icon, tone }: { icon: PlanPresentation['icon']; tone: PaidCommercialPlanId }) {
   const className = tone === 'lifetime' ? 'h-[22px] w-[22px] text-amber-300' : tone === 'pro' ? 'h-[22px] w-[22px] text-violet-300' : 'h-[22px] w-[22px] text-cyan-300';
   const stroke = {
     className,
@@ -202,7 +139,7 @@ function PlanAction({
   hasActiveStripeSubscription,
   hasStripeCustomer,
 }: {
-  plan: PlanCard;
+  plan: PaidPublicPlan;
   effectivePlan: AppPlan;
   hasActiveStripeSubscription: boolean;
   hasStripeCustomer: boolean;
@@ -217,7 +154,7 @@ function PlanAction({
     );
   }
 
-  if (currentRank > plan.rank) {
+  if (currentRank > BILLING_PLAN_PRESENTATION[plan.id].rank) {
     return (
       <button type="button" disabled className="min-h-[40px] w-full rounded-[7px] border border-white/[0.08] bg-white/[0.025] px-4 text-[13px] font-black text-slate-500">
         Inclus
@@ -271,7 +208,8 @@ export default async function DashboardBillingPage() {
       </header>
 
       <section id="plans" className="mt-14 grid items-stretch gap-5 md:grid-cols-2 xl:flex xl:justify-center xl:gap-6">
-        {plans.map((plan) => {
+        {PAID_PUBLIC_PLANS.map((plan) => {
+          const presentation = BILLING_PLAN_PRESENTATION[plan.id];
           const isPro = plan.id === 'pro';
           const isLifetime = plan.id === 'lifetime';
           const tone = isLifetime ? 'lifetime' : isPro ? 'pro' : 'starter';
@@ -290,53 +228,31 @@ export default async function DashboardBillingPage() {
               <div className={`pointer-events-none absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent ${
                 isPro ? 'via-violet-200/50' : isLifetime ? 'via-amber-200/45' : 'via-white/25'
               } to-transparent`} aria-hidden />
-              {plan.badge ? <PlanBadge tone={isLifetime ? 'lifetime' : 'pro'} /> : null}
+              {isPro || isLifetime ? <PlanBadge tone={isLifetime ? 'lifetime' : 'pro'} /> : null}
 
               <div className="flex items-center gap-3">
-                <PlanIcon icon={plan.icon} tone={tone} />
+                <PlanIcon icon={presentation.icon} tone={tone} />
                 <h2 className="text-[22px] font-black tracking-[-0.035em] text-white">{plan.name}</h2>
               </div>
 
               <div className="mt-[22px] flex min-h-[112px] flex-col">
                 <div>
                   <span className={isLifetime ? 'text-[40px] font-black leading-none tracking-[-0.06em] text-amber-300' : 'text-[40px] font-black leading-none tracking-[-0.06em] text-white'}>
-                    {plan.price}
+                    {plan.priceLabel}
                   </span>
                   <span className="ml-1.5 text-[13px] font-bold text-slate-300">{plan.cadence}</span>
                 </div>
 
-                {plan.benefit ? (
-                  <p className="mt-2 text-[13px] font-black leading-5 text-emerald-300">{plan.benefit}</p>
-                ) : null}
-
-                {plan.subtitle ? (
-                  <p className="mt-3 text-[13px] font-semibold leading-[1.5] text-slate-300">{plan.subtitle}</p>
-                ) : null}
+                <p className="mt-3 text-[13px] font-semibold leading-[1.5] text-slate-300">{plan.description}</p>
               </div>
 
               <ul className="mt-4 flex-1 space-y-2.5">
-                {plan.features.map((feature) => {
-                  const label = typeof feature === 'string' ? feature : feature.label;
-                  const available = typeof feature === 'string' ? true : feature.available;
-
-                  if (!available) {
-                    return (
-                      <li key={label} className="flex gap-2.5 text-[13px] font-semibold leading-[1.32] text-rose-300/55">
-                        <svg className="mt-[3px] h-3.5 w-3.5 shrink-0 text-rose-300/55" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden>
-                          <path d="M5.5 10h9" strokeLinecap="round" />
-                        </svg>
-                        <span className="line-through decoration-rose-300/60 decoration-2">{label}</span>
-                      </li>
-                    );
-                  }
-
-                  return (
-                  <li key={label} className="flex gap-2.5 text-[13px] font-semibold leading-[1.32] text-slate-200">
+                {plan.features.map((feature) => (
+                  <li key={feature} className="flex gap-2.5 text-[13px] font-semibold leading-[1.32] text-slate-200">
                       <CheckIcon tone={tone} />
-                    <span>{label}</span>
+                    <span>{feature}</span>
                   </li>
-                  );
-                })}
+                ))}
               </ul>
 
               <div className="mt-auto pt-6">

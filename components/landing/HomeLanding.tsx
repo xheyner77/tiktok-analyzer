@@ -5,6 +5,7 @@ import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion
 import Link from 'next/link';
 import PremiumFeaturesSection from '@/components/landing/FeaturesSection';
 import PremiumHowItWorksSection from '@/components/landing/HowItWorksSection';
+import LandingPricingSection from '@/components/landing/LandingPricingSection';
 
 const shell = 'mx-auto w-full max-w-6xl px-3.5 sm:px-6 lg:px-8';
 const titleGradient = 'bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent';
@@ -174,8 +175,8 @@ const roadmapStatusStyles: Record<
 
 const faqs = [
   ['Viralynz garantit un résultat ?', 'Non. Viralynz ne promet pas un résultat. Il t’aide à comprendre pourquoi une vidéo ne retient pas et quoi changer dans sa structure.'],
-  ['Je peux analyser une vidéo qui a déjà été publiée ?', 'Oui. C’est le cas d’usage principal : tu prends un TikTok qui n’a pas percé, Viralynz repère le hook, le drop, les cuts et la structure à retester.'],
-  ['Qu’est-ce que je reçois après l’analyse ?', 'Un verdict clair, les moments où la vidéo décroche, un hook corrigé, les cuts prioritaires, un CTA plus net et un plan de remontage.'],
+  ['Je peux analyser une vidéo qui a déjà été publiée ?', 'Oui. C’est le cas d’usage principal : tu prends un TikTok qui n’a pas percé, Viralynz repère les risques liés au hook, au rythme, aux cuts et à la structure à retester.'],
+  ['Qu’est-ce que je reçois après l’analyse ?', 'Un verdict clair, les moments où la vidéo risque de décrocher, un hook corrigé, les cuts prioritaires, un CTA plus net et un plan de remontage.'],
   ['Est-ce que je dois connecter mon compte TikTok ?', 'Non pour commencer. Tu peux tester avec une vidéo uploadée. Connecter TikTok sert ensuite à mieux suivre tes comptes et tes structures retravaillées.'],
   ['Combien de temps prend une analyse ?', 'Quelques minutes en général. L’objectif est de te donner une décision de montage exploitable, pas un rapport long à interpréter.'],
   ['Est-ce adapté aux créateurs débutants ?', 'Oui. Viralynz est pensé pour les créateurs, monteurs, freelances et marques qui veulent comprendre le hook, le rythme et la rétention.'],
@@ -403,7 +404,7 @@ export default function HomeLanding() {
             </p>
 
             <p className="mx-auto mt-3 max-w-[21rem] text-[0.95rem] leading-5 text-gray-300 sm:mt-5 sm:max-w-2xl sm:text-lg sm:leading-7">
-              Viralynz rep&egrave;re les moments qui font d&eacute;crocher les viewers et te montre quoi corriger avant de republier.
+              Viralynz signale les passages susceptibles de faire d&eacute;crocher les viewers et te montre quoi corriger avant de republier.
             </p>
 
             <div className="mt-4 flex flex-col items-center justify-center gap-2.5 sm:mt-6 sm:flex-row sm:gap-3">
@@ -525,7 +526,7 @@ export default function HomeLanding() {
 
               <div className="space-y-2 sm:space-y-2.5">
                 {[
-                  'Tu sais où l’attention décroche et pourquoi.',
+                  'Tu identifies les passages où l’attention risque de décrocher.',
                   'Tu identifies les secondes à couper, avancer ou renforcer.',
                   'Tu transformes un flop en hypothèse de repost claire.',
                   'Tu republies avec un plan, pas avec une intuition vague.',
@@ -543,13 +544,15 @@ export default function HomeLanding() {
 
           <div className="mt-4 rounded-2xl border border-blue-400/30 bg-[linear-gradient(135deg,rgba(59,130,246,0.12),rgba(34,211,238,0.05))] px-4 py-3 text-center shadow-[0_18px_65px_-55px_rgba(59,130,246,0.9)] sm:mt-5">
             <p className="text-sm font-black leading-6 text-white">
-              Le but n’est pas de poster plus. C’est de poster avec une raison claire de performer.
+              Le but n’est pas de poster plus. C’est de tester une hypothèse de montage plus claire.
             </p>
           </div>
         </div>
       </MotionSection>
 
-      <ReviewsSection />
+      <UseCasesSection />
+
+      <LandingPricingSection />
 
       <FAQSection />
 
@@ -558,7 +561,7 @@ export default function HomeLanding() {
         <div className="relative overflow-hidden rounded-[1.35rem] border border-white/[0.1] bg-[linear-gradient(135deg,rgba(232,121,249,0.18),rgba(34,211,238,0.08),rgba(99,102,241,0.14))] px-4 py-7 text-center sm:rounded-[1.7rem] sm:px-10 sm:py-12">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent" aria-hidden />
           <h2 className="mx-auto max-w-3xl text-2xl font-black leading-tight tracking-tight text-white sm:text-5xl">
-            Ta prochaine structure gagnante peut venir de <TitleAccent>ton dernier flop</TitleAccent>
+            Ta prochaine structure à tester peut venir de <TitleAccent>ton dernier flop</TitleAccent>
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-gray-300 sm:text-base sm:leading-7">
             Une vidéo qui n’a pas pris n’est pas forcément mauvaise. Parfois, le payoff arrive trop tard, le hook explique trop, ou le CTA tombe après le drop.
@@ -1060,29 +1063,29 @@ function ReconstructionFeatureSection() {
   );
 }
 
-function ReviewsSection() {
-  const decisions = [
-    ['Couper', 'Les secondes qui retardent la promesse.'],
-    ['Avancer', 'La preuve ou le payoff avant la perte d’attention.'],
-    ['Réécrire', 'Le hook et le CTA quand l’enjeu reste flou.'],
-    ['Garder', 'Les passages qui portent déjà le sujet.'],
+function UseCasesSection() {
+  const useCases = [
+    ['Créateurs', 'Comprendre pourquoi une vidéo décroche avant de préparer sa V2.'],
+    ['Clippers', 'Justifier les décisions de montage avec un diagnostic structuré.'],
+    ['Agences', 'Transformer les retours clients en cuts, hooks et priorités concrètes.'],
+    ['E-commerce', 'Analyser les créatives avant de remettre du budget.'],
   ];
 
   return (
     <MotionSection className={`${shell} relative py-5 sm:py-14`}>
       <div className="mx-auto max-w-4xl">
         <div className="text-center">
-          <ProductPositioningBadge />
+          <p className="text-[10px] font-black uppercase tracking-[0.25em] text-cyan-300/80">Cas d’usage</p>
           <h2 className="text-[1.45rem] font-black leading-tight tracking-tight text-white sm:text-4xl">
-            Chaque diagnostic devient <TitleAccent>une décision concrète</TitleAccent>
+            Conçu pour améliorer <TitleAccent>chaque nouvelle version</TitleAccent>
           </h2>
           <p className="mx-auto mt-2 max-w-2xl text-[13px] leading-5 text-gray-400 sm:text-base sm:leading-6">
-            Pas de résultat chiffré promis. Viralynz transforme les signaux réellement disponibles en hypothèses de montage à tester sur une V2.
+            Analyse ton hook, ton rythme et ta structure avant de republier. Les résultats dépendent toujours du contenu, de l’audience et de l’exécution.
           </p>
         </div>
 
         <div className="mt-5 grid gap-3 sm:mt-7 sm:grid-cols-2">
-          {decisions.map(([label, description], index) => (
+          {useCases.map(([label, description], index) => (
             <motion.article
               key={label}
               whileHover={cardHover}
@@ -1094,7 +1097,7 @@ function ReviewsSection() {
                   {index + 1}
                 </span>
                 <div>
-                  <h3 className="text-base font-black text-white">Quoi {label.toLowerCase()}</h3>
+                  <h3 className="text-base font-black text-white">{label}</h3>
                   <p className="mt-1 text-[13px] font-semibold leading-5 text-gray-400">{description}</p>
                 </div>
               </div>
@@ -1370,16 +1373,16 @@ function HeroVisual() {
       <div
         className="absolute -left-1 top-5 z-20 flex items-center gap-2 rounded-[1.05rem] bg-[#ff315f] px-3.5 py-2 text-white shadow-[0_18px_60px_-20px_rgba(255,49,95,0.95)] sm:-left-6 sm:top-7 sm:px-4 sm:py-2.5"
         style={{ animation: 'vn-float-badge 4.6s ease-in-out infinite' }}
-        aria-label="Preuve sociale TikTok"
+        aria-label="Exemple illustratif de diagnostic"
       >
         <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white text-[#ff315f]">
           <span className="h-1.5 w-1.5 rounded-full bg-current" />
         </span>
-        <span className="text-lg font-black leading-none sm:text-2xl">434</span>
+        <span className="text-lg font-black leading-none sm:text-2xl">—</span>
         <span className="h-4 w-4 rotate-45 rounded-[4px] bg-white" />
-        <span className="text-lg font-black leading-none sm:text-2xl">23k</span>
+        <span className="text-lg font-black leading-none sm:text-2xl">—</span>
         <span className="h-4 w-4 rounded-full bg-white" />
-        <span className="text-lg font-black leading-none sm:text-2xl">99+</span>
+        <span className="text-lg font-black leading-none sm:text-2xl">—</span>
         <span className="absolute -bottom-2 left-1/2 h-5 w-5 -translate-x-1/2 rotate-45 bg-[#ff315f]" aria-hidden />
       </div>
 
@@ -1387,7 +1390,7 @@ function HeroVisual() {
         className="absolute -right-1 top-[7.1rem] z-20 rounded-2xl border border-cyan-200/25 bg-cyan-200/12 px-3 py-2 text-xs font-black text-cyan-50 shadow-[0_18px_55px_-30px_rgba(34,211,238,0.95)] backdrop-blur-md sm:-right-4 sm:top-36"
         style={{ animation: 'vn-float-soft 5.4s ease-in-out infinite' }}
       >
-        +18 pts retention
+        Estimation illustrative
       </div>
 
       <div className="relative overflow-hidden rounded-[1.65rem] border border-white/[0.13] bg-[#07070d] p-2 shadow-[0_34px_150px_-76px_rgba(255,49,95,0.95)] sm:p-2.5">
@@ -1406,12 +1409,12 @@ function HeroVisual() {
           <div className="absolute inset-x-3 bottom-3 rounded-2xl border border-white/[0.12] bg-black/58 p-3 shadow-[0_24px_70px_-40px_rgba(0,0,0,0.9)] backdrop-blur-md">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-200">Scan rétention</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-200">Diagnostic illustratif</p>
                 <p className="mt-1 text-sm font-black text-white">Le payoff arrive après le drop.</p>
               </div>
               <div className="rounded-2xl border border-amber-300/30 bg-amber-300/[0.14] px-3 py-2 text-center">
-                <p className="text-[9px] font-black uppercase tracking-[0.16em] text-amber-100/70">Score</p>
-                <p className="text-2xl font-black leading-none text-amber-100">58</p>
+                <p className="text-[9px] font-black uppercase tracking-[0.16em] text-amber-100/70">Estimation</p>
+                <p className="text-2xl font-black leading-none text-amber-100">—</p>
               </div>
             </div>
             <div className="mt-3 grid grid-cols-4 gap-1.5">
@@ -1446,8 +1449,8 @@ function HeroVisual() {
 
         <div className="mt-2.5 grid grid-cols-[86px_1fr] gap-2.5">
           <div className="rounded-2xl border border-amber-300/30 bg-amber-300/[0.14] px-3 py-2.5 text-center">
-            <p className="text-[9px] font-black uppercase tracking-[0.16em] text-amber-100/70">Score</p>
-            <p className="text-3xl font-black leading-none text-amber-100">58<span className="text-sm text-amber-100/60">/100</span></p>
+            <p className="text-[9px] font-black uppercase tracking-[0.16em] text-amber-100/70">Estimation</p>
+            <p className="text-3xl font-black leading-none text-amber-100">—</p>
           </div>
           <div className="rounded-2xl border border-vn-fuchsia/25 bg-vn-fuchsia/[0.08] px-3 py-2.5">
             <p className="text-[9px] font-black uppercase tracking-[0.16em] text-fuchsia-200">Verdict</p>
@@ -1481,7 +1484,7 @@ function PremiumHeroVisual() {
             style={{ animation: 'vn-float-soft 5.8s ease-in-out infinite' }}
           >
             <span className="h-2 w-2 rounded-full bg-cyan-300 shadow-[0_0_16px_rgba(34,211,238,0.95)]" />
-            Diagnostic live
+            Exemple illustratif
           </div>
 
           <div
@@ -1489,7 +1492,7 @@ function PremiumHeroVisual() {
             style={{ animation: 'vn-float-soft 6.4s ease-in-out infinite' }}
           >
             <p className="text-[9px] font-black uppercase tracking-[0.16em] text-emerald-100/70">Structure prête</p>
-            <p className="mt-0.5 text-xl font-black leading-none text-emerald-100">87/100</p>
+            <p className="mt-0.5 text-xl font-black leading-none text-emerald-100">—</p>
           </div>
         </div>
 
@@ -1630,7 +1633,7 @@ function HeroImageVisual() {
         animate={prefersReducedMotion ? undefined : { y: [0, -8, 0], opacity: [0.78, 1, 0.78] }}
         transition={{ duration: 6.8, repeat: Infinity, ease: 'easeInOut', delay: 0.2 }}
       >
-        Analyse live
+        Exemple illustratif
       </motion.div>
       <motion.div
         className="absolute right-[-8%] top-[14%] z-20 scale-75 rounded-2xl border border-cyan-300/20 bg-cyan-300/[0.08] px-3.5 py-2 text-[11px] font-black uppercase tracking-[0.14em] text-cyan-50 shadow-[0_22px_70px_-42px_rgba(34,211,238,0.95)] backdrop-blur-md sm:right-[4%] sm:top-[17%] sm:scale-100"
@@ -1713,7 +1716,7 @@ function ProductHeroStage() {
           <div className="relative flex flex-col gap-3">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.07] pb-3">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200/70">Aperçu produit · exemple illustratif</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200/70">Exemple illustratif de diagnostic</p>
                 <p className="mt-1 text-sm font-black text-white sm:text-base">De la vidéo au plan de repost</p>
               </div>
               <span className="rounded-full border border-emerald-300/15 bg-emerald-300/[0.07] px-2.5 py-1 text-[10px] font-black text-emerald-100">
@@ -1771,14 +1774,14 @@ function ProductHeroStage() {
 
 function ProductCommandCenter() {
   return (
-    <MotionSection id="exemple-analyse" className={`${shell} relative py-5 sm:py-14`} ariaLabel="Exemple d'analyse Viralynz">
+    <MotionSection id="exemple-analyse" className={`${shell} relative py-5 sm:py-14`} ariaLabel="Exemple illustratif de diagnostic">
       <div className="relative overflow-hidden rounded-[1.35rem] border border-white/[0.13] bg-[#07070d] shadow-[0_42px_170px_-86px_rgba(232,121,249,0.95)] sm:rounded-[2.1rem]">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_13%_0%,rgba(232,121,249,0.22),transparent_34%),radial-gradient(circle_at_86%_8%,rgba(34,211,238,0.16),transparent_32%),linear-gradient(180deg,rgba(255,255,255,0.055),transparent_31%)]" aria-hidden />
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/55 to-transparent" aria-hidden />
 
         <div className="relative p-3.5 sm:p-6 lg:p-7">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-300/80">Ce que tu reçois après analyse</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-300/80">Exemple illustratif de diagnostic</p>
             <h2 className="mt-2 text-[1.45rem] font-black leading-tight text-white sm:text-4xl">
               Viralynz ne te dit pas seulement que ça flop
               <TitleAccent> Il te montre comment le remonter mieux</TitleAccent>
@@ -1795,7 +1798,7 @@ function ProductCommandCenter() {
               <div className="mt-3 flex items-end justify-between gap-4 sm:mt-4">
                 <div>
                   <p className="text-sm font-bold text-gray-400">Score actuel</p>
-                  <p className="mt-1 text-4xl font-black leading-none text-amber-100 sm:text-5xl">42<span className="text-lg text-amber-100/45 sm:text-xl">/100</span></p>
+                  <p className="mt-1 text-4xl font-black leading-none text-amber-100 sm:text-5xl">—</p>
                 </div>
                 <span className="rounded-full border border-rose-300/20 bg-rose-400/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-rose-100">Intro faible</span>
               </div>
@@ -1843,10 +1846,10 @@ function ProductCommandCenter() {
               <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-white/[0.08] bg-black/24 p-3">
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-[0.14em] text-gray-500">Score estimé après</p>
-                  <p className="mt-1 text-4xl font-black leading-none text-cyan-100 sm:text-5xl">74<span className="text-lg text-cyan-100/45 sm:text-xl">/100</span></p>
+                  <p className="mt-1 text-4xl font-black leading-none text-cyan-100 sm:text-5xl">—</p>
                 </div>
                 <div className="flex min-w-24 items-center justify-center rounded-full border border-lime-300/20 bg-lime-300/10 px-3 py-2 text-[11px] font-black text-lime-100">
-                  +32 points
+                  Estimation
                 </div>
               </div>
               <div className="relative mt-3 overflow-hidden rounded-2xl border border-cyan-300/15 bg-black/22 p-3">
@@ -1918,14 +1921,14 @@ function ProductCommandCenter() {
 function RepostTransformationSection() {
   const beforeTimeline = [
     ['0:00', 'Intro explicative', '“Salut les gars, aujourd’hui je vais vous montrer…”', 'hook faible'],
-    ['0:03', 'Drop détecté', 'Le viewer n’a toujours pas vu le bénéfice.', '-42%'],
+    ['0:03', 'Drop probable', 'Le viewer n’a toujours pas vu le bénéfice.', 'baisse estimée'],
     ['0:07', 'Preuve trop tard', 'Le meilleur passage arrive après la chute.', 'payoff tardif'],
     ['0:14', 'CTA vague', '“Dis-moi ce que tu en penses.”', 'faible action'],
   ];
 
   const afterTimeline = [
     ['0:00', 'Payoff en première frame', '“Le problème n’est pas ton produit.”', 'hook direct'],
-    ['0:02', 'Preuve avancée', 'Le résultat apparaît avant le premier drop.', '+18 pts'],
+    ['0:02', 'Preuve avancée', 'Le résultat apparaît avant le premier drop.', 'amélioration possible'],
     ['0:05', 'Pattern interrupt', 'Cut visuel au moment où le rythme baissait.', 'relance'],
     ['0:12', 'CTA précis', '“Commente PRODUIT si tu veux la version courte.”', 'action claire'],
   ];
@@ -2080,14 +2083,14 @@ function TitleAccent({ children }: { children: React.ReactNode }) {
   return <span className={titleGradient}>{children}</span>;
 }
 
-function SocialProofBand() {
+function MethodBand() {
   return (
     <MotionSection className={`${shell} relative py-5 sm:py-10`}>
       <div className="relative overflow-hidden rounded-[1.4rem] border border-white/[0.12] bg-[#07070d] p-3.5 shadow-[0_28px_120px_-82px_rgba(34,211,238,0.9)] sm:p-5">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_0%,rgba(255,49,95,0.18),transparent_32%),radial-gradient(circle_at_88%_10%,rgba(34,211,238,0.12),transparent_30%)]" aria-hidden />
         <div className="relative grid gap-4 lg:grid-cols-[0.78fr_1.22fr] lg:items-center">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300/80">Social proof</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300/80">Méthode produit</p>
             <div className="mt-3 grid grid-cols-3 gap-2">
               {[
                 ['Audit', 'hook'],

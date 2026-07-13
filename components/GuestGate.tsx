@@ -3,19 +3,16 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import FloatingParticles from '@/components/FloatingParticles';
-import {
-  MAX_ANALYSES_CREATOR,
-  MAX_ANALYSES_PRO,
-  MAX_HOOKS_CREATOR,
-  MAX_HOOKS_PRO,
-  HISTORY_LIMITS,
-} from '@/lib/plan-limits';
-import { DISPLAY_CATALOG_CREATOR_EUR, DISPLAY_CATALOG_PRO_EUR, DISPLAY_CATALOG_SCALE_EUR } from '@/lib/stripe-pricing';
+import { getPublicPlan, type PaidCommercialPlanId } from '@/lib/public-plans';
 
 export const PENDING_URL_KEY  = 'pending_tiktok_url';
 export const PENDING_PLAN_KEY = 'pending_plan_after_signup';
 
-type PlanVariant = 'starter' | 'pro' | 'lifetime';
+type PlanVariant = PaidCommercialPlanId;
+
+const starterPlan = getPublicPlan('starter');
+const proPlan = getPublicPlan('pro');
+const lifetimePlan = getPublicPlan('lifetime');
 
 /* ── Shared icon helpers ───────────────────────────────────────────────── */
 
@@ -159,7 +156,7 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
                     Starter
                   </span>
                   <div className="mt-4 mb-1">
-                    <span className="text-[2.2rem] font-black text-white leading-none">{DISPLAY_CATALOG_CREATOR_EUR}€</span>
+                    <span className="text-[2.2rem] font-black text-white leading-none">{starterPlan.priceLabel}</span>
                     <span className="text-gray-500 text-sm pb-1">/ mois</span>
                   </div>
                   <p className="text-[12px] text-gray-600 mt-1.5 leading-relaxed">
@@ -178,10 +175,10 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
                 <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-gray-700 mb-2.5">Ce que tu obtiens</p>
                 <ul className="space-y-2 flex-1">
                   {[
-                    { text: `${MAX_ANALYSES_CREATOR} analyses / mois`, sub: 'Score + Hook + Montage + Rétention', ok: true },
-                    { text: `${MAX_HOOKS_CREATOR} hooks / mois`, sub: 'Hooks corrigés à tester', ok: true },
+                    { text: `${starterPlan.limits.analyses} analyses / mois`, sub: 'Score + Hook + Montage + Rétention', ok: true },
+                    { text: `${starterPlan.limits.hooks} hooks / mois`, sub: 'Hooks corrigés à tester', ok: true },
                     { text: 'Plan de remontage', sub: 'Cuts, CTA et structure recommandée', ok: true },
-                    { text: `Historique ${HISTORY_LIMITS.creator} analyses`, sub: null, ok: true },
+                    { text: `Historique ${starterPlan.limits.history} analyses`, sub: null, ok: true },
                     { text: 'Radar Tendances', sub: null, ok: false },
                     { text: 'Multi-comptes TikTok', sub: null, ok: false },
                   ].map((f, i) => (
@@ -217,7 +214,7 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
                   </div>
 
                   <div className="flex items-end gap-2 mb-1">
-                    <span className="text-[2.6rem] font-black text-white leading-none">{DISPLAY_CATALOG_PRO_EUR}€</span>
+                    <span className="text-[2.6rem] font-black text-white leading-none">{proPlan.priceLabel}</span>
                     <span className="text-gray-500 text-sm pb-1.5">/ mois</span>
                   </div>
 
@@ -250,7 +247,7 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
                     <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-vn-fuchsia/50 mb-2">Analyse & mémoire</p>
                     <ul className="space-y-1.5">
                       {[
-                        { text: `${MAX_ANALYSES_PRO} analyses / mois`, bold: true },
+                        { text: `${proPlan.limits.analyses} analyses / mois`, bold: true },
                         { text: 'Score + Hook / Montage / Rétention', bold: false },
                         { text: "Priorités de correction", bold: false },
                         { text: 'Mémoire créateur étendue', bold: false },
@@ -266,8 +263,8 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
                     <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-vn-fuchsia/50 mb-2">Exécution</p>
                     <ul className="space-y-1.5">
                       {[
-                        { text: `${MAX_HOOKS_PRO} hooks réécrits / mois`, bold: true },
-                        { text: `Historique ${HISTORY_LIMITS.pro} analyses`, bold: false },
+                        { text: `${proPlan.limits.hooks} hooks réécrits / mois`, bold: true },
+                        { text: `Historique ${proPlan.limits.history} analyses`, bold: false },
                         { text: 'Reconstruction Workspace + mémoire créateur', bold: false },
                       ].map((f, i) => (
                         <li key={i} className="flex items-start gap-2">
@@ -296,7 +293,7 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
                   </div>
 
                   <div className="flex items-end gap-2 mb-1">
-                    <span className="text-[2.2rem] font-black text-white leading-none">{DISPLAY_CATALOG_SCALE_EUR}€</span>
+                    <span className="text-[2.2rem] font-black text-white leading-none">{lifetimePlan.priceLabel}</span>
                     <span className="text-gray-500 text-sm pb-1">une seule fois</span>
                   </div>
 
@@ -342,7 +339,7 @@ export default function GuestGate({ show, pendingUrl, onClose }: GuestGateProps)
                     <ul className="space-y-1.5">
                       {[
                         { text: 'Hooks illimités', scale: true },
-                        { text: 'Jusqu’à 8 comptes TikTok', scale: true },
+                        { text: `Jusqu’à ${lifetimePlan.limits.tiktokAccounts} comptes TikTok`, scale: true },
                         { text: 'Benchmarks anonymisés + mémoire multi-comptes', scale: true },
                         { text: 'Support prioritaire' },
                       ].map((f, i) => (

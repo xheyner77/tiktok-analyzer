@@ -51,6 +51,38 @@ describe('official Stripe catalogue validation', () => {
     expect(result).toEqual({ ok: true });
   });
 
+  it('accepts the exact 29 EUR Pro price', async () => {
+    const result = await assertStripePriceIsMonthlySubscription(
+      stripeWithPrice(recurringPrice({
+        unit_amount: 2_900,
+        metadata: { viralynz_plan: 'pro', environment: 'test' },
+        product: { metadata: { viralynz_plan: 'pro', environment: 'test' } } as unknown as Stripe.Product,
+      })),
+      'price_test_pro_catalog',
+      'month',
+      'pro',
+    );
+
+    expect(result).toEqual({ ok: true });
+  });
+
+  it('rejects the obsolete 9.99 EUR and 24.99 EUR Pro prices', async () => {
+    for (const unitAmount of [999, 2_499]) {
+      const result = await assertStripePriceIsMonthlySubscription(
+        stripeWithPrice(recurringPrice({
+          unit_amount: unitAmount,
+          metadata: { viralynz_plan: 'pro', environment: 'test' },
+          product: { metadata: { viralynz_plan: 'pro', environment: 'test' } } as unknown as Stripe.Product,
+        })),
+        'price_obsolete_pro',
+        'month',
+        'pro',
+      );
+
+      expect(result).toMatchObject({ ok: false, code: 'PRICE_AMOUNT_MISMATCH' });
+    }
+  });
+
   it('rejects the obsolete 7.99 EUR Starter price', async () => {
     const result = await assertStripePriceIsMonthlySubscription(
       stripeWithPrice(recurringPrice({ unit_amount: 799 })),

@@ -25,7 +25,7 @@ export default function HowItWorksSection() {
           Comment Viralynz transforme ta vidéo en V2
         </h2>
         <p className="mx-auto mt-3 max-w-2xl text-sm font-medium leading-6 text-gray-400 sm:text-base sm:leading-7">
-          Tu uploades. Viralynz repère ce qui casse l’attention. Tu repars avec une version plus directe à tester.
+          Tu uploades. Viralynz repère les signaux qui peuvent casser l’attention. Tu repars avec une version plus directe à tester.
         </p>
       </div>
 

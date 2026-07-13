@@ -13,6 +13,7 @@ import {
   PLAN_RANK,
 } from '@/lib/stripe-billing';
 import { getPlanLabel, isLifetimePlan } from '@/lib/plans';
+import { isPaidCommercialPlan } from '@/lib/public-plans';
 import {
   blockTestStripePublishableInProduction,
   blockTestStripeSecretInProduction,
@@ -40,7 +41,7 @@ function getStripe(): Stripe {
 }
 
 function isCheckoutPlan(plan: string | undefined): plan is PaidStripePlan {
-  return plan === 'starter' || plan === 'pro' || plan === 'lifetime';
+  return isPaidCommercialPlan(plan);
 }
 
 function checkoutIdempotencyKey(input: {

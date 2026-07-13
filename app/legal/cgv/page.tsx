@@ -1,12 +1,16 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { getPublicPlan } from '@/lib/public-plans';
 
 export const metadata: Metadata = {
   title: 'Conditions générales de vente',
   description: 'Conditions générales de vente des abonnements Viralynz.',
 };
 
-const LAST_UPDATE = '2 avril 2026';
+const LAST_UPDATE = '13 juillet 2026';
+const starterPlan = getPublicPlan('starter');
+const proPlan = getPublicPlan('pro');
+const lifetimePlan = getPublicPlan('lifetime');
 
 export default function CGVPage() {
   return (
@@ -38,9 +42,9 @@ export default function CGVPage() {
           <Section title="2. Plans et tarifs">
             <p>Viralynz propose les plans suivants (prix TTC) :</p>
             <ul>
-              <li><strong className="text-white">Starter</strong> — 10 €/mois, 30 analyses/mois, 50 hooks/mois</li>
-              <li><strong className="text-white">Pro</strong> — 29 €/mois, 150 analyses/mois, 250 hooks/mois et 30 reconstructions V2/mois</li>
-              <li><strong className="text-white">Lifetime</strong> — 149 € en paiement unique, analyses et hooks illimités, 30 reconstructions V2</li>
+              <li><strong className="text-white">{starterPlan.name}</strong> — {starterPlan.priceLabel} {starterPlan.cadence}, {starterPlan.features.slice(0, 2).join(', ')}</li>
+              <li><strong className="text-white">{proPlan.name}</strong> — {proPlan.priceLabel} {proPlan.cadence}, {proPlan.features.slice(0, 3).join(', ')}</li>
+              <li><strong className="text-white">{lifetimePlan.name}</strong> — {lifetimePlan.priceLabel} en {lifetimePlan.cadence}, {lifetimePlan.features.slice(0, 3).join(', ')}</li>
             </ul>
             <p>Tous les prix sont indiqués en euros TTC. Viralynz se réserve le droit de modifier ses tarifs avec un préavis de 30 jours. Les modifications tarifaires ne s&apos;appliquent pas aux abonnements en cours pendant leur période de facturation.</p>
           </Section>

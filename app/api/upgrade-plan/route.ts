@@ -4,6 +4,7 @@ import { getSession } from '@/lib/session';
 import { blockTestStripeSecretInProduction } from '@/lib/stripe-prod-guard';
 import { getStripeSecretKey, isStripeLiveRuntime } from '@/lib/stripe-runtime';
 import { isLifetimeCheckoutPaymentStatusConfirmed } from '@/lib/stripe-payment-status';
+import { isPaidCommercialPlan } from '@/lib/public-plans';
 import {
   privateJson,
   readJsonObject,
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
     const plan = typeof body.plan === 'string' ? body.plan : undefined;
     const sessionId = typeof body.sessionId === 'string' ? body.sessionId.trim() : '';
 
-    if (plan !== 'starter' && plan !== 'pro' && plan !== 'lifetime') {
+    if (!isPaidCommercialPlan(plan)) {
       return privateJson({ error: 'Plan invalide.' }, { status: 400 });
     }
     const normalizedPlan = plan;

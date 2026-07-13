@@ -1,6 +1,5 @@
 import Link from 'next/link';
-import { MAX_ANALYSES_PRO } from '@/lib/plan-limits';
-import { DISPLAY_CATALOG_PRO_EUR, DISPLAY_CATALOG_SCALE_EUR } from '@/lib/stripe-pricing';
+import { getPublicPlan } from '@/lib/public-plans';
 
 interface PremiumGateProps {
   onReset?: () => void;
@@ -12,25 +11,9 @@ const CheckIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const freeFeatures = ['3 analyses (utilisées)', 'Score vidéo', 'Diagnostic partiel'];
-
-const proFeatures = [
-  `${MAX_ANALYSES_PRO} analyses / mois`,
-  'Score vidéo expliqué',
-  'Mémoire créateur étendue',
-  'Historique des analyses',
-  'Hook generator (150 / mois)',
-];
-
-const scaleFeatures = [
-  'Analyses illimitées',
-  'Score vidéo expliqué',
-  'Mémoire créateur multi-comptes',
-  'Historique illimité',
-  'Hook generator (500 / mois)',
-  'Benchmarks par niche et format',
-  'Support prioritaire',
-];
+const freePlan = getPublicPlan('free');
+const proPlan = getPublicPlan('pro');
+const lifetimePlan = getPublicPlan('lifetime');
 
 export default function PremiumGate({ onReset }: PremiumGateProps) {
   return (
@@ -62,24 +45,22 @@ export default function PremiumGate({ onReset }: PremiumGateProps) {
         <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 opacity-60">
           <div className="mb-4">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Free</span>
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-widest">{freePlan.name}</span>
               <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/[0.06] text-gray-500 border border-white/[0.09]">
                 Utilisé
               </span>
             </div>
             <div className="flex items-end gap-1">
-              <span className="text-3xl font-bold text-gray-500">0</span>
-              <span className="text-base font-semibold text-gray-600 mb-0.5">€</span>
-              <span className="text-sm text-gray-600 mb-1">/mois</span>
+              <span className="text-3xl font-bold text-gray-500">{freePlan.priceLabel}</span>
             </div>
-            <p className="text-xs text-gray-600 mt-1">Pour découvrir l&apos;outil</p>
+            <p className="text-xs text-gray-600 mt-1">{freePlan.cadence}</p>
           </div>
 
           <div className="space-y-2.5 mb-5">
-            {freeFeatures.map((f) => (
-              <div key={f} className="flex items-center gap-2">
+            {freePlan.features.map((feature) => (
+              <div key={feature} className="flex items-center gap-2">
                 <CheckIcon className="w-3.5 h-3.5 text-gray-600 shrink-0" />
-                <span className="text-xs text-gray-600">{f}</span>
+                <span className="text-xs text-gray-600">{feature}</span>
               </div>
             ))}
           </div>
@@ -106,21 +87,20 @@ export default function PremiumGate({ onReset }: PremiumGateProps) {
 
           <div className="mb-4 mt-1">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold gradient-text uppercase tracking-widest">Pro</span>
+              <span className="text-xs font-semibold gradient-text uppercase tracking-widest">{proPlan.name}</span>
             </div>
             <div className="flex items-end gap-1">
-              <span className="text-3xl font-bold text-white">{DISPLAY_CATALOG_PRO_EUR}</span>
-              <span className="text-base font-semibold text-gray-300 mb-0.5">€</span>
-              <span className="text-sm text-gray-400 mb-1">/mois</span>
+              <span className="text-3xl font-bold text-white">{proPlan.priceLabel}</span>
+              <span className="text-sm text-gray-400 mb-1">{proPlan.cadence}</span>
             </div>
             <p className="text-xs text-green-400 mt-1 font-medium">Annulable à tout moment</p>
           </div>
 
           <div className="space-y-2.5 mb-5">
-            {proFeatures.map((f) => (
-              <div key={f} className="flex items-center gap-2">
+            {proPlan.features.map((feature) => (
+              <div key={feature} className="flex items-center gap-2">
                 <CheckIcon className="w-3.5 h-3.5 text-vn-fuchsia shrink-0" />
-                <span className="text-xs text-gray-300">{f}</span>
+                <span className="text-xs text-gray-300">{feature}</span>
               </div>
             ))}
           </div>
@@ -129,7 +109,7 @@ export default function PremiumGate({ onReset }: PremiumGateProps) {
             href="/dashboard/billing"
             className="block w-full rounded-xl py-3 text-sm font-semibold text-white text-center bg-gradient-to-r from-vn-fuchsia to-vn-indigo hover:opacity-90 active:scale-[0.99] transition-all shadow-lg shadow-vn-fuchsia/20"
           >
-            Choisir Pro →
+            {proPlan.cta} →
           </Link>
         </div>
 
@@ -137,24 +117,23 @@ export default function PremiumGate({ onReset }: PremiumGateProps) {
         <div className="rounded-2xl border border-vn-violet/25 bg-gradient-to-b from-vn-violet/[0.07] to-transparent p-5">
           <div className="mb-4">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-vn-glow uppercase tracking-widest">Lifetime</span>
+              <span className="text-xs font-semibold text-vn-glow uppercase tracking-widest">{lifetimePlan.name}</span>
               <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-vn-violet/15 text-vn-glow border border-vn-violet/25 whitespace-nowrap">
                 Créateurs sérieux
               </span>
             </div>
             <div className="flex items-end gap-1">
-              <span className="text-3xl font-bold text-white">{DISPLAY_CATALOG_SCALE_EUR}</span>
-              <span className="text-base font-semibold text-gray-300 mb-0.5">€</span>
-              <span className="text-sm text-gray-400 mb-1">une seule fois</span>
+              <span className="text-3xl font-bold text-white">{lifetimePlan.priceLabel}</span>
+              <span className="text-sm text-gray-400 mb-1">{lifetimePlan.cadence}</span>
             </div>
             <p className="text-xs text-green-400 mt-1 font-medium">Paiement unique</p>
           </div>
 
           <div className="space-y-2.5 mb-5">
-            {scaleFeatures.map((f) => (
-              <div key={f} className="flex items-center gap-2">
+            {lifetimePlan.features.map((feature) => (
+              <div key={feature} className="flex items-center gap-2">
                 <CheckIcon className="w-3.5 h-3.5 text-[#b060ff] shrink-0" />
-                <span className="text-xs text-gray-300">{f}</span>
+                <span className="text-xs text-gray-300">{feature}</span>
               </div>
             ))}
           </div>
@@ -163,7 +142,7 @@ export default function PremiumGate({ onReset }: PremiumGateProps) {
             href="/dashboard/billing"
             className="block w-full rounded-xl py-3 text-sm font-semibold text-vn-glow text-center bg-vn-violet/10 border border-vn-violet/30 hover:bg-vn-violet/20 hover:border-vn-violet/50 active:scale-[0.99] transition-all"
           >
-            Choisir Lifetime →
+            {lifetimePlan.cta} →
           </Link>
         </div>
 

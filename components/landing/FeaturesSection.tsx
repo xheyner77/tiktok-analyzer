@@ -36,7 +36,7 @@ export default function FeaturesSection() {
           Viralynz ne te donne pas des graphiques décoratifs. Il te dit quoi changer.
         </h2>
         <p className="mx-auto mt-3 max-w-2xl text-sm font-medium leading-6 text-gray-400 sm:text-base sm:leading-7">
-          Chaque analyse transforme ta vidéo en décisions de montage : où l’attention casse, quoi couper, quoi avancer et quelle V2 republier.
+          Chaque analyse transforme ta vidéo en décisions de montage : où l’attention risque de casser, quoi couper, quoi avancer et quelle V2 republier.
         </p>
       </div>
 
@@ -45,7 +45,7 @@ export default function FeaturesSection() {
         <div className="pointer-events-none absolute left-[12%] right-[12%] top-0 h-px bg-gradient-to-r from-transparent via-white/55 to-transparent" aria-hidden />
 
         <div className="relative px-3.5 py-3 sm:px-5">
-          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-gray-500">Moteur de décision</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-gray-500">Exemple illustratif de diagnostic</p>
           <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
             <h3 className="text-lg font-black leading-5 text-white">De vidéo faible à V2 prête à tester</h3>
             <span className="rounded-full bg-cyan-300/[0.08] px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-cyan-100">

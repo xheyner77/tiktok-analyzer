@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
   const user = await getUserById(session.userId);
   const plan = user ? getEffectivePlan(user) : 'free';
   if (!canAccessTrendRadar(plan)) {
-    return NextResponse.json({ error: 'Le scan manuel Radar est reserve aux plans Pro et Scale.' }, { status: 403 });
+    return NextResponse.json({ error: 'Le scan manuel Radar est réservé aux plans Pro et Lifetime.' }, { status: 403 });
   }
 
   try {

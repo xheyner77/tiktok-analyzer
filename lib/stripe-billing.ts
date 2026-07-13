@@ -6,10 +6,11 @@ import {
   type StripeMappedPlan,
 } from '@/lib/billing/stripe-prices';
 import { normalizePlan, type AppPlan } from './plans';
+import type { PaidCommercialPlanId } from './public-plans';
 import { STRIPE_CATALOG } from './stripe-pricing';
 import { getStripeRuntimeMode, isStripeLiveRuntime } from './stripe-runtime';
 
-export type PaidStripePlan = 'starter' | 'pro' | 'lifetime';
+export type PaidStripePlan = PaidCommercialPlanId;
 export type BillingInterval = 'month' | 'year';
 
 export type PriceValidationResult =

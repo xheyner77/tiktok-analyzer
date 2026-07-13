@@ -1,13 +1,3 @@
-/**
- * Tarifs affichés dans l’UI (EUR, virgule décimale).
- * À aligner avec les montants des Prices Stripe.
- */
-
-export const DISPLAY_CATALOG_CREATOR_EUR = '10';
-export const DISPLAY_CATALOG_PRO_EUR = '29';
-export const DISPLAY_CATALOG_SCALE_EUR = '149';
-export const DISPLAY_CATALOG_LIFETIME_EUR = DISPLAY_CATALOG_SCALE_EUR;
-
 export const STRIPE_CATALOG = {
   starter: {
     currency: 'eur',
@@ -25,6 +15,21 @@ export const STRIPE_CATALOG = {
     recurringInterval: null,
   },
 } as const;
+
+function formatCatalogEuro(unitAmount: number): string {
+  return Number.isInteger(unitAmount / 100)
+    ? String(unitAmount / 100)
+    : (unitAmount / 100).toFixed(2).replace('.', ',');
+}
+
+/**
+ * Compatibilité UI : ces libellés sont désormais dérivés du catalogue Stripe,
+ * afin qu'un changement de montant ne puisse plus créer un tarif parallèle.
+ */
+export const DISPLAY_CATALOG_CREATOR_EUR = formatCatalogEuro(STRIPE_CATALOG.starter.unitAmount);
+export const DISPLAY_CATALOG_PRO_EUR = formatCatalogEuro(STRIPE_CATALOG.pro.unitAmount);
+export const DISPLAY_CATALOG_LIFETIME_EUR = formatCatalogEuro(STRIPE_CATALOG.lifetime.unitAmount);
+export const DISPLAY_CATALOG_SCALE_EUR = DISPLAY_CATALOG_LIFETIME_EUR;
 
 /** Libellés produit sur la facture / reçu Stripe (Checkout utilise les Prices du Dashboard). */
 export const STRIPE_PRODUCT_NAME_CREATOR = 'Viralynz — Plan Starter';
