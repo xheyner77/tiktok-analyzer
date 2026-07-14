@@ -1,8 +1,11 @@
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { withWorkflow } from 'workflow/next';
+import { getFfmpegVendorRelativePath } from './scripts/ffmpeg-release.mjs';
 
 const projectRoot = dirname(fileURLToPath(import.meta.url));
 const isDevelopment = process.env.NODE_ENV === 'development';
+const ffmpegExecutable = `./${getFfmpegVendorRelativePath().replaceAll('\\', '/')}`;
 
 const contentSecurityPolicy = [
   "default-src 'self'",
@@ -24,7 +27,19 @@ const contentSecurityPolicy = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   outputFileTracingRoot: projectRoot,
+  outputFileTracingIncludes: {
+    '/.well-known/workflow/v1/step': [ffmpegExecutable],
+  },
   poweredByHeader: false,
+  webpack(config, { isServer }) {
+    if (isServer && process.platform === 'win32') {
+      // xdg-app-paths dereferences argv[0] during module initialization, while
+      // Next's Windows page-data worker can expose an empty argv. Keep Vercel's
+      // Linux runtime untouched and provide the same path API only to that build.
+      config.resolve.alias['xdg-app-paths$'] = `${projectRoot}/lib/shims/xdg-app-paths.windows.cjs`;
+    }
+    return config;
+  },
   async headers() {
     return [
       {
@@ -44,4 +59,4 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withWorkflow(nextConfig);

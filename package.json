@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "postinstall": "node scripts/install-ffmpeg.mjs",
     "test": "vitest run",
     "typecheck": "tsc --noEmit --incremental false",
     "check": "npm run typecheck && npm test && npm run build"
@@ -19,7 +20,9 @@
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "resend": "^6.17.2",
-    "stripe": "^21.0.1"
+    "stripe": "^21.0.1",
+    "workflow": "4.6.0",
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

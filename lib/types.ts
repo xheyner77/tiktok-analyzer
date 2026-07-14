@@ -614,6 +614,10 @@ export interface CoachAnalysis {
 export interface AnalysisResult {
   /** Origine de l’analyse (lien TikTok vs fichier upload + vision) */
   analysisSource?: 'url' | 'vision_upload';
+  /** Canonical lossless payload is stored in analyses.engine_result. */
+  analysisSchemaVersion?: string;
+  /** V2 scores are deterministic editorial-rubric scores, not platform metrics. */
+  scoreSemantics?: 'deterministic_editorial_rubric';
   viralityScore: number;
   structureScore?: number;
   observedPerformanceScore?: number;

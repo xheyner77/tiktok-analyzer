@@ -884,6 +884,7 @@ async function postVisionAnalyze(
   body: Record<string, unknown>,
   frames: string[]
 ): Promise<NextResponse> {
+  const memoryConsent = body.memoryConsent === true;
   const session = await getSession();
   if (!session) {
     return NextResponse.json(
@@ -988,7 +989,7 @@ async function postVisionAnalyze(
     reconstructionQuotaReserved = true;
     dbUser = { ...dbUser, reconstructions_count: reconstructionReservation.used };
   }
-  const [creatorMemory, creatorMemoryV2] = session
+  const [creatorMemory, creatorMemoryV2] = session && memoryConsent
     ? await Promise.all([
         getCreatorMemoryForAnalysis(session.userId, plan),
         getCreatorMemory(session.userId),
@@ -1156,7 +1157,9 @@ async function postVisionAnalyze(
     detectedSource,
     durationSec ? { uploadDurationSec: durationSec } : undefined
   );
-  const previousAnalyses = session ? await getRecentAnalysesForMemory(session.userId, getCreatorMemoryLimit(plan)) : [];
+  const previousAnalyses = session && memoryConsent
+    ? await getRecentAnalysesForMemory(session.userId, getCreatorMemoryLimit(plan))
+    : [];
   result = attachAnalyzerOutputs(body, result, getAnalysisEngineContext(body, {
     durationSec,
     caption: detected?.caption,
@@ -1211,30 +1214,34 @@ async function postVisionAnalyze(
       result,
       duration: durationSec,
       transcript: videoIntelligence.transcript.text ?? transcript,
-      creatorMemoryUsed: creatorMemoryV2?.profile_summary || creatorMemory?.summary,
+      creatorMemoryUsed: memoryConsent
+        ? creatorMemoryV2?.profile_summary || creatorMemory?.summary
+        : undefined,
     });
-    await Promise.all([
-      persistAnalysisSnapshotAndMemory({
-        userId: session.userId,
-        plan,
-        analysisId,
-        videoUrl: persistUrl,
-        result,
-        snapshot,
-      }),
-      enqueueMemoryLearning({
-        userId: session.userId,
-        analysisId,
-        plan,
-      }),
-      learnCreatorMemoryFromAnalysis({
-        userId: session.userId,
-        analysisId,
-        result,
-        transcript: videoIntelligence.transcript.text ?? transcript,
-        videoUrl: persistUrl,
-      }),
-    ]);
+    if (memoryConsent) {
+      await Promise.all([
+        persistAnalysisSnapshotAndMemory({
+          userId: session.userId,
+          plan,
+          analysisId,
+          videoUrl: persistUrl,
+          result,
+          snapshot,
+        }),
+        enqueueMemoryLearning({
+          userId: session.userId,
+          analysisId,
+          plan,
+        }),
+        learnCreatorMemoryFromAnalysis({
+          userId: session.userId,
+          analysisId,
+          result,
+          transcript: videoIntelligence.transcript.text ?? transcript,
+          videoUrl: persistUrl,
+        }),
+      ]);
+    }
 
     if (reconstructionQuotaReserved) {
       if (result.reconstructionIA) {
@@ -1287,6 +1294,7 @@ export async function POST(request: NextRequest) {
     if (!body) {
       return privateJson({ error: 'Payload JSON invalide.' }, { status: 400 });
     }
+    const memoryConsent = body.memoryConsent === true;
     const visionFrames = normalizeVisionFrames(body.frames);
     if (visionFrames) {
       return await postVisionAnalyze(body, visionFrames);
@@ -1501,7 +1509,7 @@ export async function POST(request: NextRequest) {
       dbUser = { ...dbUser, reconstructions_count: reconstructionReservation.used };
       refundableReconstructionQuotaUserId = session.userId;
     }
-    const [creatorMemory, creatorMemoryV2] = session
+    const [creatorMemory, creatorMemoryV2] = session && memoryConsent
       ? await Promise.all([
           getCreatorMemoryForAnalysis(session.userId, plan),
           getCreatorMemory(session.userId),
@@ -1571,7 +1579,9 @@ export async function POST(request: NextRequest) {
       outputTokens: plan === 'lifetime' ? 2200 : 1500,
     });
     console.info('[analysis-cost] url estimate', costEstimate);
-    const previousAnalyses = session ? await getRecentAnalysesForMemory(session.userId, getCreatorMemoryLimit(plan)) : [];
+    const previousAnalyses = session && memoryConsent
+      ? await getRecentAnalysesForMemory(session.userId, getCreatorMemoryLimit(plan))
+      : [];
     result = attachAnalyzerOutputs(body, result, getAnalysisEngineContext(body, {
       durationSec: detected?.durationSec,
       caption: detected?.caption,
@@ -1622,30 +1632,34 @@ export async function POST(request: NextRequest) {
         result,
         duration: detected?.durationSec,
         transcript: videoIntelligence.transcript.text,
-        creatorMemoryUsed: creatorMemoryV2?.profile_summary || creatorMemory?.summary,
+        creatorMemoryUsed: memoryConsent
+          ? creatorMemoryV2?.profile_summary || creatorMemory?.summary
+          : undefined,
       });
-      await Promise.all([
-        persistAnalysisSnapshotAndMemory({
-          userId: session.userId,
-          plan,
-          analysisId,
-          videoUrl: url,
-          result,
-          snapshot,
-        }),
-        enqueueMemoryLearning({
-          userId: session.userId,
-          analysisId,
-          plan,
-        }),
-        learnCreatorMemoryFromAnalysis({
-          userId: session.userId,
-          analysisId,
-          result,
-          transcript: videoIntelligence.transcript.text,
-          videoUrl: url,
-        }),
-      ]);
+      if (memoryConsent) {
+        await Promise.all([
+          persistAnalysisSnapshotAndMemory({
+            userId: session.userId,
+            plan,
+            analysisId,
+            videoUrl: url,
+            result,
+            snapshot,
+          }),
+          enqueueMemoryLearning({
+            userId: session.userId,
+            analysisId,
+            plan,
+          }),
+          learnCreatorMemoryFromAnalysis({
+            userId: session.userId,
+            analysisId,
+            result,
+            transcript: videoIntelligence.transcript.text,
+            videoUrl: url,
+          }),
+        ]);
+      }
 
       if (refundableReconstructionQuotaUserId) {
         if (result.reconstructionIA) {

@@ -2,6 +2,7 @@
 
 import { ChangeEvent, DragEvent, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import PremiumGate from '@/components/PremiumGate';
 import AnalysisCounter from '@/components/AnalysisCounter';
@@ -10,15 +11,15 @@ import FloatingParticles from '@/components/FloatingParticles';
 import { ReconstructionExperience } from '@/components/reconstruction/ReconstructionExperience';
 import { ReconstructionPaywall as ReconstructionPaywallPremium } from '@/components/reconstruction/ReconstructionPaywall';
 import { AnalysisPipelineState, AnalysisPipelineStepStatus, AnalysisResult, ReconstructionIAOutput, RepostVersion } from '@/lib/types';
-import { normalizeReconstructionPlan } from '@/lib/reconstruction/normalize';
 import { normalizeTikTokUrl, isTikTokVideoUrl } from '@/lib/tiktok-url';
-import { extractVideoFramesFromFile, extractAudioFromVideo } from '@/lib/extract-video-frames';
+import { createBrowserSupabaseClient } from '@/lib/supabase-browser';
 import { PLAN_LIMITS, RECONSTRUCTION_LIMITS } from '@/lib/plan-limits';
 import { hasProOrLifetimeAccess, isLifetimePlan, type AppPlan } from '@/lib/plans';
 
 const STORAGE_KEY = 'tiktok_analysis_count';
 const GUEST_LIMIT = 3;
-const MAX_UPLOAD_BYTES = 500 * 1024 * 1024;
+const MAX_UPLOAD_BYTES = 250 * 1024 * 1024;
+const SUPPORTED_VIDEO_TYPES = new Set(['video/mp4', 'video/quicktime', 'video/webm', 'video/x-matroska', 'video/mpeg']);
 const premiumEase = [0.22, 1, 0.36, 1] as const;
 const cardHover = {
   y: -3,
@@ -26,7 +27,52 @@ const cardHover = {
   transition: { duration: 0.32, ease: premiumEase },
 };
 
-type ObjectiveId = 'views' | 'hook' | 'retention' | 'comments' | 'clicks' | 'repost';
+type ObjectiveId = 'retention' | 'views' | 'comments' | 'followers' | 'leads' | 'sales' | 'authority' | 'advertising' | 'clip' | 'other';
+type KnowledgeLevel = 'beginner' | 'intermediate' | 'expert' | 'mixed';
+type CreatorTone = 'direct' | 'pedagogique' | 'storytelling' | 'humour' | 'inspirant';
+type TargetPlatform = 'tiktok' | 'instagram_reels' | 'youtube_shorts' | 'other';
+type ContentLanguage = 'fr' | 'en' | 'es' | 'de' | 'it' | 'pt' | 'ar' | 'mul';
+type ConfirmedFormat = 'facecam' | 'ugc' | 'clip' | 'demo' | 'storytelling' | 'advertising' | 'other';
+
+interface CreatorContextInput {
+  objectiveDetails: string;
+  niche: string;
+  audience: string;
+  audienceKnowledge: KnowledgeLevel | '';
+  tone: CreatorTone | '';
+  platform: TargetPlatform;
+  platformDetails: string;
+  language: ContentLanguage;
+  format: ConfirmedFormat | '';
+  formatDetails: string;
+  memoryConsent: boolean;
+}
+
+type AnalysisJobStatus = 'uploading' | 'queued' | 'preprocessing' | 'transcribing' | 'visual_analysis' | 'audio_analysis' | 'segment_analysis' | 'synthesis' | 'validation' | 'completed' | 'failed';
+
+interface PublicAnalysisJobState {
+  id: string;
+  status: AnalysisJobStatus;
+  progress: number;
+  currentStep: string;
+  analysisId: string | null;
+  quota: { state: string; used: number | null; limit: number | null; restored: boolean };
+  error: { code: string; message: string } | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+type UploadClientStage = 'initializing' | 'uploading' | 'starting' | 'processing';
+
+interface AnalysisJobApiResponse {
+  job: PublicAnalysisJobState;
+  upload?: { bucket: string; path: string; token: string } | null;
+  reused?: boolean;
+  started?: boolean;
+  trackingPending?: boolean;
+  retryUpload?: boolean;
+  error?: string;
+}
 
 interface AuthUser {
   id: string;
@@ -67,6 +113,14 @@ interface AnalyzerMeta {
   objectiveLabel?: string;
   niche?: string;
   nicheLabel?: string;
+  audience?: string;
+  objectiveDetails?: string;
+  audienceKnowledge?: KnowledgeLevel;
+  tone?: CreatorTone;
+  platform?: TargetPlatform;
+  language?: ContentLanguage;
+  format?: ConfirmedFormat;
+  memoryConsent?: boolean;
   fileName?: string;
   fileSizeMb?: number;
   status?: 'completed' | 'processing' | 'failed';
@@ -95,35 +149,29 @@ type AnalyzerResult = AnalysisResult & {
 };
 
 const objectives: { id: ObjectiveId; label: string; detail: string }[] = [
-  { id: 'views', label: 'Comprendre le décrochage', detail: 'Scroll risk et payoff' },
-  { id: 'hook', label: 'Corriger le hook', detail: '0-3 secondes' },
-  { id: 'retention', label: 'Repérer les drops', detail: 'Rythme et transitions' },
-  { id: 'comments', label: 'Clarifier le CTA', detail: 'Question et engagement' },
-  { id: 'clicks', label: 'Rendre l’action évidente', detail: 'CTA et intention' },
-  { id: 'repost', label: 'Préparer le plan de remontage', detail: 'Ordre + corrections' },
-];
-
-const analysisSteps = [
-  'Lecture du hook et de la promesse',
-  'Analyse des 3 premières secondes',
-  'Détection du drop probable',
-  'Lecture du rythme vidéo',
-  'Évaluation du CTA et de la tension',
-  'Simulation de la structure',
-  'Génération des hooks alternatifs',
+  { id: 'retention', label: 'Resserrer la rétention', detail: 'Rythme et payoff' },
+  { id: 'views', label: 'Gagner des vues', detail: 'Scroll et promesse' },
+  { id: 'comments', label: 'Obtenir des commentaires', detail: 'Question et tension' },
+  { id: 'followers', label: 'Gagner des abonnés', detail: 'Autorité et suite' },
+  { id: 'leads', label: 'Générer des leads', detail: 'Intention et CTA' },
+  { id: 'sales', label: 'Déclencher des ventes', detail: 'Preuve et offre' },
+  { id: 'authority', label: 'Renforcer l’autorité', detail: 'Clarté et preuve' },
+  { id: 'advertising', label: 'Créer une publicité', detail: 'Offre et conversion' },
+  { id: 'clip', label: 'Créer un clip', detail: 'Moment fort et contexte' },
+  { id: 'other', label: 'Autre objectif', detail: 'À préciser' },
 ];
 
 const pipelineStepTemplates = [
-  { id: 'prepare', label: 'Preparation de la video', microcopy: 'Verification du fichier, du poids et du contexte.', durationMs: 700 },
-  { id: 'frames', label: 'Reperage des moments importants', microcopy: 'Lecture des images utiles pour comprendre le visuel.', durationMs: 1400 },
-  { id: 'ocr', label: 'Detection des textes visibles', microcopy: 'Lecture des textes presents a l ecran quand ils sont exploitables.', durationMs: 1200 },
-  { id: 'transcript', label: 'Comprehension du message', microcopy: 'Lecture de la voix quand une piste audio exploitable existe.', durationMs: 1600 },
-  { id: 'format', label: 'Identification du format TikTok', microcopy: 'Facecam, tuto, sans parole, demo ou format hybride.', durationMs: 900 },
-  { id: 'opening', label: 'Analyse du hook', microcopy: 'Tension, promesse, friction et premiere preuve.', durationMs: 1200 },
-  { id: 'timeline', label: 'Lecture du rythme video', microcopy: 'Segments cles, relances et zones ou l attention peut chuter.', durationMs: 1200 },
-  { id: 'weak-moments', label: 'Reperage des pertes d attention', microcopy: 'Drop probable, surcharge, payoff tardif et contradictions.', durationMs: 900 },
-  { id: 'repost', label: 'Creation du plan de repost', microcopy: 'Structure, cuts, angle, CTA et texte ecran.', durationMs: 1100 },
-  { id: 'hooks', label: 'Preparation des hooks alternatifs', microcopy: 'Variantes testables selon les signaux vraiment disponibles.', durationMs: 900 },
+  { id: 'prepare', label: 'Préparation de la vidéo', microcopy: 'Vérification du fichier, du poids et du contexte.' },
+  { id: 'frames', label: 'Lecture des images', microcopy: 'Lecture des images uniquement quand le fichier original est disponible.' },
+  { id: 'ocr', label: 'Traitement côté serveur', microcopy: 'Le détail des signaux est confirmé uniquement par la réponse serveur.' },
+  { id: 'transcript', label: 'Lecture de la piste audio', microcopy: 'Transcription uniquement quand une piste audio exploitable existe.' },
+  { id: 'format', label: 'Identification du format', microcopy: 'Le format est confirmé à partir des signaux réellement extraits.' },
+  { id: 'opening', label: 'Lecture de l’ouverture', microcopy: 'Le hook est évalué à partir des preuves disponibles.' },
+  { id: 'timeline', label: 'Segmentation de la vidéo', microcopy: 'Les segments sont construits sans inventer de courbe de rétention.' },
+  { id: 'weak-moments', label: 'Carte des risques éditoriaux', microcopy: 'Les risques restent des hypothèses éditoriales, pas des pertes mesurées.' },
+  { id: 'repost', label: 'Création du plan de repost', microcopy: 'Structure, coupes, angle, CTA et texte écran.' },
+  { id: 'hooks', label: 'Préparation des hooks alternatifs', microcopy: 'Variantes testables selon les signaux vraiment disponibles.' },
 ] as const;
 
 type PipelineStepId = typeof pipelineStepTemplates[number]['id'];
@@ -190,14 +238,6 @@ const uxPhaseDefinitions: Array<{
   },
 ];
 
-const analysisReassuranceMessages = [
-  'On repere les moments ou l attention peut chuter...',
-  'On analyse les 3 premieres secondes de ta video...',
-  'On compare le rythme avec des patterns TikTok performants...',
-  'On prepare un plan de remontage actionnable...',
-  'Encore quelques secondes, l analyse se finalise...',
-];
-
 function pipelineProgress(steps: AnalysisPipelineState['steps']) {
   const total = steps.length;
   const completed = steps.filter((step) => ['done', 'warning', 'failed'].includes(step.status)).length;
@@ -235,43 +275,83 @@ function scoreBar(score: number) {
   return 'from-red-400 to-orange-300';
 }
 
-function verdictFor(score: number, weakest: string) {
-  if (score >= 80) return `Base solide. Resserre encore ${weakest.toLowerCase()} avant remontage.`;
-  if (score >= 60) return `Vidéo récupérable, mais ${weakest.toLowerCase()} ralentit la rétention.`;
-  if (score >= 40) return `La structure doit d’abord corriger ${weakest.toLowerCase()}.`;
-  return `Reconstruction conseillée après refonte du ${weakest.toLowerCase()}.`;
-}
-
 function getObjectiveLabel(id: ObjectiveId | '') {
   return objectives.find((item) => item.id === id)?.label ?? '';
 }
 
-function buildFallbackRepost(objective: ObjectiveId | ''): RepostVersion {
-  const objectiveHook: Record<ObjectiveId, string> = {
-    views: `Le viewer ne voit pas assez vite pourquoi rester.`,
-    hook: `Tes 3 premières secondes expliquent avant de créer une tension.`,
-    retention: `Le milieu de la vidéo manque probablement de rupture claire.`,
-    comments: `La question arrive trop tard ou reste trop générale.`,
-    clicks: `Le CTA demande une action sans bénéfice assez visible.`,
-    repost: `Reconstruis cette vidéo avec la preuve avant le contexte.`,
+function creatorContextIsComplete(objective: ObjectiveId, context: CreatorContextInput) {
+  return context.niche.trim().length >= 2
+    && context.audience.trim().length >= 2
+    && Boolean(context.audienceKnowledge)
+    && context.tone.trim().length >= 2
+    && Boolean(context.platform)
+    && (context.platform !== 'other' || context.platformDetails.trim().length >= 2)
+    && context.language.trim().length >= 2
+    && Boolean(context.format)
+    && (context.format !== 'other' || context.formatDetails.trim().length >= 2)
+    && (objective !== 'other' || context.objectiveDetails.trim().length >= 3);
+}
+
+function buildCreatorContextPayload(objective: ObjectiveId, context: CreatorContextInput) {
+  if (!creatorContextIsComplete(objective, context)) {
+    throw new Error('Complète le contexte créateur avant de lancer l’analyse.');
+  }
+
+  const niche = context.niche.trim();
+  const audience = context.audience.trim();
+  const objectiveDetails = objective === 'other' ? context.objectiveDetails.trim() : undefined;
+  const platformDetails = context.platform === 'other' ? context.platformDetails.trim() : undefined;
+  const formatDetails = context.format === 'other' ? context.formatDetails.trim() : undefined;
+  const creatorContext = {
+    objective,
+    ...(objectiveDetails ? { objectiveDetails } : {}),
+    niche,
+    audience,
+    audienceKnowledge: context.audienceKnowledge as KnowledgeLevel,
+    tone: context.tone as CreatorTone,
+    platform: context.platform,
+    ...(platformDetails ? { platformDetails } : {}),
+    language: context.language,
+    format: context.format as ConfirmedFormat,
+    ...(formatDetails ? { formatDetails } : {}),
+    memoryConsent: context.memoryConsent,
   };
+
   return {
-    hook: objective ? objectiveHook[objective] : `Le problème arrive avant la valeur: corrige ça d’abord.`,
-    structure: [
-      '0-3 sec : problème direct + tension visible',
-      '3-8 sec : preuve, exemple ou contraste concret',
-      '8-18 sec : explication courte avec 2 cuts minimum',
-      '18-25 sec : solution claire adaptée au format détecté',
-      '25-30 sec : CTA commentaire simple et spécifique',
-    ],
-    onScreenText: [
-      'Erreur que ton audience doit voir maintenant',
-      'Le vrai problème arrive avant la valeur',
-      'À couper / reformuler avant remontage',
-    ],
-    cta: 'Commente "PLAN" si tu veux la structure à recopier.',
-    angle: "Reconstruire avec un angle plus frontal : partir de l'erreur la plus douloureuse pour ton audience, puis montrer la correction en moins de 20 secondes.",
+    objective,
+    objectiveDetails,
+    objectiveLabel: getObjectiveLabel(objective),
+    niche,
+    nicheLabel: niche,
+    audience,
+    audienceKnowledge: creatorContext.audienceKnowledge,
+    tone: creatorContext.tone,
+    platform: creatorContext.platform,
+    platformDetails,
+    language: creatorContext.language,
+    format: creatorContext.format,
+    formatDetails,
+    memoryConsent: creatorContext.memoryConsent,
+    creatorContext,
   };
+}
+
+function waitForPollingInterval(signal: AbortSignal, delayMs = 2000): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal.aborted) {
+      reject(new DOMException('Polling annulé.', 'AbortError'));
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      signal.removeEventListener('abort', onAbort);
+      resolve();
+    }, delayMs);
+    const onAbort = () => {
+      window.clearTimeout(timer);
+      reject(new DOMException('Polling annulé.', 'AbortError'));
+    };
+    signal.addEventListener('abort', onAbort, { once: true });
+  });
 }
 
 function TikTokRequiredAccess({ email }: { email: string }) {
@@ -354,36 +434,24 @@ function enrichResult(
   objective: ObjectiveId | '',
   file: File | null
 ): AnalyzerResult {
-  const sections = [
-    { label: 'Hook', score: result.hook?.score ?? 0 },
-    { label: 'Rétention', score: result.retention?.score ?? 0 },
-    { label: 'Rythme', score: result.editing?.score ?? 0 },
-  ].sort((a, b) => a.score - b.score);
-  const weakest = sections[0]?.label ?? 'hook';
-  const verdictShort = result.finalVerdict?.split('.')[0] || verdictFor(result.viralityScore, weakest);
   const recommendations = result.coachAnalysis?.detectedProblems?.slice(0, 4).map((item) => item.action)
     ?? (result.improvements ?? []).slice(0, 4).map((item) => item.tip);
+  const previousObjective = objectives.some((item) => item.id === result.analyzerMeta?.objective)
+    ? result.analyzerMeta?.objective as ObjectiveId
+    : undefined;
 
   return {
     ...result,
     analyzerMeta: {
       ...result.analyzerMeta,
-      objective: objective || undefined,
+      objective: objective || previousObjective,
       objectiveLabel: getObjectiveLabel(objective) || result.analyzerMeta?.objectiveLabel,
-      fileName: file?.name,
-      fileSizeMb: file ? Number((file.size / 1024 / 1024).toFixed(1)) : undefined,
+      fileName: file?.name ?? result.analyzerMeta?.fileName,
+      fileSizeMb: file ? Number((file.size / 1024 / 1024).toFixed(1)) : result.analyzerMeta?.fileSizeMb,
       status: 'completed',
-      verdictShort,
+      verdictShort: result.analyzerMeta?.verdictShort ?? result.finalVerdict?.split('.')[0],
       recommendations,
     },
-    repostVersion: result.repostVersion ?? buildFallbackRepost(objective),
-    actionPlan: result.actionPlan ?? result.coachAnalysis?.repostEngine?.priorityChanges ?? [
-      "Couper l'intro inutile et démarrer sur la tension principale.",
-      'Ajouter une phrase choc dès la première seconde.',
-      "Mettre le bénéfice dans le texte à l'écran.",
-      'Ajouter une rupture visuelle autour de 5 secondes.',
-      'Finir avec une question simple qui appelle un commentaire.',
-    ],
   };
 }
 
@@ -496,6 +564,10 @@ function getAnalysisScore(item?: AnalysisHistoryItem | null) {
   return typeof score === 'number' && Number.isFinite(score) ? Math.max(0, Math.min(100, Math.round(score))) : null;
 }
 
+function isDeterministicEditorialAnalysis(item?: AnalysisHistoryItem | null) {
+  return item?.result?.scoreSemantics === 'deterministic_editorial_rubric';
+}
+
 function getAnalysisTitle(item?: AnalysisHistoryItem | null) {
   const meta = item?.result?.analyzerMeta as AnalyzerMeta | undefined;
   const title = meta?.verdictShort || meta?.fileName || item?.result?.coachAnalysis?.patternLabel || item?.video_url;
@@ -504,6 +576,7 @@ function getAnalysisTitle(item?: AnalysisHistoryItem | null) {
 }
 
 function getRetentionValue(item?: AnalysisHistoryItem | null) {
+  if (isDeterministicEditorialAnalysis(item)) return null;
   const score = item?.result?.retention?.score;
   return typeof score === 'number' && Number.isFinite(score) ? Math.round(score) : null;
 }
@@ -612,7 +685,7 @@ function UploadCard({
           : 'border-dashed border-white/[0.14] bg-[#080810]/80 hover:border-vn-violet/35 hover:bg-white/[0.04]'
       }`}
     >
-      <input ref={inputRef} type="file" accept="video/mp4,video/quicktime,video/*" className="hidden" disabled={disabled} onChange={onChange} />
+      <input ref={inputRef} type="file" accept="video/mp4,video/quicktime,video/webm,video/x-matroska,video/mpeg" className="hidden" disabled={disabled} onChange={onChange} />
       <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-vn-fuchsia/40 to-transparent" />
       <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-start gap-3 sm:gap-4">
@@ -628,7 +701,7 @@ function UploadCard({
             ) : (
               <>
                 <p className="text-sm font-semibold text-white">Dépose ta vidéo ici</p>
-                <p className="mt-1 text-xs leading-5 text-gray-500">MP4, MOV ou export TikTok · max 500 Mo</p>
+                <p className="mt-1 text-xs leading-5 text-gray-500">MP4, MOV, WebM, MKV ou MPEG · max 250 Mo</p>
               </>
             )}
           </div>
@@ -705,63 +778,6 @@ function ChoiceGrid<T extends string>({
   );
 }
 
-function AnalysisProgress({ currentStep, progress }: { currentStep: number; progress: number }) {
-  const activeDetail = [
-    'On vérifie si le viewer comprend pourquoi rester.',
-    'On cherche la tension, le mouvement et le texte écran.',
-    'On repère le moment où le pouce risque de swiper.',
-    'On compare les cuts à un rythme TikTok natif.',
-    'On mesure si la fin déclenche une action simple.',
-    'On estime le score avant/après correction.',
-    'On prépare une version immédiatement testable.',
-  ][Math.min(currentStep, analysisSteps.length - 1)];
-  return (
-    <section className="rounded-3xl border border-vn-violet/20 bg-[#080810]/95 p-5 sm:p-7 shadow-[0_20px_90px_-50px_rgba(99,102,241,0.75)]">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-vn-fuchsia/70">Analyse en cours</p>
-          <h2 className="mt-2 text-xl font-black text-white">Diagnostic TikTok profond</h2>
-          <p className="mt-1 text-sm text-gray-500">{analysisSteps[Math.min(currentStep, analysisSteps.length - 1)]}</p>
-          <p className="mt-2 text-xs text-vn-violet/80">{activeDetail}</p>
-        </div>
-        <p className="text-3xl font-black tabular-nums text-white">{progress}%</p>
-      </div>
-      <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/[0.06]">
-        <div
-          className="h-full rounded-full bg-gradient-to-r from-vn-fuchsia via-vn-violet to-vn-indigo transition-all duration-500"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
-      <div className="mt-6 grid gap-2">
-        {analysisSteps.map((step, index) => {
-          const done = index < currentStep;
-          const active = index === currentStep;
-          return (
-            <div key={step} className={`flex items-center gap-3 rounded-xl border px-3.5 py-3 transition ${
-              done
-                ? 'border-emerald-400/20 bg-emerald-400/[0.06]'
-                : active
-                ? 'border-vn-violet/30 bg-vn-violet/[0.08]'
-                : 'border-white/[0.06] bg-white/[0.025]'
-            }`}>
-              <span className={`flex h-6 w-6 items-center justify-center rounded-full border ${
-                done
-                  ? 'border-emerald-400/30 bg-emerald-400/15 text-emerald-300'
-                  : active
-                  ? 'border-vn-violet/35 bg-vn-violet/15 text-vn-violet'
-                  : 'border-white/[0.1] text-gray-600'
-              }`}>
-                {done ? <CheckIcon className="h-3.5 w-3.5" /> : active ? <span className="h-2 w-2 animate-pulse rounded-full bg-vn-violet" /> : <span className="h-1.5 w-1.5 rounded-full bg-gray-700" />}
-              </span>
-              <p className={`text-sm ${done || active ? 'text-white' : 'text-gray-500'}`}>{step}</p>
-            </div>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
 function formatDurationLabel(seconds?: number) {
   if (!seconds || !Number.isFinite(seconds)) return '-';
   const minutes = Math.floor(seconds / 60);
@@ -778,49 +794,19 @@ function statusBadgeClass(status: AnalysisPipelineStepStatus) {
   return 'border-white/[0.08] bg-white/[0.03] text-gray-500';
 }
 
-function phaseForPipeline(pipeline: AnalysisPipelineState, now: number) {
+function phaseForPipeline(pipeline: AnalysisPipelineState) {
   if (pipeline.progress >= 100) return uxPhaseDefinitions[uxPhaseDefinitions.length - 1];
-
-  const serverStep = pipeline.steps.find((step) => step.id === 'ocr' && step.startedAt);
-  const runningServerSteps = pipeline.steps.filter((step) => ['ocr', 'format', 'opening', 'timeline', 'weak-moments', 'repost', 'hooks'].includes(step.id) && step.status === 'running');
-  if (serverStep?.startedAt && runningServerSteps.length >= 4) {
-    const elapsed = now - new Date(serverStep.startedAt).getTime();
-    if (elapsed > 50000) return uxPhaseDefinitions.find((phase) => phase.id === 'final') ?? uxPhaseDefinitions[4];
-    if (elapsed > 30000) return uxPhaseDefinitions.find((phase) => phase.id === 'repost') ?? uxPhaseDefinitions[3];
-    if (elapsed > 14000) return uxPhaseDefinitions.find((phase) => phase.id === 'hook') ?? uxPhaseDefinitions[2];
-    return uxPhaseDefinitions.find((phase) => phase.id === 'signals') ?? uxPhaseDefinitions[1];
-  }
-
   const activeStep = pipeline.steps.find((step) => step.status === 'running') ?? pipeline.steps.find((step) => step.id === pipeline.currentStep) ?? pipeline.steps[0];
   return uxPhaseDefinitions.find((phase) => phase.stepIds.includes(activeStep?.id as PipelineStepId)) ?? uxPhaseDefinitions[0];
 }
 
-function smoothedPipelineProgress(pipeline: AnalysisPipelineState, phase: (typeof uxPhaseDefinitions)[number], now: number) {
-  if (pipeline.progress >= 100) return 100;
-
-  const phaseStep = pipeline.steps.find((step) => phase.stepIds.includes(step.id as PipelineStepId) && step.status === 'running')
-    ?? pipeline.steps.find((step) => phase.stepIds.includes(step.id as PipelineStepId) && step.startedAt);
-  const startedAt = phaseStep?.startedAt ? new Date(phaseStep.startedAt).getTime() : new Date(pipeline.startedAt).getTime();
-  const elapsed = Math.max(0, now - startedAt);
-  const durationByPhase: Record<UxPhaseId, number> = {
-    prepare: 9000,
-    signals: 18000,
-    hook: 20000,
-    repost: 16000,
-    final: 14000,
-  };
-  const phaseRatio = Math.min(0.92, elapsed / durationByPhase[phase.id]);
-  const phaseProgress = Math.round(phase.from + (phase.to - phase.from) * phaseRatio);
-  const cap = phase.to >= 100 ? 99 : phase.to - 1;
-  return Math.max(1, Math.min(cap, Math.max(pipeline.progress, phaseProgress)));
-}
-
-function phaseVisualStatus(phaseId: UxPhaseId, activePhaseId: UxPhaseId, progress: number) {
+function phaseVisualStatus(phaseId: UxPhaseId, pipeline: AnalysisPipelineState) {
   const phase = uxPhaseDefinitions.find((item) => item.id === phaseId);
   if (!phase) return 'pending';
-  if (progress >= phase.to) return 'done';
-  if (phaseId === activePhaseId) return 'running';
-  if (progress > phase.from) return 'done';
+  const steps = pipeline.steps.filter((step) => phase.stepIds.includes(step.id as PipelineStepId));
+  if (steps.some((step) => step.status === 'failed')) return 'failed';
+  if (steps.length > 0 && steps.every((step) => step.status === 'done' || step.status === 'warning')) return 'done';
+  if (steps.some((step) => step.status === 'running')) return 'running';
   return 'pending';
 }
 
@@ -831,24 +817,106 @@ function readableStepStatus(status: AnalysisPipelineStepStatus) {
   return 'A suivre';
 }
 
-function AnalysisPipelineProgress({ pipeline, preview }: { pipeline: AnalysisPipelineState; preview: AnalysisPreviewSignals }) {
-  const [tick, setTick] = useState(0);
-  useEffect(() => {
-    const timer = window.setInterval(() => setTick((value) => value + 1), 1300);
-    return () => window.clearInterval(timer);
-  }, []);
+const jobStatusLabels: Record<AnalysisJobStatus, string> = {
+  uploading: 'Envoi du fichier',
+  queued: 'Analyse en file d’attente',
+  preprocessing: 'Prétraitement vidéo',
+  transcribing: 'Transcription horodatée',
+  visual_analysis: 'Analyse visuelle',
+  audio_analysis: 'Analyse audio',
+  segment_analysis: 'Analyse des segments',
+  synthesis: 'Synthèse du diagnostic',
+  validation: 'Validation des preuves',
+  completed: 'Analyse terminée',
+  failed: 'Analyse interrompue',
+};
 
-  const now = Date.now();
-  const activePhase = phaseForPipeline(pipeline, now);
-  const displayProgress = smoothedPipelineProgress(pipeline, activePhase, now);
-  const message = analysisReassuranceMessages[Math.floor(tick / 5) % analysisReassuranceMessages.length];
-  const timeLabel = displayProgress < 40 ? 'Environ 1 min restante' : displayProgress < 75 ? 'Encore quelques secondes' : 'Finalisation en cours';
+function AsyncAnalysisJobProgress({
+  job,
+  stage,
+  fileName,
+}: {
+  job: PublicAnalysisJobState | null;
+  stage: UploadClientStage;
+  fileName?: string;
+}) {
+  const progress = job && Number.isFinite(job.progress)
+    ? Math.max(0, Math.min(100, Math.round(job.progress)))
+    : null;
+  const quotaLabel = !job
+    || job.quota.limit === null
+    || job.quota.used === null
+    || !Number.isFinite(job.quota.limit)
+    || !Number.isFinite(job.quota.used)
+    ? 'Réservé au démarrage'
+    : `${job.quota.used}/${job.quota.limit}`;
+  const stageLabel = stage === 'initializing'
+    ? 'Préparation de l’envoi privé'
+    : stage === 'uploading'
+      ? 'Envoi du fichier original'
+      : stage === 'starting'
+        ? 'Démarrage du traitement durable'
+        : job
+          ? jobStatusLabels[job.status]
+          : 'Traitement en cours';
+
+  return (
+    <section className="overflow-hidden rounded-3xl border border-cyan-300/18 bg-[radial-gradient(circle_at_16%_0%,rgba(34,211,238,0.14),transparent_34%),radial-gradient(circle_at_88%_8%,rgba(139,92,246,0.15),transparent_34%),linear-gradient(180deg,rgba(8,12,27,0.98),rgba(5,8,18,0.96))] p-4 shadow-[0_24px_100px_-64px_rgba(34,211,238,0.9)] sm:p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-cyan-100">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-300" />
+            Statut réel
+          </div>
+          <h2 className="mt-4 text-xl font-black text-white sm:text-2xl">{stageLabel}</h2>
+          <p className="mt-2 truncate text-sm text-slate-400" title={fileName}>{fileName ?? 'Vidéo sélectionnée'}</p>
+        </div>
+        <div className="shrink-0 text-left sm:text-right">
+          <p className="text-3xl font-black tabular-nums text-white">{progress === null ? '—' : `${progress}%`}</p>
+          <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Progression serveur</p>
+        </div>
+      </div>
+
+      <div className="mt-5 h-2.5 overflow-hidden rounded-full bg-white/[0.065]">
+        {progress !== null && (
+          <motion.div
+            className="h-full rounded-full bg-gradient-to-r from-cyan-300 via-blue-500 to-violet-500"
+            animate={{ width: `${progress}%` }}
+            transition={{ duration: 0.35, ease: premiumEase }}
+          />
+        )}
+      </div>
+
+      <div className="mt-5 grid gap-2 sm:grid-cols-3">
+        <div className="rounded-xl border border-white/[0.07] bg-white/[0.035] p-3">
+          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-600">État</p>
+          <p className="mt-1 text-xs font-black text-white">{job ? jobStatusLabels[job.status] : 'Initialisation'}</p>
+        </div>
+        <div className="rounded-xl border border-white/[0.07] bg-white/[0.035] p-3">
+          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-600">Étape renvoyée</p>
+          <p className="mt-1 break-words text-xs font-black text-white">{job?.currentStep || 'En attente du serveur'}</p>
+        </div>
+        <div className="rounded-xl border border-white/[0.07] bg-white/[0.035] p-3">
+          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-600">Quota</p>
+          <p className="mt-1 text-xs font-black text-white">{quotaLabel}</p>
+        </div>
+      </div>
+      <p className="mt-4 text-xs leading-5 text-slate-500">Cette progression vient du job serveur. Fermer la page n’interrompt pas le traitement durable.</p>
+    </section>
+  );
+}
+
+function AnalysisPipelineProgress({ pipeline, preview }: { pipeline: AnalysisPipelineState; preview: AnalysisPreviewSignals }) {
+  const activePhase = phaseForPipeline(pipeline);
+  const displayProgress = pipeline.progress;
+  const activeStep = pipeline.steps.find((step) => step.status === 'running');
+  const message = activeStep?.microcopy ?? 'En attente du prochain statut confirme.';
   const failedStep = pipeline.steps.find((step) => step.status === 'failed');
   const signalRows = [
-    { label: 'Format', value: preview.formatDetected ? 'Detecte' : displayProgress >= 35 ? 'En lecture' : 'A suivre' },
-    { label: 'Hook', value: preview.hookDetected ? 'Analyse' : displayProgress >= 55 ? 'En cours d analyse' : 'A suivre' },
+    { label: 'Format', value: preview.formatDetected ? 'Detecte' : 'En attente' },
+    { label: 'Hook', value: preview.hookDetected ? 'Analyse' : 'En attente' },
     { label: 'Duree', value: formatDurationLabel(preview.durationSec) },
-    { label: 'Texte ecran', value: preview.hasText ? 'Detecte' : displayProgress >= 35 ? 'Verification en cours' : '-' },
+    { label: 'Texte ecran', value: preview.hasText ? 'Detecte' : '—' },
     { label: 'Transcription', value: preview.hasTranscript ? 'Disponible' : 'Selon audio exploitable' },
   ];
 
@@ -882,8 +950,8 @@ function AnalysisPipelineProgress({ pipeline, preview }: { pipeline: AnalysisPip
               </motion.div>
             </div>
             <div className="mt-3 flex flex-col gap-2 text-xs sm:flex-row sm:items-center sm:justify-between">
-              <p className="font-semibold text-cyan-100">{timeLabel}</p>
-              <p className="text-slate-500">En general : 45 a 90 secondes selon la duree de la video</p>
+              <p className="font-semibold text-cyan-100">Progression confirmee par les etapes terminees</p>
+              <p className="text-slate-500">Aucune duree restante n'est simulee.</p>
             </div>
           </div>
 
@@ -899,7 +967,7 @@ function AnalysisPipelineProgress({ pipeline, preview }: { pipeline: AnalysisPip
 
           <div className="mt-5 grid gap-2 sm:grid-cols-2">
             {uxPhaseDefinitions.slice(0, 4).map((phase) => {
-              const status = phaseVisualStatus(phase.id, activePhase.id, displayProgress);
+              const status = phaseVisualStatus(phase.id, pipeline);
               const done = status === 'done';
               const active = status === 'running';
               return (
@@ -1185,7 +1253,7 @@ function UploadedVideoDropzone({
       <input
         ref={inputRef}
         type="file"
-        accept="video/mp4,video/quicktime,video/webm,video/*"
+        accept="video/mp4,video/quicktime,video/webm,video/x-matroska,video/mpeg"
         className="hidden"
         disabled={disabled}
         onChange={(event) => {
@@ -1215,7 +1283,7 @@ function UploadedVideoDropzone({
           <>
             <p className="mt-4 text-[1rem] font-black text-white">Glisse ta vidéo ici</p>
             <p className="mt-1 text-[0.86rem] font-medium text-slate-400">ou importe un fichier</p>
-            <p className="mt-2 text-[0.74rem] font-semibold text-slate-500">MP4, MOV, WebM · Max 500 Mo</p>
+            <p className="mt-2 text-[0.74rem] font-semibold text-slate-500">MP4, MOV, WebM, MKV, MPEG · max 250 Mo</p>
             <button type="button" disabled={disabled} onClick={() => inputRef.current?.click()} className="mt-4 h-11 rounded-[14px] bg-white px-5 text-[0.84rem] font-black text-[#050711] transition hover:bg-slate-200 disabled:opacity-50">
               Importer une vidéo
             </button>
@@ -1328,6 +1396,142 @@ function TikTokVideoPicker({
   );
 }
 
+function CreatorContextPanel({
+  objective,
+  context,
+  disabled,
+  onObjectiveChange,
+  onContextChange,
+}: {
+  objective: ObjectiveId;
+  context: CreatorContextInput;
+  disabled: boolean;
+  onObjectiveChange: (value: ObjectiveId) => void;
+  onContextChange: (patch: Partial<CreatorContextInput>) => void;
+}) {
+  const fieldClass = 'min-h-11 w-full min-w-0 rounded-xl border border-white/[0.09] bg-[#080d1d] px-3 text-[0.8rem] font-semibold text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/35 focus:ring-2 focus:ring-cyan-300/10 disabled:opacity-50';
+  const ready = creatorContextIsComplete(objective, context);
+
+  return (
+    <div className="rounded-[18px] border border-white/[0.08] bg-white/[0.03] p-3.5">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[0.92rem] font-black text-white">Contexte créateur</p>
+          <p className="mt-1 text-[0.74rem] leading-5 text-slate-500">Ces champs obligatoires relient le diagnostic à ton audience et à ton objectif réel.</p>
+        </div>
+        <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[0.64rem] font-black uppercase tracking-[0.12em] ${ready ? 'border-emerald-300/20 bg-emerald-300/10 text-emerald-200' : 'border-amber-300/18 bg-amber-300/[0.08] text-amber-100'}`}>
+          {ready ? 'Prêt' : 'À compléter'}
+        </span>
+      </div>
+
+      <div className="mt-3 grid min-w-0 grid-cols-2 gap-2.5">
+        <label className="col-span-2 min-w-0">
+          <span className="mb-1.5 block text-[0.68rem] font-bold text-slate-400">Objectif</span>
+          <select value={objective} disabled={disabled} onChange={(event) => onObjectiveChange(event.target.value as ObjectiveId)} className={fieldClass}>
+            {objectives.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
+          </select>
+        </label>
+
+        {objective === 'other' && (
+          <label className="col-span-2 min-w-0">
+            <span className="mb-1.5 block text-[0.68rem] font-bold text-slate-400">Précise l’objectif</span>
+            <input value={context.objectiveDetails} disabled={disabled} maxLength={160} onChange={(event) => onContextChange({ objectiveDetails: event.target.value })} placeholder="Ex. faire télécharger mon guide" className={fieldClass} />
+          </label>
+        )}
+
+        <label className="min-w-0">
+          <span className="mb-1.5 block text-[0.68rem] font-bold text-slate-400">Niche</span>
+          <input value={context.niche} disabled={disabled} maxLength={100} onChange={(event) => onContextChange({ niche: event.target.value })} placeholder="Ex. fitness" className={fieldClass} />
+        </label>
+        <label className="min-w-0">
+          <span className="mb-1.5 block text-[0.68rem] font-bold text-slate-400">Audience</span>
+          <input value={context.audience} disabled={disabled} maxLength={180} onChange={(event) => onContextChange({ audience: event.target.value })} placeholder="Ex. débutants pressés" className={fieldClass} />
+        </label>
+
+        <label className="min-w-0">
+          <span className="mb-1.5 block text-[0.68rem] font-bold text-slate-400">Niveau</span>
+          <select value={context.audienceKnowledge} disabled={disabled} onChange={(event) => onContextChange({ audienceKnowledge: event.target.value as KnowledgeLevel | '' })} className={fieldClass}>
+            <option value="">À préciser</option>
+            <option value="beginner">Débutant</option>
+            <option value="intermediate">Intermédiaire</option>
+            <option value="expert">Expert</option>
+            <option value="mixed">Mixte</option>
+          </select>
+        </label>
+        <label className="min-w-0">
+          <span className="mb-1.5 block text-[0.68rem] font-bold text-slate-400">Ton</span>
+          <select value={context.tone} disabled={disabled} onChange={(event) => onContextChange({ tone: event.target.value as CreatorTone | '' })} className={fieldClass}>
+            <option value="">À préciser</option>
+            <option value="direct">Direct</option>
+            <option value="pedagogique">Pédagogique</option>
+            <option value="storytelling">Storytelling</option>
+            <option value="humour">Humour</option>
+            <option value="inspirant">Inspirant</option>
+          </select>
+        </label>
+
+        <label className="min-w-0">
+          <span className="mb-1.5 block text-[0.68rem] font-bold text-slate-400">Plateforme</span>
+          <select value={context.platform} disabled={disabled} onChange={(event) => onContextChange({ platform: event.target.value as TargetPlatform })} className={fieldClass}>
+            <option value="tiktok">TikTok</option>
+            <option value="instagram_reels">Instagram Reels</option>
+            <option value="youtube_shorts">YouTube Shorts</option>
+            <option value="other">Autre</option>
+          </select>
+        </label>
+        <label className="min-w-0">
+          <span className="mb-1.5 block text-[0.68rem] font-bold text-slate-400">Langue</span>
+          <select value={context.language} disabled={disabled} onChange={(event) => onContextChange({ language: event.target.value as ContentLanguage })} className={fieldClass}>
+            <option value="fr">Français</option>
+            <option value="en">Anglais</option>
+            <option value="es">Espagnol</option>
+            <option value="de">Allemand</option>
+            <option value="it">Italien</option>
+            <option value="pt">Portugais</option>
+            <option value="ar">Arabe</option>
+            <option value="mul">Multilingue / détection automatique</option>
+          </select>
+        </label>
+
+        {context.platform === 'other' && (
+          <label className="col-span-2 min-w-0">
+            <span className="mb-1.5 block text-[0.68rem] font-bold text-slate-400">Précise la plateforme</span>
+            <input value={context.platformDetails} disabled={disabled} maxLength={80} onChange={(event) => onContextChange({ platformDetails: event.target.value })} placeholder="Ex. Snapchat Spotlight" className={fieldClass} />
+          </label>
+        )}
+
+        <label className="col-span-2 min-w-0">
+          <span className="mb-1.5 block text-[0.68rem] font-bold text-slate-400">Format confirmé</span>
+          <select value={context.format} disabled={disabled} onChange={(event) => onContextChange({ format: event.target.value as ConfirmedFormat | '' })} className={fieldClass}>
+            <option value="">À préciser</option>
+            <option value="facecam">Facecam</option>
+            <option value="ugc">UGC</option>
+            <option value="clip">Clip</option>
+            <option value="storytelling">Storytelling</option>
+            <option value="demo">Démo produit</option>
+            <option value="advertising">Publicité</option>
+            <option value="other">Autre</option>
+          </select>
+        </label>
+
+        {context.format === 'other' && (
+          <label className="col-span-2 min-w-0">
+            <span className="mb-1.5 block text-[0.68rem] font-bold text-slate-400">Précise le format</span>
+            <input value={context.formatDetails} disabled={disabled} maxLength={80} onChange={(event) => onContextChange({ formatDetails: event.target.value })} placeholder="Ex. capture d’écran commentée" className={fieldClass} />
+          </label>
+        )}
+
+        <label className="col-span-2 flex min-w-0 items-start gap-3 rounded-xl border border-white/[0.07] bg-black/15 p-3">
+          <input type="checkbox" checked={context.memoryConsent} disabled={disabled} onChange={(event) => onContextChange({ memoryConsent: event.target.checked })} className="mt-0.5 h-4 w-4 rounded border-white/20 bg-black/30 accent-cyan-400" />
+          <span className="text-[0.72rem] leading-5 text-slate-400">
+            Utiliser ma mémoire existante et apprendre de cette analyse. Désactivé par défaut.
+          </span>
+        </label>
+      </div>
+    </div>
+  );
+}
+
 function AnalyzeSourceCard({
   source,
   onSourceChange,
@@ -1345,6 +1549,10 @@ function AnalyzeSourceCard({
   canAnalyzeUpload,
   canAnalyzeTikTok,
   isLoading,
+  objective,
+  creatorContext,
+  onObjectiveChange,
+  onCreatorContextChange,
 }: {
   source: AnalyzeSource;
   onSourceChange: (value: AnalyzeSource) => void;
@@ -1362,11 +1570,19 @@ function AnalyzeSourceCard({
   canAnalyzeUpload: boolean;
   canAnalyzeTikTok: boolean;
   isLoading: boolean;
+  objective: ObjectiveId;
+  creatorContext: CreatorContextInput;
+  onObjectiveChange: (value: ObjectiveId) => void;
+  onCreatorContextChange: (patch: Partial<CreatorContextInput>) => void;
 }) {
   const tiktokConnected = Boolean(authUser?.tiktok?.connected);
   const displayName = authUser?.tiktok?.displayName?.trim() || 'Compte TikTok';
   const ctaDisabled = source === 'upload' ? !canAnalyzeUpload : !canAnalyzeTikTok;
-  const ctaLabel = source === 'upload' ? 'Analyser cette vidéo' : videos.length > 0 ? 'Analyser cette vidéo' : 'Importer une vidéo';
+  const ctaLabel = source === 'upload'
+    ? 'Analyser cette vidéo'
+    : videos.length > 0
+      ? 'Lire les données disponibles'
+      : 'Importer une vidéo';
 
   return (
     <section className="relative overflow-hidden rounded-[26px] border border-cyan-200/20 bg-[linear-gradient(180deg,rgba(9,15,35,0.86),rgba(5,8,18,0.93))] p-4 shadow-[0_0_56px_-34px_rgba(34,211,238,0.95),inset_0_1px_0_rgba(255,255,255,0.08)]">
@@ -1375,7 +1591,7 @@ function AnalyzeSourceCard({
         <span className="mt-1 text-cyan-200">✦</span>
         <div className="min-w-0">
           <h2 className="text-[1.35rem] font-black tracking-[-0.03em] text-white">Analyse automatique</h2>
-          <p className="mt-2 text-[0.84rem] leading-5 text-slate-400">Choisis une source, Viralynz détecte automatiquement les signaux qui font performer ta vidéo.</p>
+          <p className="mt-2 text-[0.84rem] leading-5 text-slate-400">Choisis une source. Viralynz relie chaque signal disponible a une decision de montage.</p>
         </div>
       </div>
 
@@ -1407,9 +1623,19 @@ function AnalyzeSourceCard({
                 onConnect={() => undefined}
                 onSwitchUpload={() => onSourceChange('upload')}
               />
+              <div className="mt-3 rounded-[14px] border border-amber-200/15 bg-amber-200/[0.055] px-3 py-2.5 text-[0.74rem] font-semibold leading-5 text-amber-50/80">
+                Sans le fichier original, Viralynz ne lit ni les images ni l’audio. Cette source exploite seulement les métadonnées TikTok disponibles. Importe le fichier pour une analyse complète.
+              </div>
             </div>
           </>
         )}
+        <CreatorContextPanel
+          objective={objective}
+          context={creatorContext}
+          disabled={isLoading}
+          onObjectiveChange={onObjectiveChange}
+          onContextChange={onCreatorContextChange}
+        />
       </div>
 
       <button
@@ -1444,20 +1670,18 @@ function InsightMetricCard({ icon, label, value, tone }: { icon: AnalyzeIconName
 }
 
 function RealtimeInsights({ latest }: { latest: AnalysisHistoryItem | null }) {
-  const retention = getRetentionValue(latest);
   const format = latest?.result?.coachAnalysis?.patternLabel || null;
   const hookValue = latest?.result?.hook?.score !== undefined ? `Hook ${Math.round(latest.result.hook.score)}/100` : 'À détecter';
-  const retentionValue = retention !== null ? `Rétention ${retention}/100` : 'À détecter';
   return (
     <section className="mt-5">
       <div className="mb-3 flex items-end justify-between gap-3">
-        <h2 className="text-[1.05rem] font-black text-white">Insights IA en temps réel</h2>
+        <h2 className="text-[1.05rem] font-black text-white">Signaux de la dernière analyse</h2>
         <span className="text-[0.76rem] font-semibold text-slate-500">{latest ? 'Dernière analyse' : 'Prêt à analyser'}</span>
       </div>
       <div className="grid grid-cols-2 gap-3 min-[430px]:grid-cols-3">
-        <InsightMetricCard icon="target" label="Hook détecté" value={hookValue} tone="violet" />
-        <InsightMetricCard icon="clock" label="Fenêtre virale" value="Après analyse" tone="cyan" />
-        <InsightMetricCard icon="trophy" label="Format gagnant" value={format ?? 'À détecter'} tone="green" />
+        <InsightMetricCard icon="target" label="Score hook" value={hookValue} tone="violet" />
+        <InsightMetricCard icon="clock" label="Risques horodatés" value={latest ? 'Timeline prête' : 'Après analyse'} tone="cyan" />
+        <InsightMetricCard icon="trophy" label="Format observé" value={format ?? 'À confirmer'} tone="green" />
       </div>
     </section>
   );
@@ -1484,10 +1708,11 @@ function ScoreRing({ score, compact = false }: { score: number | null; compact?:
 
 function ResultPreviewCard({ latest }: { latest: AnalysisHistoryItem | null }) {
   const score = getAnalysisScore(latest);
+  const editorialV2 = isDeterministicEditorialAnalysis(latest);
   const description = latest?.result?.hook?.analysis || latest?.result?.coachAnalysis?.openingAnalysis?.exactCorrection || 'Lance une analyse pour transformer le score en décisions de montage concrètes.';
   const checklist = latest?.result?.actionPlan?.slice(0, 3) ?? latest?.result?.analyzerMeta?.recommendations?.slice(0, 3) ?? [
     'Détecter le hook et le rythme',
-    'Repérer les pertes d’attention',
+    'Cartographier les risques éditoriaux',
     'Générer le plan de repost',
   ];
   return (
@@ -1497,8 +1722,8 @@ function ResultPreviewCard({ latest }: { latest: AnalysisHistoryItem | null }) {
         <ScoreRing score={score} compact />
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-[1rem] font-black text-white">Potentiel de repost</h3>
-            <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-2 py-1 text-[0.68rem] font-black text-cyan-200">Insight IA</span>
+            <h3 className="text-[1rem] font-black text-white">{editorialV2 ? 'Score éditorial' : 'Potentiel de repost'}</h3>
+            <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-2 py-1 text-[0.68rem] font-black text-cyan-200">{editorialV2 ? 'Grille déterministe' : 'Insight IA'}</span>
           </div>
           <p className="mt-2 text-[0.82rem] leading-5 text-slate-400">{description}</p>
           <div className="mt-3 space-y-1.5">
@@ -1525,6 +1750,7 @@ function RecentAnalysisCard({ item, index }: { item: AnalysisHistoryItem; index:
   const score = getAnalysisScore(item);
   const retention = getRetentionValue(item);
   const views = getObservedViews(item);
+  const editorialV2 = isDeterministicEditorialAnalysis(item);
   return (
     <button type="button" className="flex w-full items-center gap-3 rounded-[18px] border border-white/[0.075] bg-white/[0.035] p-2.5 text-left transition hover:border-cyan-200/18 hover:bg-white/[0.055]">
       <div className="relative h-[72px] w-[86px] shrink-0 overflow-hidden rounded-[13px]">
@@ -1538,7 +1764,7 @@ function RecentAnalysisCard({ item, index }: { item: AnalysisHistoryItem; index:
         <p className="mt-1 text-[0.76rem] font-medium text-slate-400">{formatAnalysisDate(item.created_at)} · <span className="text-emerald-300">Terminée</span></p>
         <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-[0.74rem] font-semibold text-slate-400">
           <span className="inline-flex items-center gap-1"><AnalyzeIcon name="eye" className="h-3.5 w-3.5" />{views === null ? 'Vues --' : `${formatCount(views)} vues`}</span>
-          <span className="inline-flex items-center gap-1"><AnalyzeIcon name="chart" className="h-3.5 w-3.5" />{retention === null ? 'Rétention --' : `${retention}% rétention`}</span>
+          <span className="inline-flex items-center gap-1"><AnalyzeIcon name="chart" className="h-3.5 w-3.5" />{editorialV2 ? 'Rétention non mesurée' : retention === null ? 'Rétention --' : `${retention}% rétention`}</span>
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-1.5">
@@ -1594,7 +1820,7 @@ function MobileBottomNav() {
   );
 }
 
-function ResultCard({ title, score, verdict, analysis, advice }: { title: string; score: number; verdict: string; analysis: string; advice: string }) {
+function ResultCard({ title, score, verdict, analysis, advice }: { title: string; score: number | null; verdict: string; analysis: string; advice: string }) {
   return (
     <div className="rounded-2xl border border-white/[0.08] bg-white/[0.035] p-4">
       <div className="flex items-start justify-between gap-3">
@@ -1602,10 +1828,12 @@ function ResultCard({ title, score, verdict, analysis, advice }: { title: string
           <h3 className="text-sm font-bold text-white">{title}</h3>
           <p className="mt-1 text-xs font-semibold text-vn-violet/80">{verdict}</p>
         </div>
-        <span className={`rounded-full border px-2.5 py-1 text-xs font-black tabular-nums ${scoreTone(score)}`}>{score}/100</span>
+        <span className={`rounded-full border px-2.5 py-1 text-xs font-black tabular-nums ${score === null ? 'border-white/[0.1] bg-white/[0.04] text-gray-400' : scoreTone(score)}`}>
+          {score === null ? '—' : `${score}/100`}
+        </span>
       </div>
       <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/[0.07]">
-        <div className={`h-full rounded-full bg-gradient-to-r ${scoreBar(score)}`} style={{ width: `${score}%` }} />
+        {score !== null && <div className={`h-full rounded-full bg-gradient-to-r ${scoreBar(score)}`} style={{ width: `${score}%` }} />}
       </div>
       <p className="mt-4 text-sm leading-relaxed text-gray-400">{analysis}</p>
       <p className="mt-3 rounded-xl border border-vn-violet/15 bg-vn-violet/[0.055] p-3 text-xs leading-relaxed text-vn-violet/90">
@@ -1648,7 +1876,7 @@ function PremiumTeaserBand() {
         <div>
           <p className="text-lg font-black text-white">Tu vois le diagnostic. Le plan complet reste en Pro.</p>
           <p className="mt-1 max-w-2xl text-sm leading-relaxed text-gray-400">
-            Debloque la timeline complete, tous les drops detectes, les hooks reecrits et la structure prete a remonter.
+            Débloque la timeline complète, les risques éditoriaux horodatés, les hooks réécrits et la structure prête à remonter.
           </p>
         </div>
         <Link href="/dashboard/billing" className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-white/[0.12] bg-white/[0.075] px-4 text-sm font-black text-white transition hover:bg-white/[0.1]">
@@ -1682,22 +1910,7 @@ function buildReconstructionTimeline(repost: RepostVersion, reconstruction?: Rec
     }));
   }
 
-  const fallback = [
-    ['0:00-0:02', 'HOOK VISUEL', 'Montrer le résultat final immédiatement.', 'Avancer'],
-    ['0:02-0:05', 'PREUVE RAPIDE', 'Afficher la transformation, la preuve ou le contraste avant le contexte.', 'Déplacer'],
-    ['0:05-0:08', 'ERREUR COMMUNE', 'Supprimer l’introduction actuelle et nommer le blocage en une phrase.', 'Couper'],
-    ['0:08-0:12', 'CORRECTION', 'Ajouter une relance visuelle et un texte écran dynamique.', 'Relancer'],
-    ['0:12-0:15', 'CTA', 'Déplacer le CTA avant le drop principal avec une question courte.', 'Optimiser'],
-  ];
-
-  return fallback.map(([time, label, action, badge], index) => ({
-    time,
-    label,
-    action: repost.structure[index] ?? action,
-    badge,
-    goal: label,
-    expectedImpact: 'Simulation IA : meilleure tenue de la rétention.',
-  }));
+  return [];
 }
 
 function ReconstructionPaywall({ plan }: { plan?: AppPlan }) {
@@ -1765,20 +1978,8 @@ function ReconstructionIASection({ result, repost, plan }: { result: AnalyzerRes
   const reconstruction = result.reconstructionIA;
   const timeline = buildReconstructionTimeline(repost, reconstruction);
   const lifetimeOnly = isLifetimePlan(plan);
-  const cuts = reconstruction?.cutsRecommended?.length
-    ? reconstruction.cutsRecommended.map((cut) => `${cut.timeRange} : ${cut.reason}${cut.replacement ? ` → ${cut.replacement}` : ''}`)
-    : [
-      'Supprimer les secondes de contexte avant la tension.',
-      'Avancer la preuve avant le premier décrochage.',
-      'Couper la phrase qui répète la promesse sans ajouter de valeur.',
-    ];
-  const relances = reconstruction?.patternInterrupts?.length
-    ? reconstruction.patternInterrupts.map((item) => `${item.at} : ${item.instruction} (${item.reason})`)
-    : [
-      'Texte écran choc au moment où le rythme baisse.',
-      'Pattern interrupt juste avant le segment explicatif.',
-      'Question courte avant la sortie probable.',
-    ];
+  const cuts = reconstruction?.cutsRecommended?.map((cut) => `${cut.timeRange} : ${cut.reason}${cut.replacement ? ` → ${cut.replacement}` : ''}`) ?? [];
+  const relances = reconstruction?.patternInterrupts?.map((item) => `${item.at} : ${item.instruction} (${item.reason})`) ?? [];
   const prediction = reconstruction?.predictedImprovements;
 
   return (
@@ -1800,8 +2001,8 @@ function ReconstructionIASection({ result, repost, plan }: { result: AnalyzerRes
           </div>
           <div className="grid grid-cols-2 gap-2 rounded-2xl border border-white/[0.08] bg-black/22 p-2">
             {[
-              ['Avant', `${result.viralityScore}/100`],
-              ['Structure', `${Math.min(96, Math.max(72, result.viralityScore + 18))}/100`],
+              ['Diagnostic', `${result.viralityScore}/100`],
+              ['Après republication', '—'],
             ].map(([label, value]) => (
               <div key={label} className="rounded-xl bg-white/[0.045] px-4 py-3 text-center">
                 <p className="text-[10px] font-black uppercase tracking-[0.14em] text-gray-500">{label}</p>
@@ -1853,7 +2054,7 @@ function ReconstructionIASection({ result, repost, plan }: { result: AnalyzerRes
               <div className="mt-3 space-y-2">
                 {(reconstruction?.alternativeHooks?.length
                   ? reconstruction.alternativeHooks.map((item) => item.hook)
-                  : (repost.hookVariants?.length ? repost.hookVariants : [repost.hook, 'Le meilleur moment de ta vidéo arrive trop tard.', 'Tu n’as pas un problème d’idée, tu as un problème d’ordre.'])
+                  : (repost.hookVariants?.length ? repost.hookVariants : [repost.hook])
                 ).slice(0, lifetimeOnly ? 4 : 3).map((hook) => (
                   <p key={hook} className="rounded-xl border border-white/[0.07] bg-black/18 px-3 py-2 text-sm font-semibold text-white">"{hook}"</p>
                 ))}
@@ -1888,7 +2089,7 @@ function ReconstructionIASection({ result, repost, plan }: { result: AnalyzerRes
                     <div key={`${fix.timeRange}-${fix.problem}`} className="rounded-xl border border-white/[0.06] bg-black/18 p-3">
                       <div className="flex items-center justify-between gap-3">
                         <span className="rounded-lg border border-amber-300/20 bg-amber-300/10 px-2 py-1 text-[11px] font-black text-amber-100">{fix.timeRange}</span>
-                        <span className="text-[10px] font-black uppercase tracking-[0.14em] text-gray-600">drop logic</span>
+                        <span className="text-[10px] font-black uppercase tracking-[0.14em] text-gray-600">risque editorial</span>
                       </div>
                       <p className="mt-2 text-xs font-semibold leading-5 text-white">{fix.problem}</p>
                       <p className="mt-2 text-xs leading-5 text-gray-400">{fix.fix}</p>
@@ -1905,9 +2106,9 @@ function ReconstructionIASection({ result, repost, plan }: { result: AnalyzerRes
           <motion.div whileHover={cardHover} className="rounded-2xl border border-white/[0.08] bg-white/[0.035] p-4">
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-100/80">Pourquoi cette structure mérite un test</p>
             <div className="mt-3 space-y-3 text-sm leading-6 text-gray-300">
-              <p>{reconstruction?.whyThisStructureWorks?.retentionLogic ?? 'Le résultat final est déplacé au début pour réduire la perte des viewers durant les 3 premières secondes.'}</p>
+              <p>{reconstruction?.whyThisStructureWorks?.retentionLogic ?? 'Explication non disponible pour cette reconstruction.'}</p>
               <p>{reconstruction?.whyThisStructureWorks?.viewerPsychology ?? 'Le viewer reçoit une preuve avant l’explication, ce qui augmente la tension et la curiosité.'}</p>
-              <p className="text-gray-500">{reconstruction?.whyThisStructureWorks?.changeJustification ?? 'Les changements suivent les drops, le hook et le CTA détectés dans l’analyse.'}</p>
+              <p className="text-gray-500">{reconstruction?.whyThisStructureWorks?.changeJustification ?? 'Les changements suivent les risques éditoriaux, le hook et le CTA détectés dans l’analyse.'}</p>
             </div>
           </motion.div>
           <motion.div whileHover={cardHover} className="rounded-2xl border border-vn-fuchsia/18 bg-vn-fuchsia/[0.055] p-4">
@@ -1947,114 +2148,88 @@ function ResultsView({
   plan?: AppPlan;
 }) {
   const subScores = result.coachAnalysis?.subScores;
-  const hookScore = subScores?.hook ?? result.hook?.score ?? 0;
-  const retentionScore = subScores?.retention ?? result.retention?.score ?? 0;
-  const rhythmScore = result.editing?.score ?? 0;
-  const clarityScore = subScores?.clarity ?? Math.round((hookScore * 0.35 + retentionScore * 0.25 + rhythmScore * 0.2 + result.viralityScore * 0.2));
-  const ctaScore = subScores?.cta ?? (result.improvements?.some((item) => item.tip.toLowerCase().includes('cta')) ? 48 : Math.max(42, result.viralityScore - 8));
-  const repostScore = subScores?.repostPotential ?? Math.min(92, Math.max(46, Math.round((100 - result.viralityScore) * 0.45 + 52)));
-  const verdict = result.coachAnalysis?.verdict || result.analyzerMeta?.verdictShort || verdictFor(result.viralityScore, hookScore <= retentionScore ? 'hook' : 'retention');
-  const repost = result.repostVersion ?? buildFallbackRepost(result.analyzerMeta?.objective ?? '');
-  const reconstructionPlan = useMemo(
-    () => result.structuredReconstructionIA ?? normalizeReconstructionPlan({
-      legacy: result.reconstructionIA,
-      repost,
-      currentRetentionScore: retentionScore,
-      currentViralityScore: result.viralityScore,
-    }),
-    [repost, result.reconstructionIA, result.structuredReconstructionIA, result.viralityScore, retentionScore]
-  );
-  const diagnostic = result.coachAnalysis?.detectedProblems?.map((item) => `${item.title} : ${item.explanation}`) ?? [
-    result.hook?.weaknesses?.[0] || "Le début manque de tension immédiate : la promesse doit arriver avant l'explication.",
-    result.hook?.weaknesses?.[1] || 'La première phrase ne crée pas assez de curiosité dans les 3 premières secondes.',
-    result.retention?.weaknesses?.[0] || 'Le rythme baisse au milieu : ajoute un micro-reset visuel entre 5 et 7 secondes.',
-    result.editing?.weaknesses?.[0] || 'Il manque un pattern interrupt visible : zoom, cut brutal, texte choc ou changement de cadrage.',
-    result.improvements?.find((item) => item.tip.toLowerCase().includes('cta'))?.tip || "Le CTA n'incite pas assez à commenter avec une réponse simple.",
-  ];
+  const toScore = (value: unknown) => typeof value === 'number' && Number.isFinite(value)
+    ? Math.max(0, Math.min(100, Math.round(value)))
+    : null;
+  const overallScore = toScore(result.viralityScore);
+  const hookScore = toScore(subScores?.hook ?? result.hook?.score);
+  const retentionScore = toScore(subScores?.retention ?? result.retention?.score);
+  const rhythmScore = toScore(result.editing?.score);
+  const clarityScore = toScore(subScores?.clarity);
+  const ctaScore = toScore(subScores?.cta);
+  const repostScore = toScore(subScores?.repostPotential);
+  const verdict = result.coachAnalysis?.verdict || result.analyzerMeta?.verdictShort || result.finalVerdict || 'Diagnostic non disponible pour cette analyse.';
+  const repost = result.repostVersion;
+  const reconstructionPlan = result.structuredReconstructionIA ?? null;
+  const problems = result.coachAnalysis?.detectedProblems ?? [];
+  const problemFor = (terms: RegExp) => problems.find((item) => terms.test(`${item.id} ${item.title} ${item.explanation}`));
+  const improvementFor = (terms: RegExp) => result.improvements?.find((item) => terms.test(item.tip))?.tip;
+  const diagnostic = problems.map((item) => `${item.title} : ${item.explanation}`);
 
   const detailCards = [
     {
       title: 'Hook',
       score: hookScore,
-      verdict: hookScore >= 70 ? 'Accroche solide mais perfectible' : 'Hook trop lent pour stopper le scroll',
-      analysis: result.hook?.analysis || "Les 3 premières secondes ne créent pas assez de tension. L'audience comprend le sujet avant de comprendre pourquoi elle devrait rester.",
-      advice: "Ouvre avec la conséquence ou l'erreur, pas avec le contexte. La première phrase doit tenir en 6 à 8 mots.",
+      verdict: result.hook?.rating ?? 'Score indisponible',
+      analysis: result.hook?.analysis || 'Analyse du hook non disponible.',
+      advice: problemFor(/hook|accroche/i)?.action ?? improvementFor(/hook|accroche/i) ?? 'Correction non disponible.',
     },
     {
       title: 'Rétention',
       score: retentionScore,
-      verdict: retentionScore >= 70 ? 'Courbe correcte' : 'Drop probable au milieu',
-      analysis: result.retention?.analysis || 'La valeur est présente, mais elle arrive par blocs trop longs. TikTok favorise les vidéos qui relancent la curiosité toutes les 5 à 7 secondes.',
-      advice: 'Ajoute un changement visuel, une stat ou une objection au milieu pour replanter une raison de rester.',
+      verdict: result.retention?.rating ?? 'Score indisponible',
+      analysis: result.retention?.analysis || 'Analyse de rétention non disponible.',
+      advice: problemFor(/retention|rétention|drop|payoff/i)?.action ?? improvementFor(/retention|rétention|drop|payoff/i) ?? 'Correction non disponible.',
     },
     {
       title: 'Clarte du message',
       score: clarityScore,
-      verdict: clarityScore >= 70 ? 'Message lisible' : 'Promesse pas assez explicite',
-      analysis: "La vidéo gagnerait à annoncer plus vite le bénéfice final. Le viewer doit savoir ce qu'il obtient avant la seconde 4.",
-      advice: "Mets le bénéfice exact en texte à l'écran et réduis les formulations générales.",
+      verdict: clarityScore === null ? 'Score indisponible' : 'Score issu du diagnostic',
+      analysis: problemFor(/clarte|clarté|promesse|message/i)?.explanation ?? 'Analyse de clarté non disponible.',
+      advice: problemFor(/clarte|clarté|promesse|message/i)?.action ?? improvementFor(/clarte|clarté|promesse|message/i) ?? 'Correction non disponible.',
     },
     {
       title: 'Rythme',
       score: rhythmScore,
-      verdict: rhythmScore >= 70 ? 'Montage fluide' : 'Plans trop longs',
-      analysis: result.editing?.analysis || 'Le rythme visuel manque de ruptures. Un plan qui ne change pas pendant plusieurs secondes devient un signal de sortie.',
-      advice: 'Coupe les respirations, ajoute 2 zooms subtils et synchronise les cuts avec les mots importants.',
+      verdict: result.editing?.rating ?? 'Score indisponible',
+      analysis: result.editing?.analysis || 'Analyse du rythme non disponible.',
+      advice: problemFor(/rythme|montage|cut|pattern/i)?.action ?? improvementFor(/rythme|montage|cut|pattern/i) ?? 'Correction non disponible.',
     },
     {
       title: 'CTA',
       score: ctaScore,
-      verdict: ctaScore >= 70 ? 'Action claire' : 'Incitation trop faible',
-      analysis: "La fin ne transforme pas assez l'attention en action. Un CTA vague cree peu de commentaires et peu de signaux algorithmiques.",
-      advice: 'Pose une question binaire ou demande un mot-clé précis en commentaire.',
+      verdict: ctaScore === null ? 'Score indisponible' : 'Score issu du diagnostic',
+      analysis: problemFor(/cta|appel.*action|comment/i)?.explanation ?? 'Analyse du CTA non disponible.',
+      advice: problemFor(/cta|appel.*action|comment/i)?.action ?? improvementFor(/cta|appel.*action|comment/i) ?? 'Correction non disponible.',
     },
     {
       title: 'Potentiel de reconstruction',
       score: repostScore,
-      verdict: repostScore >= 70 ? 'Reconstruction fortement recommandée' : 'Structure à retravailler après coupe',
-      analysis: "Le sujet peut mieux performer si l'angle est plus frontal et si la promesse est visible dès la première frame.",
-      advice: "Remonte une version plus courte avec un nouveau hook et un texte écran plus direct.",
+      verdict: repostScore === null ? 'Score indisponible' : 'Score issu du diagnostic',
+      analysis: result.coachAnalysis?.repostEngine?.bestOpportunity?.why ?? 'Potentiel de reconstruction non disponible.',
+      advice: result.coachAnalysis?.repostEngine?.bestOpportunity?.action ?? 'Correction non disponible.',
     },
   ];
   const visibleDiagnosticCount = isFreePreview ? 2 : 5;
   const visibleDetailCards = isFreePreview ? detailCards.slice(0, 2) : detailCards;
   const lockedDetailCards = isFreePreview ? detailCards.slice(2) : [];
-  const engineScoreAfter = result.coachAnalysis?.repostEngine?.scoreAfter;
-  const potentialAfterCorrection = Math.min(
-    96,
-    Math.max(result.viralityScore + 12, typeof engineScoreAfter === 'number' && engineScoreAfter > result.viralityScore ? engineScoreAfter : result.viralityScore + 18)
-  );
-  const estimatedGain = Math.max(0, potentialAfterCorrection - result.viralityScore);
   const primaryPriority = result.coachAnalysis?.openingAnalysis?.mainProblem
     ?? result.coachAnalysis?.detectedProblems?.[0]?.title
-    ?? (hookScore <= retentionScore ? 'Hook trop lent' : 'Rythme trop plat');
-  const priorityActions = [
-    {
-      title: 'Réécrire le hook',
-      why: result.coachAnalysis?.openingAnalysis?.whyItBlocks ?? detailCards[0].analysis,
-      correction: result.coachAnalysis?.openingAnalysis?.exactCorrection ?? 'Ouvre avec la preuve, pas le contexte. Phrase de 3 à 6 mots + texte écran direct.',
-      impact: 'Impact fort',
-    },
-    {
-      title: 'Avancer la preuve',
-      why: result.retention?.weaknesses?.[0] ?? 'La valeur arrive trop tard pour retenir les viewers froids.',
-      correction: result.actionPlan?.find((item) => /preuve|avancer|cut|couper/i.test(item)) ?? 'Montre le résultat ou le contraste avant l’explication.',
-      impact: 'Rétention',
-    },
-    {
-      title: 'Renforcer le CTA',
-      why: result.improvements?.find((item) => /cta|comment/i.test(item.tip))?.tip ?? 'La fin ne pousse pas assez à commenter.',
-      correction: 'Pose une question binaire ou demande un mot-clé précis.',
-      impact: 'Commentaires',
-    },
-  ];
-  const repostPreview = [
+    ?? 'Aucune priorité fiable disponible.';
+  const priorityActions = problems.slice(0, 3).map((problem) => ({
+    title: problem.title,
+    why: problem.explanation,
+    correction: problem.action,
+    impact: problem.impact || 'Diagnostic',
+  }));
+  const repostPreview: Array<[string, string]> = repost ? [
     ['Hook', repost.hook],
-    ['Preuve', repost.structure[1] ?? 'Avancer la preuve avant le contexte.'],
-    ['Contexte', repost.structure[2] ?? 'Garder uniquement ce qui sert la promesse.'],
-    ['Relance', repost.structure[3] ?? 'Ajouter une rupture visuelle au milieu.'],
+    ...repost.structure.slice(0, 3).map((step, index): [string, string] => [`Étape ${index + 1}`, step]),
     ['CTA', repost.cta],
-  ];
+  ].filter((item): item is [string, string] => Boolean(item[1]?.trim())) : [];
+  const hookPackHref = repost?.hook
+    ? `/dashboard/hooks?objective=repost&trendHook=${encodeURIComponent(repost.hook)}&trendTitle=${encodeURIComponent(verdict)}`
+    : '/dashboard/hooks?objective=repost';
 
   return (
     <section className="animate-fade-in space-y-5">
@@ -2065,17 +2240,10 @@ function ResultsView({
             <div className="absolute inset-6 rounded-full bg-cyan-300/10 blur-3xl" />
             <div className="relative w-full text-center">
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-100/75">Résultat</p>
-              <p className="mt-2 text-6xl font-black tracking-tight text-white tabular-nums sm:text-7xl">{result.viralityScore}<span className="text-2xl text-gray-600">/100</span></p>
-              <div className="mx-auto mt-4 grid max-w-xs grid-cols-2 gap-2">
-                <div className="rounded-xl border border-emerald-300/16 bg-emerald-300/[0.055] px-3 py-2">
-                  <p className="text-[9px] font-black uppercase tracking-[0.14em] text-emerald-100/75">Après correction</p>
-                  <p className="mt-1 text-lg font-black text-emerald-200">{potentialAfterCorrection}/100</p>
-                </div>
-                <div className="rounded-xl border border-vn-fuchsia/18 bg-vn-fuchsia/[0.07] px-3 py-2">
-                  <p className="text-[9px] font-black uppercase tracking-[0.14em] text-fuchsia-100/75">Gain estimé</p>
-                  <p className="mt-1 text-lg font-black text-white">+{estimatedGain} pts</p>
-                </div>
-              </div>
+              <p className="mt-2 text-6xl font-black tracking-tight text-white tabular-nums sm:text-7xl">
+                {overallScore ?? '—'}{overallScore !== null && <span className="text-2xl text-gray-600">/100</span>}
+              </p>
+              <p className="mx-auto mt-4 max-w-xs text-xs leading-5 text-gray-500">Aucun gain futur n'est affiché sans mesure après republication.</p>
             </div>
           </div>
           <div>
@@ -2088,12 +2256,14 @@ function ResultsView({
                 <span key={item} className="rounded-full border border-white/[0.09] bg-white/[0.04] px-3 py-1 text-[11px] font-semibold text-gray-300">{item}</span>
               ))}
             </div>
-            <h2 className="mt-4 text-2xl font-black leading-tight tracking-tight text-white">Ta vidéo a du potentiel, mais l’ouverture doit donner une raison de rester plus vite.</h2>
+            <h2 className="mt-4 text-2xl font-black leading-tight tracking-tight text-white">Diagnostic enregistré pour cette vidéo</h2>
             <p className="mt-3 text-sm leading-6 text-slate-300">{verdict}</p>
             <div className="mt-4 rounded-2xl border border-vn-fuchsia/18 bg-vn-fuchsia/[0.065] p-3">
               <p className="text-[10px] font-black uppercase tracking-[0.18em] text-vn-fuchsia/80">Priorité n°1</p>
               <p className="mt-1 text-sm font-black text-white">{primaryPriority}</p>
-              <p className="mt-1 text-xs leading-5 text-gray-400">Coupe l’intro, avance la preuve, puis reposte une V2 plus tendue.</p>
+              <p className="mt-1 text-xs leading-5 text-gray-400">
+                {priorityActions[0]?.correction ?? 'Aucune correction fiable n’a été retournée pour ce diagnostic.'}
+              </p>
             </div>
             {result.analyzerMeta?.analysisModeLabel && (
               <div className="mt-3 flex flex-wrap gap-2 text-xs text-gray-400">
@@ -2163,7 +2333,12 @@ function ResultsView({
         </div>
       </div>
 
-      <SectionCard title="À corriger en priorité" eyebrow="3 décisions">
+      <SectionCard title="À corriger en priorité" eyebrow="Décisions observées">
+        {priorityActions.length === 0 && (
+          <div className="rounded-2xl border border-dashed border-white/[0.1] bg-white/[0.025] p-4 text-sm leading-6 text-gray-400">
+            Aucune priorité fiable n'est disponible. Relance une analyse exploitable pour obtenir des décisions liées à cette vidéo.
+          </div>
+        )}
         <div className="grid gap-3 lg:grid-cols-3">
           {priorityActions.map((action, index) => (
             <motion.div key={action.title} whileHover={cardHover} className="rounded-2xl border border-white/[0.08] bg-white/[0.035] p-4">
@@ -2186,20 +2361,28 @@ function ResultsView({
           <div className="mb-4 rounded-2xl border border-cyan-300/14 bg-cyan-300/[0.045] p-4">
             <h3 className="text-lg font-black text-white">Transforme ce diagnostic en plan de repost prêt à monter.</h3>
             <p className="mt-2 text-sm leading-6 text-gray-400">Viralynz reconstruit l’ordre de ta vidéo : nouvel ordre, hook alternatif, relances d’attention et CTA plus clair.</p>
-            <div className="mt-4 grid gap-2 sm:grid-cols-5">
-              {repostPreview.map(([label, value]) => (
-                <div key={label} className="rounded-xl border border-white/[0.065] bg-black/18 p-3">
-                  <p className="text-[10px] font-black uppercase tracking-[0.14em] text-cyan-100/75">{label}</p>
-                  <p className="mt-1 line-clamp-2 text-xs font-semibold leading-5 text-gray-200">{value}</p>
-                </div>
-              ))}
-            </div>
+            {repostPreview.length > 0 ? (
+              <div className="mt-4 grid gap-2 sm:grid-cols-5">
+                {repostPreview.map(([label, value]) => (
+                  <div key={`${label}-${value}`} className="rounded-xl border border-white/[0.065] bg-black/18 p-3">
+                    <p className="text-[10px] font-black uppercase tracking-[0.14em] text-cyan-100/75">{label}</p>
+                    <p className="mt-1 line-clamp-2 text-xs font-semibold leading-5 text-gray-200">{value}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-4 rounded-xl border border-dashed border-white/[0.1] bg-black/18 p-3 text-xs leading-5 text-gray-500">Plan de repost indisponible dans cette analyse.</p>
+            )}
           </div>
-          {canUseReconstruction ? (
+          {canUseReconstruction && reconstructionPlan ? (
             <ReconstructionExperience
               plan={reconstructionPlan}
               scaleMode={isLifetimePlan(plan)}
             />
+          ) : canUseReconstruction ? (
+            <div className="rounded-2xl border border-dashed border-white/[0.1] bg-white/[0.025] p-4 text-sm leading-6 text-gray-400">
+              La reconstruction structurée n'est pas disponible pour cette analyse. Aucun plan générique n'a été injecté.
+            </div>
           ) : (
             <ReconstructionPaywallPremium plan={plan} access={result.reconstructionAccess} />
           )}
@@ -2224,7 +2407,7 @@ function ResultsView({
       </div>
 
       {isFreePreview && result.coachAnalysis?.timeline && (
-        <CollapsibleInsight title="Timeline — les secondes qui font décrocher">
+        <CollapsibleInsight title="Carte des risques éditoriaux">
           <div className="grid gap-3 sm:grid-cols-2">
             {result.coachAnalysis.timeline.slice(0, 1).map((marker) => (
               <div key={`${marker.time}-${marker.label}`} className="rounded-2xl border border-amber-300/20 bg-amber-300/[0.055] p-4">
@@ -2288,12 +2471,13 @@ function ResultsView({
               )}
               <div className="mt-4 grid grid-cols-2 gap-2">
                 <div className="rounded-xl bg-white/[0.04] p-3">
-                  <p className="text-[10px] uppercase tracking-[0.16em] text-gray-500">Avant</p>
+                  <p className="text-[10px] uppercase tracking-[0.16em] text-gray-500">Diagnostic actuel</p>
                   <p className="mt-1 text-xl font-black text-white">{result.coachAnalysis.repostEngine.scoreBefore}/100</p>
                 </div>
-                <div className="rounded-xl bg-emerald-400/10 p-3">
-                  <p className="text-[10px] uppercase tracking-[0.16em] text-emerald-300/70">Après reconstruction</p>
-                  <p className="mt-1 text-xl font-black text-emerald-300">{result.coachAnalysis.repostEngine.scoreAfter}/100</p>
+                <div className="rounded-xl bg-white/[0.04] p-3">
+                  <p className="text-[10px] uppercase tracking-[0.16em] text-gray-500">Après republication</p>
+                  <p className="mt-1 text-xl font-black text-gray-400">—</p>
+                  <p className="mt-1 text-[10px] text-gray-600">Non mesure</p>
                 </div>
               </div>
             </div>
@@ -2313,8 +2497,8 @@ function ResultsView({
             <div className="mt-4 rounded-2xl border border-white/[0.08] bg-black/15 p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-              <p className="text-sm font-bold text-white">Timeline intelligente</p>
-                  <p className="mt-1 text-xs text-gray-500">Lecture des moments qui changent la rétention.</p>
+              <p className="text-sm font-bold text-white">Carte des risques éditoriaux</p>
+                  <p className="mt-1 text-xs text-gray-500">Hypothèses horodatées issues des signaux disponibles, pas une courbe de rétention mesurée.</p>
                 </div>
                 <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1 text-[10px] font-black text-emerald-300">
                   Confiance {result.coachAnalysis.formatConfidence?.level ?? 'moyenne'}
@@ -2374,14 +2558,14 @@ function ResultsView({
           )}
           {result.coachAnalysis.videoSegments && (
             <div className="mt-4 rounded-2xl border border-white/[0.08] bg-black/15 p-4">
-              <p className="text-sm font-bold text-white">Timeline segmentee</p>
+              <p className="text-sm font-bold text-white">Carte segmentee des risques</p>
               <p className="mt-1 text-xs text-gray-500">Chaque segment indique les signaux vraiment disponibles et la correction a tester.</p>
               <div className="mt-4 grid gap-2 lg:grid-cols-3">
                 {result.coachAnalysis.videoSegments.map((segment) => (
                   <div key={`${segment.range}-${segment.role}`} className="rounded-xl border border-white/[0.07] bg-white/[0.025] p-3">
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-xs font-black text-vn-violet">{segment.range}</p>
-                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${scoreTone(100 - segment.dropRisk)}`}>drop {segment.dropRisk}</span>
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${scoreTone(100 - segment.dropRisk)}`}>risque estime {segment.dropRisk}</span>
                     </div>
                     <p className="mt-2 text-xs font-bold text-white">{segment.role}</p>
                     <p className="mt-1 text-[11px] leading-relaxed text-gray-500">{segment.mainProblem}</p>
@@ -2442,60 +2626,10 @@ function ResultsView({
         </CollapsibleInsight>
       )}
 
-      {false && (
-      <SectionCard title="Structure optimisée à remonter" eyebrow="Plan de remontage">
-        <div className="grid gap-4 lg:grid-cols-[1fr_1.1fr]">
-          <div className="rounded-2xl border border-vn-fuchsia/20 bg-vn-fuchsia/[0.06] p-4">
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-vn-fuchsia/75">Nouveau hook recommandé</p>
-            <p className="mt-3 text-xl font-black leading-tight text-white">"{repost.hook}"</p>
-            {!isFreePreview && (repost.hookVariants?.length ?? 0) > 1 && (
-              <div className="mt-4 space-y-2">
-                {repost.hookVariants!.slice(1, 4).map((hook) => (
-                  <p key={hook} className="rounded-xl border border-white/[0.07] bg-black/15 px-3 py-2 text-xs text-gray-300">"{hook}"</p>
-                ))}
-              </div>
-            )}
-            <div className="mt-5 rounded-xl border border-white/[0.08] bg-black/20 p-3">
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-gray-500">CTA recommandé</p>
-              <p className="mt-2 text-sm font-semibold text-white">{repost.cta}</p>
-            </div>
-          </div>
-          <div className="grid gap-3">
-            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-gray-500">Structure de script</p>
-              <div className="mt-3 space-y-2">
-                {repost.structure.slice(0, isFreePreview ? 2 : undefined).map((item) => (
-                  <p key={item} className="rounded-xl bg-white/[0.035] px-3 py-2 text-sm text-gray-300">{item}</p>
-                ))}
-                {isFreePreview && repost.structure.length > 2 && (
-                  <PremiumPreview label="Structure complete disponible dans Pro." className="rounded-xl" intensity="light">
-                    <div className="space-y-2">
-                      {repost.structure.slice(2).map((item) => (
-                        <p key={item} className="rounded-xl bg-white/[0.035] px-3 py-2 text-sm text-gray-300">{item}</p>
-                      ))}
-                    </div>
-                  </PremiumPreview>
-                )}
-              </div>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-gray-500">Texte à l'écran</p>
-                <div className="mt-3 space-y-2">
-                  {repost.onScreenText.map((item) => <p key={item} className="text-sm text-gray-300">• {item}</p>)}
-                </div>
-              </div>
-              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-gray-500">Angle conseille</p>
-                <p className="mt-3 text-sm leading-relaxed text-gray-300">{repost.angle}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </SectionCard>
-      )}
-
       <CollapsibleInsight title="Checklist complète — avant remontage">
+        {(result.actionPlan ?? []).length === 0 && (
+          <p className="rounded-xl border border-dashed border-white/[0.1] bg-white/[0.025] p-3 text-sm leading-6 text-gray-400">Checklist indisponible dans cette analyse.</p>
+        )}
         <div className="grid gap-2.5 sm:grid-cols-2">
           {(result.actionPlan ?? []).slice(0, isFreePreview ? 2 : undefined).map((item) => (
             <label key={item} className="flex items-start gap-3 rounded-xl border border-white/[0.07] bg-white/[0.03] p-3">
@@ -2528,7 +2662,7 @@ function ResultsView({
           <p className="mt-1 text-xs text-gray-500">Crée une ouverture, prépare le plan de remontage ou retourne au dashboard pour suivre la progression.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href={`/dashboard/hooks?objective=repost&trendHook=${encodeURIComponent(repost.hook)}&trendTitle=${encodeURIComponent(verdict)}`} className="rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo px-4 py-3 text-sm font-bold text-white transition hover:brightness-110">Créer un Hook Pack</Link>
+          <Link href={hookPackHref} className="rounded-xl bg-gradient-to-r from-vn-fuchsia to-vn-indigo px-4 py-3 text-sm font-bold text-white transition hover:brightness-110">Créer un Hook Pack</Link>
           <Link href="/dashboard#growth-loop" className="rounded-xl border border-white/[0.09] bg-white/[0.04] px-4 py-3 text-sm font-bold text-white transition hover:bg-white/[0.07]">Voir dans le dashboard</Link>
           <button
             type="button"
@@ -2554,14 +2688,27 @@ interface AnalyzerV2ClientProps {
 }
 
 export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientProps) {
+  const router = useRouter();
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [uploadTiktokUrl, setUploadTiktokUrl] = useState('');
   const [activeSource, setActiveSource] = useState<AnalyzeSource>('upload');
   const [tiktokVideos, setTikTokVideos] = useState<TikTokPublishedVideo[]>([]);
   const [tiktokVideosLoaded, setTikTokVideosLoaded] = useState(false);
   const [selectedTikTokVideoId, setSelectedTikTokVideoId] = useState<string | null>(null);
-  const [objective] = useState<ObjectiveId>('repost');
-  const [extractStatus, setExtractStatus] = useState('');
+  const [objective, setObjective] = useState<ObjectiveId>('retention');
+  const [creatorContext, setCreatorContext] = useState<CreatorContextInput>({
+    objectiveDetails: '',
+    niche: '',
+    audience: '',
+    audienceKnowledge: '',
+    tone: '',
+    platform: 'tiktok',
+    platformDetails: '',
+    language: 'fr',
+    format: '',
+    formatDetails: '',
+    memoryConsent: false,
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<AnalyzerResult | null>(null);
   const [error, setError] = useState('');
@@ -2572,11 +2719,14 @@ export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientP
   const [showGuestGate, setShowGuestGate] = useState(false);
   const [history, setHistory] = useState<AnalysisHistoryItem[]>([]);
   const [historyLocked, setHistoryLocked] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [stepIndex, setStepIndex] = useState(0);
   const [pipelineState, setPipelineState] = useState<AnalysisPipelineState>(() => createPipelineState());
   const [analysisPreview, setAnalysisPreview] = useState<AnalysisPreviewSignals>({});
+  const [analysisJob, setAnalysisJob] = useState<PublicAnalysisJobState | null>(null);
+  const [uploadClientStage, setUploadClientStage] = useState<UploadClientStage>('initializing');
   const requestedAnalysisIdRef = useRef<string | null>(null);
+  const pollAbortRef = useRef<AbortController | null>(null);
+  const uploadIdempotencyKeyRef = useRef<string | null>(null);
+  const browserSupabaseRef = useRef<ReturnType<typeof createBrowserSupabaseClient> | null>(null);
 
   const updatePipelineStep = (
     id: PipelineStepId,
@@ -2648,32 +2798,25 @@ export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientP
       .finally(() => setAuthLoaded(true));
   }, []);
 
-  useEffect(() => {
-    if (!isLoading) {
-      setProgress(0);
-      setStepIndex(0);
-      return;
-    }
-    const timer = window.setInterval(() => {
-      setProgress((prev) => {
-        const next = Math.min(94, prev + Math.max(2, Math.round((100 - prev) * 0.08)));
-        setStepIndex(Math.min(analysisSteps.length - 1, Math.floor((next / 100) * analysisSteps.length)));
-        return next;
-      });
-    }, 700);
-    return () => window.clearInterval(timer);
-  }, [isLoading]);
+  useEffect(() => () => {
+    pollAbortRef.current?.abort();
+  }, []);
 
   const isReady = mounted && authLoaded;
   const effectiveCount = authUser ? authUser.analyses_count : guestCount;
   const effectiveLimit = authUser ? (PLAN_LIMITS[authUser.plan] ?? GUEST_LIMIT) : GUEST_LIMIT;
   const isLimitReached = isReady && effectiveCount >= effectiveLimit;
-  const canSubmit = !!videoFile && !isLoading && !isLimitReached;
+  const creatorContextReady = creatorContextIsComplete(objective, creatorContext);
+  const canSubmit = !!videoFile && creatorContextReady && !isLoading && !isLimitReached;
   const isFreePreview = !authUser || authUser.plan === 'free';
   const planCanUseReconstruction = authUser ? hasProOrLifetimeAccess(authUser.plan) : false;
   const reconstructionLimit = authUser ? RECONSTRUCTION_LIMITS[authUser.plan] ?? 0 : 0;
   const reconstructionUsed = authUser?.reconstructions_count ?? 0;
-  const loadingButtonText = isLoading ? phaseForPipeline(pipelineState, Date.now()).title : 'Lancer le diagnostic';
+  const loadingButtonText = isLoading
+    ? activeSource === 'upload'
+      ? analysisJob ? jobStatusLabels[analysisJob.status] : 'Préparation de l’envoi'
+      : pipelineState.steps.find((step) => step.status === 'running')?.label ?? 'En attente du statut serveur'
+    : 'Lancer le diagnostic';
 
   const sortedHistory = useMemo(
     () => [...history].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
@@ -2683,7 +2826,7 @@ export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientP
     () => tiktokVideos.find((video) => video.id === selectedTikTokVideoId) ?? null,
     [selectedTikTokVideoId, tiktokVideos]
   );
-  const canAnalyzeSelectedTikTok = Boolean(selectedTikTokVideo?.shareUrl && !isLoading && !isLimitReached);
+  const canAnalyzeSelectedTikTok = Boolean(selectedTikTokVideo?.shareUrl && creatorContextReady && !isLoading && !isLimitReached);
   const latestHistoryItem = sortedHistory[0] ?? null;
 
   useEffect(() => {
@@ -2729,9 +2872,17 @@ export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientP
   const handleFileSelect = (file: File | null) => {
     if (!file) return;
     if (file.size > MAX_UPLOAD_BYTES) {
-      setError('La vidéo dépasse 500 Mo. Compresse-la ou exporte une version plus légère.');
+      setError('La vidéo dépasse 250 Mo. Compresse-la ou exporte une version plus légère.');
       return;
     }
+    if (!SUPPORTED_VIDEO_TYPES.has(file.type)) {
+      setError('Format non pris en charge. Utilise MP4, MOV, WebM, MKV ou MPEG.');
+      return;
+    }
+    pollAbortRef.current?.abort();
+    uploadIdempotencyKeyRef.current = null;
+    setAnalysisJob(null);
+    setUploadClientStage('initializing');
     setError('');
     setVideoFile(file);
     setAnalysisPreview({
@@ -2739,6 +2890,14 @@ export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientP
       fileSizeMb: Number((file.size / 1024 / 1024).toFixed(1)),
     });
     setResults(null);
+  };
+
+  const clearSelectedVideo = () => {
+    pollAbortRef.current?.abort();
+    uploadIdempotencyKeyRef.current = null;
+    setAnalysisJob(null);
+    setVideoFile(null);
+    setAnalysisPreview({});
   };
 
   const processAnalyzeResponse = async (response: Response, currentFile: File | null) => {
@@ -2776,7 +2935,6 @@ export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientP
     try { data = JSON.parse(rawText) as AnalysisResult; }
     catch (e) { console.error('[analyze] JSON.parse failed:', rawText.slice(0, 200)); throw e; }
 
-    const usedSignals = data.videoIntelligence?.confidence.signalsUsed ?? [];
     const missingSignals = data.videoIntelligence?.confidence.missingSignals ?? [];
     setAnalysisPreview((prev) => ({
       ...prev,
@@ -2807,17 +2965,14 @@ export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientP
     });
       updatePipelineStep('repost', data.repostVersion || data.coachAnalysis?.repostEngine ? 'done' : 'warning', {
       signalsAvailable: data.repostVersion || data.coachAnalysis?.repostEngine ? ['Plan de remontage'] : [],
-      warning: data.repostVersion || data.coachAnalysis?.repostEngine ? undefined : 'Plan de remontage genere en fallback.',
+      warning: data.repostVersion || data.coachAnalysis?.repostEngine ? undefined : 'Aucun plan de remontage fiable retourne.',
     });
     updatePipelineStep('hooks', data.coachAnalysis?.hookVariants?.length || data.repostVersion?.hook ? 'done' : 'warning', {
       signalsAvailable: data.coachAnalysis?.hookVariants?.length || data.repostVersion?.hook ? ['Hooks generes'] : [],
       limitations: missingSignals.slice(0, 2),
-      warning: usedSignals.length ? undefined : 'Hooks bases sur fallback structurel.',
+      warning: data.coachAnalysis?.hookVariants?.length || data.repostVersion?.hook ? undefined : 'Aucune variante de hook fiable retournee.',
       completed: true,
     });
-
-    setProgress(100);
-    setStepIndex(analysisSteps.length - 1);
 
     if (authUser) {
       setAuthUser((prev) => prev ? {
@@ -2841,125 +2996,196 @@ export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientP
     setResults(enrichResult(data, objective, currentFile));
   };
 
-  const analyzeFromUpload = async () => {
-    if (isLimitReached) return;
-    if (!videoFile) { setError('Choisis un fichier vidéo MP4 ou MOV.'); return; }
+  const readApiError = async (response: Response, fallback: string) => {
+    const data = await response.json().catch(() => ({} as { error?: unknown }));
+    return typeof data.error === 'string' && data.error.trim() ? data.error : fallback;
+  };
 
-    let normalized = '';
-    if (uploadTiktokUrl.trim()) {
-      normalized = normalizeTikTokUrl(uploadTiktokUrl.trim());
-      if (!isTikTokVideoUrl(normalized)) {
-        setError('Lien TikTok invalide. Utilise un lien vm.tiktok.com, vt.tiktok.com ou une URL contenant /video/ ou /t/.');
-        return;
+  const pollAnalysisJob = async (jobId: string, signal: AbortSignal): Promise<PublicAnalysisJobState> => {
+    let consecutiveFailures = 0;
+    let queuedRecoveryAttempted = false;
+    while (!signal.aborted) {
+      await waitForPollingInterval(signal, 2000);
+      const response = await fetch(`/api/analysis-jobs/${encodeURIComponent(jobId)}`, {
+        method: 'GET',
+        cache: 'no-store',
+        signal,
+      });
+      if (!response.ok) {
+        consecutiveFailures += 1;
+        const message = await readApiError(response, 'Le statut de l’analyse est temporairement indisponible.');
+        if (response.status === 401 || response.status === 404 || consecutiveFailures >= 3) {
+          throw new Error(message);
+        }
+        continue;
       }
+
+      consecutiveFailures = 0;
+      const data = await response.json() as AnalysisJobApiResponse;
+      if (!data.job?.id) throw new Error('Réponse de statut invalide.');
+      let currentJob = data.job;
+      setAnalysisJob(currentJob);
+      if (currentJob.status === 'completed' || currentJob.status === 'failed') return currentJob;
+
+      const updatedAtMs = Date.parse(currentJob.updatedAt);
+      const queuedLeaseIsStale = currentJob.status === 'queued'
+        && Number.isFinite(updatedAtMs)
+        && Date.now() - updatedAtMs >= 120_000;
+      if (queuedLeaseIsStale && !queuedRecoveryAttempted) {
+        queuedRecoveryAttempted = true;
+        const recoveryResponse = await fetch(`/api/analysis-jobs/${encodeURIComponent(jobId)}/start`, {
+          method: 'POST',
+          signal,
+        });
+        if (recoveryResponse.ok) {
+          const recovery = await recoveryResponse.json() as AnalysisJobApiResponse;
+          if (recovery.job?.id) {
+            currentJob = recovery.job;
+            setAnalysisJob(currentJob);
+            if (currentJob.status === 'completed' || currentJob.status === 'failed') return currentJob;
+          }
+        }
+      }
+    }
+    throw new DOMException('Polling annulé.', 'AbortError');
+  };
+
+  const analyzeFromUpload = async () => {
+    if (isLimitReached || isLoading) return;
+    if (!videoFile) { setError('Choisis un fichier MP4, MOV, WebM, MKV ou MPEG.'); return; }
+    if (!authUser) {
+      setShowGuestGate(true);
+      return;
+    }
+    if (!creatorContextIsComplete(objective, creatorContext)) {
+      setError('Complète le contexte créateur avant de lancer l’analyse.');
+      return;
     }
 
     const currentFile = videoFile;
-    setPipelineState(createPipelineState());
+    const controller = new AbortController();
+    pollAbortRef.current?.abort();
+    pollAbortRef.current = controller;
+    const idempotencyKey = uploadIdempotencyKeyRef.current ?? `analysis_${crypto.randomUUID()}`;
+    uploadIdempotencyKeyRef.current = idempotencyKey;
+    setError('');
+    setIsLoading(true);
+    setResults(null);
+    setAnalysisJob(null);
+    setUploadClientStage('initializing');
     setAnalysisPreview({
       fileName: currentFile.name,
       fileSizeMb: Number((currentFile.size / 1024 / 1024).toFixed(1)),
     });
-    updatePipelineStep('prepare', 'running');
-    setError('');
-    setIsLoading(true);
-    setResults(null);
-    setExtractStatus('Préparation de la vidéo...');
 
     try {
-      updatePipelineStep('prepare', 'done', { signalsAvailable: ['Fichier video'] });
-      updatePipelineStep('frames', 'running');
-      setExtractStatus("Extraction des images et de l'audio...");
-      const [{ frames, durationSec }, audioResult] = await Promise.all([
-        extractVideoFramesFromFile(currentFile),
-        extractAudioFromVideo(currentFile),
-      ]);
-      setAnalysisPreview((prev) => ({
-        ...prev,
-        durationSec,
-        hasFrames: frames.length > 0,
-      }));
-      updatePipelineStep('frames', frames.length ? 'done' : 'warning', {
-        signalsAvailable: frames.length ? ['Frames cles'] : [],
-        warning: frames.length ? undefined : 'Aucune frame exploitable extraite.',
-        limitations: frames.length ? [] : ['Frames indisponibles'],
-      });
-
-      let transcript = '';
-      if (audioResult && authUser && authUser.plan !== 'free') {
-        updatePipelineStep('transcript', 'running');
-        setExtractStatus('Transcription audio...');
-        try {
-          const tRes = await fetch('/api/transcribe', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ audio: audioResult.audioBase64, mimeType: audioResult.mimeType }),
-          });
-          if (tRes.ok) {
-            const tData = await tRes.json() as { transcript?: string };
-            transcript = tData.transcript?.trim() ?? '';
-            setAnalysisPreview((prev) => ({ ...prev, hasTranscript: Boolean(transcript) }));
-            updatePipelineStep('transcript', transcript ? 'done' : 'warning', {
-              signalsAvailable: transcript ? ['Transcript audio'] : [],
-              warning: transcript ? undefined : 'Audio traite, mais aucun transcript fiable.',
-              limitations: transcript ? [] : ['Transcript indisponible'],
-            });
-          } else {
-            setAnalysisPreview((prev) => ({ ...prev, hasTranscript: false }));
-            updatePipelineStep('transcript', 'warning', {
-              warning: 'Transcription indisponible, analyse poursuivie avec vision/OCR.',
-              limitations: ['Whisper indisponible'],
-            });
-          }
-        } catch (tErr) {
-          console.warn('[analyze] transcription failed (non-blocking):', tErr);
-          setAnalysisPreview((prev) => ({ ...prev, hasTranscript: false }));
-          updatePipelineStep('transcript', 'warning', {
-            warning: 'Transcription indisponible, analyse poursuivie avec vision/OCR.',
-            limitations: ['Whisper indisponible'],
-          });
-        }
-      } else {
-        setAnalysisPreview((prev) => ({ ...prev, hasTranscript: false }));
-        updatePipelineStep('transcript', 'warning', {
-          warning: 'Aucune piste audio exploitable detectee avant analyse serveur.',
-          limitations: ['Audio indisponible'],
-        });
-      }
-
-      updatePipelineStep('ocr', 'running');
-      updatePipelineStep('format', 'running');
-      updatePipelineStep('opening', 'running');
-      updatePipelineStep('timeline', 'running');
-      updatePipelineStep('weak-moments', 'running');
-      updatePipelineStep('repost', 'running');
-      updatePipelineStep('hooks', 'running');
-      setExtractStatus('Analyse par vision IA...');
-      const response = await fetch('/api/analyze', {
+      const contextPayload = buildCreatorContextPayload(objective, creatorContext);
+      const initializeResponse = await fetch('/api/analysis-jobs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          frames,
-          durationSec,
+          idempotencyKey,
           fileName: currentFile.name,
-          fileSizeMb: Number((currentFile.size / 1024 / 1024).toFixed(1)),
-          mimeType: currentFile.type,
-          tiktokUrl: normalized || undefined,
-          transcript: transcript || undefined,
-          objective,
-          objectiveLabel: getObjectiveLabel(objective),
+          contentType: currentFile.type,
+          sizeBytes: currentFile.size,
+          creatorContext: contextPayload.creatorContext,
         }),
+        signal: controller.signal,
       });
-      await processAnalyzeResponse(response, currentFile);
-    } catch (err) {
-      const runningStep = pipelineState.steps.find((step) => step.status === 'running')?.id as PipelineStepId | undefined;
-      if (runningStep) {
-        updatePipelineStep(runningStep, 'failed', { error: err instanceof Error ? err.message : 'Analyse interrompue.' });
+      if (!initializeResponse.ok) {
+        if (initializeResponse.status === 409) uploadIdempotencyKeyRef.current = null;
+        throw new Error(await readApiError(initializeResponse, 'Impossible de préparer l’envoi privé.'));
       }
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue. Veuillez réessayer.');
+
+      const initialized = await initializeResponse.json() as AnalysisJobApiResponse;
+      if (!initialized.job?.id) throw new Error('Le serveur n’a pas retourné de job d’analyse.');
+      let currentJob = initialized.job;
+      setAnalysisJob(currentJob);
+
+      if (currentJob.status === 'failed') {
+        uploadIdempotencyKeyRef.current = null;
+        throw new Error(currentJob.error?.message ?? 'Cette analyse a été interrompue.');
+      }
+      if (currentJob.status === 'completed') {
+        if (!currentJob.analysisId) throw new Error('Analyse terminée sans résultat accessible.');
+        router.push(`/analyses/${encodeURIComponent(currentJob.analysisId)}`);
+        return;
+      }
+
+      if (initialized.reused && (currentJob.status === 'uploading' || currentJob.status === 'queued')) {
+        const resumingUploadedFile = currentJob.status === 'uploading';
+        setUploadClientStage('starting');
+        const resumeResponse = await fetch(`/api/analysis-jobs/${encodeURIComponent(currentJob.id)}/start`, {
+          method: 'POST',
+          signal: controller.signal,
+        });
+        if (resumeResponse.ok) {
+          const resumed = await resumeResponse.json() as AnalysisJobApiResponse;
+          if (resumed.job?.id) {
+            currentJob = resumed.job;
+            setAnalysisJob(currentJob);
+          }
+        } else {
+          const resumeFailure = await resumeResponse.json().catch(() => ({} as AnalysisJobApiResponse));
+          const canRetryUpload = resumingUploadedFile
+            && resumeResponse.status === 400
+            && resumeFailure.retryUpload === true;
+          if (!canRetryUpload) {
+            throw new Error(
+              typeof resumeFailure.error === 'string' && resumeFailure.error.trim()
+                ? resumeFailure.error
+                : 'Impossible de reprendre le traitement.',
+            );
+          }
+        }
+      }
+
+      if (currentJob.status === 'uploading') {
+        if (!initialized.upload?.bucket || !initialized.upload.path || !initialized.upload.token) {
+          throw new Error('Le lien d’envoi privé est indisponible.');
+        }
+        setUploadClientStage('uploading');
+        const supabase = browserSupabaseRef.current ?? createBrowserSupabaseClient();
+        browserSupabaseRef.current = supabase;
+        const { error: uploadError } = await supabase.storage
+          .from(initialized.upload.bucket)
+          .uploadToSignedUrl(initialized.upload.path, initialized.upload.token, currentFile, {
+            contentType: currentFile.type,
+          });
+        if (uploadError) {
+          throw new Error('L’envoi privé de la vidéo a échoué. Vérifie ta connexion puis réessaie.');
+        }
+
+        setUploadClientStage('starting');
+        const startResponse = await fetch(`/api/analysis-jobs/${encodeURIComponent(currentJob.id)}/start`, {
+          method: 'POST',
+          signal: controller.signal,
+        });
+        if (!startResponse.ok) {
+          throw new Error(await readApiError(startResponse, 'Le traitement n’a pas pu démarrer.'));
+        }
+        const started = await startResponse.json() as AnalysisJobApiResponse;
+        if (!started.job?.id) throw new Error('Le serveur n’a pas confirmé le démarrage.');
+        currentJob = started.job;
+        setAnalysisJob(currentJob);
+      }
+
+      setUploadClientStage('processing');
+      const terminalJob = currentJob.status === 'completed' || currentJob.status === 'failed'
+        ? currentJob
+        : await pollAnalysisJob(currentJob.id, controller.signal);
+      if (terminalJob.status === 'failed') {
+        uploadIdempotencyKeyRef.current = null;
+        throw new Error(terminalJob.error?.message ?? 'L’analyse a été interrompue. Ton quota a été restauré.');
+      }
+      if (!terminalJob.analysisId) throw new Error('Analyse terminée sans résultat accessible.');
+      router.push(`/analyses/${encodeURIComponent(terminalJob.analysisId)}`);
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue. Réessaie sans changer de vidéo.');
     } finally {
-      setExtractStatus('');
-      setTimeout(() => setIsLoading(false), 350);
+      if (pollAbortRef.current === controller) pollAbortRef.current = null;
+      if (!controller.signal.aborted) setIsLoading(false);
     }
   };
 
@@ -2969,7 +3195,16 @@ export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientP
       setError('Cette vidéo TikTok n’a pas de lien exploitable. Importe le fichier vidéo pour lancer une analyse complète.');
       return;
     }
+    if (!authUser) {
+      setShowGuestGate(true);
+      return;
+    }
+    if (!creatorContextIsComplete(objective, creatorContext)) {
+      setError('Complète le contexte créateur avant de lire les données TikTok disponibles.');
+      return;
+    }
 
+    setAnalysisJob(null);
     setPipelineState(createPipelineState());
     setAnalysisPreview({
       fileName: selectedTikTokVideo.title ?? selectedTikTokVideo.shareUrl,
@@ -2979,24 +3214,17 @@ export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientP
     setError('');
     setIsLoading(true);
     setResults(null);
-    setExtractStatus('Analyse de la vidéo TikTok...');
 
     try {
       updatePipelineStep('prepare', 'done', { signalsAvailable: ['Lien TikTok'] });
-      updatePipelineStep('format', 'running');
-      updatePipelineStep('opening', 'running');
-      updatePipelineStep('timeline', 'running');
-      updatePipelineStep('weak-moments', 'running');
-      updatePipelineStep('repost', 'running');
-      updatePipelineStep('hooks', 'running');
+      updatePipelineStep('ocr', 'running');
 
       const response = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           url: selectedTikTokVideo.shareUrl,
-          objective,
-          objectiveLabel: getObjectiveLabel(objective),
+          ...buildCreatorContextPayload(objective, creatorContext),
         }),
       });
       await processAnalyzeResponse(response, null);
@@ -3007,8 +3235,7 @@ export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientP
       }
       setError(err instanceof Error ? err.message : 'Une erreur est survenue. Veuillez réessayer.');
     } finally {
-      setExtractStatus('');
-      setTimeout(() => setIsLoading(false), 350);
+      setIsLoading(false);
     }
   };
 
@@ -3020,18 +3247,22 @@ export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientP
   };
 
   const handleAnalysisReset = () => {
+    pollAbortRef.current?.abort();
+    uploadIdempotencyKeyRef.current = null;
+    setAnalysisJob(null);
     setResults(null);
     setError('');
     setVideoFile(null);
     setUploadTiktokUrl('');
-    setProgress(0);
-    setStepIndex(0);
     setPipelineState(createPipelineState());
     setAnalysisPreview({});
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleChangeVideoAfterError = () => {
+    pollAbortRef.current?.abort();
+    uploadIdempotencyKeyRef.current = null;
+    setAnalysisJob(null);
     setError('');
     setVideoFile(null);
     setPipelineState(createPipelineState());
@@ -3069,10 +3300,7 @@ export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientP
                 file={videoFile}
                 disabled={isLoading || isLimitReached}
                 onSelect={handleFileSelect}
-                onClear={() => {
-                  setVideoFile(null);
-                  setAnalysisPreview({});
-                }}
+                onClear={clearSelectedVideo}
               />
               <div className="mt-4">
                 <label className="mb-2 block text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500">
@@ -3132,7 +3360,11 @@ export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientP
               />
             )}
 
-            {isLoading && <AnalysisPipelineProgress pipeline={pipelineState} preview={analysisPreview} />}
+            {isLoading && (
+              activeSource === 'upload'
+                ? <AsyncAnalysisJobProgress job={analysisJob} stage={uploadClientStage} fileName={videoFile?.name} />
+                : <AnalysisPipelineProgress pipeline={pipelineState} preview={analysisPreview} />
+            )}
             {results && !isLoading && !isLimitReached && (
               <ResultsView
                 result={results}
@@ -3218,7 +3450,7 @@ export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientP
                         >
                           <p className="truncate text-xs font-semibold text-white">{item.video_url}</p>
                           <p className="mt-1 text-[11px] text-gray-600">
-                            Score <span className="text-vn-violet">{item.result?.viralityScore ?? 0}</span> · {new Date(item.created_at).toLocaleDateString('fr-FR')}
+                            Score <span className="text-vn-violet">{getAnalysisScore(item) ?? '—'}</span> · {new Date(item.created_at).toLocaleDateString('fr-FR')}
                           </p>
                           {(meta?.analysisModeLabel || meta?.analysisConfidence || firstWarning) && (
                             <p className={`mt-1 text-[10px] font-semibold ${isDegraded ? 'text-amber-300' : 'text-gray-500'}`}>
@@ -3258,7 +3490,7 @@ export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientP
             <div className="max-w-[300px]">
               <h1 className="text-[3.05rem] font-black leading-[0.96] tracking-[-0.055em] text-white min-[390px]:text-[3.35rem]">Analyser</h1>
               <p className="mt-4 max-w-[320px] text-[1rem] font-medium leading-6 text-slate-300">
-                L’IA détecte automatiquement le hook, le rythme, la rétention et le potentiel de repost.
+                Viralynz repere le hook, le rythme et les risques editoriaux a partir des signaux reellement disponibles.
               </p>
             </div>
           </section>
@@ -3269,10 +3501,7 @@ export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientP
             file={videoFile}
             disabled={isLoading || isLimitReached}
             onFileSelect={handleFileSelect}
-            onFileClear={() => {
-              setVideoFile(null);
-              setAnalysisPreview({});
-            }}
+            onFileClear={clearSelectedVideo}
             authUser={authUser}
             videos={tiktokVideos}
             videosLoading={!tiktokVideosLoaded}
@@ -3283,6 +3512,10 @@ export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientP
             canAnalyzeUpload={canSubmit}
             canAnalyzeTikTok={canAnalyzeSelectedTikTok}
             isLoading={isLoading}
+            objective={objective}
+            creatorContext={creatorContext}
+            onObjectiveChange={setObjective}
+            onCreatorContextChange={(patch) => setCreatorContext((current) => ({ ...current, ...patch }))}
           />
 
           {error && (
@@ -3298,7 +3531,11 @@ export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientP
 
           {isLoading && (
             <div className="mt-5">
-              <AnalysisPipelineProgress pipeline={pipelineState} preview={analysisPreview} />
+              {activeSource === 'upload' ? (
+                <AsyncAnalysisJobProgress job={analysisJob} stage={uploadClientStage} fileName={videoFile?.name} />
+              ) : (
+                <AnalysisPipelineProgress pipeline={pipelineState} preview={analysisPreview} />
+              )}
             </div>
           )}
 

@@ -3,10 +3,13 @@ import { notFound, redirect } from 'next/navigation';
 import CopyHookButton from '@/components/analysis-detail/CopyHookButton';
 import {
   getAnalysisDetailData,
+  type AnalysisCriterionDetail,
   type AnalysisDetailData,
   type AnalysisDiagnostic,
   type AnalysisMoment,
+  type AnalysisSectionDetail,
   type EditingDecision,
+  type GroundedV2Item,
   type RecommendedV2Step,
 } from '@/lib/analysis-detail-data';
 
@@ -64,7 +67,10 @@ function AnalysisDetailView({ analysis }: { analysis: AnalysisDetailData }) {
           <Diagnostics diagnostics={analysis.diagnostics} />
         </section>
 
+        <AnalysisSections sections={analysis.analysisSections} />
+
         <RecommendedV2 analysis={analysis} />
+        <ImprovedVersionWorkspace analysis={analysis} />
 
         <section className="mt-5 grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
           <EditingDecisions decisions={analysis.editingDecisions} />
@@ -133,15 +139,17 @@ function VideoPreview({ analysis }: { analysis: AnalysisDetailData }) {
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,6,17,0.08),rgba(2,6,17,0.36)_45%,rgba(2,6,17,0.92))]" />
         <div className="absolute left-4 right-4 top-4 flex items-center justify-between">
           <span className="rounded-full border border-white/[0.16] bg-black/35 px-3 py-1 text-[11px] font-black uppercase tracking-[0.12em] text-white/90">
-            TikTok scan
+            Analyse vidéo
           </span>
           <span className="rounded-full border border-cyan-200/20 bg-cyan-300/12 px-3 py-1 text-[11px] font-black text-cyan-100">
             {analysis.duration}
           </span>
         </div>
-        <div className="absolute left-1/2 top-[42%] grid h-16 w-16 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-white/[0.18] bg-black/42 shadow-[0_0_50px_rgba(232,121,249,0.38)]">
-          <span className="ml-1 h-0 w-0 border-y-[10px] border-l-[16px] border-y-transparent border-l-white" />
-        </div>
+        {!analysis.thumbnailUrl && (
+          <div className="absolute left-1/2 top-[42%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/[0.14] bg-black/42 px-4 py-2 text-center text-[10px] font-black uppercase tracking-[0.12em] text-slate-300 shadow-[0_0_50px_rgba(232,121,249,0.24)]">
+            Aperçu indisponible
+          </div>
+        )}
         <div className="absolute bottom-0 left-0 right-0 p-5">
           <div className="mb-4 flex items-end justify-between gap-3">
             <div className="min-w-0">
@@ -153,9 +161,9 @@ function VideoPreview({ analysis }: { analysis: AnalysisDetailData }) {
             </div>
           </div>
           <div className="grid grid-cols-3 gap-2">
-            <PreviewSignal label="Hook" value={analysis.diagnostics[0]?.score ?? analysis.score} />
-            <PreviewSignal label="Preuve" value={analysis.diagnostics[3]?.score ?? analysis.score} />
-            <PreviewSignal label="CTA" value={analysis.diagnostics[4]?.score ?? analysis.score} />
+            <PreviewSignal label="Hook" value={analysis.diagnostics[0]?.score ?? null} />
+            <PreviewSignal label="Preuve" value={analysis.diagnostics[3]?.score ?? null} />
+            <PreviewSignal label="CTA" value={analysis.diagnostics[4]?.score ?? null} />
           </div>
         </div>
       </div>
@@ -180,11 +188,11 @@ function HeroSummary({ analysis }: { analysis: AnalysisDetailData }) {
     <section className="flex min-w-0 flex-col justify-between rounded-[22px] border border-white/[0.075] bg-white/[0.035] p-5 sm:p-6">
       <div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className={eyebrow}>{analysis.transparency.level === 'real' ? 'Analyse complète' : analysis.transparency.label}</span>
+          <span className={eyebrow}>{analysis.transparency.label}</span>
           <span className="rounded-full border border-white/[0.08] bg-black/20 px-2.5 py-1 text-[11px] font-bold text-slate-300">{analysis.createdAt}</span>
         </div>
         <h1 className="mt-4 max-w-3xl text-4xl font-black leading-[0.98] tracking-[-0.055em] text-white sm:text-5xl">
-          Viralynz a trouvé quoi republier.
+          Ton diagnostic vidéo, sans métrique inventée.
         </h1>
         <p className="mt-4 max-w-3xl text-base font-semibold leading-7 text-slate-200">{analysis.verdict}</p>
         <p className="mt-3 max-w-3xl text-[15px] leading-7 text-slate-400">{analysis.summary}</p>
@@ -192,7 +200,7 @@ function HeroSummary({ analysis }: { analysis: AnalysisDetailData }) {
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
         <MetaItem label="Objectif" value={analysis.objective} />
-        <MetaItem label="Format" value={analysis.sourceLabel} />
+        <MetaItem label="Format détecté" value={analysis.formatLabel} />
         <MetaItem label="Durée" value={analysis.duration} />
         <MetaItem label="Niche" value={analysis.niche} />
       </div>
@@ -232,10 +240,10 @@ function Timeline({ moments }: { moments: AnalysisMoment[] }) {
     <section className={`${card} p-5 sm:p-6`}>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className={eyebrow}>Moments clés</p>
-          <h2 className="mt-2 text-2xl font-black tracking-[-0.035em]">Où l’attention casse</h2>
+          <p className={eyebrow}>Risques éditoriaux</p>
+          <h2 className="mt-2 text-2xl font-black tracking-[-0.035em]">Carte des risques éditoriaux</h2>
         </div>
-        <p className="max-w-xs text-sm leading-6 text-slate-400">Chaque timestamp devient une correction de montage, pas une note de rapport.</p>
+        <p className="max-w-xs text-sm leading-6 text-slate-400">Chaque timestamp vient du diagnostic enregistré. Ce n’est pas une courbe de rétention mesurée.</p>
       </div>
       {moments.length === 0 ? (
         <div className="mt-6 rounded-[18px] border border-dashed border-white/[0.10] bg-white/[0.025] p-5 text-sm leading-6 text-slate-400">
@@ -259,6 +267,50 @@ function Timeline({ moments }: { moments: AnalysisMoment[] }) {
                 <InsightBlock label="Problème" body={moment.diagnostic} />
                 <InsightBlock label="Correction" body={moment.correction} accent />
               </div>
+              {(moment.transcript || moment.observation || moment.objectiveFit || moment.example || moment.evidence?.length || moment.frameUrl) ? (
+                <details className="group mt-3 overflow-hidden rounded-2xl border border-white/[0.07] bg-black/18">
+                  <summary className="cursor-pointer list-none px-4 py-3 text-xs font-black uppercase tracking-[0.13em] text-cyan-100 marker:hidden">
+                    <span className="flex items-center justify-between gap-3">
+                      Ouvrir les preuves du segment
+                      <span aria-hidden className="text-lg font-medium text-slate-500 transition group-open:rotate-45">+</span>
+                    </span>
+                  </summary>
+                  <div className="grid gap-3 border-t border-white/[0.06] p-4 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)]">
+                    <div>
+                      {moment.frameUrl ? (
+                        <div
+                          role="img"
+                          aria-label={`Frame observée pour le segment ${moment.time}`}
+                          className="aspect-video w-full rounded-xl border border-white/[0.08] bg-slate-950 bg-cover bg-center"
+                          style={{ backgroundImage: `url(${moment.frameUrl})` }}
+                        />
+                      ) : (
+                        <div className="grid aspect-video w-full place-items-center rounded-xl border border-dashed border-white/[0.10] bg-slate-950/70 px-4 text-center text-xs text-slate-500">
+                          Frame indisponible pour ce segment.
+                        </div>
+                      )}
+                      <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">
+                        {moment.nature ? <span className="rounded-full border border-white/[0.08] px-2.5 py-1">{moment.nature}</span> : null}
+                        {moment.confidence ? <span className="rounded-full border border-white/[0.08] px-2.5 py-1">Confiance {moment.confidence}</span> : null}
+                      </div>
+                    </div>
+                    <div className="min-w-0 space-y-3">
+                      {moment.transcript ? <InsightBlock label="Transcript" body={moment.transcript} /> : null}
+                      {moment.observation ? <InsightBlock label="Observation" body={moment.observation} /> : null}
+                      {moment.objectiveFit ? <InsightBlock label="Lien avec l’objectif" body={moment.objectiveFit} /> : null}
+                      {moment.example ? <InsightBlock label="Exemple directement applicable" body={moment.example} accent /> : null}
+                      {moment.evidence?.length ? (
+                        <div className="rounded-2xl border border-white/[0.07] bg-black/16 p-3.5">
+                          <p className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500">Preuves citées</p>
+                          <ul className="mt-2 space-y-1.5 text-xs font-semibold leading-5 text-slate-300">
+                            {moment.evidence.map((evidence) => <li key={evidence}>• {evidence}</li>)}
+                          </ul>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                </details>
+              ) : null}
             </div>
           </article>
         ))}
@@ -289,6 +341,207 @@ function Diagnostics({ diagnostics }: { diagnostics: AnalysisDiagnostic[] }) {
       </div>
     </section>
   );
+}
+
+function AnalysisSections({ sections }: { sections: AnalysisSectionDetail[] }) {
+  const totalCriteria = sections.reduce((total, section) => total + section.criteria.length, 0);
+  const unavailableCriteria = sections.reduce(
+    (total, section) => total + section.criteria.filter((criterion) => criterion.status === 'unavailable').length,
+    0,
+  );
+  const availableSections = sections.filter((section) => section.status === 'available').length;
+
+  return (
+    <section className={`${card} mt-5 p-5 sm:p-6`} aria-labelledby="analyse-par-rubrique">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="min-w-0">
+          <p className={eyebrow}>Diagnostic par rubrique</p>
+          <h2 id="analyse-par-rubrique" className="mt-2 text-2xl font-black tracking-[-0.035em] sm:text-3xl">
+            8 rubriques, 78 critères, aucune case inventée
+          </h2>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-400">
+            Chaque critère indique ce qui a été observé, ce qui ne l’a pas été et ce que la vidéo ne permet pas de conclure.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2 text-[11px] font-black uppercase tracking-[0.12em]">
+          <span className="rounded-full border border-emerald-300/18 bg-emerald-400/[0.07] px-3 py-1.5 text-emerald-100">
+            {availableSections}/8 rubriques disponibles
+          </span>
+          <span className="rounded-full border border-white/[0.09] bg-black/20 px-3 py-1.5 text-slate-300">
+            {totalCriteria} critères
+          </span>
+          {unavailableCriteria > 0 ? (
+            <span className="rounded-full border border-amber-300/18 bg-amber-300/[0.07] px-3 py-1.5 text-amber-100">
+              {unavailableCriteria} indisponible{unavailableCriteria > 1 ? 's' : ''}
+            </span>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="mt-6 space-y-3">
+        {sections.map((section, sectionIndex) => {
+          const observed = section.criteria.filter((criterion) => criterion.status === 'observed').length;
+          const notObserved = section.criteria.filter((criterion) => criterion.status === 'not_observed').length;
+          const unavailable = section.criteria.filter((criterion) => criterion.status === 'unavailable').length;
+
+          return (
+            <details
+              key={section.key}
+              className="group overflow-hidden rounded-[20px] border border-white/[0.075] bg-white/[0.028]"
+              open={sectionIndex === 0}
+            >
+              <summary className="cursor-pointer list-none px-4 py-4 marker:hidden sm:px-5">
+                <span className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="min-w-0">
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="text-base font-black text-white">{section.label}</span>
+                      <SectionStatusBadge status={section.status} />
+                    </span>
+                    <span className="mt-1 block break-words text-xs leading-5 text-slate-500">{section.summary}</span>
+                  </span>
+                  <span className="flex shrink-0 flex-wrap items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.1em]">
+                    <span className="rounded-full border border-emerald-300/14 px-2.5 py-1 text-emerald-200">{observed} observé{observed > 1 ? 's' : ''}</span>
+                    <span className="rounded-full border border-slate-300/12 px-2.5 py-1 text-slate-400">{notObserved} non observé{notObserved > 1 ? 's' : ''}</span>
+                    {unavailable > 0 ? <span className="rounded-full border border-amber-300/14 px-2.5 py-1 text-amber-200">{unavailable} indisponible{unavailable > 1 ? 's' : ''}</span> : null}
+                    <span aria-hidden className="ml-1 text-lg font-medium text-slate-500 transition group-open:rotate-45">+</span>
+                  </span>
+                </span>
+              </summary>
+
+              <div className="border-t border-white/[0.06] p-4 sm:p-5">
+                {section.status === 'available' ? (
+                  <SectionEditorialSummary section={section} />
+                ) : (
+                  <p className="rounded-2xl border border-dashed border-amber-300/16 bg-amber-300/[0.04] p-4 text-sm leading-6 text-amber-50/75">
+                    {section.summary} Aucun diagnostic de remplacement n’a été fabriqué.
+                  </p>
+                )}
+
+                <div className="mt-5">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="text-sm font-black text-white">Matrice des critères</h3>
+                    <span className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-600">{section.criteria.length} critères obligatoires</span>
+                  </div>
+                  <div className="mt-3 grid min-w-0 gap-3 lg:grid-cols-2 2xl:grid-cols-3">
+                    {section.criteria.map((criterion) => (
+                      <CriterionCard key={criterion.criterionId} criterion={criterion} />
+                    ))}
+                  </div>
+                </div>
+
+                {section.limitations.length > 0 ? (
+                  <div className="mt-4 rounded-2xl border border-amber-300/12 bg-amber-300/[0.035] px-4 py-3">
+                    <p className="text-[10px] font-black uppercase tracking-[0.14em] text-amber-100/70">Limites</p>
+                    <ul className="mt-2 space-y-1.5 text-xs leading-5 text-amber-50/70">
+                      {section.limitations.map((limitation) => <li key={limitation} className="break-words">• {limitation}</li>)}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+            </details>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function SectionEditorialSummary({ section }: { section: AnalysisSectionDetail }) {
+  return (
+    <div className="grid min-w-0 gap-3 xl:grid-cols-3">
+      <EditorialList title="Forces" items={section.strengths} empty="Aucune force suffisamment étayée." tone="positive" />
+      <EditorialList title="Problèmes" items={section.problems} empty="Aucun problème suffisamment étayé." tone="warning" />
+      <div className="min-w-0 rounded-2xl border border-violet-300/12 bg-violet-400/[0.04] p-4">
+        <p className="text-[10px] font-black uppercase tracking-[0.14em] text-violet-100/75">Recommandations</p>
+        {section.recommendations.length > 0 ? (
+          <div className="mt-3 space-y-3">
+            {section.recommendations.map((recommendation) => (
+              <article key={recommendation.id} className="min-w-0 rounded-xl border border-white/[0.07] bg-black/18 p-3">
+                <span className="rounded-full border border-cyan-300/14 bg-cyan-300/[0.05] px-2 py-1 text-[10px] font-black text-cyan-100">{recommendation.timeRange}</span>
+                <p className="mt-3 break-words text-xs font-black leading-5 text-white">{recommendation.action}</p>
+                <p className="mt-2 break-words text-xs leading-5 text-slate-400">Pourquoi : {recommendation.why}</p>
+                <p className="mt-2 break-words text-xs font-semibold leading-5 text-violet-100/85">Exemple : {recommendation.example}</p>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-3 text-xs leading-5 text-slate-500">Aucune recommandation supplémentaire justifiée.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function EditorialList({
+  title,
+  items,
+  empty,
+  tone,
+}: {
+  title: string;
+  items: string[];
+  empty: string;
+  tone: 'positive' | 'warning';
+}) {
+  const toneClass = tone === 'positive'
+    ? 'border-emerald-300/12 bg-emerald-400/[0.035] text-emerald-100/75'
+    : 'border-amber-300/12 bg-amber-300/[0.035] text-amber-100/75';
+  return (
+    <div className={`min-w-0 rounded-2xl border p-4 ${toneClass}`}>
+      <p className="text-[10px] font-black uppercase tracking-[0.14em]">{title}</p>
+      {items.length > 0 ? (
+        <ul className="mt-3 space-y-2 text-xs leading-5 text-slate-300">
+          {items.map((item) => <li key={item} className="break-words">• {item}</li>)}
+        </ul>
+      ) : (
+        <p className="mt-3 text-xs leading-5 text-slate-500">{empty}</p>
+      )}
+    </div>
+  );
+}
+
+function CriterionCard({ criterion }: { criterion: AnalysisCriterionDetail }) {
+  return (
+    <article className="min-w-0 rounded-2xl border border-white/[0.07] bg-black/18 p-3.5">
+      <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
+        <h4 className="min-w-0 flex-1 break-words text-sm font-black leading-5 text-white">{criterion.label}</h4>
+        <CriterionStatusBadge status={criterion.status} />
+      </div>
+      <p className="mt-3 break-words text-xs leading-5 text-slate-400">{criterion.note}</p>
+      <div className="mt-3 flex flex-wrap gap-1.5 text-[10px] font-bold text-slate-500">
+        <span className="rounded-full border border-white/[0.08] px-2 py-1">Confiance {criterion.confidence}</span>
+        <span className="rounded-full border border-white/[0.08] px-2 py-1">{criterion.timeRange ?? 'Aucun timestamp fiable'}</span>
+      </div>
+      {criterion.evidence.length > 0 ? (
+        <details className="group/evidence mt-3 rounded-xl border border-white/[0.06] bg-white/[0.02]">
+          <summary className="cursor-pointer list-none px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] text-cyan-100/75 marker:hidden">
+            {criterion.evidence.length} preuve{criterion.evidence.length > 1 ? 's' : ''} lisible{criterion.evidence.length > 1 ? 's' : ''}
+          </summary>
+          <ul className="space-y-1.5 border-t border-white/[0.05] px-3 py-2.5 text-[11px] leading-5 text-slate-400">
+            {criterion.evidence.map((evidence) => <li key={evidence} className="break-words">• {evidence}</li>)}
+          </ul>
+        </details>
+      ) : (
+        <p className="mt-3 text-[11px] leading-5 text-slate-600">Aucune preuve disponible pour ce critère.</p>
+      )}
+    </article>
+  );
+}
+
+function SectionStatusBadge({ status }: { status: AnalysisSectionDetail['status'] }) {
+  return status === 'available'
+    ? <span className="rounded-full border border-emerald-300/16 bg-emerald-400/[0.07] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-emerald-100">Disponible</span>
+    : <span className="rounded-full border border-amber-300/16 bg-amber-300/[0.07] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-amber-100">Indisponible</span>;
+}
+
+function CriterionStatusBadge({ status }: { status: AnalysisCriterionDetail['status'] }) {
+  const label = status === 'observed' ? 'Observé' : status === 'not_observed' ? 'Non observé' : 'Indisponible';
+  const tone = status === 'observed'
+    ? 'border-emerald-300/16 bg-emerald-400/[0.07] text-emerald-100'
+    : status === 'not_observed'
+      ? 'border-slate-300/12 bg-white/[0.035] text-slate-300'
+      : 'border-amber-300/16 bg-amber-300/[0.07] text-amber-100';
+  return <span className={`shrink-0 rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-[0.1em] ${tone}`}>{label}</span>;
 }
 
 function RecommendedV2({ analysis }: { analysis: AnalysisDetailData }) {
@@ -480,6 +733,137 @@ function ScoreDial({ score }: { score: number | null }) {
         </div>
       </div>
     </div>
+  );
+}
+
+function GroundedPlan({
+  title,
+  description,
+  items,
+}: {
+  title: string;
+  description: string;
+  items: GroundedV2Item[];
+}) {
+  return (
+    <details className="group overflow-hidden rounded-[20px] border border-white/[0.075] bg-white/[0.032]" open={items.length > 0 && items.length <= 4}>
+      <summary className="cursor-pointer list-none px-4 py-4 marker:hidden sm:px-5">
+        <span className="flex items-center justify-between gap-4">
+          <span className="min-w-0">
+            <span className="block text-sm font-black text-white">{title}</span>
+            <span className="mt-1 block text-xs leading-5 text-slate-500">{description}</span>
+          </span>
+          <span className="shrink-0 rounded-full border border-white/[0.08] bg-black/20 px-2.5 py-1 text-[10px] font-black text-slate-300">
+            {items.length}
+          </span>
+        </span>
+      </summary>
+      <div className="space-y-3 border-t border-white/[0.06] p-4 sm:p-5">
+        {items.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-white/[0.09] p-3 text-xs leading-5 text-slate-500">
+            Aucun élément fiable n’a été produit pour cette partie.
+          </p>
+        ) : null}
+        {items.map((item, index) => (
+          <article key={item.id} className="min-w-0 rounded-2xl border border-white/[0.07] bg-black/18 p-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full border border-cyan-300/14 bg-cyan-300/[0.06] px-2.5 py-1 text-[10px] font-black text-cyan-100">{item.time}</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-600">Action {index + 1}</span>
+              <span className="text-[10px] font-bold text-slate-500">Confiance {item.confidence}</span>
+            </div>
+            <p className="mt-3 break-words text-sm font-black leading-6 text-white">{item.action}</p>
+            <p className="mt-2 break-words text-xs leading-5 text-slate-400">Observé : {item.observation}</p>
+            <p className="mt-2 break-words text-xs leading-5 text-violet-100/80">Pourquoi : {item.why}</p>
+            <p className="mt-2 break-words rounded-xl border border-violet-300/12 bg-violet-400/[0.055] px-3 py-2 text-xs font-semibold leading-5 text-slate-200">
+              Exemple : {item.example}
+            </p>
+          </article>
+        ))}
+      </div>
+    </details>
+  );
+}
+
+function ImprovedVersionWorkspace({ analysis }: { analysis: AnalysisDetailData }) {
+  const improved = analysis.improvedVersion;
+  if (!improved) return null;
+
+  return (
+    <section className={`${card} mt-5 p-5 sm:p-6`}>
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div className="min-w-0">
+          <p className={eyebrow}>Livrables V2</p>
+          <h2 className="mt-2 text-2xl font-black tracking-[-0.035em]">Ton script et ton plan de tournage complets</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
+            Ces livrables restent reliés aux observations horodatées de cette vidéo. Ils ne sont pas remplacés par un modèle générique.
+          </p>
+        </div>
+        <CopyHookButton value={improved.fullScript} label="Copier le script V2" />
+      </div>
+
+      <div className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
+        <article className="min-w-0 rounded-[22px] border border-violet-300/16 bg-[linear-gradient(180deg,rgba(88,28,135,0.18),rgba(2,6,17,0.58))] p-4 sm:p-5">
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-violet-100/75">Script réécrit complet</p>
+          <p className="mt-4 max-h-[520px] overflow-y-auto whitespace-pre-wrap break-words pr-1 text-sm font-semibold leading-7 text-slate-100">
+            {improved.fullScript}
+          </p>
+        </article>
+
+        <article className="min-w-0 rounded-[22px] border border-white/[0.075] bg-white/[0.03] p-4 sm:p-5">
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-100/75">Découpage du script</p>
+          <div className="mt-4 space-y-3">
+            {improved.scriptSegments.map((segment, index) => (
+              <div key={segment.id} className="min-w-0 rounded-2xl border border-white/[0.07] bg-black/18 p-3.5">
+                <p className="text-[10px] font-black uppercase tracking-[0.13em] text-slate-500">{index + 1}. {segment.purpose}</p>
+                <p className="mt-2 break-words text-sm font-semibold leading-6 text-slate-200">{segment.text}</p>
+              </div>
+            ))}
+          </div>
+        </article>
+      </div>
+
+      <div className="mt-4 grid gap-4 xl:grid-cols-2">
+        <GroundedPlan title="Plan de montage" description="Cuts, déplacements et rythme à appliquer." items={improved.editPlan} />
+        <GroundedPlan title="Shot list" description="Plans à tourner ou à remplacer précisément." items={improved.shotList} />
+        <GroundedPlan title="Texte à l’écran" description="Formulations, timing et hiérarchie visuelle." items={improved.onScreenText} />
+        <GroundedPlan title="Effets et B-roll" description="Renforts visuels justifiés par la séquence." items={improved.effectsAndBRoll} />
+      </div>
+
+      <div className="mt-4 grid gap-4 xl:grid-cols-2">
+        <article className="min-w-0 rounded-[20px] border border-white/[0.075] bg-white/[0.032] p-4 sm:p-5">
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">Première ligne</p>
+          <p className="mt-3 break-words text-lg font-black leading-7 text-white">{improved.firstLine.action}</p>
+          <p className="mt-2 break-words text-xs leading-5 text-slate-400">{improved.firstLine.why}</p>
+          <div className="mt-4"><CopyHookButton value={improved.firstLine.action} /></div>
+        </article>
+        <article className="min-w-0 rounded-[20px] border border-white/[0.075] bg-white/[0.032] p-4 sm:p-5">
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">Légende TikTok</p>
+          <p className="mt-3 whitespace-pre-wrap break-words text-sm font-semibold leading-6 text-white">{improved.caption.action}</p>
+          <p className="mt-2 break-words text-xs leading-5 text-slate-400">{improved.caption.why}</p>
+          <div className="mt-4"><CopyHookButton value={improved.caption.action} /></div>
+        </article>
+      </div>
+
+      <div className="mt-4 rounded-[20px] border border-white/[0.075] bg-white/[0.032] p-4 sm:p-5">
+        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">Variantes A/B</p>
+        <div className="mt-4 grid gap-3 lg:grid-cols-2">
+          {improved.abTests.map((test) => (
+            <article key={test.id} className="min-w-0 rounded-2xl border border-white/[0.07] bg-black/18 p-4">
+              <p className="text-[10px] font-black uppercase tracking-[0.13em] text-cyan-100/75">Test {test.variable}</p>
+              <p className="mt-3 break-words text-sm font-semibold leading-6 text-slate-200">A — {test.versionA}</p>
+              <p className="mt-2 break-words text-sm font-semibold leading-6 text-slate-200">B — {test.versionB}</p>
+              <p className="mt-3 break-words text-xs leading-5 text-slate-500">Mesure : {test.successCriterion}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+
+      {improved.limitations.length ? (
+        <p className="mt-4 rounded-2xl border border-amber-300/14 bg-amber-300/[0.05] px-4 py-3 text-xs leading-5 text-amber-50/80">
+          Limites : {improved.limitations.join(' · ')}
+        </p>
+      ) : null}
+    </section>
   );
 }
 
