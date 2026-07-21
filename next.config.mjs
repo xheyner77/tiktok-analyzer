@@ -32,11 +32,11 @@ const nextConfig = {
   },
   poweredByHeader: false,
   webpack(config, { isServer }) {
-    if (isServer && process.platform === 'win32') {
-      // xdg-app-paths dereferences argv[0] during module initialization, while
-      // Next's Windows page-data worker can expose an empty argv. Keep Vercel's
-      // Linux runtime untouched and provide the same path API only to that build.
-      config.resolve.alias['xdg-app-paths$'] = `${projectRoot}/lib/shims/xdg-app-paths.windows.cjs`;
+    if (isServer) {
+      // Next page-data workers can expose an empty argv[0] on Windows and on
+      // Vercel Linux builds. The upstream package dereferences it at import
+      // time; this compatible shim keeps the platform paths without argv.
+      config.resolve.alias['xdg-app-paths$'] = `${projectRoot}/lib/shims/xdg-app-paths.safe.cjs`;
     }
     return config;
   },
