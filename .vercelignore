@@ -1,6 +1,18 @@
 .codex*
 .env*
 supabase/.temp/
+.git/
+.next/
+.vercel/
+node_modules/
+vendor/ffmpeg/
+coverage/
+playwright-report/
+test-results/
+tmp/
+temp/
+*.log
+*.tsbuildinfo
 
 # Captures de dashboard et exports d'audit contenant des données utilisateur.
 public/Dashboard _ Viralynz _ Viralynz.html
