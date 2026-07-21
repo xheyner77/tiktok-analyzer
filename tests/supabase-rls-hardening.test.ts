@@ -25,11 +25,33 @@ describe('Supabase server-only table hardening', () => {
   const tiktokMigration = readSql(
     'supabase/migrations/20260713121629_harden_tiktok_account_privileges.sql',
   );
+  const analysesAndStripeMigration = readSql(
+    'supabase/migrations/20260713170000_harden_analyses_and_stripe_privileges.sql',
+  );
   const schema = readSql('supabase/schema.sql');
 
   it('removes direct browser access to billing entitlements in users', () => {
     expectServerOnlyTable(usersMigration, 'users');
     expectServerOnlyTable(schema, 'users');
+  });
+
+  it('keeps analyses owner-readable without browser write privileges', () => {
+    expect(analysesAndStripeMigration).toMatch(
+      /alter\s+table\s+public\.analyses\s+enable\s+row\s+level\s+security/,
+    );
+    expect(analysesAndStripeMigration).toMatch(
+      /revoke\s+all\s+on\s+table\s+public\.analyses\s+from\s+public,\s*anon,\s*authenticated/,
+    );
+    expect(analysesAndStripeMigration).toMatch(
+      /grant\s+select\s+on\s+table\s+public\.analyses\s+to\s+authenticated/,
+    );
+    expect(analysesAndStripeMigration).toMatch(
+      /grant\s+select,\s*insert,\s*update,\s*delete\s+on\s+table\s+public\.analyses\s+to\s+service_role/,
+    );
+  });
+
+  it('keeps Stripe webhook idempotency data server-only', () => {
+    expectServerOnlyTable(analysesAndStripeMigration, 'stripe_webhook_events');
   });
 
   it('keeps encrypted TikTok OAuth rows server-only in the forward migration', () => {
