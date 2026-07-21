@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { createWriteStream } from 'node:fs';
 import {
   chmod,
+  copyFile,
   mkdir,
   mkdtemp,
   open,
@@ -43,6 +44,28 @@ const asset = getFfmpegAsset(requestedPlatform, requestedArch);
 const targetPath = resolve(projectRoot, getFfmpegVendorRelativePath(requestedPlatform, requestedArch));
 const crossPlatformVerification = asset.key !== `${process.platform}-${process.arch}`;
 const expectedVersionPrefix = `ffmpeg version ${FFMPEG_RELEASE.revision}`;
+
+async function moveExecutable(sourcePath, destinationPath) {
+  try {
+    await rename(sourcePath, destinationPath);
+    return;
+  } catch (error) {
+    if (error?.code !== 'EXDEV') throw error;
+  }
+
+  // Vercel stores temporary files and the checkout on different filesystems.
+  // Copy to a sibling first, then rename on the destination filesystem so the
+  // final executable still appears atomically.
+  const stagedPath = `${destinationPath}.install-${process.pid}`;
+  try {
+    await rm(stagedPath, { force: true });
+    await copyFile(sourcePath, stagedPath);
+    await chmod(stagedPath, 0o755);
+    await rename(stagedPath, destinationPath);
+  } finally {
+    await rm(stagedPath, { force: true });
+  }
+}
 
 function minimalEnvironment() {
   const environment = {
@@ -273,7 +296,7 @@ async function install() {
 
     await mkdir(dirname(targetPath), { recursive: true });
     await rm(targetPath, { force: true });
-    await rename(candidatePath, targetPath);
+    await moveExecutable(candidatePath, targetPath);
     const installedSha256 = await sha256(targetPath);
     const installedBytes = (await stat(targetPath)).size;
     process.stdout.write(`[ffmpeg] Installed ${FFMPEG_RELEASE.revision} (${installedBytes} bytes, executable SHA-256 ${installedSha256}).\n`);
