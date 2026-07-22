@@ -15,6 +15,7 @@ import { normalizeTikTokUrl, isTikTokVideoUrl } from '@/lib/tiktok-url';
 import { createBrowserSupabaseClient } from '@/lib/supabase-browser';
 import { PLAN_LIMITS, RECONSTRUCTION_LIMITS } from '@/lib/plan-limits';
 import { hasProOrLifetimeAccess, isLifetimePlan, type AppPlan } from '@/lib/plans';
+import { canCreateAnalysisJob } from '@/lib/video-analysis/types';
 
 const STORAGE_KEY = 'tiktok_analysis_count';
 const GUEST_LIMIT = 3;
@@ -65,7 +66,7 @@ interface PublicAnalysisJobState {
 type UploadClientStage = 'initializing' | 'uploading' | 'starting' | 'processing';
 
 interface AnalysisJobApiResponse {
-  job: PublicAnalysisJobState;
+  job: PublicAnalysisJobState | null;
   upload?: { bucket: string; path: string; token: string } | null;
   reused?: boolean;
   started?: boolean;
@@ -2710,6 +2711,7 @@ export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientP
     memoryConsent: false,
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [isRestoringJob, setIsRestoringJob] = useState(true);
   const [results, setResults] = useState<AnalyzerResult | null>(null);
   const [error, setError] = useState('');
   const [guestCount, setGuestCount] = useState(0);
@@ -2807,7 +2809,7 @@ export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientP
   const effectiveLimit = authUser ? (PLAN_LIMITS[authUser.plan] ?? GUEST_LIMIT) : GUEST_LIMIT;
   const isLimitReached = isReady && effectiveCount >= effectiveLimit;
   const creatorContextReady = creatorContextIsComplete(objective, creatorContext);
-  const canSubmit = !!videoFile && creatorContextReady && !isLoading && !isLimitReached;
+  const canSubmit = !!videoFile && creatorContextReady && !isLoading && !isRestoringJob && !isLimitReached;
   const isFreePreview = !authUser || authUser.plan === 'free';
   const planCanUseReconstruction = authUser ? hasProOrLifetimeAccess(authUser.plan) : false;
   const reconstructionLimit = authUser ? RECONSTRUCTION_LIMITS[authUser.plan] ?? 0 : 0;
@@ -2826,7 +2828,7 @@ export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientP
     () => tiktokVideos.find((video) => video.id === selectedTikTokVideoId) ?? null,
     [selectedTikTokVideoId, tiktokVideos]
   );
-  const canAnalyzeSelectedTikTok = Boolean(selectedTikTokVideo?.shareUrl && creatorContextReady && !isLoading && !isLimitReached);
+  const canAnalyzeSelectedTikTok = Boolean(selectedTikTokVideo?.shareUrl && creatorContextReady && !isLoading && !isRestoringJob && !isLimitReached);
   const latestHistoryItem = sortedHistory[0] ?? null;
 
   useEffect(() => {
@@ -3050,8 +3052,70 @@ export default function AnalyzerV2Client({ embedded = false }: AnalyzerV2ClientP
     throw new DOMException('Polling annulé.', 'AbortError');
   };
 
+  useEffect(() => {
+    if (!authLoaded) return;
+    if (!authUser) {
+      setIsRestoringJob(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    pollAbortRef.current?.abort();
+    pollAbortRef.current = controller;
+    setIsRestoringJob(true);
+
+    const restoreActiveJob = async () => {
+      let safeToCreateAnotherJob = false;
+      try {
+        const response = await fetch('/api/analysis-jobs', {
+          method: 'GET',
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error(await readApiError(response, 'Impossible de restaurer l’analyse en cours.'));
+        const data = await response.json() as AnalysisJobApiResponse;
+        if (!data.job) {
+          safeToCreateAnotherJob = true;
+          return;
+        }
+
+        setActiveSource('upload');
+        setAnalysisJob(data.job);
+        setUploadClientStage('processing');
+        setError('');
+        setResults(null);
+        setIsLoading(true);
+
+        const terminalJob = await pollAnalysisJob(data.job.id, controller.signal);
+        if (terminalJob.status === 'failed') {
+          safeToCreateAnotherJob = true;
+          setError(terminalJob.error?.message ?? 'L’analyse a été interrompue. Ton quota a été restauré.');
+          return;
+        }
+        if (!terminalJob.analysisId) throw new Error('Analyse terminée sans résultat accessible.');
+        router.push(`/analyses/${encodeURIComponent(terminalJob.analysisId)}`);
+      } catch (restoreError) {
+        if (restoreError instanceof DOMException && restoreError.name === 'AbortError') return;
+        setError(restoreError instanceof Error ? restoreError.message : 'Impossible de restaurer l’analyse en cours.');
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+          setIsRestoringJob(!safeToCreateAnotherJob);
+        }
+        if (pollAbortRef.current === controller) pollAbortRef.current = null;
+      }
+    };
+
+    void restoreActiveJob();
+    return () => controller.abort();
+  }, [authLoaded, authUser?.id]);
+
   const analyzeFromUpload = async () => {
-    if (isLimitReached || isLoading) return;
+    if (isLimitReached || !canCreateAnalysisJob({
+      isLoading,
+      isRestoring: isRestoringJob,
+      currentStatus: analysisJob?.status,
+    })) return;
     if (!videoFile) { setError('Choisis un fichier MP4, MOV, WebM, MKV ou MPEG.'); return; }
     if (!authUser) {
       setShowGuestGate(true);

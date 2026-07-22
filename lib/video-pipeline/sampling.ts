@@ -64,6 +64,55 @@ export interface AdaptiveSamplingOptions {
   maxSilenceEvents?: number;
 }
 
+export interface FrameCoverageAssessment {
+  usable: boolean;
+  frameCount: number;
+  startGapSec: number;
+  endGapSec: number;
+  largestGapSec: number;
+  boundaryToleranceSec: number;
+  gapToleranceSec: number;
+}
+
+/**
+ * Assesses only timestamps of frames that were actually decoded. Small codec/FPS
+ * offsets around the bounds are tolerated, but a real blind area still fails.
+ */
+export function assessDecodedFrameCoverage(
+  timestampsSec: number[],
+  durationSec: number,
+  fps: number,
+  maxCoverageGapSec: number,
+): FrameCoverageAssessment {
+  const timestamps = [...new Set(timestampsSec
+    .filter((value) => Number.isFinite(value) && value >= 0 && value <= durationSec)
+    .map(roundTimestamp))]
+    .sort((a, b) => a - b);
+  const boundaryToleranceSec = 0.5;
+  const gapToleranceSec = Math.min(0.5, Math.max(0.25, 2 / Math.max(1, fps)));
+  const first = timestamps[0];
+  const last = timestamps.at(-1);
+  const startGapSec = first === undefined ? durationSec : first;
+  const endGapSec = last === undefined ? durationSec : Math.max(0, durationSec - last);
+  const largestGapSec = timestamps.length < 2
+    ? durationSec
+    : Math.max(...timestamps.slice(1).map((value, index) => value - timestamps[index]));
+  const minimumFrameCount = durationSec <= boundaryToleranceSec * 2 ? 1 : 2;
+
+  return {
+    usable: timestamps.length >= minimumFrameCount
+      && startGapSec <= boundaryToleranceSec
+      && endGapSec <= boundaryToleranceSec
+      && largestGapSec <= maxCoverageGapSec + gapToleranceSec,
+    frameCount: timestamps.length,
+    startGapSec,
+    endGapSec,
+    largestGapSec,
+    boundaryToleranceSec,
+    gapToleranceSec,
+  };
+}
+
 function chooseDistributedTimestamps(values: number[], durationSec: number, maximum: number): number[] {
   const valid = [...new Set(values
     .filter((value) => Number.isFinite(value) && value > 0 && value < durationSec)
@@ -86,7 +135,7 @@ export function buildAdaptiveSamplePlan(
 ): PlannedFrameSample[] {
   if (!Number.isFinite(durationSec) || durationSec <= 0) return [];
 
-  const maxFrames = Math.max(10, Math.floor(options.maxFrames ?? VIDEO_PIPELINE_LIMITS.maxFrames));
+  const maxFrames = Math.max(2, Math.floor(options.maxFrames ?? VIDEO_PIPELINE_LIMITS.maxFrames));
   const maxCoverageGapSec = Math.max(1, options.maxCoverageGapSec ?? VIDEO_PIPELINE_LIMITS.maxCoverageGapSec);
   const contextOffset = Math.max(0.08, options.sceneContextOffsetSec ?? 0.18);
   const samples = new Map<number, Set<FrameSampleReason>>();
@@ -105,18 +154,25 @@ export function buildAdaptiveSamplePlan(
     addSample(samples, timestamp, 'regular_coverage', durationSec);
   }
 
-  // For an accepted video this should fit. The guard keeps custom low budgets deterministic.
+  // When the budget is tight, preserve full-duration coverage first. Opening detail
+  // then consumes only spare capacity, so a duplicate early anchor cannot create a
+  // large blind area later in the video.
   if (samples.size > maxFrames) {
-    const mandatory = [...samples.entries()].filter(([, reasons]) =>
-      reasons.has('first_frame') || reasons.has('opening_detail') || reasons.has('midpoint') || reasons.has('end'));
-    const regular = [...samples.entries()].filter(([, reasons]) => reasons.has('regular_coverage'));
     samples.clear();
-    for (const [timestamp, reasons] of mandatory) samples.set(timestamp, reasons);
-    const capacity = Math.max(0, maxFrames - samples.size);
-    const stride = regular.length / Math.max(1, capacity);
-    for (let index = 0; index < capacity; index++) {
-      const selected = regular[Math.min(regular.length - 1, Math.floor(index * stride))];
-      if (selected) samples.set(selected[0], selected[1]);
+    addSample(samples, 0, 'first_frame', durationSec);
+    addSample(samples, endTimestamp, 'end', durationSec);
+
+    const requiredSegments = Math.max(1, Math.ceil(endTimestamp / maxCoverageGapSec));
+    const coverageSegments = Math.min(requiredSegments, maxFrames - 1);
+    for (let index = 1; index < coverageSegments; index++) {
+      const timestamp = (endTimestamp * index) / coverageSegments;
+      const isMiddle = index * 2 === coverageSegments;
+      addSample(samples, timestamp, isMiddle ? 'midpoint' : 'regular_coverage', durationSec);
+    }
+
+    for (const timestamp of OPENING_TIMESTAMPS_SEC.slice(1)) {
+      if (samples.size >= maxFrames) break;
+      addSample(samples, timestamp, 'opening_detail', durationSec);
     }
   }
 

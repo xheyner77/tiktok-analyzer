@@ -14,7 +14,7 @@ import {
   pickJobStageValues,
   sanitizeOriginalFileName,
 } from './job-guards';
-import type { AnalysisJobRow, AnalysisJobStatus } from './types';
+import { ACTIVE_ANALYSIS_JOB_STATUSES, type AnalysisJobRow, type AnalysisJobStatus } from './types';
 import { reconcileExpiredProviderAttempts } from './provider-ledger';
 
 const JOB_COLUMNS = [
@@ -286,6 +286,23 @@ export async function getOwnedAnalysisJob(jobId: string, userId: string): Promis
   if (error) {
     console.error('[analysis-job] read_failed', { code: error.code });
     throw new Error('ANALYSIS_JOB_READ_FAILED');
+  }
+  return data ? asJobRow(data) : null;
+}
+
+export async function getLatestActiveAnalysisJob(userId: string): Promise<AnalysisJobRow | null> {
+  const { data, error } = await supabase
+    .from('analysis_jobs')
+    .select(JOB_COLUMNS)
+    .eq('user_id', userId)
+    .in('status', [...ACTIVE_ANALYSIS_JOB_STATUSES])
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.error('[analysis-job] active_read_failed', { code: error.code });
+    throw new Error('ANALYSIS_ACTIVE_JOB_READ_FAILED');
   }
   return data ? asJobRow(data) : null;
 }

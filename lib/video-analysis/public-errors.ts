@@ -9,7 +9,7 @@ const PUBLIC_ANALYSIS_FAILURES = {
   ANALYSIS_PRIVATE_DOWNLOAD_TOO_LARGE: 'Le fichier dépasse la limite technique annoncée.',
   ANALYSIS_UPLOAD_SIZE_MISMATCH: 'Le fichier envoyé est incomplet.',
   VIDEO_METADATA_INCOMPLETE: 'Les métadonnées indispensables de la vidéo sont illisibles.',
-  VIDEO_FRAME_COVERAGE_INCOMPLETE: 'La vidéo ne peut pas être représentée intégralement sans zone aveugle.',
+  VIDEO_FRAME_COVERAGE_INCOMPLETE: 'Impossible d’extraire suffisamment d’images de cette vidéo. Vérifie son format ou essaie de la réencoder. Ton quota n’a pas été consommé.',
   ANALYSIS_QUOTA_NOT_RESERVED: 'Le quota n’a pas été réservé pour ce traitement.',
   ANALYSIS_JOB_ALREADY_FAILED: 'Ce traitement est déjà terminé en erreur.',
   ANALYSIS_JOB_ALREADY_COMPLETED: 'Cette analyse est déjà enregistrée.',

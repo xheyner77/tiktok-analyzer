@@ -50,6 +50,7 @@ import {
   finalizeExpiredProviderAttempts,
   persistProviderCostRollup,
 } from './provider-ledger';
+import { assessDecodedFrameCoverage } from '@/lib/video-pipeline/sampling';
 import { runSpecialistAnalyses, type SpecialistStepResult } from './specialists';
 import {
   parseSynthesisCheckpoint,
@@ -71,11 +72,6 @@ function samplingReason(reasons: string[]): string {
   return 'adaptive_interval';
 }
 
-function maxTimestampGap(values: number[]): number {
-  if (values.length < 2) return 0;
-  return Math.max(...values.slice(1).map((value, index) => value - values[index]));
-}
-
 function publicPipelineError(error: unknown): { code: string; message: string; permanent: boolean } {
   if (error instanceof VideoPipelineLimitError) {
     return { code: error.code, message: error.message, permanent: true };
@@ -85,7 +81,7 @@ function publicPipelineError(error: unknown): { code: string; message: string; p
     ANALYSIS_PRIVATE_DOWNLOAD_TOO_LARGE: 'Le fichier dépasse la limite technique annoncée.',
     ANALYSIS_UPLOAD_SIZE_MISMATCH: 'Le fichier envoyé est incomplet.',
     VIDEO_METADATA_INCOMPLETE: 'Les métadonnées indispensables de la vidéo sont illisibles.',
-    VIDEO_FRAME_COVERAGE_INCOMPLETE: 'La vidéo ne peut pas être représentée intégralement sans zone aveugle.',
+    VIDEO_FRAME_COVERAGE_INCOMPLETE: 'Impossible d’extraire suffisamment d’images de cette vidéo. Vérifie son format ou essaie de la réencoder. Ton quota n’a pas été consommé.',
   };
   return {
     code: knownPermanent[code] ? code : 'ANALYSIS_PREPROCESSING_FAILED',
@@ -212,12 +208,8 @@ export async function preprocessVideoStep(jobId: string): Promise<PreprocessStep
     if (!frames.length) throw new Error('VIDEO_FRAME_COVERAGE_INCOMPLETE');
 
     const timestamps = frames.map((frame) => frame.timestampSec).sort((a, b) => a - b);
-    const lastTimestamp = timestamps[timestamps.length - 1] ?? 0;
-    if (
-      timestamps[0] > 0.1
-      || lastTimestamp < probe.durationSec - Math.min(0.5, 1 / probe.fps)
-      || maxTimestampGap(timestamps) > 12.05
-    ) {
+    const coverage = assessDecodedFrameCoverage(timestamps, probe.durationSec, probe.fps, 12);
+    if (!coverage.usable) {
       throw new Error('VIDEO_FRAME_COVERAGE_INCOMPLETE');
     }
 
@@ -260,8 +252,8 @@ export async function preprocessVideoStep(jobId: string): Promise<PreprocessStep
           audioBytes,
           frameCount: frames.length,
           coverageStartSeconds: timestamps[0],
-          coverageEndSeconds: lastTimestamp,
-          maximumFrameGapSeconds: maxTimestampGap(timestamps),
+          coverageEndSeconds: timestamps.at(-1),
+          maximumFrameGapSeconds: coverage.largestGapSec,
           samplingStrategy: 'opening+regular+scene-change+silence-boundary+ending',
         },
         cost_metrics: {

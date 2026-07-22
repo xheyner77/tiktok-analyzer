@@ -11,6 +11,32 @@ export type AnalysisJobStatus =
   | 'completed'
   | 'failed';
 
+export const ACTIVE_ANALYSIS_JOB_STATUSES = [
+  'uploading',
+  'queued',
+  'preprocessing',
+  'transcribing',
+  'visual_analysis',
+  'audio_analysis',
+  'segment_analysis',
+  'synthesis',
+  'validation',
+] as const satisfies readonly AnalysisJobStatus[];
+
+export function isActiveAnalysisJobStatus(status: AnalysisJobStatus | null | undefined): boolean {
+  return status !== null
+    && status !== undefined
+    && ACTIVE_ANALYSIS_JOB_STATUSES.includes(status as typeof ACTIVE_ANALYSIS_JOB_STATUSES[number]);
+}
+
+export function canCreateAnalysisJob(input: {
+  isLoading: boolean;
+  isRestoring: boolean;
+  currentStatus?: AnalysisJobStatus | null;
+}): boolean {
+  return !input.isLoading && !input.isRestoring && !isActiveAnalysisJobStatus(input.currentStatus);
+}
+
 export type AnalysisJobQuotaState = 'not_reserved' | 'reserved' | 'consumed' | 'refunded';
 
 export interface AnalysisJobRow {

@@ -4,7 +4,7 @@ import { checkAndResetMonthly, ensureUserProfile } from '@/lib/auth';
 import { privateJson, readJsonObject, rejectCrossSiteMutation } from '@/lib/api-route-security';
 import { getSessionVerification } from '@/lib/session';
 import { VIDEO_ANALYSIS_LIMITS, VIDEO_INPUT_MIME_TYPES } from '@/lib/video-analysis/config';
-import { createOrReuseUploadJob } from '@/lib/video-analysis/jobs';
+import { createOrReuseUploadJob, getLatestActiveAnalysisJob } from '@/lib/video-analysis/jobs';
 import { toPublicAnalysisJob } from '@/lib/video-analysis/types';
 import { analysisProfileSnapshot, resolveServerAnalysisProfile } from '@/lib/video-analysis/analysis-profiles';
 import {
@@ -73,6 +73,18 @@ function sessionFailure(status: 'missing' | 'invalid' | 'unavailable') {
     );
   }
   return privateJson({ error: 'Connexion requise.' }, { status: 401 });
+}
+
+export async function GET() {
+  const sessionResult = await getSessionVerification();
+  if (sessionResult.status !== 'authenticated') return sessionFailure(sessionResult.status);
+
+  try {
+    const job = await getLatestActiveAnalysisJob(sessionResult.session.userId);
+    return privateJson({ job: job ? toPublicAnalysisJob(job) : null });
+  } catch {
+    return privateJson({ error: 'État de l’analyse temporairement indisponible.' }, { status: 503 });
+  }
 }
 
 export async function POST(request: NextRequest) {
