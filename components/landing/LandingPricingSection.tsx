@@ -14,8 +14,7 @@ export default function LandingPricingSection() {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[32rem] bg-[radial-gradient(ellipse_58%_34%_at_50%_0%,rgba(168,85,247,0.15),transparent_72%),radial-gradient(circle_at_86%_18%,rgba(34,211,238,0.08),transparent_30%)]" aria-hidden />
 
       <div className="relative mx-auto max-w-3xl text-center">
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-300/80">Tarifs transparents</p>
-        <h2 className="mt-3 text-[1.72rem] font-black leading-[1.02] tracking-tight text-white sm:text-5xl">
+        <h2 className="text-[1.72rem] font-black leading-[1.02] tracking-tight text-white sm:text-5xl">
           Quatre offres. Aucun quota caché.
         </h2>
         <p className="mx-auto mt-3 max-w-2xl text-sm font-medium leading-6 text-gray-400 sm:text-base sm:leading-7">

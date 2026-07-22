@@ -283,8 +283,7 @@ function RoadmapSection() {
         </div>
 
         <div className="relative mx-auto max-w-3xl text-center">
-          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300/80">Roadmap</p>
-          <h2 className="mt-3 text-[1.85rem] font-black leading-[1.02] tracking-tight text-white sm:text-5xl">
+          <h2 className="text-[1.85rem] font-black leading-[1.02] tracking-tight text-white sm:text-5xl">
             Une roadmap pensée pour les créateurs multi-plateformes
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-gray-400 sm:text-base sm:leading-7">
@@ -1061,7 +1060,6 @@ function UseCasesSection() {
     <MotionSection className={`${shell} relative py-5 sm:py-14`}>
       <div className="mx-auto max-w-4xl">
         <div className="text-center">
-          <p className="text-[10px] font-black uppercase tracking-[0.25em] text-cyan-300/80">Cas d’usage</p>
           <h2 className="text-[1.45rem] font-black leading-tight tracking-tight text-white sm:text-4xl">
             Conçu pour améliorer <TitleAccent>chaque nouvelle version</TitleAccent>
           </h2>
@@ -1666,8 +1664,7 @@ function TikTokStatsIllustration() {
       <div className="pointer-events-none absolute left-1/2 top-[54%] h-[34rem] w-[34rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-500/[0.09] blur-[110px]" aria-hidden />
 
       <div className="relative z-10 mx-auto max-w-3xl">
-        <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-300/75">Du diagnostic au repost</p>
-        <h2 className="mt-3 text-[1.75rem] font-black leading-[1.02] tracking-[-0.035em] text-white sm:text-5xl">
+        <h2 className="text-[1.75rem] font-black leading-[1.02] tracking-[-0.035em] text-white sm:text-5xl">
           Corrige. Reposte. <TitleAccent>Mesure ce qui change.</TitleAccent>
         </h2>
         <p className="mx-auto mt-3 max-w-2xl text-[13px] font-semibold leading-5 text-gray-400 sm:text-base sm:leading-6">

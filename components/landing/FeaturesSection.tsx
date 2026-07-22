@@ -31,8 +31,7 @@ export default function FeaturesSection() {
       <div className="pointer-events-none absolute inset-x-0 top-4 h-[22rem] bg-[radial-gradient(ellipse_60%_36%_at_50%_0%,rgba(168,85,247,0.14),transparent_72%),radial-gradient(circle_at_90%_20%,rgba(34,211,238,0.09),transparent_32%)]" aria-hidden />
 
       <div className="relative mx-auto max-w-3xl text-center">
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-300/80">Fonctionnalités</p>
-        <h2 className="mt-3 text-[1.72rem] font-black leading-[1.02] tracking-tight text-white sm:text-5xl">
+        <h2 className="text-[1.72rem] font-black leading-[1.02] tracking-tight text-white sm:text-5xl">
           Viralynz ne te donne pas des graphiques décoratifs. Il te dit quoi changer.
         </h2>
         <p className="mx-auto mt-3 max-w-2xl text-sm font-medium leading-6 text-gray-400 sm:text-base sm:leading-7">

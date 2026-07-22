@@ -20,8 +20,7 @@ export default function HowItWorksSection() {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[22rem] bg-[radial-gradient(ellipse_64%_36%_at_50%_4%,rgba(34,211,238,0.11),transparent_70%),radial-gradient(circle_at_84%_22%,rgba(232,121,249,0.1),transparent_30%)]" aria-hidden />
 
       <div className="relative mx-auto max-w-3xl text-center">
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-vn-fuchsia/85">Comment ça marche</p>
-        <h2 className="mt-3 text-[1.72rem] font-black leading-[1.02] tracking-tight text-white sm:text-5xl">
+        <h2 className="text-[1.72rem] font-black leading-[1.02] tracking-tight text-white sm:text-5xl">
           Comment Viralynz transforme ta vidéo en V2
         </h2>
         <p className="mx-auto mt-3 max-w-2xl text-sm font-medium leading-6 text-gray-400 sm:text-base sm:leading-7">
