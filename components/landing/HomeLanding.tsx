@@ -1677,34 +1677,35 @@ function HeroImageVisual() {
 
 function TikTokStatsIllustration() {
   return (
-    <div className="relative mx-auto mt-5 grid w-[94vw] max-w-[1100px] items-center gap-5 overflow-hidden rounded-[1.55rem] border border-white/[0.1] bg-[radial-gradient(circle_at_78%_18%,rgba(168,85,247,0.16),transparent_34%),linear-gradient(145deg,rgba(255,255,255,0.055),rgba(5,5,8,0.94))] px-4 py-5 shadow-[0_42px_140px_-94px_rgba(168,85,247,0.9)] sm:mt-7 sm:w-[90vw] sm:rounded-[2.2rem] sm:px-8 sm:py-8 lg:grid-cols-[1fr_0.72fr] lg:px-12">
-      <div className="relative z-10 text-center lg:text-left">
-        <span className="inline-flex rounded-full border border-violet-300/20 bg-violet-300/[0.08] px-3 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-violet-100 sm:text-[10px]">
-          Après le repost
-        </span>
-        <h2 className="mt-3 text-2xl font-black leading-tight tracking-tight text-white sm:text-4xl">
-          Mesure ensuite l’impact dans tes <TitleAccent>vraies statistiques TikTok</TitleAccent>
+    <div className="relative mx-auto mt-6 w-[94vw] max-w-[1100px] pb-2 pt-5 text-center sm:mt-10 sm:w-[90vw] sm:pt-8">
+      <div className="pointer-events-none absolute left-1/2 top-[54%] h-[34rem] w-[34rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-500/[0.09] blur-[110px]" aria-hidden />
+
+      <div className="relative z-10 mx-auto max-w-3xl">
+        <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-300/75">Du diagnostic au repost</p>
+        <h2 className="mt-3 text-[1.75rem] font-black leading-[1.02] tracking-[-0.035em] text-white sm:text-5xl">
+          Corrige. Reposte. <TitleAccent>Mesure ce qui change.</TitleAccent>
         </h2>
-        <p className="mx-auto mt-3 max-w-xl text-[13px] font-semibold leading-5 text-gray-400 sm:text-base sm:leading-6 lg:mx-0">
-          Viralynz t’aide à corriger la structure de ta vidéo. Les vues, l’engagement et les revenus restent les résultats réels de ton compte TikTok.
-        </p>
-        <p className="mt-4 text-[10px] font-bold leading-4 text-gray-500 sm:text-xs">
-          Exemple visuel · chiffres fictifs · aucun niveau de vues ou de revenus n’est garanti.
+        <p className="mx-auto mt-3 max-w-2xl text-[13px] font-semibold leading-5 text-gray-400 sm:text-base sm:leading-6">
+          Viralynz te dit quoi couper, avancer et réécrire. TikTok te montre ensuite les vues, l’engagement et les revenus réellement générés par ta nouvelle version.
         </p>
       </div>
 
-      <div className="relative isolate mx-auto w-full max-w-[15.5rem] sm:max-w-[19rem]">
-        <div className="absolute -inset-5 rounded-[3rem] bg-[radial-gradient(circle_at_50%_36%,rgba(168,85,247,0.22),transparent_62%)] blur-2xl" aria-hidden />
-        <div className="relative overflow-hidden [mask-image:radial-gradient(ellipse_64%_76%_at_50%_50%,black_58%,rgba(0,0,0,0.82)_73%,transparent_100%)] [-webkit-mask-image:radial-gradient(ellipse_64%_76%_at_50%_50%,black_58%,rgba(0,0,0,0.82)_73%,transparent_100%)]">
-          <img
-            src="/ChatGPT Image 15 mai 2026, 13_58_30.png"
-            alt="Illustration fictive d’un écran TikTok Analytics avec vues, engagement et récompenses estimées"
-            className="block w-[108%] max-w-none -translate-x-[3.8%] mix-blend-lighten drop-shadow-[0_28px_70px_rgba(168,85,247,0.24)]"
-            loading="lazy"
-            decoding="async"
-          />
-        </div>
+      <div className="relative z-10 mx-auto mt-5 w-full max-w-[27rem] sm:mt-7 sm:max-w-[31rem]">
+        <img
+          src="/ChatGPT Image 15 mai 2026, 13_58_30.png"
+          alt="Aperçu illustratif d’un écran TikTok Analytics avec vues, engagement et récompenses estimées"
+          width="930"
+          height="1666"
+          className="block h-auto w-full select-none object-contain drop-shadow-[0_34px_80px_rgba(0,0,0,0.68)]"
+          loading="lazy"
+          decoding="async"
+          draggable={false}
+        />
       </div>
+
+      <p className="relative z-10 mx-auto mt-1 max-w-lg text-[9px] font-semibold leading-4 text-gray-600 sm:text-[10px]">
+        Aperçu illustratif · données de démonstration · résultats variables.
+      </p>
     </div>
   );
 }
