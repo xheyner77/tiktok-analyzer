@@ -460,6 +460,7 @@ export async function parseStructuredResponse<Schema extends z.ZodType>(input: {
           budgetReservation: ledger ? {
             promptCharacters: input.prompt.length + input.instructions.length,
             imageCount: input.images?.length ?? 0,
+            imageDetail: input.images?.[0]?.detail,
             maxOutputTokens: input.maxOutputTokens ?? 8_000,
             stage: ledger.stage,
             model: available,

@@ -63,6 +63,7 @@ import { createAnalysisTempDir, downloadPrivateFile, removeAnalysisTempDir } fro
 import { analyzeCompleteTimeline, type TimelineAnalysisStepResult } from './timeline-analysis';
 import { transcribeCompleteAudio } from './transcription';
 import { analyzeAllFrames, type VisualAnalysisStepResult } from './visual-analysis';
+import { classifyAnalysisStepError } from './workflow-error-policy';
 
 function samplingReason(reasons: string[]): string {
   if (reasons.includes('first_frame') || reasons.includes('opening_detail')) return 'opening';
@@ -399,10 +400,16 @@ export async function transcribeVideoStep(jobId: string): Promise<TranscriptionS
 
 export async function visualAnalysisStep(jobId: string): Promise<VisualAnalysisStepResult> {
   'use step';
-  const job = await getAnalysisJobForWorkflow(jobId);
-  assertJobCanPerformProviderWork(job);
-  return analyzeAllFrames(jobId);
+  try {
+    const job = await getAnalysisJobForWorkflow(jobId);
+    assertJobCanPerformProviderWork(job);
+    return await analyzeAllFrames(jobId);
+  } catch (error) {
+    throw classifyAnalysisStepError(error);
+  }
 }
+
+visualAnalysisStep.maxRetries = 1;
 
 export type SpecialistWorkflowStepResult = Omit<SpecialistStepResult, 'diagnostics'>;
 

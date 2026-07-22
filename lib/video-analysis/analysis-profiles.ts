@@ -156,7 +156,7 @@ const QA: AnalysisProfile = Object.freeze({
   singlePassTranscription: true,
   stages: Object.freeze({
     transcription: { maxCalls: 1, maxInputTokensPerCall: 0, maxOutputTokensPerCall: 0, maxAudioSecondsPerCall: 90, models: ['whisper-1'] },
-    visual_analysis: { maxCalls: 1, maxInputTokensPerCall: 16_000, maxOutputTokensPerCall: 2_000, maxAudioSecondsPerCall: 0, models: ['gpt-4o-mini'] },
+    visual_analysis: { maxCalls: 1, maxInputTokensPerCall: 32_000, maxOutputTokensPerCall: 2_000, maxAudioSecondsPerCall: 0, models: ['gpt-4o-mini'] },
     specialist_analysis: { maxCalls: 4, maxInputTokensPerCall: 9_000, maxOutputTokensPerCall: 1_800, maxAudioSecondsPerCall: 0, models: ['gpt-4o-mini'] },
     timeline_analysis: { maxCalls: 1, maxInputTokensPerCall: 12_000, maxOutputTokensPerCall: 2_800, maxAudioSecondsPerCall: 0, models: ['gpt-4o-mini'] },
     synthesis_critique: noCalls(['gpt-5.4-mini']),

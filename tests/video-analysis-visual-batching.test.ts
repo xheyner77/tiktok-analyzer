@@ -6,6 +6,7 @@ vi.mock('@/lib/supabase', () => ({ supabase: {} }));
 import type { VisualBatchObservation } from '@/lib/video-analysis/intermediate-schemas';
 import type { AnalysisArtifactRow } from '@/lib/video-analysis/artifacts';
 import {
+  buildVisualBatchPayload,
   buildOverlappingVisualBatches,
   mergePersistentTextGroups,
   validateVisualBatch,
@@ -51,6 +52,22 @@ function observation(evidenceRef: string, timestampSec: number): VisualBatchObse
 }
 
 describe('lots visuels avec continuité inter-batch', () => {
+  it('compacte le contexte sans dupliquer la transcription et utilise le detail bas', () => {
+    const frames = Array.from({ length: 10 }, (_, index) => frame(index + 1));
+    const payload = buildVisualBatchPayload({
+      batchId: 'visual-batch-01',
+      targetFrames: frames,
+      contextFrame: null,
+      signedUrls: new Map(frames.map((item) => [item.id, `https://example.test/${item.id}.jpg`])),
+      segments: [{ startSec: 0, endSec: 2, text: 'Une phrase unique.' }],
+    });
+
+    expect(payload.images).toHaveLength(10);
+    expect(payload.images.every((image) => image.detail === 'low')).toBe(true);
+    expect(payload.prompt.match(/Une phrase unique\./gu)).toHaveLength(1);
+    expect(payload.prompt.length).toBeLessThan(4_000);
+  });
+
   it('ajoute la frame 10 comme contexte non cible pour analyser correctement la frame 11', () => {
     const frames = Array.from({ length: 11 }, (_, index) => frame(index + 1));
     const batches = buildOverlappingVisualBatches(frames, 10);

@@ -7,6 +7,7 @@ import {
   assertAnalysisBudget,
   estimatedInputTokens,
 } from '@/lib/video-analysis/budget';
+import { ANALYSIS_PROFILES } from '@/lib/video-analysis/analysis-profiles';
 import { VIDEO_ANALYSIS_BUDGET } from '@/lib/video-analysis/config';
 import {
   estimateProviderUsageCost,
@@ -21,6 +22,49 @@ describe('budget strict du moteur video', () => {
       maxOutputTokens: 100,
       stage: 'visual_analysis',
     })).toBe(4_000);
+  });
+
+  it('autorise les 10 frames basse resolution de la video A sous le budget QA', () => {
+    const reservation = {
+      promptCharacters: 4_000,
+      imageCount: 10,
+      imageDetail: 'low' as const,
+      maxOutputTokens: 2_000,
+      stage: 'visual_analysis',
+      model: 'gpt-4o-mini',
+    };
+    expect(estimatedInputTokens(reservation)).toBe(30_330);
+    expect(() => assertAnalysisBudget(
+      { billableCalls: 1, inputTokens: 0, outputTokens: 0 },
+      reservation,
+      ANALYSIS_PROFILES.qa,
+    )).not.toThrow();
+  });
+
+  it('refuse un payload visuel reellement trop grand', () => {
+    expect(() => assertAnalysisBudget(
+      { billableCalls: 1, inputTokens: 0, outputTokens: 0 },
+      {
+        promptCharacters: 8_000,
+        imageCount: 10,
+        imageDetail: 'low',
+        maxOutputTokens: 2_000,
+        stage: 'visual_analysis',
+        model: 'gpt-4o-mini',
+      },
+      ANALYSIS_PROFILES.qa,
+    )).toThrow('ANALYSIS_TOKEN_BUDGET_EXCEEDED:stage_input');
+  });
+
+  it('additionne une seule fois le texte et les images', () => {
+    expect(estimatedInputTokens({
+      promptCharacters: 4_000,
+      imageCount: 10,
+      imageDetail: 'low',
+      maxOutputTokens: 2_000,
+      stage: 'visual_analysis',
+      model: 'gpt-4o-mini',
+    })).toBe(28_330 + 2_000);
   });
 
   it.each([

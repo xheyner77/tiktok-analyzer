@@ -66,16 +66,6 @@ function transcriptSegments(value: unknown): TranscriptSegmentLike[] {
   });
 }
 
-function transcriptNear(timestampSec: number, segments: TranscriptSegmentLike[]): string {
-  return segments
-    .filter((segment) => segment.startSec <= timestampSec + 2 && segment.endSec >= timestampSec - 2)
-    .map((segment) => segment.text)
-    .join(' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 1_500);
-}
-
 function frameTimestamp(frame: AnalysisArtifactRow): number {
   return Number(frame.start_time);
 }
@@ -202,33 +192,31 @@ async function mapWithConcurrency<T, R>(
   return result;
 }
 
-function batchPrompt(input: {
+export function buildVisualBatchPayload(input: {
   batchId: string;
   targetFrames: AnalysisArtifactRow[];
   contextFrame: AnalysisArtifactRow | null;
   signedUrls: Map<string, string>;
   segments: TranscriptSegmentLike[];
-}): { prompt: string; images: Array<{ dataUrl: string; detail: 'high' }> } {
+}): { prompt: string; images: Array<{ dataUrl: string; detail: 'low' }> } {
   const evidenceFrames = input.contextFrame
     ? [input.contextFrame, ...input.targetFrames]
     : input.targetFrames;
   const catalog = evidenceFrames.map((frame, index) => {
     const timestamp = frameTimestamp(frame);
-    const nearbyTranscript = transcriptNear(timestamp, input.segments);
     const isContext = input.contextFrame?.id === frame.id;
-    return [
-      `${isContext ? 'Image de contexte inter-lot' : `Image cible ${index + (input.contextFrame ? 0 : 1)}`}: evidenceRef=${frame.id}; timestampSec=${timestamp.toFixed(3)}`,
-      isContext
-        ? 'Cette image sert seulement de précédent à la première image cible; ne la retourne pas dans frames.'
-        : 'Retourne exactement une observation pour cette image dans frames.',
-      nearbyTranscript ? `Paroles proches (contexte, pas preuve visuelle): ${nearbyTranscript}` : 'Paroles proches: indisponibles.',
-    ].join('\n');
-  }).join('\n\n');
+    const targetIndex = index + (input.contextFrame ? 0 : 1);
+    return `${isContext ? 'context' : `target:${targetIndex}`}|${frame.id}|${timestamp.toFixed(3)}`;
+  }).join('\n');
+
+  const transcriptCatalog = input.segments.map((segment) => (
+    `${segment.startSec.toFixed(2)}-${segment.endSec.toFixed(2)}|${segment.text.replace(/\s+/g, ' ').trim()}`
+  )).filter((line) => !line.endsWith('|')).join('\n').slice(0, 4_000);
 
   const images = evidenceFrames.map((frame) => {
     const signedUrl = input.signedUrls.get(frame.id);
     if (!signedUrl) throw new Error('VISUAL_FRAME_URL_MISSING');
-    return { dataUrl: signedUrl, detail: 'high' as const };
+    return { dataUrl: signedUrl, detail: 'low' as const };
   });
 
   return {
@@ -245,6 +233,7 @@ function batchPrompt(input: {
       'Regroupe dans persistentTextGroups le même texte resté visible sur plusieurs frames.',
       '',
       catalog,
+      transcriptCatalog ? `\nParoles horodatées (contexte seulement):\n${transcriptCatalog}` : '',
     ].join('\n'),
     images,
   };
@@ -304,7 +293,7 @@ export async function analyzeAllFrames(jobId: string): Promise<VisualAnalysisSte
   const models = configuredProfileModels(analysisProfile, 'visual_analysis');
   const outputs = await mapWithConcurrency(batches, 1, async (batch, index) => {
     const batchId = `visual-batch-${String(index + 1).padStart(2, '0')}`;
-    const prepared = batchPrompt({
+    const prepared = buildVisualBatchPayload({
       batchId,
       targetFrames: batch.targetFrames,
       contextFrame: batch.contextFrame,

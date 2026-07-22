@@ -15,6 +15,8 @@ import {
 const PROMPT_CHARACTERS_PER_TOKEN = 2;
 const ESTIMATED_TOKENS_PER_IMAGE = 1_500;
 
+export type AnalysisImageDetail = 'low' | 'high' | 'auto';
+
 export interface AnalysisBudgetUsage {
   billableCalls: number;
   inputTokens: number;
@@ -26,10 +28,28 @@ export interface AnalysisBudgetUsage {
 export interface AnalysisBudgetReservation {
   promptCharacters: number;
   imageCount: number;
+  imageDetail?: AnalysisImageDetail;
   maxOutputTokens: number;
   stage: string;
   model?: string;
   audioSeconds?: number;
+}
+
+function estimatedTokensPerImage(reservation: AnalysisBudgetReservation): number {
+  const model = reservation.model?.trim().toLowerCase() ?? '';
+  const detail = reservation.imageDetail;
+  if (!detail) return ESTIMATED_TOKENS_PER_IMAGE;
+
+  if (detail === 'low') {
+    if (model === 'gpt-4o-mini') return 2_833;
+    if (model === 'gpt-4o' || model.startsWith('gpt-4.1')) return 85;
+    return 2_833;
+  }
+
+  // Conservative six-tile estimate for the 720x1280 evidence frames.
+  if (model === 'gpt-4o-mini') return 2_833 + 6 * 5_667;
+  if (model === 'gpt-4o' || model.startsWith('gpt-4.1')) return 85 + 6 * 170;
+  return ESTIMATED_TOKENS_PER_IMAGE;
 }
 
 export class AnalysisBudgetExceededError extends Error {
@@ -59,7 +79,7 @@ function isBudgetStage(value: string): value is AnalysisBudgetStage {
 
 export function estimatedInputTokens(reservation: AnalysisBudgetReservation): number {
   return Math.ceil(Math.max(0, reservation.promptCharacters) / PROMPT_CHARACTERS_PER_TOKEN)
-    + Math.max(0, reservation.imageCount) * ESTIMATED_TOKENS_PER_IMAGE;
+    + Math.max(0, reservation.imageCount) * estimatedTokensPerImage(reservation);
 }
 
 export function worstCaseReservationCostUsd(
