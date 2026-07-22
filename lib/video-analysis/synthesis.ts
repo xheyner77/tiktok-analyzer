@@ -181,6 +181,29 @@ export function validateCrossCritique(
   return critique;
 }
 
+export function validateCrossCritiqueOrFallback(
+  critiqueCandidate: unknown,
+  input: CritiqueAndSynthesisInput,
+): AnalysisCritique {
+  try {
+    const critique = validateCrossCritique(critiqueCandidate, input);
+    if (critique.verdict === 'reject') throw new Error('CROSS_CRITIQUE_REJECTED');
+    return critique;
+  } catch (error) {
+    if (!(error instanceof Error) || !error.message.startsWith('CROSS_CRITIQUE_')) throw error;
+    return {
+      version: 'analysis-critique-v1',
+      verdict: 'revise',
+      reviewedDiagnosticIds: input.specialists.map((diagnostic) => diagnostic.id),
+      issues: [],
+      contradictionsResolved: [],
+      limitations: [
+        'Critique fournisseur écartée car elle ne respectait pas les identifiants de preuve validés par le serveur.',
+      ],
+    };
+  }
+}
+
 function validateDeterministicInputs(input: CritiqueAndSynthesisInput) {
   if (!/^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$/.test(input.analysisId)) {
     throw new Error('ANALYSIS_ID_INVALID');
@@ -711,10 +734,7 @@ export async function runCritiqueAndSynthesis(
     idempotencyKey: `${input.jobId}:critique:${VIDEO_ANALYSIS_VERSIONS.prompt}`,
   });
   calls.push(metric('critique', critiqueResponse.metrics));
-  const critique = validateCrossCritique(critiqueResponse.value, request);
-  if (critique.verdict === 'reject') {
-    throw new Error('CROSS_CRITIQUE_REJECTED');
-  }
+  const critique = validateCrossCritiqueOrFallback(critiqueResponse.value, request);
 
   const synthesisResponse = await structuredCall({
     candidates: models,

@@ -17,6 +17,7 @@ import {
   buildFinalAnalysisCandidate,
   runCritiqueAndSynthesis,
   validateCrossCritique,
+  validateCrossCritiqueOrFallback,
   type CritiqueAndSynthesisInput,
   type GeneratedAnalysisNarrative,
 } from '@/lib/video-analysis/synthesis';
@@ -488,6 +489,21 @@ describe('critique croisée et synthèse finale', () => {
         targetIds: ['frame_start'],
       }],
     }, request)).toThrow('CROSS_CRITIQUE_UNRESOLVED_ERROR');
+  });
+
+  it('remplace une critique fournisseur invalide par une limite serveur explicite', () => {
+    const request = requestFixture();
+    const critique = validateCrossCritiqueOrFallback({
+      ...critiqueFixture(),
+      reviewedDiagnosticIds: ['specialist-invented'],
+    }, request);
+
+    expect(critique).toMatchObject({
+      verdict: 'revise',
+      reviewedDiagnosticIds: request.specialists.map((diagnostic) => diagnostic.id),
+      issues: [],
+    });
+    expect(critique.limitations[0]).toContain('identifiants de preuve validés par le serveur');
   });
 
   it('fusionne les blocs déterministes et calcule les scores côté serveur', () => {
