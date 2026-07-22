@@ -14,6 +14,9 @@ export const ANALYSIS_BUDGET_EUR_TO_USD = 1.1418;
 export const ANALYSIS_BUDGET_FX_DATE = '2026-07-21';
 /** Keeps 5% unspent so a static reference rate cannot consume the full EUR envelope. */
 export const ANALYSIS_BUDGET_FX_SAFETY_FACTOR = 0.95;
+export const COMMERCIAL_BUDGET_VERSION = 'commercial-analysis-budget-2026-07-22.2';
+/** First commit carrying period-aware commercial accounting. */
+export const COMMERCIAL_BUDGET_ACCOUNTING_STARTED_AT = '2026-07-22T12:35:30.000Z';
 
 export interface CommercialAnalysisBudget {
   plan: 'free' | 'starter' | 'pro' | 'lifetime';
@@ -29,11 +32,15 @@ export interface CommercialBudgetState extends CommercialAnalysisBudget {
   remainingUsd: number;
   indeterminate: boolean;
   activeReservations: number;
+  historicalNonAttributableJobs: number;
+  historicalUnknownNonAttributableCalls: number;
 }
 
 interface BudgetJobRow {
   id: string;
   status: string;
+  created_at: string;
+  quota_state: string;
   source_metadata: Record<string, unknown> | null;
 }
 
@@ -83,14 +90,45 @@ function finiteNonNegative(value: unknown): number | null {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
 }
 
+function metadataCommercialBudgetVersion(metadata: Record<string, unknown> | null): string | null {
+  const value = metadata?.commercialBudget;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const version = (value as { version?: unknown }).version;
+  return typeof version === 'string' ? version : null;
+}
+
+function isHistoricalNonAttributableJob(job: BudgetJobRow): boolean {
+  const createdAt = Date.parse(job.created_at);
+  const accountingStartedAt = Date.parse(COMMERCIAL_BUDGET_ACCOUNTING_STARTED_AT);
+  return job.status === 'failed'
+    && job.quota_state === 'refunded'
+    && Number.isFinite(createdAt)
+    && createdAt < accountingStartedAt
+    && metadataCommercialBudgetVersion(job.source_metadata) !== COMMERCIAL_BUDGET_VERSION;
+}
+
+function unknownCostMustBlock(call: BudgetCallRow): boolean {
+  return call.status === 'succeeded'
+    || call.billing_status === 'billable'
+    || call.billing_status === 'unknown';
+}
+
 export function calculateCommercialCommitment(input: {
   jobs: readonly BudgetJobRow[];
   calls: readonly BudgetCallRow[];
   currentJobId?: string;
-}): { committedUsd: number; indeterminate: boolean; activeReservations: number } {
+}): {
+  committedUsd: number;
+  indeterminate: boolean;
+  activeReservations: number;
+  historicalNonAttributableJobs: number;
+  historicalUnknownNonAttributableCalls: number;
+} {
   let committedUsd = 0;
   let indeterminate = false;
   let activeReservations = 0;
+  let historicalNonAttributableJobs = 0;
+  let historicalUnknownNonAttributableCalls = 0;
   const callsByJob = new Map<string, BudgetCallRow[]>();
   for (const call of input.calls) {
     if (call.operation === 'models.retrieve') continue;
@@ -101,18 +139,33 @@ export function calculateCommercialCommitment(input: {
 
   for (const job of input.jobs) {
     if (job.id === input.currentJobId) continue;
+    const jobCalls = callsByJob.get(job.id) ?? [];
+    if (isHistoricalNonAttributableJob(job)) {
+      historicalNonAttributableJobs += 1;
+      historicalUnknownNonAttributableCalls += jobCalls.filter((call) => (
+        finiteNonNegative(call.estimated_cost_usd) === null
+      )).length;
+      continue;
+    }
     const terminal = job.status === 'completed' || job.status === 'failed';
     if (!terminal) {
       const profile = getAnalysisProfileFromMetadata(job.source_metadata ?? {});
       committedUsd += profile.maxCostUsd;
       activeReservations += 1;
+      if (jobCalls.some((call) => (
+        call.billing_status !== 'non_billable'
+        && finiteNonNegative(call.estimated_cost_usd) === null
+        && unknownCostMustBlock(call)
+      ))) {
+        indeterminate = true;
+      }
       continue;
     }
-    for (const call of callsByJob.get(job.id) ?? []) {
+    for (const call of jobCalls) {
       if (call.billing_status === 'non_billable') continue;
       const cost = finiteNonNegative(call.estimated_cost_usd);
       if (cost === null) {
-        if (call.status === 'succeeded' || call.billing_status === 'billable' || call.billing_status === 'unknown') {
+        if (unknownCostMustBlock(call)) {
           indeterminate = true;
         }
         continue;
@@ -125,6 +178,8 @@ export function calculateCommercialCommitment(input: {
     committedUsd: Number(committedUsd.toFixed(8)),
     indeterminate,
     activeReservations,
+    historicalNonAttributableJobs,
+    historicalUnknownNonAttributableCalls,
   };
 }
 
@@ -159,7 +214,7 @@ export function canReserveCommercialCost(input: {
 
 export function commercialBudgetSnapshot(state: CommercialBudgetState, economic: boolean) {
   return {
-    version: 'commercial-analysis-budget-2026-07-22.1',
+    version: COMMERCIAL_BUDGET_VERSION,
     plan: state.plan,
     periodBudgetEur: state.periodBudgetEur,
     operationalBudgetUsd: state.operationalBudgetUsd,
@@ -167,6 +222,8 @@ export function commercialBudgetSnapshot(state: CommercialBudgetState, economic:
     fxDate: ANALYSIS_BUDGET_FX_DATE,
     fxSafetyFactor: ANALYSIS_BUDGET_FX_SAFETY_FACTOR,
     committedUsdAtSelection: state.committedUsd,
+    historicalNonAttributableJobs: state.historicalNonAttributableJobs,
+    historicalUnknownNonAttributableCalls: state.historicalUnknownNonAttributableCalls,
     mode: economic ? 'economic' : 'standard',
   };
 }
@@ -181,7 +238,7 @@ export async function readCommercialBudgetState(input: {
   const budget = commercialAnalysisBudget(input.plan);
   const jobsResult = await supabase
     .from('analysis_jobs')
-    .select('id,status,source_metadata')
+    .select('id,status,created_at,quota_state,source_metadata')
     .eq('user_id', input.userId)
     .gte('created_at', input.periodStart)
     .limit(500);

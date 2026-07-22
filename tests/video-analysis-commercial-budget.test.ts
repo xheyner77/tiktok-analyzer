@@ -15,6 +15,27 @@ import {
 } from '@/lib/video-analysis/commercial-budget';
 
 describe('budget commercial glissant des analyses vidéo', () => {
+  const currentJob = (input: {
+    id: string;
+    status: string;
+    quotaState?: string;
+    sourceMetadata?: Record<string, unknown>;
+  }) => ({
+    id: input.id,
+    status: input.status,
+    created_at: '2026-07-22T13:00:00.000Z',
+    quota_state: input.quotaState ?? 'consumed',
+    source_metadata: input.sourceMetadata ?? {},
+  });
+
+  const historicalRefundedJob = (id: string) => ({
+    id,
+    status: 'failed',
+    created_at: '2026-07-22T01:00:00.000Z',
+    quota_state: 'refunded',
+    source_metadata: {},
+  });
+
   it('ne publie que les quatre offres canoniques', () => {
     expect(PUBLIC_PLANS.map((plan) => plan.id)).toEqual(['free', 'starter', 'pro', 'lifetime']);
     expect(PUBLIC_PLANS.some((plan) => ['creator', 'scale'].includes(plan.id))).toBe(false);
@@ -49,30 +70,86 @@ describe('budget commercial glissant des analyses vidéo', () => {
 
   it('compte un appel et ses rejeux exactement une fois', () => {
     const result = calculateCommercialCommitment({
-      jobs: [{ id: 'done', status: 'completed', source_metadata: {} }],
+      jobs: [currentJob({ id: 'done', status: 'completed' })],
       calls: [{
         job_id: 'done', operation: 'responses.parse', status: 'succeeded',
         billing_status: 'billable', estimated_cost_usd: 0.05, replay_count: 1,
       }],
     });
-    expect(result).toEqual({ committedUsd: 0.1, indeterminate: false, activeReservations: 0 });
+    expect(result).toEqual({
+      committedUsd: 0.1,
+      indeterminate: false,
+      activeReservations: 0,
+      historicalNonAttributableJobs: 0,
+      historicalUnknownNonAttributableCalls: 0,
+    });
   });
 
   it('réserve le plafond des autres jobs actifs contre les courses concurrentes', () => {
     const result = calculateCommercialCommitment({
-      jobs: [{
+      jobs: [currentJob({
         id: 'active', status: 'processing',
-        source_metadata: { analysisProfile: analysisProfileSnapshot(ANALYSIS_PROFILES.pro) },
-      }],
+        sourceMetadata: { analysisProfile: analysisProfileSnapshot(ANALYSIS_PROFILES.pro) },
+      })],
       calls: [],
       currentJobId: 'current',
     });
-    expect(result).toEqual({ committedUsd: 0.18, indeterminate: false, activeReservations: 1 });
+    expect(result).toMatchObject({ committedUsd: 0.18, indeterminate: false, activeReservations: 1 });
   });
 
-  it('bloque un coût facturable indéterminé', () => {
+  it('conserve un ancien coût inconnu sans l’imputer ni le convertir en zéro', () => {
+    const call = {
+      job_id: 'legacy', operation: 'responses.parse', status: 'failed',
+      billing_status: 'unknown', estimated_cost_usd: null, replay_count: 0,
+    };
+    const result = calculateCommercialCommitment({
+      jobs: [historicalRefundedJob('legacy')],
+      calls: [call],
+    });
+    expect(call.estimated_cost_usd).toBeNull();
+    expect(result).toEqual({
+      committedUsd: 0,
+      indeterminate: false,
+      activeReservations: 0,
+      historicalNonAttributableJobs: 1,
+      historicalUnknownNonAttributableCalls: 1,
+    });
+  });
+
+  it('exclut du budget courant un ancien job remboursé, y compris son coût connu', () => {
+    const result = calculateCommercialCommitment({
+      jobs: [historicalRefundedJob('legacy-refunded')],
+      calls: [{
+        job_id: 'legacy-refunded', operation: 'responses.parse', status: 'succeeded',
+        billing_status: 'billable', estimated_cost_usd: 0.08, replay_count: 0,
+      }],
+    });
+    expect(result.committedUsd).toBe(0);
+    expect(result.indeterminate).toBe(false);
+    expect(result.historicalNonAttributableJobs).toBe(1);
+  });
+
+  it('bloque toujours un job actif avec un coût fournisseur inconnu', () => {
+    const result = calculateCommercialCommitment({
+      jobs: [currentJob({
+        id: 'active-unknown', status: 'processing', quotaState: 'reserved',
+        sourceMetadata: { analysisProfile: analysisProfileSnapshot(ANALYSIS_PROFILES.qa) },
+      })],
+      calls: [{
+        job_id: 'active-unknown', operation: 'responses.parse', status: 'failed',
+        billing_status: 'unknown', estimated_cost_usd: null, replay_count: 0,
+      }],
+    });
+    expect(result).toMatchObject({
+      committedUsd: ANALYSIS_PROFILES.qa.maxCostUsd,
+      indeterminate: true,
+      activeReservations: 1,
+    });
+  });
+
+  it('bloque un coût facturable indéterminé sur un job courant terminé', () => {
     expect(calculateCommercialCommitment({
-      jobs: [{ id: 'done', status: 'failed', source_metadata: {} }],
+      jobs: [currentJob({ id: 'done', status: 'failed', quotaState: 'refunded' })],
       calls: [{
         job_id: 'done', operation: 'responses.parse', status: 'failed',
         billing_status: 'unknown', estimated_cost_usd: null, replay_count: 0,
@@ -88,6 +165,7 @@ describe('budget commercial glissant des analyses vidéo', () => {
       state: {
         ...budget, committedUsd: 10.75, remainingUsd: 0.0971,
         indeterminate: false, activeReservations: 0,
+        historicalNonAttributableJobs: 0, historicalUnknownNonAttributableCalls: 0,
       },
     }).id).toBe('free');
   });
@@ -97,6 +175,7 @@ describe('budget commercial glissant des analyses vidéo', () => {
     const state = {
       ...budget, committedUsd: 3.2, remainingUsd: 0.05413,
       indeterminate: false, activeReservations: 0,
+      historicalNonAttributableJobs: 0, historicalUnknownNonAttributableCalls: 0,
     };
     expect(canReserveCommercialCost({
       state, currentJobCommittedUsd: 0.04, nextReservationUsd: 0.02,
@@ -115,6 +194,7 @@ describe('budget commercial glissant des analyses vidéo', () => {
       state: {
         ...budget, committedUsd: 0, remainingUsd: budget.operationalBudgetUsd,
         indeterminate: false, activeReservations: 0,
+        historicalNonAttributableJobs: 0, historicalUnknownNonAttributableCalls: 0,
       },
     }).id).toBe('pro');
   });
