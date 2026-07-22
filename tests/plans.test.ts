@@ -33,8 +33,8 @@ describe('plans', () => {
   });
 
   it('does not fallback a Supabase scale alias to free', () => {
-    expect(getPlanLimits('scale').analyses).toBe(Number.POSITIVE_INFINITY);
-    expect(getPlanLimits('scale').hooks).toBe(Number.POSITIVE_INFINITY);
+    expect(getPlanLimits('scale').analyses).toBe(150);
+    expect(getPlanLimits('scale').hooks).toBe(250);
   });
 
   it('does not keep recurring legacy Scale after its subscription ends', () => {
@@ -88,10 +88,10 @@ describe('plans', () => {
     expect(PLAN_LIMITS.free).toBe(3);
     expect(PLAN_LIMITS.starter).toBe(30);
     expect(PLAN_LIMITS.pro).toBe(150);
-    expect(PLAN_LIMITS.lifetime).toBe(Number.POSITIVE_INFINITY);
+    expect(PLAN_LIMITS.lifetime).toBe(150);
     expect(HOOK_LIMITS.starter).toBe(50);
     expect(HOOK_LIMITS.pro).toBe(250);
-    expect(HOOK_LIMITS.lifetime).toBe(Number.POSITIVE_INFINITY);
+    expect(HOOK_LIMITS.lifetime).toBe(250);
     expect(getPlanLimits('pro')).toMatchObject({ analyses: 150, hooks: 250 });
   });
 
@@ -110,7 +110,7 @@ describe('plans', () => {
     expect(activeElite).toBe('pro');
     expect(PLAN_LIMITS[activeElite]).toBe(PLAN_LIMITS.pro);
     expect(HOOK_LIMITS[activeElite]).toBe(HOOK_LIMITS.pro);
-    expect(PLAN_LIMITS[activeElite]).not.toBe(PLAN_LIMITS.lifetime);
+    expect(activeElite).not.toBe('lifetime');
     expect(inactiveElite).toBe('free');
     expect(PLAN_LIMITS[inactiveElite]).toBe(PLAN_LIMITS.free);
   });

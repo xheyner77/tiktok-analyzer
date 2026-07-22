@@ -50,7 +50,7 @@ describe('profils économiques du moteur vidéo', () => {
   it('ignore toute tentative client d’élever un profil dans les métadonnées inconnues', () => {
     expect(getAnalysisProfileFromMetadata({ analysisProfile: { id: 'enterprise' } }).id).toBe('free');
     expect(analysisProfileSnapshot(ANALYSIS_PROFILES.qa)).toEqual({
-      version: 'analysis-economics-2026-07-22.1', id: 'qa', maxCostUsd: 0.25,
+      version: 'analysis-economics-2026-07-22.2', id: 'qa', maxCostUsd: 0.25,
     });
   });
 

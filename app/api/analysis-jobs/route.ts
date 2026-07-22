@@ -1,12 +1,19 @@
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { ensureUserProfile } from '@/lib/auth';
+import { checkAndResetMonthly, ensureUserProfile } from '@/lib/auth';
 import { privateJson, readJsonObject, rejectCrossSiteMutation } from '@/lib/api-route-security';
 import { getSessionVerification } from '@/lib/session';
 import { VIDEO_ANALYSIS_LIMITS, VIDEO_INPUT_MIME_TYPES } from '@/lib/video-analysis/config';
 import { createOrReuseUploadJob } from '@/lib/video-analysis/jobs';
 import { toPublicAnalysisJob } from '@/lib/video-analysis/types';
 import { analysisProfileSnapshot, resolveServerAnalysisProfile } from '@/lib/video-analysis/analysis-profiles';
+import {
+  chooseProfileForCommercialBudget,
+  commercialBudgetPeriodStart,
+  commercialBudgetSnapshot,
+  readCommercialBudgetState,
+} from '@/lib/video-analysis/commercial-budget';
+import { profileWorstCaseCostUsd } from '@/lib/video-analysis/budget';
 
 export const runtime = 'nodejs';
 
@@ -94,19 +101,44 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const profile = await ensureUserProfile({
+  const ensuredProfile = await ensureUserProfile({
     userId: sessionResult.session.userId,
     email: sessionResult.session.email,
   });
-  if (!profile) {
+  if (!ensuredProfile) {
     return privateJson({ error: 'Ton profil est temporairement indisponible.' }, { status: 503 });
   }
 
   try {
-    const analysisProfile = resolveServerAnalysisProfile({
+    const profile = await checkAndResetMonthly(ensuredProfile);
+    const baseAnalysisProfile = resolveServerAnalysisProfile({
       plan: profile.plan,
       userId: sessionResult.session.userId,
     });
+    const commercialState = await readCommercialBudgetState({
+      userId: profile.id,
+      plan: profile.plan,
+      periodStart: commercialBudgetPeriodStart({
+        plan: profile.plan,
+        createdAt: profile.created_at,
+        lastResetAt: profile.last_reset_at,
+      }),
+    });
+    const analysisProfile = chooseProfileForCommercialBudget({
+      baseProfile: baseAnalysisProfile,
+      state: commercialState,
+      analysesUsed: profile.analyses_count,
+    });
+    if (
+      commercialState.indeterminate
+      || commercialState.remainingUsd + Number.EPSILON
+        < profileWorstCaseCostUsd(analysisProfile)
+    ) {
+      return privateJson(
+        { error: 'Le budget d’analyse de ta période est atteint. Aucun appel fournisseur n’a été lancé.' },
+        { status: 429 },
+      );
+    }
     const created = await createOrReuseUploadJob({
       userId: sessionResult.session.userId,
       idempotencyKey: parsed.data.idempotencyKey,
@@ -114,7 +146,13 @@ export async function POST(request: NextRequest) {
       contentType: parsed.data.contentType,
       sizeBytes: parsed.data.sizeBytes,
       creatorContext: parsed.data.creatorContext,
-      sourceMetadata: { analysisProfile: analysisProfileSnapshot(analysisProfile) },
+      sourceMetadata: {
+        analysisProfile: analysisProfileSnapshot(analysisProfile),
+        commercialBudget: commercialBudgetSnapshot(
+          commercialState,
+          analysisProfile.id === 'free' && baseAnalysisProfile.id !== 'free',
+        ),
+      },
     });
 
     return privateJson(

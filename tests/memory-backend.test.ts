@@ -32,7 +32,7 @@ describe('memory backend limits', () => {
     expect(pro.monthlyAnalysesLearned).toBe(150);
     expect(pro.factsPerAnalysis).toBe(10);
     expect(pro.retrievalLimit).toBeGreaterThan(starter.retrievalLimit);
-    expect(lifetime.monthlyAnalysesLearned).toBe(Number.POSITIVE_INFINITY);
+    expect(lifetime.monthlyAnalysesLearned).toBe(150);
     expect(lifetime.maxActiveFacts).toBeGreaterThan(pro.maxActiveFacts);
   });
 

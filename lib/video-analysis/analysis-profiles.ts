@@ -31,7 +31,7 @@ export interface AnalysisStageBudget {
 }
 
 export interface AnalysisProfile {
-  version: 'analysis-economics-2026-07-22.1';
+  version: 'analysis-economics-2026-07-22.2';
   id: AnalysisProfileId;
   maxCostUsd: number;
   maxBillableCalls: number;
@@ -58,9 +58,9 @@ const noCalls = (models: readonly string[]): AnalysisStageBudget => ({
 });
 
 const FREE: AnalysisProfile = Object.freeze({
-  version: 'analysis-economics-2026-07-22.1',
+  version: 'analysis-economics-2026-07-22.2',
   id: 'free',
-  maxCostUsd: 0.15,
+  maxCostUsd: 0.1,
   maxBillableCalls: 9,
   maxInputTokens: 88_000,
   maxOutputTokens: 16_000,
@@ -85,9 +85,9 @@ const FREE: AnalysisProfile = Object.freeze({
 });
 
 const STARTER: AnalysisProfile = Object.freeze({
-  version: 'analysis-economics-2026-07-22.1',
+  version: 'analysis-economics-2026-07-22.2',
   id: 'starter',
-  maxCostUsd: 0.25,
+  maxCostUsd: 0.12,
   maxBillableCalls: 12,
   maxInputTokens: 154_000,
   maxOutputTokens: 26_900,
@@ -112,9 +112,9 @@ const STARTER: AnalysisProfile = Object.freeze({
 });
 
 const PRO: AnalysisProfile = Object.freeze({
-  version: 'analysis-economics-2026-07-22.1',
+  version: 'analysis-economics-2026-07-22.2',
   id: 'pro',
-  maxCostUsd: 0.4,
+  maxCostUsd: 0.18,
   maxBillableCalls: 17,
   maxInputTokens: 266_000,
   maxOutputTokens: 48_200,
@@ -133,13 +133,13 @@ const PRO: AnalysisProfile = Object.freeze({
     specialist_analysis: { maxCalls: 7, maxInputTokensPerCall: 12_000, maxOutputTokensPerCall: 2_500, maxAudioSecondsPerCall: 0, models: ['gpt-4o-mini'] },
     timeline_analysis: { maxCalls: 3, maxInputTokensPerCall: 18_000, maxOutputTokensPerCall: 4_000, maxAudioSecondsPerCall: 0, models: ['gpt-4o-mini'] },
     synthesis_critique: { maxCalls: 1, maxInputTokensPerCall: 22_000, maxOutputTokensPerCall: 2_500, maxAudioSecondsPerCall: 0, models: ['gpt-5.4-mini'] },
-    synthesis: { maxCalls: 1, maxInputTokensPerCall: 60_000, maxOutputTokensPerCall: 5_000, maxAudioSecondsPerCall: 0, models: ['gpt-5.4'] },
+    synthesis: { maxCalls: 1, maxInputTokensPerCall: 40_000, maxOutputTokensPerCall: 5_000, maxAudioSecondsPerCall: 0, models: ['gpt-5.4-mini'] },
     synthesis_repair: { maxCalls: 1, maxInputTokensPerCall: 18_000, maxOutputTokensPerCall: 2_200, maxAudioSecondsPerCall: 0, models: ['gpt-5.4-mini'] },
   }),
 });
 
 const QA: AnalysisProfile = Object.freeze({
-  version: 'analysis-economics-2026-07-22.1',
+  version: 'analysis-economics-2026-07-22.2',
   id: 'qa',
   maxCostUsd: 0.25,
   maxBillableCalls: 9,

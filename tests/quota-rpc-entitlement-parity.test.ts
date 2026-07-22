@@ -115,11 +115,13 @@ describe('quota RPC entitlement parity', () => {
     });
   });
 
-  it('keeps infinite entitlements on the counter-only path', async () => {
-    const rpc = vi.fn(async () => ({ data: null, error: null }));
-    vi.doMock('@/lib/supabase', () => ({
-      supabase: { rpc, from: vi.fn() },
-    }));
+  it('applies the finite Pro guardrail to Lifetime', async () => {
+    const rpc = mockRpcReservation({
+      reservationName: 'reserve_analysis_quota',
+      refundName: 'refund_analysis_quota',
+      used: 1,
+      limitValue: 150,
+    });
     const { reserveAnalysisQuota } = await import('@/lib/auth');
 
     const result = await reserveAnalysisQuota(user({
@@ -127,9 +129,8 @@ describe('quota RPC entitlement parity', () => {
       subscription_status: 'lifetime',
     }));
 
-    expect(result.allowed).toBe(true);
-    expect(result.limit).toBe(Number.POSITIVE_INFINITY);
-    expect(rpc).toHaveBeenCalledWith('increment_analyses_count', { user_id: 'user-quota' });
-    expect(rpc).not.toHaveBeenCalledWith('reserve_analysis_quota', expect.anything());
+    expect(result).toEqual({ allowed: true, used: 1, limit: 150 });
+    expect(rpc).toHaveBeenCalledWith('reserve_analysis_quota', { p_user_id: 'user-quota', p_amount: 1 });
+    expect(rpc).not.toHaveBeenCalledWith('increment_analyses_count', expect.anything());
   });
 });

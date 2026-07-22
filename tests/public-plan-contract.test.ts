@@ -40,8 +40,8 @@ describe('public commercial plan contract', () => {
     expect(getPublicPlan('starter').limits).toMatchObject({ analyses: 30, hooks: 50, reconstructions: 0, history: 30 });
     expect(getPublicPlan('pro').limits).toMatchObject({ analyses: 150, hooks: 250, reconstructions: 30, history: 200 });
     expect(getPublicPlan('lifetime').limits).toMatchObject({
-      analyses: Number.POSITIVE_INFINITY,
-      hooks: Number.POSITIVE_INFINITY,
+      analyses: 150,
+      hooks: 250,
       reconstructions: 30,
       history: 1000,
     });

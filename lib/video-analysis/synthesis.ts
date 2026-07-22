@@ -864,6 +864,13 @@ export async function runCritiqueAndSynthesis(
   // Direct callers predating profiles retain the former full-quality path;
   // production workflows always pass the server-snapshotted profile.
   const analysisProfile = ANALYSIS_PROFILES[input.analysisProfileId ?? 'pro'];
+  const advancedCritiqueRequired = input.analysisProfileId === undefined || (
+    analysisProfile.includeCritique
+    && request.specialists.filter((diagnostic) => (
+      diagnostic.findings.some((finding) => finding.severity === 'high')
+    )).length >= 2
+    && request.timeline.length >= 8
+  );
   const persistCheckpoint = async (value: Pick<SynthesisCheckpoint, 'critique' | 'narrative'>) => {
     await dependencies.persistCheckpoint?.({
       version: 'synthesis-checkpoint-v1',
@@ -877,7 +884,7 @@ export async function runCritiqueAndSynthesis(
 
   let critique = reusableCheckpoint?.critique;
   if (!critique) {
-    if (analysisProfile.includeCritique) {
+    if (advancedCritiqueRequired) {
       try {
         const critiqueResponse = await structuredCall({
           candidates: configuredProfileModels(analysisProfile, 'synthesis_critique'),

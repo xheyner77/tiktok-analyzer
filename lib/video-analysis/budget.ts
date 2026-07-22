@@ -33,12 +33,14 @@ export interface AnalysisBudgetReservation {
 }
 
 export class AnalysisBudgetExceededError extends Error {
-  readonly dimension: 'calls' | 'input' | 'output' | 'stage_calls' | 'stage_input' | 'stage_output' | 'audio' | 'cost' | 'unknown_pricing';
+  readonly dimension: 'calls' | 'input' | 'output' | 'stage_calls' | 'stage_input' | 'stage_output' | 'audio' | 'cost' | 'period_cost' | 'unknown_pricing';
 
   constructor(dimension: AnalysisBudgetExceededError['dimension']) {
     super(dimension === 'unknown_pricing'
       ? 'ANALYSIS_MODEL_PRICE_UNKNOWN'
-      : dimension === 'cost'
+      : dimension === 'period_cost'
+        ? 'ANALYSIS_PERIOD_BUDGET_EXCEEDED'
+        : dimension === 'cost'
         ? 'ANALYSIS_FINANCIAL_BUDGET_EXCEEDED'
         : `ANALYSIS_TOKEN_BUDGET_EXCEEDED:${dimension}`);
     this.name = 'AnalysisBudgetExceededError';
@@ -123,9 +125,15 @@ export function profileWorstCaseCostUsd(profile: AnalysisProfile): number {
 }
 
 /** Planning estimate only: 50% of reserved input, 35% of output, 10% repair rate. */
-export function profileNormalEstimatedCostUsd(profile: AnalysisProfile): number {
+export function profileNormalEstimatedCostUsd(
+  profile: AnalysisProfile,
+  options: { includeConditionalCritique?: boolean } = {},
+): number {
   return Number(Object.entries(profile.stages).reduce((total, [stageName, stage]) => {
     if (!stage.maxCalls) return total;
+    if (stageName === 'synthesis_critique' && options.includeConditionalCritique === false) {
+      return total;
+    }
     const repairProbability = stageName === 'synthesis_repair' ? 0.1 : 1;
     const reservation: AnalysisBudgetReservation = {
       stage: stageName,
@@ -146,7 +154,7 @@ export async function assertRemoteAnalysisBudget(input: {
 }): Promise<void> {
   const { supabase } = await import('@/lib/supabase');
   const [jobResult, callsResult] = await Promise.all([
-    supabase.from('analysis_jobs').select('source_metadata,cost_metrics').eq('id', input.jobId).single(),
+    supabase.from('analysis_jobs').select('user_id,source_metadata,cost_metrics').eq('id', input.jobId).single(),
     supabase.from('analysis_provider_calls')
       .select('operation,stage,model,status,billing_status,input_tokens,output_tokens,replay_count')
       .eq('job_id', input.jobId),
@@ -175,6 +183,35 @@ export async function assertRemoteAnalysisBudget(input: {
     }, profile) * multiplier;
   }
   try {
+    const userResult = await supabase
+      .from('users')
+      .select('plan,last_reset_at,created_at')
+      .eq('id', jobResult.data.user_id)
+      .single();
+    if (userResult.error || !userResult.data) throw new Error('ANALYSIS_COMMERCIAL_BUDGET_READ_FAILED');
+    const {
+      canReserveCommercialCost,
+      commercialBudgetPeriodStart,
+      readCommercialBudgetState,
+    } = await import('./commercial-budget');
+    const commercial = await readCommercialBudgetState({
+      userId: jobResult.data.user_id,
+      plan: userResult.data.plan,
+      periodStart: commercialBudgetPeriodStart({
+        plan: userResult.data.plan,
+        createdAt: userResult.data.created_at,
+        lastResetAt: userResult.data.last_reset_at,
+      }),
+      currentJobId: input.jobId,
+    });
+    const nextCost = worstCaseReservationCostUsd(input.reservation, profile);
+    if (!canReserveCommercialCost({
+      state: commercial,
+      currentJobCommittedUsd: reservedCostUsd,
+      nextReservationUsd: nextCost,
+    })) {
+      throw new AnalysisBudgetExceededError('period_cost');
+    }
     assertAnalysisBudget({
       billableCalls: billableRows.reduce((sum, row) => sum + 1 + nonNegativeInteger(row.replay_count), 0),
       inputTokens: succeeded.reduce((sum, row) => sum + nonNegativeInteger(row.input_tokens), 0),

@@ -133,9 +133,9 @@ export async function getUserById(id: string): Promise<UserProfile | null> {
 export async function checkAndResetMonthly(user: UserProfile): Promise<UserProfile> {
   const tier = getEffectivePlan(user);
 
-  // Free is a lifetime trial (3 analyses total), not a monthly allowance.
-  // Lifetime is intentionally not reset either.
-  if (tier === 'free' || tier === 'lifetime') return user;
+  // Free is a lifetime trial. Lifetime uses the same monthly anti-abuse
+  // window as Pro even though its commercial payment is one-time.
+  if (tier === 'free') return user;
 
   const now = new Date();
   const nextReset = getNextMonthlyResetAt(user.last_reset_at);
