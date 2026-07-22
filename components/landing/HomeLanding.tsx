@@ -1711,61 +1711,17 @@ function ProductHeroStage() {
         transition={{ duration: 5.8, repeat: Infinity, ease: 'easeInOut' }}
       >
         <div className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/45 to-transparent" aria-hidden />
-        <div className="relative overflow-hidden rounded-[1.3rem] bg-[#050508] p-3 text-left sm:rounded-[1.8rem] sm:p-6">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_0%,rgba(232,121,249,0.16),transparent_34%),radial-gradient(circle_at_88%_10%,rgba(34,211,238,0.12),transparent_30%)]" aria-hidden />
-          <div className="relative flex flex-col gap-3">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.07] pb-3">
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200/70">Exemple illustratif de diagnostic</p>
-                <p className="mt-1 text-sm font-black text-white sm:text-base">De la vidéo au plan de repost</p>
-              </div>
-              <span className="rounded-full border border-emerald-300/15 bg-emerald-300/[0.07] px-2.5 py-1 text-[10px] font-black text-emerald-100">
-                Aucune métrique TikTok simulée
-              </span>
-            </div>
-
-            <div className="grid gap-3 md:grid-cols-[0.8fr_1.1fr_1.1fr]">
-              <section className="rounded-2xl border border-white/[0.08] bg-white/[0.035] p-3 sm:p-4" aria-label="Vidéo source">
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-gray-500">Vidéo source</p>
-                <div className="mt-3 grid aspect-video place-items-center rounded-xl border border-dashed border-white/[0.13] bg-black/25 text-center">
-                  <div>
-                    <span className="mx-auto grid h-8 w-8 place-items-center rounded-full border border-vn-fuchsia/20 bg-vn-fuchsia/10 text-sm text-fuchsia-100" aria-hidden>▶</span>
-                    <p className="mt-2 text-xs font-black text-gray-200">Ton fichier ou lien TikTok</p>
-                    <p className="mt-1 text-[10px] text-gray-500">Les données absentes restent « — »</p>
-                  </div>
-                </div>
-              </section>
-
-              <section className="rounded-2xl border border-vn-fuchsia/18 bg-vn-fuchsia/[0.055] p-3 sm:p-4" aria-label="Décisions de montage">
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-fuchsia-100/70">Diagnostic</p>
-                <div className="mt-3 grid gap-2">
-                  {[
-                    ['Couper', 'l’intro avant la promesse'],
-                    ['Avancer', 'la preuve dans les premières secondes'],
-                    ['Réécrire', 'le hook pour annoncer l’enjeu'],
-                    ['Garder', 'le passage qui démontre le résultat'],
-                  ].map(([action, detail]) => (
-                    <div key={action} className="rounded-xl border border-white/[0.075] bg-black/20 px-3 py-2">
-                      <p className="text-[10px] font-black uppercase tracking-[0.12em] text-cyan-200">{action}</p>
-                      <p className="mt-0.5 text-xs font-semibold leading-5 text-gray-300">{detail}</p>
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              <section className="rounded-2xl border border-cyan-300/16 bg-cyan-300/[0.045] p-3 sm:p-4" aria-label="Plan de repost V2">
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-100/70">V2 à tester</p>
-                <div className="mt-3 grid gap-2">
-                  {planSteps.map((step, index) => (
-                    <div key={step} className="flex items-center gap-2 rounded-xl border border-white/[0.075] bg-black/20 px-3 py-2.5">
-                      <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-cyan-300/10 text-[10px] font-black text-cyan-100">{index + 1}</span>
-                      <p className="text-xs font-black text-gray-200">{step}</p>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            </div>
-          </div>
+        <div className="relative aspect-[3/2] overflow-hidden rounded-[1.3rem] bg-[#050508] sm:rounded-[1.8rem]">
+          <img
+            src="/hero-dashboard-complete.png"
+            alt="Aperçu illustratif du dashboard Viralynz avec rétention, diagnostics et recommandations"
+            className="h-full w-full object-contain object-center"
+            loading="eager"
+            decoding="async"
+          />
+          <span className="absolute bottom-2 right-2 rounded-full border border-white/[0.14] bg-black/75 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-white/80 backdrop-blur-md sm:bottom-4 sm:right-4 sm:text-[10px]">
+            Aperçu illustratif · données de démonstration
+          </span>
         </div>
       </motion.div>
     </motion.div>
