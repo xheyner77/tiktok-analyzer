@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion';
 import Link from 'next/link';
 import PremiumFeaturesSection from '@/components/landing/FeaturesSection';
@@ -222,10 +222,38 @@ function ArrowIcon({ className = 'h-4 w-4' }: { className?: string }) {
 }
 
 function ProductPositioningBadge() {
+  const [userCount, setUserCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    fetch('/api/users/count', { signal: controller.signal })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload: { count?: unknown; available?: unknown } | null) => {
+        if (payload?.available === true && typeof payload.count === 'number' && Number.isFinite(payload.count)) {
+          setUserCount(Math.max(0, Math.floor(payload.count)));
+        }
+      })
+      .catch(() => undefined);
+
+    return () => controller.abort();
+  }, []);
+
   return (
-    <div className="mb-3 inline-flex max-w-[21rem] items-center justify-center gap-2 rounded-full border border-white/[0.1] bg-white/[0.045] px-3.5 py-1.5 text-[12px] font-bold text-gray-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_18px_45px_-32px_rgba(34,211,238,0.55)] sm:mb-5 sm:max-w-none sm:px-4">
-      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-300 shadow-[0_0_14px_rgba(34,211,238,0.85)]" aria-hidden />
-      <span><span className="font-black text-white">Coach de repost</span> · diagnostic → décisions de montage</span>
+    <div className="mb-3 inline-flex max-w-[22rem] items-center justify-center gap-2.5 rounded-full border border-white/[0.11] bg-white/[0.05] px-3 py-1.5 text-[12px] font-bold text-gray-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_18px_45px_-30px_rgba(168,85,247,0.65)] backdrop-blur-xl sm:mb-5 sm:max-w-none sm:px-4">
+      <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-fuchsia-300/20 bg-gradient-to-br from-fuchsia-400/20 to-cyan-300/15 text-fuchsia-200 shadow-[0_0_18px_rgba(217,70,239,0.25)]" aria-hidden>
+        <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none">
+          <path d="m4 8.2 2.45 2.45L12.2 4.9" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span aria-live="polite">
+        {userCount !== null ? (
+          <><span className="font-black text-white">+{userCount.toLocaleString('fr-FR')}</span> créateurs déjà inscrits</>
+        ) : (
+          <><span className="font-black text-white">Des créateurs exigeants</span> ont déjà rejoint Viralynz</>
+        )}
+      </span>
+      <span className="hidden rounded-full border border-cyan-300/15 bg-cyan-300/[0.07] px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.16em] text-cyan-200/80 sm:inline">En direct</span>
     </div>
   );
 }
