@@ -639,7 +639,7 @@ function FakeQrCode() {
     >
       <div className="relative h-full w-full overflow-hidden rounded-[1.1rem] bg-white">
         <svg
-          className="h-full w-full scale-105 opacity-40 blur-[6px]"
+          className="h-full w-full scale-[1.03] opacity-65 blur-[2.5px]"
           viewBox={`0 0 ${fakeQrViewBox} ${fakeQrViewBox}`}
           shapeRendering="crispEdges"
           aria-hidden
@@ -649,12 +649,7 @@ function FakeQrCode() {
             <rect key={`${x}-${y}`} x={x} y={y} width="1" height="1" fill="#111111" />
           ))}
         </svg>
-        <div className="pointer-events-none absolute inset-0 bg-white/45 backdrop-blur-[2px]" aria-hidden />
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden>
-          <div className="rounded-full border border-black/10 bg-white/82 px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.16em] text-[#111827] shadow-[0_14px_42px_-28px_rgba(15,23,42,0.8)]">
-            Applications
-          </div>
-        </div>
+        <div className="pointer-events-none absolute inset-0 bg-white/14 backdrop-blur-[0.75px]" aria-hidden />
         <div className="pointer-events-none absolute inset-0 rounded-[1.1rem] ring-1 ring-black/10" aria-hidden />
       </div>
     </motion.div>
