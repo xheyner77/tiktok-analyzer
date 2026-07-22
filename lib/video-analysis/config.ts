@@ -59,20 +59,16 @@ function configuredCandidates(name: string, fallbacks: readonly string[]): reado
 export function getVideoAnalysisModelConfig(): VideoAnalysisModelConfig {
   return {
     synthesisCandidates: configuredCandidates('OPENAI_ANALYSIS_MODELS', [
-      'gpt-5.6',
-      'gpt-5.4',
-      'gpt-4o',
-      'gpt-4o-mini',
+      'gpt-5.4-mini',
     ]),
     extractionCandidates: configuredCandidates('OPENAI_EXTRACTION_MODELS', [
-      'gpt-4o',
       'gpt-4o-mini',
     ]),
     specialistCandidates: configuredCandidates('OPENAI_SPECIALIST_MODELS', [
       'gpt-4o-mini',
       'gpt-4o',
     ]),
-    transcriptionPrimary: process.env.OPENAI_TRANSCRIPTION_MODEL?.trim() || 'gpt-4o-transcribe',
+    transcriptionPrimary: process.env.OPENAI_TRANSCRIPTION_MODEL?.trim() || 'whisper-1',
     transcriptionAlignment: process.env.OPENAI_ALIGNMENT_MODEL?.trim() || 'whisper-1',
   };
 }

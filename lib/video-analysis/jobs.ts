@@ -311,6 +311,7 @@ export async function createOrReuseUploadJob(input: {
   contentType: string;
   sizeBytes: number;
   creatorContext: Record<string, unknown>;
+  sourceMetadata?: Record<string, unknown>;
 }): Promise<{ job: AnalysisJobRow; uploadToken: string | null; reused: boolean }> {
   const existing = await supabase
     .from('analysis_jobs')
@@ -355,6 +356,7 @@ export async function createOrReuseUploadJob(input: {
         content_type: input.contentType,
         size_bytes: input.sizeBytes,
         creator_context: input.creatorContext,
+        source_metadata: input.sourceMetadata ?? {},
       })
       .select(JOB_COLUMNS)
       .single();

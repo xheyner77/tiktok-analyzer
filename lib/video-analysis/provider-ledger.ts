@@ -111,6 +111,12 @@ export const DEFAULT_OPENAI_PRICING_CATALOG: ProviderPricingCatalog = Object.fre
       cachedInputUsdPerMillion: 0.25,
       outputUsdPerMillion: 15,
     }),
+    'gpt-5.4-mini': Object.freeze({
+      billingUnit: 'tokens' as const,
+      inputUsdPerMillion: 0.75,
+      cachedInputUsdPerMillion: 0.075,
+      outputUsdPerMillion: 4.5,
+    }),
     'gpt-4o': Object.freeze({
       billingUnit: 'tokens' as const,
       inputUsdPerMillion: 2.5,
@@ -127,6 +133,13 @@ export const DEFAULT_OPENAI_PRICING_CATALOG: ProviderPricingCatalog = Object.fre
       billingUnit: 'tokens' as const,
       inputUsdPerMillion: 2.5,
       outputUsdPerMillion: 10,
+      audioUsdPerMinute: 0.006,
+    }),
+    'gpt-4o-mini-transcribe': Object.freeze({
+      billingUnit: 'tokens' as const,
+      inputUsdPerMillion: 1.25,
+      outputUsdPerMillion: 5,
+      audioUsdPerMinute: 0.003,
     }),
     'whisper-1': Object.freeze({
       billingUnit: 'audio_seconds' as const,
@@ -398,7 +411,7 @@ export function estimateProviderUsageCost(
     };
   }
 
-  if (pricing.billingUnit === 'audio_seconds') {
+  if (usage.kind === 'audio_seconds' && pricing.audioUsdPerMinute !== undefined) {
     if (usage.audioSeconds === null || pricing.audioUsdPerMinute === undefined) {
       return { priceCatalogVersion: catalog.version, estimatedCostUsd: null, missingPricing: true };
     }
@@ -453,8 +466,12 @@ export function inferProviderLedgerContext(input: {
         ? 'timeline_analysis'
         : lower.includes(':transcript') || lower.includes(':alignment')
           ? 'transcription'
-          : lower.includes(':critique:') || lower.includes(':synthesis')
-            ? 'synthesis'
+          : lower.includes(':critique:')
+            ? 'synthesis_critique'
+            : lower.includes(':repair:')
+              ? 'synthesis_repair'
+              : lower.includes(':synthesis')
+                ? 'synthesis'
             : 'provider';
   return {
     jobId,

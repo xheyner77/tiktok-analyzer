@@ -5,7 +5,7 @@ import type { ResponseInputContent } from 'openai/resources/responses/responses'
 import type { z } from 'zod';
 import { RetryableError } from 'workflow';
 import { VIDEO_ANALYSIS_LIMITS } from './config';
-import { assertRemoteAnalysisBudget } from './budget';
+import { assertRemoteAnalysisBudget, type AnalysisBudgetReservation } from './budget';
 import {
   beginProviderAttempt,
   estimateProviderUsageCost,
@@ -53,6 +53,8 @@ export interface ProviderRetryOptions<T> {
   sleep?: (milliseconds: number) => Promise<void>;
   /** Injectable ledger I/O used by the replay regression test. */
   ledgerDriver?: ProviderLedgerDriver;
+  /** Full pessimistic reservation checked before every provider attempt/replay. */
+  budgetReservation?: AnalysisBudgetReservation;
 }
 
 type FinishProviderAttemptInput = Parameters<typeof finishProviderAttempt>[0];
@@ -158,15 +160,10 @@ export async function withProviderRetry<T>(
   const maxRetries = options.maxRetries ?? VIDEO_ANALYSIS_LIMITS.maxRetriesPerProviderCall;
   const driver = options.ledgerDriver ?? DEFAULT_LEDGER_DRIVER;
   while (true) {
-    if (options.ledger && !options.ledgerDriver) {
+    if (options.ledger && options.budgetReservation && !options.ledgerDriver) {
       await assertRemoteAnalysisBudget({
         jobId: options.ledger.jobId,
-        reservation: {
-          promptCharacters: 0,
-          imageCount: 0,
-          maxOutputTokens: 0,
-          stage: options.ledger.stage,
-        },
+        reservation: options.budgetReservation,
       });
     }
     const handle = options.ledger
@@ -192,6 +189,12 @@ export async function withProviderRetry<T>(
       let replayHandle = handle;
       while (true) {
         assertProviderReplayLease(replayHandle);
+        if (options.ledger && options.budgetReservation && !options.ledgerDriver) {
+          await assertRemoteAnalysisBudget({
+            jobId: options.ledger.jobId,
+            reservation: options.budgetReservation,
+          });
+        }
         const replayStartedAt = Date.now();
         let value: T;
         try {
@@ -433,17 +436,6 @@ export async function parseStructuredResponse<Schema extends z.ZodType>(input: {
     const startedAt = Date.now();
 
     try {
-      if (ledger) {
-        await assertRemoteAnalysisBudget({
-          jobId: ledger.jobId,
-          reservation: {
-            promptCharacters: input.prompt.length + input.instructions.length,
-            imageCount: input.images?.length ?? 0,
-            maxOutputTokens: input.maxOutputTokens ?? 8_000,
-            stage: ledger.stage,
-          },
-        });
-      }
       const request = await withProviderRetry(
         () => client.responses.parse(
           {
@@ -465,6 +457,13 @@ export async function parseStructuredResponse<Schema extends z.ZodType>(input: {
           ledger: ledger ? { ...ledger, model: available } : null,
           usage: (response) => providerUsageFromUnknown(response.usage),
           maxRetries: input.maxRetries,
+          budgetReservation: ledger ? {
+            promptCharacters: input.prompt.length + input.instructions.length,
+            imageCount: input.images?.length ?? 0,
+            maxOutputTokens: input.maxOutputTokens ?? 8_000,
+            stage: ledger.stage,
+            model: available,
+          } : undefined,
         },
       );
       const parsed = request.value.output_parsed;

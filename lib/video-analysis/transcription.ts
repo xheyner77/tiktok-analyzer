@@ -4,6 +4,7 @@ import type { TranscriptionVerbose } from 'openai/resources/audio/transcriptions
 import { RetryableError } from 'workflow';
 import type { Transcription } from '@/lib/analysis-engine/index';
 import { getVideoAnalysisModelConfig } from './config';
+import { ANALYSIS_PROFILES, configuredProfileModels, type AnalysisProfileId } from './analysis-profiles';
 import {
   getVideoOpenAIClient,
   withProviderRetry,
@@ -201,6 +202,7 @@ export async function transcribeCompleteAudio(input: {
   expectedLanguage?: string;
   idempotencyKey?: string;
   audioDurationSeconds?: number;
+  analysisProfileId?: AnalysisProfileId;
 }): Promise<{ transcription: Transcription; metrics: TranscriptionMetrics }> {
   if (!input.hasAudio) {
     return {
@@ -222,6 +224,80 @@ export async function transcribeCompleteAudio(input: {
   }
 
   const client = getVideoOpenAIClient();
+  const analysisProfile = input.analysisProfileId
+    ? ANALYSIS_PROFILES[input.analysisProfileId]
+    : null;
+  if (analysisProfile?.singlePassTranscription) {
+    const startedAt = Date.now();
+    const model = configuredProfileModels(analysisProfile, 'transcription')[0];
+    const callKey = input.idempotencyKey
+      ? `${input.idempotencyKey}:transcript:${model}`.slice(0, 240)
+      : undefined;
+    const call = await withProviderRetry(
+      () => client.audio.transcriptions.create({
+        file: createReadStream(input.audioPath),
+        model,
+        response_format: 'verbose_json',
+        timestamp_granularities: ['segment', 'word'],
+      }, callKey ? { idempotencyKey: callKey } : undefined),
+      {
+        ledger: inferProviderLedgerContext({
+          idempotencyKey: callKey,
+          operation: 'audio.transcriptions.create',
+          model,
+          fallbackIndex: 0,
+          billable: true,
+        }),
+        usage: (response) => providerUsageFromUnknown(response.usage, input.audioDurationSeconds),
+        maxRetries: analysisProfile.maxProviderRetries,
+        budgetReservation: callKey ? {
+          promptCharacters: 0,
+          imageCount: 0,
+          maxOutputTokens: 0,
+          stage: 'transcription',
+          model,
+          audioSeconds: input.audioDurationSeconds,
+        } : undefined,
+      },
+    );
+    const verbose = call.value as TranscriptionVerbose;
+    const aligned = buildAlignedContent(verbose);
+    const normalizedText = normalizeTranscriptText(
+      verbose.text || aligned.segments.map((segment) => segment.text).join(' '),
+    );
+    const tokens = usageTokens(verbose.usage);
+    const metrics: TranscriptionMetrics = {
+      models: [model], providerCalls: 1, inputTokens: tokens.input,
+      outputTokens: tokens.output, retries: call.retries,
+      durationMs: Date.now() - startedAt, providerDurationMs: call.providerDurationMs,
+    };
+    if (!normalizedText && aligned.words.length === 0 && aligned.segments.length === 0) {
+      return {
+        transcription: { status: 'unavailable', reasonCode: 'no_speech_detected', reason: 'Aucune parole exploitable nâ€™a été détectée sur la piste audio.' },
+        metrics,
+      };
+    }
+    const rawLanguage = typeof verbose.language === 'string' && verbose.language.trim()
+      ? verbose.language.trim().slice(0, 40) : null;
+    const languageCode = normalizeDetectedLanguageCode(rawLanguage);
+    return {
+      transcription: {
+        status: 'available', source: 'openai', model,
+        timingPrecision: aligned.words.length ? 'word' : aligned.segments.length ? 'segment' : 'none',
+        raw: { text: verbose.text, ...(rawLanguage ? { language: rawLanguage } : {}) },
+        normalized: {
+          text: normalizedText,
+          language: languageCode
+            ? { status: 'measured', code: languageCode, method: model }
+            : { status: 'unavailable', reason: 'Le fournisseur nâ€™a pas renvoyé de langue fiable.' },
+          segments: aligned.segments,
+          words: aligned.words,
+        },
+        generatedAt: new Date().toISOString(),
+      },
+      metrics,
+    };
+  }
   const config = getVideoAnalysisModelConfig();
   const startedAt = Date.now();
   let primaryText = '';

@@ -16,11 +16,8 @@ import {
   type SpecialistDiagnostic,
   type TimelineSegment,
 } from '@/lib/analysis-engine/index';
-import {
-  VIDEO_ANALYSIS_BUDGET,
-  VIDEO_ANALYSIS_VERSIONS,
-  getVideoAnalysisModelConfig,
-} from './config';
+import { VIDEO_ANALYSIS_VERSIONS } from './config';
+import { ANALYSIS_PROFILES, configuredProfileModels, type AnalysisProfileId } from './analysis-profiles';
 import type { DeterministicEvidenceBundle } from './evidence';
 import {
   SYNTHESIS_PROMPT_MAX_CHARACTERS,
@@ -69,6 +66,7 @@ export interface CritiqueAndSynthesisInput {
   creatorMemoryContext?: string;
   /** Kept injectable so a durable retry can preserve one generation timestamp. */
   generatedAt?: string;
+  analysisProfileId?: AnalysisProfileId;
 }
 
 export type SynthesisStage = 'critique' | 'synthesis' | 'repair';
@@ -560,7 +558,6 @@ const REPAIR_INSTRUCTIONS = [
 ].join('\n');
 
 // Must remain valid for every configured fallback, including GPT-4o/4o-mini.
-const MAX_SYNTHESIS_OUTPUT_TOKENS = VIDEO_ANALYSIS_BUDGET.maxSynthesisOutputTokens;
 const SYNTHESIS_PROVIDER_TIMEOUT_MS = 240_000;
 
 function synthesisContext(
@@ -864,7 +861,9 @@ export async function runCritiqueAndSynthesis(
   if (!Number.isFinite(Date.parse(generatedAt))) throw new Error('ANALYSIS_GENERATED_AT_INVALID');
   const startedAt = Date.now();
   const calls: SynthesisCallMetric[] = [...(reusableCheckpoint?.calls ?? [])];
-  const models = getVideoAnalysisModelConfig().synthesisCandidates;
+  // Direct callers predating profiles retain the former full-quality path;
+  // production workflows always pass the server-snapshotted profile.
+  const analysisProfile = ANALYSIS_PROFILES[input.analysisProfileId ?? 'pro'];
   const persistCheckpoint = async (value: Pick<SynthesisCheckpoint, 'critique' | 'narrative'>) => {
     await dependencies.persistCheckpoint?.({
       version: 'synthesis-checkpoint-v1',
@@ -878,18 +877,36 @@ export async function runCritiqueAndSynthesis(
 
   let critique = reusableCheckpoint?.critique;
   if (!critique) {
-    const critiqueResponse = await structuredCall({
-      candidates: models,
-      schema: AnalysisCritiqueSchema,
-      schemaName: 'viralynz_cross_critique',
-      instructions: CRITIQUE_INSTRUCTIONS,
-      prompt: buildCritiquePrompt(request),
-      maxOutputTokens: 4_000,
-      maxRetries: VIDEO_ANALYSIS_BUDGET.maxProviderRetries,
-      idempotencyKey: `${input.jobId}:critique:${VIDEO_ANALYSIS_VERSIONS.prompt}`,
-    });
-    calls.push(metric('critique', critiqueResponse.metrics));
-    critique = validateCrossCritiqueOrFallback(critiqueResponse.value, request);
+    if (analysisProfile.includeCritique) {
+      try {
+        const critiqueResponse = await structuredCall({
+          candidates: configuredProfileModels(analysisProfile, 'synthesis_critique'),
+          schema: AnalysisCritiqueSchema,
+          schemaName: 'viralynz_cross_critique',
+          instructions: CRITIQUE_INSTRUCTIONS,
+          prompt: buildCritiquePrompt(request),
+          maxOutputTokens: analysisProfile.stages.synthesis_critique.maxOutputTokensPerCall,
+          maxRetries: analysisProfile.maxProviderRetries,
+          idempotencyKey: `${input.jobId}:critique:${VIDEO_ANALYSIS_VERSIONS.prompt}`,
+        });
+        calls.push(metric('critique', critiqueResponse.metrics));
+        critique = validateCrossCritiqueOrFallback(critiqueResponse.value, request);
+      } catch {
+        critique = {
+          version: 'analysis-critique-v1', verdict: 'revise',
+          reviewedDiagnosticIds: request.specialists.map((diagnostic) => diagnostic.id),
+          issues: [], contradictionsResolved: [],
+          limitations: ['Critique fournisseur indisponible; synthèse limitée aux preuves validées côté serveur.'],
+        };
+      }
+    } else {
+      critique = {
+        version: 'analysis-critique-v1', verdict: 'pass',
+        reviewedDiagnosticIds: request.specialists.map((diagnostic) => diagnostic.id),
+        issues: [], contradictionsResolved: [],
+        limitations: ['Critique fournisseur non exécutée conformément au profil économique sélectionné.'],
+      };
+    }
     await persistCheckpoint({ critique });
   }
 
@@ -898,12 +915,12 @@ export async function runCritiqueAndSynthesis(
   if (!narrative) {
     try {
       const synthesisResponse = await structuredCall({
-        candidates: models,
+        candidates: configuredProfileModels(analysisProfile, 'synthesis'),
         schema: GeneratedAnalysisNarrativeSchema,
         schemaName: 'viralynz_final_narrative',
         instructions: SYNTHESIS_INSTRUCTIONS,
         prompt: buildSynthesisPrompt(request, critique),
-        maxOutputTokens: MAX_SYNTHESIS_OUTPUT_TOKENS,
+        maxOutputTokens: analysisProfile.stages.synthesis.maxOutputTokensPerCall,
         timeoutMs: SYNTHESIS_PROVIDER_TIMEOUT_MS,
         maxRetries: 0,
         idempotencyKey: `${input.jobId}:synthesis:${VIDEO_ANALYSIS_VERSIONS.prompt}`,
@@ -925,16 +942,16 @@ export async function runCritiqueAndSynthesis(
   let quality = validateAnalysisQuality(result);
   let repaired = false;
 
-  if (!quality.validForPersistence && !fallbackUsed && VIDEO_ANALYSIS_BUDGET.maxRepairs > 0) {
+  if (!quality.validForPersistence && !fallbackUsed && analysisProfile.maxRepairs > 0) {
     try {
       const keys = new Set(repairKeys(quality));
       const repairResponse = await structuredCall({
-        candidates: models,
+        candidates: configuredProfileModels(analysisProfile, 'synthesis_repair'),
         schema: GeneratedAnalysisNarrativePatchSchema,
         schemaName: 'viralynz_repaired_narrative_fields',
         instructions: REPAIR_INSTRUCTIONS,
         prompt: repairPrompt({ request, critique, previous: narrative, quality }),
-        maxOutputTokens: VIDEO_ANALYSIS_BUDGET.maxRepairOutputTokens,
+        maxOutputTokens: analysisProfile.stages.synthesis_repair.maxOutputTokensPerCall,
         timeoutMs: SYNTHESIS_PROVIDER_TIMEOUT_MS,
         maxRetries: 0,
         idempotencyKey: `${input.jobId}:synthesis-repair:${VIDEO_ANALYSIS_VERSIONS.prompt}`,

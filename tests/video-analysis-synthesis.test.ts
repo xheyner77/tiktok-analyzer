@@ -555,8 +555,8 @@ describe('critique croisée et synthèse finale', () => {
       'job_123:synthesis-repair:video-coach-2026-07-13.1',
     ]);
     expect(calls.slice(1)).toEqual(expect.arrayContaining([
-      expect.objectContaining({ maxOutputTokens: 22_000, timeoutMs: 240_000, maxRetries: 0 }),
       expect.objectContaining({ maxOutputTokens: 5_000, timeoutMs: 240_000, maxRetries: 0 }),
+      expect.objectContaining({ maxOutputTokens: 2_200, timeoutMs: 240_000, maxRetries: 0 }),
     ]));
     expect(JSON.stringify(response.metrics)).not.toContain('Optimise ton contenu');
   });

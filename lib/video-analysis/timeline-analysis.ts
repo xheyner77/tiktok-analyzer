@@ -2,7 +2,7 @@ import 'server-only';
 import { FatalError } from 'workflow';
 import { TimelineSegmentSchema, type TimelineSegment } from '@/lib/analysis-engine/index';
 import { listJobArtifacts } from './artifacts';
-import { getVideoAnalysisModelConfig } from './config';
+import { configuredProfileModels, getAnalysisProfileFromMetadata } from './analysis-profiles';
 import {
   buildFrameObservationCatalog,
   buildKnownEvidenceSet,
@@ -278,6 +278,7 @@ export async function analyzeCompleteTimeline(jobId: string): Promise<TimelineAn
 
   await updateJobStage({ jobId, status: 'segment_analysis', progress: 73 });
   job = await getAnalysisJobForWorkflow(jobId);
+  const analysisProfile = getAnalysisProfileFromMetadata(job.source_metadata);
   const frames = await listJobArtifacts(jobId, 'frame');
   const transcript = transcriptFromJob(job);
   const durationSec = Number(job.source_metadata.durationSeconds);
@@ -289,6 +290,7 @@ export async function analyzeCompleteTimeline(jobId: string): Promise<TimelineAn
     frames: frames.map((frame) => ({ id: frame.id, timestampSec: Number(frame.start_time) })),
     sceneCuts: times.sceneCuts,
     silenceBoundaries: times.silenceBoundaries,
+    maxSegments: analysisProfile.maxTimelineSegments,
   });
   if (!timelineCoversDuration(specs, durationSec)) throw new Error('TIMELINE_SPEC_COVERAGE_FAILED');
 
@@ -329,7 +331,7 @@ export async function analyzeCompleteTimeline(jobId: string): Promise<TimelineAn
       ),
     };
     const response = await parseStructuredResponse({
-      candidates: getVideoAnalysisModelConfig().extractionCandidates,
+      candidates: configuredProfileModels(analysisProfile, 'timeline_analysis'),
       schema: TimelineAnalysisChunkSchema,
       schemaName: 'viralynz_timeline_chunk',
       instructions: TIMELINE_INSTRUCTIONS,
@@ -339,8 +341,8 @@ export async function analyzeCompleteTimeline(jobId: string): Promise<TimelineAn
         'Les exactSegments contiennent le transcript réel déjà associé à chaque plage. Ne le paraphrase pas dans transcript.text.',
         safeJsonForPrompt(promptContext),
       ].join('\n'),
-      maxOutputTokens: 6_000,
-      maxRetries: 1,
+      maxOutputTokens: analysisProfile.stages.timeline_analysis.maxOutputTokensPerCall,
+      maxRetries: analysisProfile.maxProviderRetries,
       idempotencyKey: `${job.id}:timeline:${index + 1}`,
     });
     calls.push(response.metrics);

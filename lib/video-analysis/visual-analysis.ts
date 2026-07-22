@@ -6,7 +6,7 @@ import {
   updateArtifactMetadataBatch,
   type AnalysisArtifactRow,
 } from './artifacts';
-import { getVideoAnalysisModelConfig, VIDEO_ANALYSIS_LIMITS } from './config';
+import { getAnalysisProfileFromMetadata, configuredProfileModels } from './analysis-profiles';
 import {
   VisualBatchObservationSchema,
   type VisualBatchObservation,
@@ -293,14 +293,15 @@ export async function analyzeAllFrames(jobId: string): Promise<VisualAnalysisSte
 
   await updateJobStage({ jobId, status: 'visual_analysis', progress: 48 });
   job = await getAnalysisJobForWorkflow(jobId);
+  const analysisProfile = getAnalysisProfileFromMetadata(job.source_metadata);
   const signedUrls = await createArtifactSignedUrls(frames, 900);
   const segments = transcriptSegments(job.transcript);
   const batches = buildOverlappingVisualBatches(
     frames,
-    VIDEO_ANALYSIS_LIMITS.framesPerVisionBatch,
+    analysisProfile.framesPerVisionBatch,
   );
   const startedAt = Date.now();
-  const models = getVideoAnalysisModelConfig().extractionCandidates;
+  const models = configuredProfileModels(analysisProfile, 'visual_analysis');
   const outputs = await mapWithConcurrency(batches, 1, async (batch, index) => {
     const batchId = `visual-batch-${String(index + 1).padStart(2, '0')}`;
     const prepared = batchPrompt({
@@ -317,8 +318,8 @@ export async function analyzeAllFrames(jobId: string): Promise<VisualAnalysisSte
       instructions: VISUAL_INSTRUCTIONS,
       prompt: prepared.prompt,
       images: prepared.images,
-      maxOutputTokens: 4_000,
-      maxRetries: 1,
+      maxOutputTokens: analysisProfile.stages.visual_analysis.maxOutputTokensPerCall,
+      maxRetries: analysisProfile.maxProviderRetries,
       idempotencyKey: `${job.id}:${batchId}`,
     });
     return {

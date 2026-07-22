@@ -31,6 +31,7 @@ import {
 } from './artifacts';
 import { VIDEO_ANALYSIS_LIMITS } from './config';
 import { VIDEO_ANALYSIS_VERSIONS } from './config';
+import { getAnalysisProfileFromMetadata } from './analysis-profiles';
 import { buildDeterministicEvidence } from './evidence';
 import {
   cleanupTerminalJobStorage,
@@ -150,6 +151,7 @@ export async function preprocessVideoStep(jobId: string): Promise<PreprocessStep
     };
   }
   assertJobCanPerformProviderWork(existing);
+  const analysisProfile = getAnalysisProfileFromMetadata(existing.source_metadata);
 
   await updateJobStage({ jobId, status: 'preprocessing', progress: 10 });
   await incrementJobAttempts(jobId);
@@ -173,8 +175,8 @@ export async function preprocessVideoStep(jobId: string): Promise<PreprocessStep
       fileSizeBytes: actualBytes,
       limits: {
         maxFileBytes: VIDEO_ANALYSIS_LIMITS.maxFileBytes,
-        maxDurationSec: VIDEO_ANALYSIS_LIMITS.maxDurationSeconds,
-        maxFrames: VIDEO_ANALYSIS_LIMITS.maxFrames,
+        maxDurationSec: analysisProfile.maxDurationSeconds,
+        maxFrames: analysisProfile.maxFrames,
         maxCoverageGapSec: 12,
       },
     });
@@ -204,7 +206,7 @@ export async function preprocessVideoStep(jobId: string): Promise<PreprocessStep
       metadata: probe,
       sceneCuts,
       silenceBoundariesSec: silenceBoundaries,
-      maxFrames: VIDEO_ANALYSIS_LIMITS.maxFrames,
+      maxFrames: analysisProfile.maxFrames,
       maxCoverageGapSec: 12,
     });
     if (!frames.length) throw new Error('VIDEO_FRAME_COVERAGE_INCOMPLETE');
@@ -252,6 +254,7 @@ export async function preprocessVideoStep(jobId: string): Promise<PreprocessStep
         probe,
         technical_signals: technicalSignals,
         source_metadata: {
+          ...existing.source_metadata,
           durationSeconds: probe.durationSec,
           hasAudio: probe.hasAudio,
           audioBytes,
@@ -356,6 +359,7 @@ export async function transcribeVideoStep(jobId: string): Promise<TranscriptionS
       audioDurationSeconds: audioArtifact
         ? Math.max(0, Number(audioArtifact.end_time) - Number(audioArtifact.start_time))
         : undefined,
+      analysisProfileId: getAnalysisProfileFromMetadata(job.source_metadata).id,
     });
     const segmentCount = result.transcription.status === 'available'
       ? result.transcription.normalized.segments.length
@@ -612,6 +616,7 @@ export async function synthesizeValidateAndPersistStep(jobId: string): Promise<S
     specialists,
     timeline,
     creatorMemoryContext: creatorMemory.context || undefined,
+    analysisProfileId: getAnalysisProfileFromMetadata(job.source_metadata).id,
   }, {
     checkpoint: synthesisCheckpoint,
     persistCheckpoint: persistSynthesisCheckpoint,

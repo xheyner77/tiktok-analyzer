@@ -14,6 +14,7 @@ import {
 } from '@/lib/video-analysis/jobs';
 import { toPublicAnalysisJob } from '@/lib/video-analysis/types';
 import { runVideoAnalysisWorkflow } from '@/workflows/video-analysis';
+import { getAnalysisProfileFromMetadata, resolveServerAnalysisProfile } from '@/lib/video-analysis/analysis-profiles';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -51,6 +52,14 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
 
       const profile = await getUserById(sessionResult.session.userId);
       if (!profile) return privateJson({ error: 'Profil introuvable.' }, { status: 404 });
+      const storedAnalysisProfile = getAnalysisProfileFromMetadata(job.source_metadata);
+      const authorizedAnalysisProfile = resolveServerAnalysisProfile({
+        plan: profile.plan,
+        userId: sessionResult.session.userId,
+      });
+      if (storedAnalysisProfile.id === 'qa' && authorizedAnalysisProfile.id !== 'qa') {
+        return privateJson({ error: 'Le profil QA temporaire n\u2019est plus autorisé.' }, { status: 403 });
+      }
       await checkAndResetMonthly(profile);
 
       const quota = await reserveJobQuota(job);

@@ -6,6 +6,7 @@ import { getSessionVerification } from '@/lib/session';
 import { VIDEO_ANALYSIS_LIMITS, VIDEO_INPUT_MIME_TYPES } from '@/lib/video-analysis/config';
 import { createOrReuseUploadJob } from '@/lib/video-analysis/jobs';
 import { toPublicAnalysisJob } from '@/lib/video-analysis/types';
+import { analysisProfileSnapshot, resolveServerAnalysisProfile } from '@/lib/video-analysis/analysis-profiles';
 
 export const runtime = 'nodejs';
 
@@ -102,6 +103,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const analysisProfile = resolveServerAnalysisProfile({
+      plan: profile.plan,
+      userId: sessionResult.session.userId,
+    });
     const created = await createOrReuseUploadJob({
       userId: sessionResult.session.userId,
       idempotencyKey: parsed.data.idempotencyKey,
@@ -109,6 +114,7 @@ export async function POST(request: NextRequest) {
       contentType: parsed.data.contentType,
       sizeBytes: parsed.data.sizeBytes,
       creatorContext: parsed.data.creatorContext,
+      sourceMetadata: { analysisProfile: analysisProfileSnapshot(analysisProfile) },
     });
 
     return privateJson(
@@ -124,7 +130,7 @@ export async function POST(request: NextRequest) {
         reused: created.reused,
         limits: {
           maxFileBytes: VIDEO_ANALYSIS_LIMITS.maxFileBytes,
-          maxDurationSeconds: VIDEO_ANALYSIS_LIMITS.maxDurationSeconds,
+          maxDurationSeconds: analysisProfile.maxDurationSeconds,
         },
       },
       { status: created.reused ? 200 : 201 },

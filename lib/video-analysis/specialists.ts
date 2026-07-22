@@ -5,7 +5,7 @@ import {
   type SpecialistDiagnostic,
 } from '@/lib/analysis-engine/index';
 import { listJobArtifacts } from './artifacts';
-import { VIDEO_ANALYSIS_BUDGET, getVideoAnalysisModelConfig } from './config';
+import { configuredProfileModels, getAnalysisProfileFromMetadata } from './analysis-profiles';
 import {
   SPECIALIST_PROMPT_MAX_CHARACTERS,
   assertPromptCharacterBudget,
@@ -21,6 +21,7 @@ import {
 } from './grounding';
 import { getAnalysisJobForWorkflow, updateJobStage } from './jobs';
 import { parseStructuredResponse } from './openai-client';
+import { AnalysisBudgetExceededError } from './budget';
 
 export type SpecialistName = SpecialistDiagnostic['specialist'];
 
@@ -555,6 +556,7 @@ export async function runSpecialistAnalyses(jobId: string): Promise<SpecialistSt
 
   await updateJobStage({ jobId, status: 'audio_analysis', progress: 63 });
   job = await getAnalysisJobForWorkflow(jobId);
+  const analysisProfile = getAnalysisProfileFromMetadata(job.source_metadata);
   const frames = await listJobArtifacts(jobId, 'frame');
   const transcript = transcriptFromJob(job);
   const durationSec = Number(job.source_metadata.durationSeconds);
@@ -568,25 +570,39 @@ export async function runSpecialistAnalyses(jobId: string): Promise<SpecialistSt
     providerDurationMs: number;
   }> = [];
 
-  const diagnostics = await mapWithConcurrency(SPECIALISTS, 1, async (specialist) => {
+  const diagnostics = await mapWithConcurrency(
+    SPECIALISTS.filter((specialist) => analysisProfile.specialists.includes(specialist)),
+    1,
+    async (specialist) => {
     const skipReason = shouldSkipSpecialist(specialist, transcript.status === 'available', hasAudio);
     if (skipReason) return deterministicUnavailable(specialist, skipReason);
     const promptView = buildSpecialistPromptContext({ specialist, job, frames });
-    const response = await parseStructuredResponse({
-      candidates: getVideoAnalysisModelConfig().specialistCandidates,
-      schema: SpecialistDiagnosticSchema,
-      schemaName: `viralynz_${specialist}_diagnostic`,
-      instructions: SPECIALIST_INSTRUCTIONS,
-      prompt: buildSpecialistPrompt({
-        specialist,
-        durationSec,
-        evidenceIds: promptView.evidenceIds,
-        promptContext: promptView.context,
-      }),
-      maxOutputTokens: VIDEO_ANALYSIS_BUDGET.maxSpecialistOutputTokens,
-      maxRetries: VIDEO_ANALYSIS_BUDGET.maxProviderRetries,
-      idempotencyKey: `${job.id}:specialist:${specialist}`,
-    });
+    let response;
+    try {
+      response = await parseStructuredResponse({
+        candidates: configuredProfileModels(analysisProfile, 'specialist_analysis'),
+        schema: SpecialistDiagnosticSchema,
+        schemaName: `viralynz_${specialist}_diagnostic`,
+        instructions: SPECIALIST_INSTRUCTIONS,
+        prompt: buildSpecialistPrompt({
+          specialist,
+          durationSec,
+          evidenceIds: promptView.evidenceIds,
+          promptContext: promptView.context,
+        }),
+        maxOutputTokens: analysisProfile.stages.specialist_analysis.maxOutputTokensPerCall,
+        maxRetries: analysisProfile.maxProviderRetries,
+        idempotencyKey: `${job.id}:specialist:${specialist}`,
+      });
+    } catch (error) {
+      if (error instanceof AnalysisBudgetExceededError) {
+        return deterministicUnavailable(
+          specialist,
+          'Le budget économique de cette analyse ne permet pas un appel fournisseur supplémentaire.',
+        );
+      }
+      throw error;
+    }
     calls.push(response.metrics);
     return validateSpecialistDiagnosticOrUnavailable({
       diagnostic: response.value,
