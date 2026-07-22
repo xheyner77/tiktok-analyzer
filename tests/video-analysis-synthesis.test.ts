@@ -20,6 +20,7 @@ import {
   validateCrossCritiqueOrFallback,
   type CritiqueAndSynthesisInput,
   type GeneratedAnalysisNarrative,
+  type SynthesisCheckpoint,
 } from '@/lib/video-analysis/synthesis';
 
 const NOW = '2026-07-13T20:00:00.000Z';
@@ -554,8 +555,8 @@ describe('critique croisée et synthèse finale', () => {
       'job_123:synthesis-repair:video-coach-2026-07-13.1',
     ]);
     expect(calls.slice(1)).toEqual(expect.arrayContaining([
-      expect.objectContaining({ maxOutputTokens: 24_000, timeoutMs: 240_000, maxRetries: 0 }),
-      expect.objectContaining({ maxOutputTokens: 24_000, timeoutMs: 240_000, maxRetries: 0 }),
+      expect.objectContaining({ maxOutputTokens: 22_000, timeoutMs: 240_000, maxRetries: 0 }),
+      expect.objectContaining({ maxOutputTokens: 5_000, timeoutMs: 240_000, maxRetries: 0 }),
     ]));
     expect(JSON.stringify(response.metrics)).not.toContain('Optimise ton contenu');
   });
@@ -565,9 +566,49 @@ describe('critique croisée et synthèse finale', () => {
     if (generic.hook.status !== 'available') throw new Error('Fixture hook indisponible');
     generic.hook.summary = 'Optimise ton contenu et améliore le hook.';
     const calls: Array<Record<string, unknown>> = [];
-    await expect(runCritiqueAndSynthesis(requestFixture(), {
+    const response = await runCritiqueAndSynthesis(requestFixture(), {
       structuredCall: fakeStructuredCall([critiqueFixture(), generic, generic], calls),
-    })).rejects.toBeInstanceOf(FinalAnalysisQualityError);
+    });
+    expect(response.quality.validForPersistence).toBe(true);
+    expect(response.result.hook.status).toBe('unavailable');
     expect(calls).toHaveLength(3);
+  });
+
+  it('reprend le checkpoint sans rappeler une synthese deja reussie', async () => {
+    let checkpoint: SynthesisCheckpoint | null = null;
+    const firstCalls: Array<Record<string, unknown>> = [];
+    await expect(runCritiqueAndSynthesis(requestFixture(), {
+      structuredCall: fakeStructuredCall([critiqueFixture(), narrativeFixture()], firstCalls),
+      persistCheckpoint: async (value) => {
+        checkpoint = value;
+        if (value.narrative) throw new Error('WORKFLOW_INTERRUPTED_AFTER_SYNTHESIS');
+      },
+    })).rejects.toThrow('WORKFLOW_INTERRUPTED_AFTER_SYNTHESIS');
+    expect(firstCalls).toHaveLength(2);
+    expect(checkpoint).toMatchObject({ narrative: expect.any(Object) });
+
+    const resumedCall = vi.fn(async () => {
+      throw new Error('PROVIDER_MUST_NOT_BE_CALLED');
+    });
+    const resumed = await runCritiqueAndSynthesis(requestFixture(), {
+      structuredCall: resumedCall as unknown as StructuredCall,
+      checkpoint,
+    });
+    expect(resumedCall).not.toHaveBeenCalled();
+    expect(resumed.quality.validForPersistence).toBe(true);
+    expect(resumed.metrics.providerCalls).toBe(2);
+  });
+
+  it('produit un fallback valide si la sortie de synthese est tronquee', async () => {
+    let index = 0;
+    const structuredCall = vi.fn(async () => {
+      index += 1;
+      if (index === 1) return { value: critiqueFixture(), metrics: callMetrics('model-qa') };
+      throw new Error('OPENAI_STRUCTURED_OUTPUT_TRUNCATED');
+    }) as unknown as StructuredCall;
+    const response = await runCritiqueAndSynthesis(requestFixture(), { structuredCall });
+    expect(response.result.hook.status).toBe('unavailable');
+    expect(response.quality.validForPersistence).toBe(true);
+    expect(structuredCall).toHaveBeenCalledTimes(2);
   });
 });

@@ -167,7 +167,7 @@ describe('cloisonnement des preuves des specialistes', () => {
     const editingView = buildSpecialistPromptContext({ specialist: 'editing', job, frames });
     const omittedFrame = frames.find((frame) => !editingView.evidenceIds.includes(frame.id));
     expect(omittedFrame).toBeDefined();
-    expect(editingView.evidenceIds.filter((id) => id.startsWith('frame-'))).toHaveLength(36);
+    expect(editingView.evidenceIds.filter((id) => id.startsWith('frame-'))).toHaveLength(20);
 
     expect(() => validate(editingView, diagnostic({
       evidenceRefs: [omittedFrame!.id],
@@ -178,7 +178,7 @@ describe('cloisonnement des preuves des specialistes', () => {
     const segments = transcriptFixture().normalized.segments;
     const omittedSegment = segments.find((segment) => !scriptView.evidenceIds.includes(segment.id));
     expect(omittedSegment).toBeDefined();
-    expect(scriptView.evidenceIds.filter((id) => id.startsWith('segment-'))).toHaveLength(72);
+    expect(scriptView.evidenceIds.filter((id) => id.startsWith('segment-'))).toHaveLength(28);
     expect(() => validate(scriptView, diagnostic({
       specialist: 'script',
       evidenceRefs: [omittedSegment!.id],

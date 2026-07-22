@@ -2,6 +2,7 @@ import 'server-only';
 
 import { z } from 'zod';
 import {
+  ANALYSIS_SECTION_CRITERIA,
   AnalysisCritiqueSchema,
   FinalAnalysisResultSchema,
   SpecialistDiagnosticSchema,
@@ -15,7 +16,11 @@ import {
   type SpecialistDiagnostic,
   type TimelineSegment,
 } from '@/lib/analysis-engine/index';
-import { VIDEO_ANALYSIS_VERSIONS, getVideoAnalysisModelConfig } from './config';
+import {
+  VIDEO_ANALYSIS_BUDGET,
+  VIDEO_ANALYSIS_VERSIONS,
+  getVideoAnalysisModelConfig,
+} from './config';
 import type { DeterministicEvidenceBundle } from './evidence';
 import {
   SYNTHESIS_PROMPT_MAX_CHARACTERS,
@@ -98,6 +103,54 @@ type StructuredCall = typeof parseStructuredResponse;
 interface SynthesisDependencies {
   structuredCall?: StructuredCall;
   now?: () => Date;
+  checkpoint?: SynthesisCheckpoint | null;
+  persistCheckpoint?: (checkpoint: SynthesisCheckpoint) => Promise<void>;
+}
+
+export interface SynthesisCheckpoint {
+  version: 'synthesis-checkpoint-v1';
+  promptVersion: string;
+  generatedAt: string;
+  critique?: AnalysisCritique;
+  narrative?: GeneratedAnalysisNarrative;
+  calls: SynthesisCallMetric[];
+}
+
+export function parseSynthesisCheckpoint(value: unknown): SynthesisCheckpoint | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const row = value as Record<string, unknown>;
+  if (
+    row.version !== 'synthesis-checkpoint-v1'
+    || row.promptVersion !== VIDEO_ANALYSIS_VERSIONS.prompt
+    || typeof row.generatedAt !== 'string'
+    || !Number.isFinite(Date.parse(row.generatedAt))
+    || !Array.isArray(row.calls)
+  ) return null;
+  const calls = row.calls.filter((call): call is SynthesisCallMetric => {
+    if (!call || typeof call !== 'object' || Array.isArray(call)) return false;
+    const metricRow = call as Record<string, unknown>;
+    return ['critique', 'synthesis', 'repair'].includes(String(metricRow.stage))
+      && typeof metricRow.model === 'string'
+      && ['inputTokens', 'outputTokens', 'retries', 'durationMs', 'providerDurationMs']
+        .every((key) => Number.isFinite(Number(metricRow[key])));
+  });
+  if (calls.length !== row.calls.length) return null;
+  const critique = row.critique === undefined
+    ? undefined
+    : AnalysisCritiqueSchema.safeParse(row.critique);
+  if (critique && !critique.success) return null;
+  const narrative = row.narrative === undefined
+    ? undefined
+    : GeneratedAnalysisNarrativeSchema.safeParse(row.narrative);
+  if (narrative && !narrative.success) return null;
+  return {
+    version: 'synthesis-checkpoint-v1',
+    promptVersion: VIDEO_ANALYSIS_VERSIONS.prompt,
+    generatedAt: row.generatedAt,
+    calls,
+    ...(critique ? { critique: critique.data } : {}),
+    ...(narrative ? { narrative: narrative.data } : {}),
+  };
 }
 
 export class FinalAnalysisQualityError extends Error {
@@ -241,21 +294,21 @@ interface PromptViewLimits {
 }
 
 const DEFAULT_PROMPT_VIEW_LIMITS: PromptViewLimits = {
-  frames: 48,
-  transcriptSegments: 100,
-  transcriptWords: 480,
-  retentionPoints: 80,
-  findingsPerSpecialist: 10,
-  timelineSegments: 60,
+  frames: 18,
+  transcriptSegments: 30,
+  transcriptWords: 0,
+  retentionPoints: 30,
+  findingsPerSpecialist: 3,
+  timelineSegments: 20,
 };
 
 const REPAIR_PROMPT_VIEW_LIMITS: PromptViewLimits = {
-  frames: 32,
-  transcriptSegments: 64,
-  transcriptWords: 240,
-  retentionPoints: 48,
-  findingsPerSpecialist: 6,
-  timelineSegments: 36,
+  frames: 10,
+  transcriptSegments: 16,
+  transcriptWords: 0,
+  retentionPoints: 16,
+  findingsPerSpecialist: 2,
+  timelineSegments: 12,
 };
 
 function measuredEvidenceIds(evidence: DeterministicEvidenceBundle): string[] {
@@ -507,7 +560,7 @@ const REPAIR_INSTRUCTIONS = [
 ].join('\n');
 
 // Must remain valid for every configured fallback, including GPT-4o/4o-mini.
-const MAX_SYNTHESIS_OUTPUT_TOKENS = 24_000;
+const MAX_SYNTHESIS_OUTPUT_TOKENS = VIDEO_ANALYSIS_BUDGET.maxSynthesisOutputTokens;
 const SYNTHESIS_PROVIDER_TIMEOUT_MS = 240_000;
 
 function synthesisContext(
@@ -543,7 +596,7 @@ function synthesisContext(
       maximumArrayItems: 100,
     }),
     timeline: timeline.view,
-    rubric: VIRALYNZ_RUBRIC,
+    rubric: VIRALYNZ_RUBRIC.map(({ id, dimension, weight }) => ({ id, dimension, weight })),
     sourcePolicy: {
       supportingSourceIds,
       rule: 'Only these visible specialist finding IDs and timeline segment IDs may be used in supportingSourceIds, and each source must directly support the claim.',
@@ -581,7 +634,7 @@ export function buildCritiquePrompt(input: CritiqueAndSynthesisInput): string {
         transcriptCitation: 'Exact verbatim quote from a visible transcript segment only.',
         omittedContent: 'Never infer content declared omitted by a coverage object.',
       },
-    }, 320_000),
+    }, 90_000),
   ].join('\n');
   return assertPromptCharacterBudget(
     prompt,
@@ -601,13 +654,33 @@ export function buildSynthesisPrompt(
     'supportingSourceIds doit citer une source visible et directement compatible; transcriptCitation doit etre exacte et verbatim.',
     'improvedVersion.bestHook selectionne par hookId un des trois hooks proposes et ne constitue pas un quatrieme hook.',
     'Contexte complet distribue JSON:',
-    safeJsonForPrompt(synthesisContext(input, critique), 320_000),
+    safeJsonForPrompt(synthesisContext(input, critique), 120_000),
   ].join('\n');
   return assertPromptCharacterBudget(
     prompt,
     SYNTHESIS_PROMPT_MAX_CHARACTERS,
     'SYNTHESIS_PROMPT_TOO_LARGE',
   );
+}
+
+const NARRATIVE_KEYS = [
+  'strategicSummary', 'hook', 'script', 'editing', 'visual', 'textAndCaptions',
+  'audio', 'storytelling', 'conversion', 'priorities', 'correctionPlan',
+  'improvedVersion', 'rubric',
+] as const satisfies readonly (keyof GeneratedAnalysisNarrative)[];
+
+export const GeneratedAnalysisNarrativePatchSchema = GeneratedAnalysisNarrativeSchema.partial().strict();
+
+function repairKeys(quality: QualityValidationReport): Array<keyof GeneratedAnalysisNarrative> {
+  const allowed = new Set<string>(NARRATIVE_KEYS);
+  const selected = quality.issues.flatMap((issue) => {
+    const root = issue.path?.[0];
+    return typeof root === 'string' && allowed.has(root)
+      ? [root as keyof GeneratedAnalysisNarrative]
+      : [];
+  });
+  const fallback: Array<keyof GeneratedAnalysisNarrative> = ['strategicSummary'];
+  return [...new Set(selected.length ? selected : fallback)];
 }
 
 function repairPrompt(input: {
@@ -621,6 +694,8 @@ function repairPrompt(input: {
     input.critique,
     REPAIR_PROMPT_VIEW_LIMITS,
   );
+  const keys = repairKeys(input.quality);
+  const previous = Object.fromEntries(keys.map((key) => [key, input.previous[key]]));
   const prompt = [
     `Analyse: ${input.request.analysisId}`,
     'Problemes de qualite a corriger:',
@@ -631,19 +706,79 @@ function repairPrompt(input: {
       targetId: issue.targetId,
       message: issue.message,
     })), 30_000),
-    'Synthese refusee:',
-    safeJsonForPrompt(compactValueForPrompt(input.previous, {
-      maximumStringCharacters: 500,
-      maximumArrayItems: 40,
-    }), 90_000),
-    'Contexte deterministe immuable et distribue:',
-    safeJsonForPrompt(compactContext, 200_000),
+    `Retourne uniquement ces champs racine: ${keys.join(', ')}`,
+    'Champs refuses uniquement:',
+    safeJsonForPrompt(compactValueForPrompt(previous, {
+      maximumStringCharacters: 320,
+      maximumArrayItems: 16,
+    }), 28_000),
+    'Sources compactes autorisees:',
+    safeJsonForPrompt({
+      evidenceIds: compactContext.evidenceIds,
+      sourcePolicy: compactContext.sourcePolicy,
+      specialists: compactContext.specialists,
+      timeline: compactContext.timeline,
+    }, 38_000),
   ].join('\n');
   return assertPromptCharacterBudget(
     prompt,
     SYNTHESIS_PROMPT_MAX_CHARACTERS,
     'REPAIR_PROMPT_TOO_LARGE',
   );
+}
+
+export function buildDeterministicFallbackNarrative(reason: string): GeneratedAnalysisNarrative {
+  const unavailable = 'Cette partie n’a pas pu être reconstruite de façon fiable dans le budget de l’analyse.';
+  const section = (key: keyof typeof ANALYSIS_SECTION_CRITERIA) => ({
+    section: key,
+    status: 'unavailable' as const,
+    reason: unavailable,
+    limitations: [reason],
+    criteria: ANALYSIS_SECTION_CRITERIA[key].map((criterionId) => ({
+      criterionId,
+      status: 'unavailable' as const,
+      note: unavailable,
+      evidence: [],
+      timeRange: null,
+      confidence: 'low' as const,
+    })),
+  });
+  const unavailableBlock = {
+    status: 'unavailable' as const,
+    reason: unavailable,
+    limitations: [reason],
+  };
+  return GeneratedAnalysisNarrativeSchema.parse({
+    strategicSummary: unavailableBlock,
+    hook: section('hook'),
+    script: section('script'),
+    editing: section('editing'),
+    visual: section('visual'),
+    textAndCaptions: section('textAndCaptions'),
+    audio: section('audio'),
+    storytelling: section('storytelling'),
+    conversion: section('conversion'),
+    priorities: unavailableBlock,
+    correctionPlan: unavailableBlock,
+    improvedVersion: unavailableBlock,
+    rubric: {
+      version: 'viralynz-rubric-v1',
+      assessments: VIRALYNZ_RUBRIC.map((criterion) => ({
+        criterionId: criterion.id,
+        status: 'unavailable' as const,
+        evidence: [],
+        observation: unavailable,
+        positive: null,
+        penalty: null,
+      })),
+    },
+  });
+}
+
+function operationalFallbackReason(error: unknown, fallback: string): string {
+  const raw = error instanceof Error ? error.message.split(':', 1)[0] : fallback;
+  const code = raw.toUpperCase().replace(/[^A-Z0-9_]/g, '_').slice(0, 120);
+  return code || fallback;
 }
 
 export function buildFinalAnalysisCandidate(input: {
@@ -719,58 +854,119 @@ export async function runCritiqueAndSynthesis(
   const { specialists, timeline } = validateDeterministicInputs(input);
   const request = { ...input, specialists, timeline };
   const structuredCall = dependencies.structuredCall ?? parseStructuredResponse;
-  const generatedAt = input.generatedAt ?? (dependencies.now?.() ?? new Date()).toISOString();
+  const reusableCheckpoint = dependencies.checkpoint?.version === 'synthesis-checkpoint-v1'
+    && dependencies.checkpoint.promptVersion === VIDEO_ANALYSIS_VERSIONS.prompt
+    ? dependencies.checkpoint
+    : null;
+  const generatedAt = reusableCheckpoint?.generatedAt
+    ?? input.generatedAt
+    ?? (dependencies.now?.() ?? new Date()).toISOString();
   if (!Number.isFinite(Date.parse(generatedAt))) throw new Error('ANALYSIS_GENERATED_AT_INVALID');
   const startedAt = Date.now();
-  const calls: SynthesisCallMetric[] = [];
+  const calls: SynthesisCallMetric[] = [...(reusableCheckpoint?.calls ?? [])];
   const models = getVideoAnalysisModelConfig().synthesisCandidates;
+  const persistCheckpoint = async (value: Pick<SynthesisCheckpoint, 'critique' | 'narrative'>) => {
+    await dependencies.persistCheckpoint?.({
+      version: 'synthesis-checkpoint-v1',
+      promptVersion: VIDEO_ANALYSIS_VERSIONS.prompt,
+      generatedAt,
+      calls: [...calls],
+      ...(value.critique ? { critique: value.critique } : {}),
+      ...(value.narrative ? { narrative: value.narrative } : {}),
+    });
+  };
 
-  const critiqueResponse = await structuredCall({
-    candidates: models,
-    schema: AnalysisCritiqueSchema,
-    schemaName: 'viralynz_cross_critique',
-    instructions: CRITIQUE_INSTRUCTIONS,
-    prompt: buildCritiquePrompt(request),
-    maxOutputTokens: 8_000,
-    idempotencyKey: `${input.jobId}:critique:${VIDEO_ANALYSIS_VERSIONS.prompt}`,
-  });
-  calls.push(metric('critique', critiqueResponse.metrics));
-  const critique = validateCrossCritiqueOrFallback(critiqueResponse.value, request);
+  let critique = reusableCheckpoint?.critique;
+  if (!critique) {
+    const critiqueResponse = await structuredCall({
+      candidates: models,
+      schema: AnalysisCritiqueSchema,
+      schemaName: 'viralynz_cross_critique',
+      instructions: CRITIQUE_INSTRUCTIONS,
+      prompt: buildCritiquePrompt(request),
+      maxOutputTokens: 4_000,
+      maxRetries: VIDEO_ANALYSIS_BUDGET.maxProviderRetries,
+      idempotencyKey: `${input.jobId}:critique:${VIDEO_ANALYSIS_VERSIONS.prompt}`,
+    });
+    calls.push(metric('critique', critiqueResponse.metrics));
+    critique = validateCrossCritiqueOrFallback(critiqueResponse.value, request);
+    await persistCheckpoint({ critique });
+  }
 
-  const synthesisResponse = await structuredCall({
-    candidates: models,
-    schema: GeneratedAnalysisNarrativeSchema,
-    schemaName: 'viralynz_final_narrative',
-    instructions: SYNTHESIS_INSTRUCTIONS,
-    prompt: buildSynthesisPrompt(request, critique),
-    maxOutputTokens: MAX_SYNTHESIS_OUTPUT_TOKENS,
-    timeoutMs: SYNTHESIS_PROVIDER_TIMEOUT_MS,
-    maxRetries: 0,
-    idempotencyKey: `${input.jobId}:synthesis:${VIDEO_ANALYSIS_VERSIONS.prompt}`,
-  });
-  calls.push(metric('synthesis', synthesisResponse.metrics));
-  let narrative = GeneratedAnalysisNarrativeSchema.parse(synthesisResponse.value);
+  let narrative = reusableCheckpoint?.narrative;
+  let fallbackUsed = false;
+  if (!narrative) {
+    try {
+      const synthesisResponse = await structuredCall({
+        candidates: models,
+        schema: GeneratedAnalysisNarrativeSchema,
+        schemaName: 'viralynz_final_narrative',
+        instructions: SYNTHESIS_INSTRUCTIONS,
+        prompt: buildSynthesisPrompt(request, critique),
+        maxOutputTokens: MAX_SYNTHESIS_OUTPUT_TOKENS,
+        timeoutMs: SYNTHESIS_PROVIDER_TIMEOUT_MS,
+        maxRetries: 0,
+        idempotencyKey: `${input.jobId}:synthesis:${VIDEO_ANALYSIS_VERSIONS.prompt}`,
+      });
+      calls.push(metric('synthesis', synthesisResponse.metrics));
+      narrative = GeneratedAnalysisNarrativeSchema.parse(synthesisResponse.value);
+      // Durability boundary: the expensive provider output is saved before the
+      // quality gate, so a Workflow retry never regenerates it.
+      await persistCheckpoint({ critique, narrative });
+    } catch (error) {
+      narrative = buildDeterministicFallbackNarrative(
+        operationalFallbackReason(error, 'SYNTHESIS_UNAVAILABLE'),
+      );
+      fallbackUsed = true;
+      await persistCheckpoint({ critique, narrative });
+    }
+  }
   let result = buildFinalAnalysisCandidate({ request, critique, narrative, generatedAt });
   let quality = validateAnalysisQuality(result);
   let repaired = false;
 
+  if (!quality.validForPersistence && !fallbackUsed && VIDEO_ANALYSIS_BUDGET.maxRepairs > 0) {
+    try {
+      const keys = new Set(repairKeys(quality));
+      const repairResponse = await structuredCall({
+        candidates: models,
+        schema: GeneratedAnalysisNarrativePatchSchema,
+        schemaName: 'viralynz_repaired_narrative_fields',
+        instructions: REPAIR_INSTRUCTIONS,
+        prompt: repairPrompt({ request, critique, previous: narrative, quality }),
+        maxOutputTokens: VIDEO_ANALYSIS_BUDGET.maxRepairOutputTokens,
+        timeoutMs: SYNTHESIS_PROVIDER_TIMEOUT_MS,
+        maxRetries: 0,
+        idempotencyKey: `${input.jobId}:synthesis-repair:${VIDEO_ANALYSIS_VERSIONS.prompt}`,
+      });
+      calls.push(metric('repair', repairResponse.metrics));
+      const patch = GeneratedAnalysisNarrativePatchSchema.parse(repairResponse.value);
+      const scopedPatch = Object.fromEntries(
+        Object.entries(patch).filter(([key]) => keys.has(key as keyof GeneratedAnalysisNarrative)),
+      );
+      if (Object.keys(scopedPatch).length === 0) throw new Error('ANALYSIS_REPAIR_EMPTY_PATCH');
+      narrative = GeneratedAnalysisNarrativeSchema.parse({ ...narrative, ...scopedPatch });
+      result = buildFinalAnalysisCandidate({ request, critique, narrative, generatedAt });
+      quality = validateAnalysisQuality(result);
+      repaired = true;
+      await persistCheckpoint({ critique, narrative });
+    } catch (error) {
+      narrative = buildDeterministicFallbackNarrative(
+        operationalFallbackReason(error, 'REPAIR_UNAVAILABLE'),
+      );
+      result = buildFinalAnalysisCandidate({ request, critique, narrative, generatedAt });
+      quality = validateAnalysisQuality(result);
+      repaired = true;
+      fallbackUsed = true;
+      await persistCheckpoint({ critique, narrative });
+    }
+  }
+
   if (!quality.validForPersistence) {
-    const repairResponse = await structuredCall({
-      candidates: models,
-      schema: GeneratedAnalysisNarrativeSchema,
-      schemaName: 'viralynz_repaired_narrative',
-      instructions: REPAIR_INSTRUCTIONS,
-      prompt: repairPrompt({ request, critique, previous: narrative, quality }),
-      maxOutputTokens: MAX_SYNTHESIS_OUTPUT_TOKENS,
-      timeoutMs: SYNTHESIS_PROVIDER_TIMEOUT_MS,
-      maxRetries: 0,
-      idempotencyKey: `${input.jobId}:synthesis-repair:${VIDEO_ANALYSIS_VERSIONS.prompt}`,
-    });
-    calls.push(metric('repair', repairResponse.metrics));
-    narrative = GeneratedAnalysisNarrativeSchema.parse(repairResponse.value);
+    narrative = buildDeterministicFallbackNarrative('FINAL_ANALYSIS_QUALITY_REJECTED');
     result = buildFinalAnalysisCandidate({ request, critique, narrative, generatedAt });
     quality = validateAnalysisQuality(result);
-    repaired = true;
+    await persistCheckpoint({ critique, narrative });
   }
 
   if (!quality.validForPersistence) throw new FinalAnalysisQualityError(quality);

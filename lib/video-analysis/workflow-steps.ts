@@ -46,10 +46,16 @@ import { toHonestLegacyAnalysisResult } from './legacy-adapter';
 import { assertCrossVideoRecommendationsDistinct } from './cross-video-genericity';
 import {
   buildProviderCostRollup,
+  finalizeExpiredProviderAttempts,
   persistProviderCostRollup,
 } from './provider-ledger';
 import { runSpecialistAnalyses, type SpecialistStepResult } from './specialists';
-import { runCritiqueAndSynthesis, type CritiqueAndSynthesisResult } from './synthesis';
+import {
+  parseSynthesisCheckpoint,
+  runCritiqueAndSynthesis,
+  type CritiqueAndSynthesisResult,
+  type SynthesisCheckpoint,
+} from './synthesis';
 import { parsePublicAnalysisFailure } from './public-errors';
 import { createAnalysisTempDir, downloadPrivateFile, removeAnalysisTempDir } from './temp-files';
 import { analyzeCompleteTimeline, type TimelineAnalysisStepResult } from './timeline-analysis';
@@ -585,6 +591,20 @@ export async function synthesizeValidateAndPersistStep(jobId: string): Promise<S
     consent: evidence.creatorContext.memoryConsent === true,
   });
 
+  let synthesisCheckpoint = parseSynthesisCheckpoint(job.source_metadata.synthesisCheckpoint);
+  const persistSynthesisCheckpoint = async (checkpoint: SynthesisCheckpoint) => {
+    synthesisCheckpoint = checkpoint;
+    job = {
+      ...job,
+      source_metadata: { ...job.source_metadata, synthesisCheckpoint: checkpoint },
+    };
+    await updateJobStage({
+      jobId,
+      status: 'synthesis',
+      progress: checkpoint.narrative ? 92 : 88,
+      values: { source_metadata: job.source_metadata },
+    });
+  };
   const synthesis = await runCritiqueAndSynthesis({
     jobId,
     analysisId: jobId,
@@ -592,6 +612,9 @@ export async function synthesizeValidateAndPersistStep(jobId: string): Promise<S
     specialists,
     timeline,
     creatorMemoryContext: creatorMemory.context || undefined,
+  }, {
+    checkpoint: synthesisCheckpoint,
+    persistCheckpoint: persistSynthesisCheckpoint,
   });
   const preliminaryCostMetrics = persistenceMetrics(synthesis, job.cost_metrics);
   await assertCrossVideoRecommendationsDistinct({
@@ -730,6 +753,7 @@ export async function failVideoAnalysisStep(jobId: string, serializedError: stri
   await markJobFailed(job, descriptor.code, descriptor.message);
   const failedJob = await getAnalysisJobForWorkflow(jobId);
   try {
+    await finalizeExpiredProviderAttempts(jobId);
     await persistProviderCostRollup(failedJob, failedCostMetrics);
   } finally {
     const cleanupErrors = await cleanupTerminalJobStorage(failedJob);

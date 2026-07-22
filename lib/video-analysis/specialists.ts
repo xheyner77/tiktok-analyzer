@@ -5,7 +5,7 @@ import {
   type SpecialistDiagnostic,
 } from '@/lib/analysis-engine/index';
 import { listJobArtifacts } from './artifacts';
-import { getVideoAnalysisModelConfig } from './config';
+import { VIDEO_ANALYSIS_BUDGET, getVideoAnalysisModelConfig } from './config';
 import {
   SPECIALIST_PROMPT_MAX_CHARACTERS,
   assertPromptCharacterBudget,
@@ -261,23 +261,23 @@ export function buildSpecialistPromptContext(input: {
 }): SpecialistPromptContext {
   const transcript = transcriptFromJob(input.job);
   const frameCatalog = buildFrameObservationCatalog(input.frames);
-  const allFrames = buildFrameObservationPromptView(input.frames, 36);
+  const allFrames = buildFrameObservationPromptView(input.frames, 20);
   const transcriptView = buildTranscriptPromptView(transcript, {
-    maximumSegments: 72,
-    maximumWords: 320,
-    maximumSegmentCharacters: 480,
+    maximumSegments: 28,
+    maximumWords: 0,
+    maximumSegmentCharacters: 320,
     maximumWordCharacters: 80,
   });
   const earlyFrames = distributedPromptSample(
     frameCatalog.filter((frame) => frame.timestampSec <= 3.1),
-    16,
+    8,
   );
-  const endingFrames = distributedPromptSample(frameCatalog.slice(-8), 16);
+  const endingFrames = distributedPromptSample(frameCatalog.slice(-8), 8);
   const earlyTranscript = distributedPromptSample(
     transcript.segments.filter((segment) => segment.startSec <= 5),
-    24,
+    12,
   );
-  const endingTranscript = distributedPromptSample(transcript.segments.slice(-12), 24);
+  const endingTranscript = distributedPromptSample(transcript.segments.slice(-12), 12);
   const technicalCatalog = measuredTechnicalCatalog(input.job);
   const technical = compactValueForPrompt(technicalCatalog, {
     maximumStringCharacters: 360,
@@ -568,7 +568,7 @@ export async function runSpecialistAnalyses(jobId: string): Promise<SpecialistSt
     providerDurationMs: number;
   }> = [];
 
-  const diagnostics = await mapWithConcurrency(SPECIALISTS, 3, async (specialist) => {
+  const diagnostics = await mapWithConcurrency(SPECIALISTS, 1, async (specialist) => {
     const skipReason = shouldSkipSpecialist(specialist, transcript.status === 'available', hasAudio);
     if (skipReason) return deterministicUnavailable(specialist, skipReason);
     const promptView = buildSpecialistPromptContext({ specialist, job, frames });
@@ -583,7 +583,8 @@ export async function runSpecialistAnalyses(jobId: string): Promise<SpecialistSt
         evidenceIds: promptView.evidenceIds,
         promptContext: promptView.context,
       }),
-      maxOutputTokens: 5_000,
+      maxOutputTokens: VIDEO_ANALYSIS_BUDGET.maxSpecialistOutputTokens,
+      maxRetries: VIDEO_ANALYSIS_BUDGET.maxProviderRetries,
       idempotencyKey: `${job.id}:specialist:${specialist}`,
     });
     calls.push(response.metrics);

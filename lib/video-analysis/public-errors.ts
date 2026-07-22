@@ -13,6 +13,7 @@ const PUBLIC_ANALYSIS_FAILURES = {
   ANALYSIS_QUOTA_NOT_RESERVED: 'Le quota n’a pas été réservé pour ce traitement.',
   ANALYSIS_JOB_ALREADY_FAILED: 'Ce traitement est déjà terminé en erreur.',
   ANALYSIS_JOB_ALREADY_COMPLETED: 'Cette analyse est déjà enregistrée.',
+  ANALYSIS_TOKEN_BUDGET_EXCEEDED: 'Le budget technique de cette analyse a été atteint. Aucun appel supplémentaire n’a été lancé et ton quota a été restauré.',
   ANALYSIS_PIPELINE_FAILED: 'L’analyse n’a pas pu être terminée. Ton quota a été restauré.',
 } as const;
 

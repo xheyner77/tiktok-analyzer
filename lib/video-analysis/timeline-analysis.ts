@@ -339,7 +339,8 @@ export async function analyzeCompleteTimeline(jobId: string): Promise<TimelineAn
         'Les exactSegments contiennent le transcript réel déjà associé à chaque plage. Ne le paraphrase pas dans transcript.text.',
         safeJsonForPrompt(promptContext),
       ].join('\n'),
-      maxOutputTokens: 10_000,
+      maxOutputTokens: 6_000,
+      maxRetries: 1,
       idempotencyKey: `${job.id}:timeline:${index + 1}`,
     });
     calls.push(response.metrics);

@@ -7,8 +7,27 @@ export const VIDEO_ANALYSIS_LIMITS = Object.freeze({
   maxGapSeconds: 15,
   framesPerVisionBatch: 10,
   maxSpecialistCalls: 8,
-  maxRetriesPerProviderCall: 2,
+  maxRetriesPerProviderCall: 1,
   providerTimeoutMs: 90_000,
+});
+
+/**
+ * Hard, server-enforced envelope for one short-form video analysis. The
+ * preflight estimate deliberately uses two characters per token so a new call
+ * cannot start when it could plausibly push the job past the input ceiling.
+ */
+export const VIDEO_ANALYSIS_BUDGET = Object.freeze({
+  maxInputTokens: 240_000,
+  maxOutputTokens: 48_000,
+  maxBillableCalls: 20,
+  maxSpecialistInputTokens: 12_000,
+  maxSpecialistOutputTokens: 2_500,
+  maxSynthesisOutputTokens: 22_000,
+  maxRepairOutputTokens: 5_000,
+  maxRepairs: 1,
+  maxProviderRetries: 1,
+  promptCharactersPerEstimatedToken: 2,
+  estimatedTokensPerImage: 1_500,
 });
 
 export const VIDEO_ANALYSIS_VERSIONS = Object.freeze({

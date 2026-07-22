@@ -102,6 +102,39 @@ export interface ProviderCostCalculation {
   missingPricing: boolean;
 }
 
+export const DEFAULT_OPENAI_PRICING_CATALOG: ProviderPricingCatalog = Object.freeze({
+  version: 'openai-standard-2026-07-22',
+  models: Object.freeze({
+    'gpt-5.4': Object.freeze({
+      billingUnit: 'tokens' as const,
+      inputUsdPerMillion: 2.5,
+      cachedInputUsdPerMillion: 0.25,
+      outputUsdPerMillion: 15,
+    }),
+    'gpt-4o': Object.freeze({
+      billingUnit: 'tokens' as const,
+      inputUsdPerMillion: 2.5,
+      cachedInputUsdPerMillion: 1.25,
+      outputUsdPerMillion: 10,
+    }),
+    'gpt-4o-mini': Object.freeze({
+      billingUnit: 'tokens' as const,
+      inputUsdPerMillion: 0.15,
+      cachedInputUsdPerMillion: 0.075,
+      outputUsdPerMillion: 0.6,
+    }),
+    'gpt-4o-transcribe': Object.freeze({
+      billingUnit: 'tokens' as const,
+      inputUsdPerMillion: 2.5,
+      outputUsdPerMillion: 10,
+    }),
+    'whisper-1': Object.freeze({
+      billingUnit: 'audio_seconds' as const,
+      audioUsdPerMinute: 0.006,
+    }),
+  }),
+});
+
 export interface ProviderTimingInput {
   createdAt?: string | null;
   queuedAt?: string | null;
@@ -241,7 +274,7 @@ function parseModelPricing(value: unknown): ModelPricing | null {
  */
 export function readConfiguredPricingCatalog(): ProviderPricingCatalog {
   const raw = process.env.OPENAI_MODEL_PRICING_JSON;
-  if (!raw) return { version: null, models: {} };
+  if (!raw) return DEFAULT_OPENAI_PRICING_CATALOG;
   try {
     const parsed: unknown = JSON.parse(raw);
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
@@ -266,6 +299,57 @@ export function readConfiguredPricingCatalog(): ProviderPricingCatalog {
   } catch {
     return { version: null, models: {} };
   }
+}
+
+/**
+ * Atomically abandons only leases that are still expired at update time. A
+ * concurrent worker that reclaimed the row first changes lease_expires_at, so
+ * this conditional update cannot steal its live lease.
+ */
+export async function finalizeExpiredProviderAttempts(jobId: string): Promise<number> {
+  if (!UUID_PATTERN.test(jobId)) throw new Error('PROVIDER_LEDGER_JOB_ID_INVALID');
+  const client = await getAdminClient();
+  const now = new Date();
+  const finalizer = randomUUID();
+  const { data, error } = await client
+    .from('analysis_provider_calls')
+    .update({
+      status: 'failed',
+      billing_status: 'unknown',
+      usage_kind: 'unknown',
+      error_code: 'PROVIDER_ATTEMPT_LEASE_EXPIRED',
+      retryable: false,
+      fallback_allowed: false,
+      ended_at: now.toISOString(),
+      lease_owner: null,
+      lease_expires_at: null,
+      finalized_by: finalizer,
+      updated_at: now.toISOString(),
+    })
+    .eq('job_id', jobId)
+    .eq('status', 'started')
+    .lt('lease_expires_at', now.toISOString())
+    .select('attempt_id');
+  if (error) throw new Error('PROVIDER_LEDGER_EXPIRED_FINALIZE_FAILED');
+  return data?.length ?? 0;
+}
+
+export async function reconcileExpiredProviderAttempts(limit = 100): Promise<number> {
+  const client = await getAdminClient();
+  const now = new Date().toISOString();
+  const { data, error } = await client
+    .from('analysis_provider_calls')
+    .select('job_id')
+    .eq('status', 'started')
+    .lt('lease_expires_at', now)
+    .order('lease_expires_at', { ascending: true })
+    .limit(Math.max(1, Math.min(500, Math.round(limit))));
+  if (error) throw new Error('PROVIDER_LEDGER_EXPIRED_READ_FAILED');
+  let finalized = 0;
+  for (const jobId of [...new Set((data ?? []).map((row) => row.job_id))]) {
+    finalized += await finalizeExpiredProviderAttempts(jobId);
+  }
+  return finalized;
 }
 
 export function providerUsageFromUnknown(

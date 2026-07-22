@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { APIConnectionError } from 'openai';
+import { APIConnectionError, APIConnectionTimeoutError, RateLimitError } from 'openai';
 import { RetryableError } from 'workflow';
 
 vi.mock('server-only', () => ({}));
@@ -257,6 +257,13 @@ describe('fallback fournisseur apres epuisement des retries', () => {
 
   it('essaie le modele suivant apres une erreur transitoire du modele courant', () => {
     expect(shouldFallbackToNextModel(new APIConnectionError({ message: 'transient' }))).toBe(true);
+    expect(shouldFallbackToNextModel(new APIConnectionTimeoutError({ message: 'timeout' }))).toBe(true);
+    expect(shouldFallbackToNextModel(new RateLimitError(
+      429,
+      { error: { code: 'rate_limit_exceeded' } },
+      'rate limited',
+      new Headers(),
+    ))).toBe(true);
   });
 
   it('conserve le caractere rejouable d un echec deja inscrit dans le ledger', () => {

@@ -5,6 +5,7 @@ import type { ResponseInputContent } from 'openai/resources/responses/responses'
 import type { z } from 'zod';
 import { RetryableError } from 'workflow';
 import { VIDEO_ANALYSIS_LIMITS } from './config';
+import { assertRemoteAnalysisBudget } from './budget';
 import {
   beginProviderAttempt,
   estimateProviderUsageCost,
@@ -157,6 +158,17 @@ export async function withProviderRetry<T>(
   const maxRetries = options.maxRetries ?? VIDEO_ANALYSIS_LIMITS.maxRetriesPerProviderCall;
   const driver = options.ledgerDriver ?? DEFAULT_LEDGER_DRIVER;
   while (true) {
+    if (options.ledger && !options.ledgerDriver) {
+      await assertRemoteAnalysisBudget({
+        jobId: options.ledger.jobId,
+        reservation: {
+          promptCharacters: 0,
+          imageCount: 0,
+          maxOutputTokens: 0,
+          stage: options.ledger.stage,
+        },
+      });
+    }
     const handle = options.ledger
       ? await driver.begin(options.ledger, retries)
       : null;
@@ -421,6 +433,17 @@ export async function parseStructuredResponse<Schema extends z.ZodType>(input: {
     const startedAt = Date.now();
 
     try {
+      if (ledger) {
+        await assertRemoteAnalysisBudget({
+          jobId: ledger.jobId,
+          reservation: {
+            promptCharacters: input.prompt.length + input.instructions.length,
+            imageCount: input.images?.length ?? 0,
+            maxOutputTokens: input.maxOutputTokens ?? 8_000,
+            stage: ledger.stage,
+          },
+        });
+      }
       const request = await withProviderRetry(
         () => client.responses.parse(
           {

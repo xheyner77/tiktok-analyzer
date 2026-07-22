@@ -15,6 +15,7 @@ import {
   sanitizeOriginalFileName,
 } from './job-guards';
 import type { AnalysisJobRow, AnalysisJobStatus } from './types';
+import { reconcileExpiredProviderAttempts } from './provider-ledger';
 
 const JOB_COLUMNS = [
   'id',
@@ -191,10 +192,17 @@ export async function reconcileStaleAnalysisJobs(input: {
   nowMs?: number;
   staleAfterMs?: number;
   limit?: number;
-} = {}): Promise<{ examined: number; failed: number; refunded: number; cleanupErrors: number }> {
+} = {}): Promise<{
+  examined: number;
+  failed: number;
+  refunded: number;
+  cleanupErrors: number;
+  providerAttemptsFinalized: number;
+}> {
   const nowMs = input.nowMs ?? Date.now();
   const staleAfterMs = Math.max(DEFAULT_STALE_PROCESSING_AGE_MS, input.staleAfterMs ?? DEFAULT_STALE_PROCESSING_AGE_MS);
   const limit = Math.max(1, Math.min(100, Math.floor(input.limit ?? 25)));
+  const providerAttemptsFinalized = await reconcileExpiredProviderAttempts(limit);
   const cutoff = new Date(nowMs - staleAfterMs).toISOString();
   const uploadCutoff = new Date(nowMs - DEFAULT_STALE_UPLOAD_AGE_MS).toISOString();
   const terminalCleanupCutoff = new Date(nowMs - DEFAULT_TERMINAL_CLEANUP_AGE_MS).toISOString();
@@ -258,7 +266,13 @@ export async function reconcileStaleAnalysisJobs(input: {
       cleanupErrors += 1;
     }
   }
-  return { examined: staleJobs.length + terminalJobs.length, failed, refunded, cleanupErrors };
+  return {
+    examined: staleJobs.length + terminalJobs.length,
+    failed,
+    refunded,
+    cleanupErrors,
+    providerAttemptsFinalized,
+  };
 }
 
 export async function getOwnedAnalysisJob(jobId: string, userId: string): Promise<AnalysisJobRow | null> {

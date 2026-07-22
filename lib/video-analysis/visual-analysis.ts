@@ -301,7 +301,7 @@ export async function analyzeAllFrames(jobId: string): Promise<VisualAnalysisSte
   );
   const startedAt = Date.now();
   const models = getVideoAnalysisModelConfig().extractionCandidates;
-  const outputs = await mapWithConcurrency(batches, 2, async (batch, index) => {
+  const outputs = await mapWithConcurrency(batches, 1, async (batch, index) => {
     const batchId = `visual-batch-${String(index + 1).padStart(2, '0')}`;
     const prepared = batchPrompt({
       batchId,
@@ -317,7 +317,8 @@ export async function analyzeAllFrames(jobId: string): Promise<VisualAnalysisSte
       instructions: VISUAL_INSTRUCTIONS,
       prompt: prepared.prompt,
       images: prepared.images,
-      maxOutputTokens: 6_000,
+      maxOutputTokens: 4_000,
+      maxRetries: 1,
       idempotencyKey: `${job.id}:${batchId}`,
     });
     return {
