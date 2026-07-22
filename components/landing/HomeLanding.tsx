@@ -230,17 +230,6 @@ function ProductPositioningBadge() {
   );
 }
 
-function CreatorProofBadge() {
-  return (
-    <div className="mb-4 mx-auto flex w-fit max-w-full items-center justify-center gap-2 rounded-full border border-cyan-300/15 bg-cyan-300/[0.055] px-3 py-1.5 sm:mb-6">
-      <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-cyan-300/10 text-[11px] font-black text-cyan-100" aria-hidden>✓</span>
-      <p className="text-xs font-semibold text-gray-300 sm:text-sm">
-        <span className="font-black text-cyan-100">Aucune métrique inventée.</span> Chaque donnée est réelle ou indiquée comme indisponible.
-      </p>
-    </div>
-  );
-}
-
 function RoadmapStepIcon({ icon, className }: { icon: RoadmapIconName; className?: string }) {
   if (icon === 'play') {
     return (
@@ -462,9 +451,6 @@ export default function HomeLanding() {
                 </div>
               </div>
 
-              <div className="mt-4 sm:mt-5">
-                <CreatorProofBadge />
-              </div>
             </div>
           </div>
 
@@ -558,7 +544,6 @@ export default function HomeLanding() {
       <FAQSection />
 
       <MotionSection className={`${shell} relative pb-8 pt-6 sm:pb-16 sm:pt-12`}>
-        <CreatorProofBadge />
         <div className="relative overflow-hidden rounded-[1.35rem] border border-white/[0.1] bg-[linear-gradient(135deg,rgba(232,121,249,0.18),rgba(34,211,238,0.08),rgba(99,102,241,0.14))] px-4 py-7 text-center sm:rounded-[1.7rem] sm:px-10 sm:py-12">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent" aria-hidden />
           <h2 className="mx-auto max-w-3xl text-2xl font-black leading-tight tracking-tight text-white sm:text-5xl">
@@ -1691,6 +1676,9 @@ function TikTokStatsIllustration() {
       </div>
 
       <div className="relative z-10 mx-auto mt-5 w-full max-w-[27rem] sm:mt-7 sm:max-w-[31rem]">
+        <span className="absolute right-[9%] top-[7%] z-20 rounded-full bg-black/70 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-white/65 backdrop-blur-sm">
+          Démo
+        </span>
         <img
           src="/ChatGPT Image 15 mai 2026, 13_58_30.png"
           alt="Aperçu illustratif d’un écran TikTok Analytics avec vues, engagement et récompenses estimées"
@@ -1702,10 +1690,6 @@ function TikTokStatsIllustration() {
           draggable={false}
         />
       </div>
-
-      <p className="relative z-10 mx-auto mt-1 max-w-lg text-[9px] font-semibold leading-4 text-gray-600 sm:text-[10px]">
-        Aperçu illustratif · données de démonstration · résultats variables.
-      </p>
     </div>
   );
 }
