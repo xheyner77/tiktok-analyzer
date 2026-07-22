@@ -507,8 +507,8 @@ const REPAIR_INSTRUCTIONS = [
 ].join('\n');
 
 // Must remain valid for every configured fallback, including GPT-4o/4o-mini.
-const MAX_SYNTHESIS_OUTPUT_TOKENS = 16_000;
-const SYNTHESIS_PROVIDER_TIMEOUT_MS = 180_000;
+const MAX_SYNTHESIS_OUTPUT_TOKENS = 24_000;
+const SYNTHESIS_PROVIDER_TIMEOUT_MS = 240_000;
 
 function synthesisContext(
   input: CritiqueAndSynthesisInput,
