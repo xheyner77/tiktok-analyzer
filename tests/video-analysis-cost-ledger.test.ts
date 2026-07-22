@@ -18,6 +18,8 @@ import {
 } from '@/lib/video-analysis/provider-ledger';
 import {
   probeModelAvailability,
+  ProviderRecordedFailureError,
+  shouldFallbackToNextModel,
   withProviderRetry,
   type ModelProbeDependencies,
   type ProviderLedgerDriver,
@@ -231,6 +233,27 @@ describe('rollup complet du ledger', () => {
     expect(result.estimatedCostUsd).toBeNull();
     expect(result.missingPricingModels).toEqual(['model-sans-prix']);
     expect(result.indeterminateBillingModels).toEqual(['model-timeout']);
+  });
+});
+
+describe('fallback fournisseur apres epuisement des retries', () => {
+  it('essaie le modele suivant apres une erreur transitoire du modele courant', () => {
+    expect(shouldFallbackToNextModel(new APIConnectionError({ message: 'transient' }))).toBe(true);
+  });
+
+  it('conserve le caractere rejouable d un echec deja inscrit dans le ledger', () => {
+    const error = new ProviderRecordedFailureError('RATE_LIMIT_EXCEEDED', true, false);
+
+    expect(error.retryable).toBe(true);
+    expect(error.fallbackAllowed).toBe(false);
+    expect(shouldFallbackToNextModel(error)).toBe(true);
+  });
+
+  it('ne masque pas une erreur fatale sans fallback autorise', () => {
+    expect(shouldFallbackToNextModel(new Error('INVALID_PROVIDER_RESPONSE'))).toBe(false);
+    expect(shouldFallbackToNextModel(
+      new ProviderRecordedFailureError('INVALID_PROVIDER_RESPONSE', false, false),
+    )).toBe(false);
   });
 });
 

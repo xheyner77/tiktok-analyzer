@@ -79,13 +79,24 @@ const DEFAULT_LEDGER_DRIVER: ProviderLedgerDriver = {
 };
 
 export class ProviderRecordedFailureError extends Error {
+  readonly retryable: boolean;
   readonly fallbackAllowed: boolean;
 
-  constructor(code: string | null, fallbackAllowed: boolean) {
+  constructor(code: string | null, retryable: boolean, fallbackAllowed: boolean) {
     super(`PROVIDER_RECORDED_FAILURE:${code ?? 'UNKNOWN'}`);
     this.name = 'ProviderRecordedFailureError';
+    this.retryable = retryable;
     this.fallbackAllowed = fallbackAllowed;
   }
+}
+
+export function shouldFallbackToNextModel(error: unknown): boolean {
+  return isModelFallbackError(error)
+    || isRetryable(error)
+    || (
+      error instanceof ProviderRecordedFailureError
+      && (error.fallbackAllowed || error.retryable)
+    );
 }
 
 function assertProviderAttemptLease(handle: ProviderAttemptHandle | null): void {
@@ -157,6 +168,7 @@ export async function withProviderRetry<T>(
       }
       throw new ProviderRecordedFailureError(
         handle.existingErrorCode,
+        handle.existingRetryable === true,
         handle.existingFallbackAllowed === true,
       );
     }
@@ -439,9 +451,7 @@ export async function parseStructuredResponse<Schema extends z.ZodType>(input: {
       };
     } catch (error) {
       lastError = error;
-      const fallbackAllowed = isModelFallbackError(error)
-        || (error instanceof ProviderRecordedFailureError && error.fallbackAllowed);
-      if (!fallbackAllowed) throw error;
+      if (!shouldFallbackToNextModel(error)) throw error;
       modelAvailability.set(candidate, Promise.resolve(false));
     }
   }
