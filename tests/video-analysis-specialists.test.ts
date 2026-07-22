@@ -17,6 +17,7 @@ import { TECHNICAL_EVIDENCE_IDS } from '@/lib/video-analysis/grounding';
 import {
   buildSpecialistPromptContext,
   validateSpecialistDiagnostic,
+  validateSpecialistDiagnosticOrUnavailable,
   type SpecialistName,
   type SpecialistPromptContext,
 } from '@/lib/video-analysis/specialists';
@@ -206,6 +207,34 @@ describe('cloisonnement des preuves des specialistes', () => {
       evidenceRefs: [visibleFrameId],
       timeRange: { startSec: timestamp, endSec: timestamp + 0.02 },
     }))).toBeTruthy();
+  });
+
+  it('ecarte un diagnostic fournisseur non ancre sans faire echouer le pipeline', () => {
+    const view = buildSpecialistPromptContext({
+      specialist: 'editing',
+      job: jobFixture(),
+      frames: frameFixtures(),
+    });
+    const invalid = diagnostic({
+      evidenceRefs: ['preuve-inventee-par-le-fournisseur'],
+      timeRange: { startSec: 10, endSec: 11 },
+    });
+
+    const result = validateSpecialistDiagnosticOrUnavailable({
+      diagnostic: invalid,
+      specialist: 'editing',
+      evidenceScope: view.evidenceScope,
+      durationSec: DURATION_SEC,
+    });
+
+    expect(result).toMatchObject({
+      id: 'specialist-editing',
+      specialist: 'editing',
+      findings: [],
+    });
+    expect(result.limitations).toContain(
+      'Diagnostic spécialiste écarté car ses preuves ne correspondent pas aux signaux mesurés.',
+    );
   });
 
   it('borne les preuves techniques temporelles et reserve les agregats aux constats globaux', () => {

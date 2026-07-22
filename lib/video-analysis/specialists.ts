@@ -471,6 +471,23 @@ export function validateSpecialistDiagnostic(input: {
   return input.diagnostic;
 }
 
+export function validateSpecialistDiagnosticOrUnavailable(input: {
+  diagnostic: SpecialistDiagnostic;
+  specialist: SpecialistName;
+  evidenceScope: SpecialistEvidenceScope;
+  durationSec: number;
+}): SpecialistDiagnostic {
+  try {
+    return validateSpecialistDiagnostic(input);
+  } catch (error) {
+    if (!(error instanceof Error) || !error.message.startsWith('SPECIALIST_')) throw error;
+    return deterministicUnavailable(
+      input.specialist,
+      'Diagnostic spécialiste écarté car ses preuves ne correspondent pas aux signaux mesurés.',
+    );
+  }
+}
+
 async function mapWithConcurrency<T, R>(
   values: readonly T[],
   concurrency: number,
@@ -570,7 +587,7 @@ export async function runSpecialistAnalyses(jobId: string): Promise<SpecialistSt
       idempotencyKey: `${job.id}:specialist:${specialist}`,
     });
     calls.push(response.metrics);
-    return validateSpecialistDiagnostic({
+    return validateSpecialistDiagnosticOrUnavailable({
       diagnostic: response.value,
       specialist,
       evidenceScope: promptView.evidenceScope,
