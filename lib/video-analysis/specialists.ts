@@ -556,7 +556,7 @@ export async function runSpecialistAnalyses(jobId: string): Promise<SpecialistSt
     if (skipReason) return deterministicUnavailable(specialist, skipReason);
     const promptView = buildSpecialistPromptContext({ specialist, job, frames });
     const response = await parseStructuredResponse({
-      candidates: getVideoAnalysisModelConfig().extractionCandidates,
+      candidates: getVideoAnalysisModelConfig().specialistCandidates,
       schema: SpecialistDiagnosticSchema,
       schemaName: `viralynz_${specialist}_diagnostic`,
       instructions: SPECIALIST_INSTRUCTIONS,

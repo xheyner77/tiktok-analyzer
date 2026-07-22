@@ -20,6 +20,7 @@ export const VIDEO_ANALYSIS_VERSIONS = Object.freeze({
 export interface VideoAnalysisModelConfig {
   synthesisCandidates: readonly string[];
   extractionCandidates: readonly string[];
+  specialistCandidates: readonly string[];
   transcriptionPrimary: string;
   transcriptionAlignment: string;
 }
@@ -47,6 +48,10 @@ export function getVideoAnalysisModelConfig(): VideoAnalysisModelConfig {
     extractionCandidates: configuredCandidates('OPENAI_EXTRACTION_MODELS', [
       'gpt-4o',
       'gpt-4o-mini',
+    ]),
+    specialistCandidates: configuredCandidates('OPENAI_SPECIALIST_MODELS', [
+      'gpt-4o-mini',
+      'gpt-4o',
     ]),
     transcriptionPrimary: process.env.OPENAI_TRANSCRIPTION_MODEL?.trim() || 'gpt-4o-transcribe',
     transcriptionAlignment: process.env.OPENAI_ALIGNMENT_MODEL?.trim() || 'whisper-1',

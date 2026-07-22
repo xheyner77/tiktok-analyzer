@@ -24,6 +24,7 @@ import {
   type ModelProbeDependencies,
   type ProviderLedgerDriver,
 } from '@/lib/video-analysis/openai-client';
+import { getVideoAnalysisModelConfig } from '@/lib/video-analysis/config';
 
 function ledgerRow(overrides: Partial<ProviderLedgerRow> = {}): ProviderLedgerRow {
   return {
@@ -237,6 +238,23 @@ describe('rollup complet du ledger', () => {
 });
 
 describe('fallback fournisseur apres epuisement des retries', () => {
+  afterEach(() => {
+    delete process.env.OPENAI_SPECIALIST_MODELS;
+  });
+
+  it('priorise le modele leger pour les appels specialistes longs', () => {
+    expect(getVideoAnalysisModelConfig().specialistCandidates).toEqual(['gpt-4o-mini', 'gpt-4o']);
+  });
+
+  it('respecte une liste specialiste explicitement configuree', () => {
+    process.env.OPENAI_SPECIALIST_MODELS = 'model-specialiste-a,model-specialiste-b';
+
+    expect(getVideoAnalysisModelConfig().specialistCandidates).toEqual([
+      'model-specialiste-a',
+      'model-specialiste-b',
+    ]);
+  });
+
   it('essaie le modele suivant apres une erreur transitoire du modele courant', () => {
     expect(shouldFallbackToNextModel(new APIConnectionError({ message: 'transient' }))).toBe(true);
   });
