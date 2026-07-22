@@ -508,6 +508,7 @@ const REPAIR_INSTRUCTIONS = [
 
 // Must remain valid for every configured fallback, including GPT-4o/4o-mini.
 const MAX_SYNTHESIS_OUTPUT_TOKENS = 16_000;
+const SYNTHESIS_PROVIDER_TIMEOUT_MS = 180_000;
 
 function synthesisContext(
   input: CritiqueAndSynthesisInput,
@@ -743,6 +744,8 @@ export async function runCritiqueAndSynthesis(
     instructions: SYNTHESIS_INSTRUCTIONS,
     prompt: buildSynthesisPrompt(request, critique),
     maxOutputTokens: MAX_SYNTHESIS_OUTPUT_TOKENS,
+    timeoutMs: SYNTHESIS_PROVIDER_TIMEOUT_MS,
+    maxRetries: 0,
     idempotencyKey: `${input.jobId}:synthesis:${VIDEO_ANALYSIS_VERSIONS.prompt}`,
   });
   calls.push(metric('synthesis', synthesisResponse.metrics));
@@ -759,6 +762,8 @@ export async function runCritiqueAndSynthesis(
       instructions: REPAIR_INSTRUCTIONS,
       prompt: repairPrompt({ request, critique, previous: narrative, quality }),
       maxOutputTokens: MAX_SYNTHESIS_OUTPUT_TOKENS,
+      timeoutMs: SYNTHESIS_PROVIDER_TIMEOUT_MS,
+      maxRetries: 0,
       idempotencyKey: `${input.jobId}:synthesis-repair:${VIDEO_ANALYSIS_VERSIONS.prompt}`,
     });
     calls.push(metric('repair', repairResponse.metrics));

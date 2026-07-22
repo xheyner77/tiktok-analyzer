@@ -553,6 +553,10 @@ describe('critique croisée et synthèse finale', () => {
       'job_123:synthesis:video-coach-2026-07-13.1',
       'job_123:synthesis-repair:video-coach-2026-07-13.1',
     ]);
+    expect(calls.slice(1)).toEqual(expect.arrayContaining([
+      expect.objectContaining({ timeoutMs: 180_000, maxRetries: 0 }),
+      expect.objectContaining({ timeoutMs: 180_000, maxRetries: 0 }),
+    ]));
     expect(JSON.stringify(response.metrics)).not.toContain('Optimise ton contenu');
   });
 

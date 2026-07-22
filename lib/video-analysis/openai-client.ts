@@ -47,6 +47,7 @@ async function delay(ms: number): Promise<void> {
 export interface ProviderRetryOptions<T> {
   ledger?: ProviderLedgerContext | null;
   usage?: (value: T) => ProviderUsageSnapshot;
+  maxRetries?: number;
   /** Injectable only to make retry accounting deterministic in unit tests. */
   sleep?: (milliseconds: number) => Promise<void>;
   /** Injectable ledger I/O used by the replay regression test. */
@@ -153,6 +154,7 @@ export async function withProviderRetry<T>(
 }> {
   let retries = 0;
   let providerDurationMs = 0;
+  const maxRetries = options.maxRetries ?? VIDEO_ANALYSIS_LIMITS.maxRetriesPerProviderCall;
   const driver = options.ledgerDriver ?? DEFAULT_LEDGER_DRIVER;
   while (true) {
     const handle = options.ledger
@@ -162,7 +164,7 @@ export async function withProviderRetry<T>(
     assertProviderAttemptLease(handle);
 
     if (handle?.existingStatus === 'failed') {
-      if (handle.existingRetryable === true && retries < VIDEO_ANALYSIS_LIMITS.maxRetriesPerProviderCall) {
+      if (handle.existingRetryable === true && retries < maxRetries) {
         retries += 1;
         continue;
       }
@@ -190,7 +192,7 @@ export async function withProviderRetry<T>(
             succeeded: false,
             providerDurationMs: replayDurationMs,
           });
-          if (!isRetryable(error) || replayRetries >= VIDEO_ANALYSIS_LIMITS.maxRetriesPerProviderCall) throw error;
+          if (!isRetryable(error) || replayRetries >= maxRetries) throw error;
           const backoff = Math.min(8_000, 750 * 2 ** replayRetries);
           replayRetries += 1;
           await (options.sleep ?? delay)(backoff);
@@ -229,7 +231,7 @@ export async function withProviderRetry<T>(
           fallbackAllowed: isModelFallbackError(error),
         });
       }
-      if (!isRetryable(error) || retries >= VIDEO_ANALYSIS_LIMITS.maxRetriesPerProviderCall) throw error;
+      if (!isRetryable(error) || retries >= maxRetries) throw error;
       const retryAfter = error instanceof APIError ? Number(error.headers?.get('retry-after')) : Number.NaN;
       const backoff = Number.isFinite(retryAfter)
         ? Math.min(10_000, Math.max(500, retryAfter * 1_000))
@@ -380,6 +382,8 @@ export async function parseStructuredResponse<Schema extends z.ZodType>(input: {
   prompt: string;
   images?: Array<{ dataUrl: string; detail?: 'low' | 'high' | 'auto' }>;
   maxOutputTokens?: number;
+  timeoutMs?: number;
+  maxRetries?: number;
   idempotencyKey?: string;
 }): Promise<{ value: z.infer<Schema>; metrics: StructuredCallMetrics }> {
   const client = getVideoOpenAIClient();
@@ -427,13 +431,17 @@ export async function parseStructuredResponse<Schema extends z.ZodType>(input: {
             max_output_tokens: input.maxOutputTokens ?? 8_000,
             store: false,
           },
-          input.idempotencyKey
-            ? { idempotencyKey: `${input.idempotencyKey}:${available}`.slice(0, 240) }
-            : undefined,
+          {
+            ...(input.idempotencyKey
+              ? { idempotencyKey: `${input.idempotencyKey}:${available}`.slice(0, 240) }
+              : {}),
+            ...(input.timeoutMs ? { timeout: input.timeoutMs } : {}),
+          },
         ),
         {
           ledger: ledger ? { ...ledger, model: available } : null,
           usage: (response) => providerUsageFromUnknown(response.usage),
+          maxRetries: input.maxRetries,
         },
       );
       const parsed = request.value.output_parsed;

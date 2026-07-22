@@ -670,7 +670,7 @@ describe('persistance durable sans contenu utilisateur', () => {
     expect(openaiClient).toContain("status: 'succeeded'");
     expect(openaiClient).toContain('RetryableError.is(error)');
     const terminalRetryDecision = openaiClient.indexOf(
-      'if (!isRetryable(error) || retries >= VIDEO_ANALYSIS_LIMITS.maxRetriesPerProviderCall)',
+      'if (!isRetryable(error) || retries >= maxRetries)',
     );
     expect(openaiClient.lastIndexOf('await driver.finish({', terminalRetryDecision))
       .toBeGreaterThan(openaiClient.indexOf('export async function withProviderRetry'));
