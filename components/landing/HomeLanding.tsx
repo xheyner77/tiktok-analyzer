@@ -410,6 +410,10 @@ export default function HomeLanding() {
                 href="/signup"
                 className="group inline-flex min-h-[46px] w-full max-w-[19rem] items-center justify-center gap-2 rounded-xl border border-vn-fuchsia/35 bg-gradient-to-r from-vn-fuchsia to-vn-indigo px-5 text-sm font-black text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08)_inset,0_22px_70px_-32px_rgba(232,121,249,0.95)] transition duration-500 ease-out hover:-translate-y-0.5 hover:scale-[1.012] hover:brightness-110 hover:shadow-[0_0_0_1px_rgba(255,255,255,0.12)_inset,0_30px_95px_-42px_rgba(232,121,249,1)] active:scale-[0.99] sm:min-h-[54px] sm:w-auto sm:max-w-[24rem] sm:px-8"
               >
+                <svg className="h-4 w-4 shrink-0 drop-shadow-[0_0_8px_rgba(255,255,255,0.45)]" viewBox="0 0 20 20" fill="none" aria-hidden>
+                  <path d="M8.15 2.2c.25 2.9 1.56 4.21 4.45 4.45-2.89.25-4.2 1.56-4.45 4.45-.24-2.89-1.55-4.2-4.45-4.45 2.9-.24 4.21-1.55 4.45-4.45Z" fill="currentColor" />
+                  <path d="M14.45 10.15c.16 1.92 1.03 2.79 2.95 2.95-1.92.16-2.79 1.03-2.95 2.95-.16-1.92-1.03-2.79-2.95-2.95 1.92-.16 2.79-1.03 2.95-2.95Z" fill="currentColor" opacity=".9" />
+                </svg>
                 Analyser ma vid&eacute;o
               </Link>
             </div>
