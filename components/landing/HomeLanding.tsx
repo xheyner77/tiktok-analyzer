@@ -222,14 +222,20 @@ function ArrowIcon({ className = 'h-4 w-4' }: { className?: string }) {
 
 function ProductPositioningBadge() {
   return (
-    <div className="mb-3 inline-flex max-w-[22rem] items-center justify-center gap-2.5 rounded-full border border-white/[0.11] bg-white/[0.05] px-3 py-1.5 text-[12px] font-bold text-gray-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_18px_45px_-30px_rgba(168,85,247,0.65)] backdrop-blur-xl sm:mb-5 sm:max-w-none sm:px-4">
-      <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-fuchsia-300/20 bg-gradient-to-br from-fuchsia-400/20 to-cyan-300/15 text-fuchsia-200 shadow-[0_0_18px_rgba(217,70,239,0.25)]" aria-hidden>
-        <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none">
-          <path d="m4 8.2 2.45 2.45L12.2 4.9" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+    <div
+      className="mb-3 inline-flex max-w-full items-center justify-center gap-2 rounded-full border border-cyan-300/[0.12] bg-cyan-300/[0.045] px-3 py-2 text-[11px] font-bold text-slate-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_18px_45px_-30px_rgba(34,211,238,0.55)] backdrop-blur-xl sm:mb-5 sm:gap-2.5 sm:px-4 sm:text-xs"
+      aria-label="Note de 4,8 sur 5, basée sur plus de 500 avis cinq étoiles"
+    >
+      <span className="flex items-center gap-0.5 text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" aria-hidden>
+        {Array.from({ length: 5 }, (_, index) => (
+          <svg key={index} className="h-3 w-3 fill-current sm:h-3.5 sm:w-3.5" viewBox="0 0 20 20">
+            <path d="m10 1.7 2.53 5.13 5.66.82-4.1 3.99.97 5.63L10 14.61l-5.06 2.66.97-5.63-4.1-3.99 5.66-.82L10 1.7Z" />
+          </svg>
+        ))}
       </span>
-      <span><span className="font-black text-white">+10K</span> créateurs satisfaits</span>
-      <span className="hidden rounded-full border border-cyan-300/15 bg-cyan-300/[0.07] px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.16em] text-cyan-200/80 sm:inline">Sondage créateurs</span>
+      <span className="font-black text-white">4,8</span>
+      <span className="h-3.5 w-px bg-white/15" aria-hidden />
+      <span><span className="font-black text-white">500+</span> avis 5 étoiles</span>
     </div>
   );
 }
