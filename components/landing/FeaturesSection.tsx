@@ -28,7 +28,7 @@ const v2Plan = [
 export default function FeaturesSection() {
   return (
     <section id="fonctionnalites" className="relative mx-auto w-full max-w-6xl scroll-mt-28 px-3.5 py-7 sm:px-6 sm:py-14 lg:px-8">
-      <div className="pointer-events-none absolute inset-x-0 top-4 h-[22rem] bg-[radial-gradient(ellipse_60%_36%_at_50%_0%,rgba(168,85,247,0.14),transparent_72%),radial-gradient(circle_at_90%_20%,rgba(34,211,238,0.09),transparent_32%)]" aria-hidden />
+      <div className="pointer-events-none absolute inset-x-0 top-4 h-[22rem] bg-[radial-gradient(ellipse_60%_36%_at_50%_0%,rgba(168,85,247,0.14),transparent_72%),radial-gradient(circle_at_90%_20%,rgba(34,211,238,0.09),transparent_32%)] [mask-image:linear-gradient(to_bottom,transparent,black_22%,black)]" aria-hidden />
 
       <div className="relative mx-auto max-w-3xl text-center">
         <h2 className="text-[1.72rem] font-black leading-[1.02] tracking-tight text-white sm:text-5xl">
