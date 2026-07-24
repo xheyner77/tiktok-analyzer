@@ -5,7 +5,6 @@ import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion
 import Link from 'next/link';
 import PremiumFeaturesSection from '@/components/landing/FeaturesSection';
 import PremiumHowItWorksSection from '@/components/landing/HowItWorksSection';
-import LandingPricingSection from '@/components/landing/LandingPricingSection';
 
 const shell = 'mx-auto w-full max-w-6xl px-3.5 sm:px-6 lg:px-8';
 const titleGradient = 'bg-gradient-to-r from-vn-fuchsia via-pink-400 to-vn-indigo bg-clip-text text-transparent';
@@ -410,7 +409,7 @@ export default function HomeLanding() {
             </div>
 
             <p className="mt-2 text-[11px] font-bold text-gray-500">
-              3 analyses gratuites au total · sans carte bancaire
+              3 analyses gratuites · sans carte bancaire
             </p>
 
             <div className="mt-5 sm:mt-8">
@@ -542,8 +541,6 @@ export default function HomeLanding() {
       </MotionSection>
 
       <UseCasesSection />
-
-      <LandingPricingSection />
 
       <FAQSection />
 
@@ -1672,13 +1669,13 @@ function TikTokStatsIllustration() {
         </p>
       </div>
 
-      <div className="relative z-10 mx-auto mt-5 w-full max-w-[27rem] sm:mt-7 sm:max-w-[31rem]">
+      <div className="relative z-10 mx-auto mt-5 w-full max-w-[27rem] overflow-hidden rounded-[2.4rem] sm:mt-7 sm:max-w-[31rem] sm:rounded-[2.8rem]">
         <img
           src="/ChatGPT Image 15 mai 2026, 13_58_30.png"
           alt="Aperçu illustratif d’un écran TikTok Analytics avec vues, engagement et récompenses estimées"
           width="930"
           height="1666"
-          className="block h-auto w-full select-none object-contain drop-shadow-[0_34px_80px_rgba(0,0,0,0.68)]"
+          className="block aspect-[0.59] w-full select-none object-cover object-center drop-shadow-[0_34px_80px_rgba(0,0,0,0.68)]"
           loading="lazy"
           decoding="async"
           draggable={false}
