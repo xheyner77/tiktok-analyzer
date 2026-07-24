@@ -1733,9 +1733,6 @@ function ProductHeroStage() {
             loading="eager"
             decoding="async"
           />
-          <span className="absolute bottom-2 right-2 rounded-full border border-white/[0.14] bg-black/75 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-white/80 backdrop-blur-md sm:bottom-4 sm:right-4 sm:text-[10px]">
-            Aperçu illustratif · données de démonstration
-          </span>
         </div>
       </motion.div>
     </motion.div>
