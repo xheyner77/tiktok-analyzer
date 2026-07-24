@@ -1711,7 +1711,7 @@ function TikTokStatsIllustration() {
         </p>
       </div>
 
-      <div className="relative z-10 mx-auto -mb-12 mt-5 w-full max-w-[27rem] sm:mb-0 sm:mt-7 sm:max-w-[31rem]">
+      <div className="relative z-10 mx-auto mt-5 w-full max-w-[27rem] sm:mt-7 sm:max-w-[31rem]">
         <img
           src="/ChatGPT%20Image%2015%20mai%202026%2C%2013_58_30.png"
           alt="Aperçu illustratif d’un écran TikTok Analytics avec vues, engagement et récompenses estimées"
