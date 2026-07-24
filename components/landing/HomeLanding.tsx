@@ -1705,10 +1705,10 @@ function TikTokStatsIllustration() {
 
       <div className="relative z-10 mx-auto max-w-3xl">
         <h2 className="text-[1.75rem] font-black leading-[1.02] tracking-[-0.035em] text-white sm:text-5xl">
-          Corrige. Reposte. <TitleAccent>Mesure ce qui change.</TitleAccent>
+          Une vid&eacute;o peut g&eacute;n&eacute;rer <TitleAccent>plus de 4 000&nbsp;&euro;.</TitleAccent>
         </h2>
         <p className="mx-auto mt-3 max-w-2xl text-[13px] font-semibold leading-5 text-gray-400 sm:text-base sm:leading-6">
-          Viralynz te dit quoi couper, avancer et réécrire. TikTok te montre ensuite les vues, l’engagement et les revenus réellement générés par ta nouvelle version.
+          Viralynz t&rsquo;aide &agrave; corriger le hook, le rythme et le montage avant de republier. Une V2 qui retient mieux peut g&eacute;n&eacute;rer plus de vues et, pour un compte &eacute;ligible, plusieurs milliers d&rsquo;euros de revenus TikTok.
         </p>
       </div>
 
