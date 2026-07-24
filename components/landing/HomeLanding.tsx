@@ -442,11 +442,11 @@ export default function HomeLanding() {
             <div className="mt-4 flex flex-col items-center justify-center gap-2.5 sm:mt-6 sm:flex-row sm:gap-3">
               <Link
                 href="/signup"
-                className="group inline-flex min-h-[46px] w-full max-w-[19rem] items-center justify-center gap-2 rounded-xl border border-vn-fuchsia/35 bg-gradient-to-r from-vn-fuchsia to-vn-indigo px-5 text-sm font-black text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08)_inset,0_22px_70px_-32px_rgba(232,121,249,0.95)] transition duration-500 ease-out hover:-translate-y-0.5 hover:scale-[1.012] hover:brightness-110 hover:shadow-[0_0_0_1px_rgba(255,255,255,0.12)_inset,0_30px_95px_-42px_rgba(232,121,249,1)] active:scale-[0.99] sm:min-h-[54px] sm:w-auto sm:max-w-[24rem] sm:px-8"
+                className="group inline-flex min-h-[46px] w-auto min-w-[14.5rem] max-w-none items-center justify-center gap-2 rounded-xl border border-vn-fuchsia/35 bg-gradient-to-r from-vn-fuchsia to-vn-indigo px-6 text-sm font-black text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08)_inset,0_22px_70px_-32px_rgba(232,121,249,0.95)] transition duration-500 ease-out hover:-translate-y-0.5 hover:scale-[1.012] hover:brightness-110 hover:shadow-[0_0_0_1px_rgba(255,255,255,0.12)_inset,0_30px_95px_-42px_rgba(232,121,249,1)] active:scale-[0.99] sm:min-h-[54px] sm:min-w-0 sm:max-w-[24rem] sm:px-8"
               >
-                <svg className="h-4 w-4 shrink-0 drop-shadow-[0_0_8px_rgba(255,255,255,0.45)]" viewBox="0 0 20 20" fill="none" aria-hidden>
-                  <path d="M8.15 2.2c.25 2.9 1.56 4.21 4.45 4.45-2.89.25-4.2 1.56-4.45 4.45-.24-2.89-1.55-4.2-4.45-4.45 2.9-.24 4.21-1.55 4.45-4.45Z" fill="currentColor" />
-                  <path d="M14.45 10.15c.16 1.92 1.03 2.79 2.95 2.95-1.92.16-2.79 1.03-2.95 2.95-.16-1.92-1.03-2.79-2.95-2.95 1.92-.16 2.79-1.03 2.95-2.95Z" fill="currentColor" opacity=".9" />
+                <svg className="h-3.5 w-3.5 shrink-0 drop-shadow-[0_0_7px_rgba(255,255,255,0.5)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="m12 3-1.35 4.1a5 5 0 0 1-3.17 3.17L3.4 11.6l4.08 1.34a5 5 0 0 1 3.17 3.17L12 20.2l1.35-4.09a5 5 0 0 1 3.17-3.17l4.08-1.34-4.08-1.33a5 5 0 0 1-3.17-3.17L12 3Z" />
+                  <path d="M5 3v3M3.5 4.5h3M19 17.5v3M17.5 19h3" />
                 </svg>
                 Analyser ma vid&eacute;o
               </Link>
