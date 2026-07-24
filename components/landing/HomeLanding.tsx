@@ -729,13 +729,10 @@ function MobileAppComingSoonSection() {
         <div className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/55 to-transparent" aria-hidden />
 
         <div className="relative rounded-[1.95rem] bg-[linear-gradient(180deg,rgba(255,255,255,0.075),rgba(255,255,255,0.03)_38%,rgba(3,5,13,0.88))] px-4 py-5 backdrop-blur-xl sm:rounded-[2.2rem] sm:px-6 sm:py-7">
-          <div className="relative mx-auto w-full max-w-[18rem] rounded-[1.75rem] border border-white/[0.12] bg-white/[0.06] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_26px_80px_-50px_rgba(232,121,249,0.95)] sm:max-w-[19.5rem] sm:p-5">
-            <div className="absolute -inset-4 rounded-[2.2rem] bg-[radial-gradient(circle,rgba(34,211,238,0.26),transparent_62%)] blur-2xl" aria-hidden />
+          <div className="relative mx-auto flex w-full justify-center py-2 sm:py-3">
+            <div className="absolute left-1/2 top-1/2 h-52 w-52 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(34,211,238,0.22),rgba(232,121,249,0.12)_42%,transparent_70%)] blur-2xl" aria-hidden />
             <div className="relative">
               <FakeQrCode />
-              <div className="mx-auto mt-4 w-fit rounded-full border border-white/10 bg-[#080b16]/82 px-3.5 py-1.5 text-[0.68rem] font-black uppercase tracking-[0.16em] text-white/68 shadow-[0_12px_38px_-28px_rgba(34,211,238,0.75)]">
-                Acc&egrave;s stores bient&ocirc;t
-              </div>
             </div>
           </div>
 
@@ -744,7 +741,7 @@ function MobileAppComingSoonSection() {
               L&rsquo;app Viralynz arrive <span className={titleGradient}>bient&ocirc;t</span>
             </h2>
             <p className="mx-auto mt-4 text-[0.95rem] font-semibold leading-6 text-slate-300/82 sm:text-base sm:leading-7">
-              Viralynz fonctionne d&eacute;j&agrave; sur mobile depuis ton navigateur. Les versions Google Play et App Store arrivent bient&ocirc;t pour retrouver ton coach de repost encore plus vite.
+              Viralynz fonctionne d&eacute;j&agrave; sur mobile depuis ton navigateur. Les versions Google Play et App Store arrivent bient&ocirc;t.
             </p>
             <div className="mt-5 grid gap-3 sm:mt-6">
               <GooglePlayBadge />
