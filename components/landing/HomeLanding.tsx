@@ -226,7 +226,7 @@ function ProductPositioningBadge() {
       className="mb-3 inline-flex max-w-full items-center justify-center gap-2 rounded-full border border-cyan-300/[0.12] bg-cyan-300/[0.045] px-3 py-2 text-[11px] font-bold text-slate-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_18px_45px_-30px_rgba(34,211,238,0.55)] backdrop-blur-xl sm:mb-5 sm:gap-2.5 sm:px-4 sm:text-xs"
       aria-label="Note de 4,8 sur 5, basée sur plus de 500 avis cinq étoiles"
     >
-      <span className="flex items-center gap-0.5 text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" aria-hidden>
+      <span className="flex items-center gap-0.5 text-fuchsia-400 drop-shadow-[0_0_8px_rgba(217,70,239,0.6)]" aria-hidden>
         {Array.from({ length: 5 }, (_, index) => (
           <svg key={index} className="h-3 w-3 fill-current sm:h-3.5 sm:w-3.5" viewBox="0 0 20 20">
             <path d="m10 1.7 2.53 5.13 5.66.82-4.1 3.99.97 5.63L10 14.61l-5.06 2.66.97-5.63-4.1-3.99 5.66-.82L10 1.7Z" />
