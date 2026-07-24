@@ -240,28 +240,25 @@ function ProductPositioningBadge() {
   );
 }
 
-const creatorAvatarGradients = [
-  'from-fuchsia-500 via-violet-600 to-indigo-950',
-  'from-cyan-400 via-blue-600 to-slate-950',
-  'from-amber-300 via-orange-500 to-rose-950',
-  'from-emerald-300 via-teal-600 to-slate-950',
-  'from-pink-400 via-fuchsia-600 to-violet-950',
+const creatorAvatarPaths = [
+  '/creator-avatars/creator-1.jpg',
+  '/creator-avatars/creator-2.jpg',
+  '/creator-avatars/creator-3.jpg',
+  '/creator-avatars/creator-4.jpg',
+  '/creator-avatars/creator-5.jpg',
 ];
 
 function CreatorTrustRow() {
   return (
     <div className="mt-3 flex items-center justify-center gap-3 sm:mt-4" aria-label="Déjà adopté par plus de 10 000 créateurs">
       <div className="flex -space-x-2" aria-hidden>
-        {creatorAvatarGradients.map((gradient, index) => (
+        {creatorAvatarPaths.map((src, index) => (
           <span
-            key={gradient}
-            className={`relative grid h-7 w-7 place-items-center overflow-hidden rounded-full border-2 border-[#07070b] bg-gradient-to-br ${gradient} shadow-[0_8px_24px_-12px_rgba(168,85,247,0.9)] sm:h-8 sm:w-8`}
+            key={src}
+            className="relative grid h-7 w-7 place-items-center overflow-hidden rounded-full border-2 border-[#07070b] bg-[#11131b] shadow-[0_8px_24px_-12px_rgba(168,85,247,0.9)] sm:h-8 sm:w-8"
           >
-            <svg className="h-[72%] w-[72%] text-white/82" viewBox="0 0 24 24" fill="currentColor">
-              <circle cx={12 + (index % 2 ? 0.5 : -0.5)} cy="8" r="3.7" />
-              <path d="M5.2 20c.55-4.25 3.15-6.35 6.8-6.35s6.25 2.1 6.8 6.35H5.2Z" />
-            </svg>
-            {index === creatorAvatarGradients.length - 1 ? (
+            <img src={src} alt="" width="32" height="32" className="h-full w-full object-cover" loading="eager" decoding="async" />
+            {index === creatorAvatarPaths.length - 1 ? (
               <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full border border-[#07070b] bg-vn-fuchsia shadow-[0_0_8px_rgba(217,70,239,0.95)]" />
             ) : null}
           </span>
