@@ -384,7 +384,7 @@ export default function HomeLanding() {
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,5,8,0.02),rgba(5,5,8,0.84)_58%,#050508)]" />
       </div>
 
-      <MotionSection className={`${shell} relative overflow-hidden pb-5 pt-14 sm:pb-16 sm:pt-20 lg:pt-24`}>
+      <MotionSection className={`${shell} relative overflow-hidden pb-0 pt-14 sm:pb-16 sm:pt-20 lg:pt-24`}>
         <div className="mx-auto max-w-5xl text-center">
           <div>
             <ProductPositioningBadge />
@@ -1664,7 +1664,7 @@ function HeroImageVisual() {
 
 function TikTokStatsIllustration() {
   return (
-    <div className="relative mx-auto mt-6 w-[94vw] max-w-[1100px] pb-2 pt-5 text-center sm:mt-10 sm:w-[90vw] sm:pt-8">
+    <div className="relative mx-auto mt-6 w-[94vw] max-w-[1100px] pt-5 text-center sm:mt-10 sm:w-[90vw] sm:pb-2 sm:pt-8">
       <div className="pointer-events-none absolute left-1/2 top-[54%] h-[34rem] w-[34rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-500/[0.09] blur-[110px]" aria-hidden />
 
       <div className="relative z-10 mx-auto max-w-3xl">
@@ -1682,7 +1682,7 @@ function TikTokStatsIllustration() {
           alt="Aperçu illustratif d’un écran TikTok Analytics avec vues, engagement et récompenses estimées"
           width="930"
           height="1666"
-          className="block aspect-[0.59] w-full select-none object-cover object-center drop-shadow-[0_34px_80px_rgba(0,0,0,0.68)]"
+          className="block aspect-[0.59] w-full select-none object-cover object-top drop-shadow-[0_34px_80px_rgba(0,0,0,0.68)] sm:object-center"
           loading="lazy"
           decoding="async"
           draggable={false}
