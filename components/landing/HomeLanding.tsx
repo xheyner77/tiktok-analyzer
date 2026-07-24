@@ -1699,8 +1699,9 @@ function HeroImageVisual() {
 
 function TikTokStatsIllustration() {
   return (
-    <div className="relative mx-auto mt-6 w-[94vw] max-w-[1100px] pt-5 text-center sm:mt-10 sm:w-[90vw] sm:pb-2 sm:pt-8">
+    <div className="relative mx-auto mt-6 w-[94vw] max-w-[1100px] pb-10 pt-5 text-center sm:mt-10 sm:w-[90vw] sm:pb-2 sm:pt-8">
       <div className="pointer-events-none absolute left-1/2 top-[54%] h-[34rem] w-[34rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-500/[0.09] blur-[110px]" aria-hidden />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-b from-[#05050f] via-[#05050d] to-[#050508] sm:hidden" aria-hidden />
 
       <div className="relative z-10 mx-auto max-w-3xl">
         <h2 className="text-[1.75rem] font-black leading-[1.02] tracking-[-0.035em] text-white sm:text-5xl">
